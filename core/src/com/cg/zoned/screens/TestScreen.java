@@ -19,6 +19,7 @@ import com.cg.zoned.ui.StepScrollPane;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+// Used for testing purposes, nvm about the crap in here
 public class TestScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 

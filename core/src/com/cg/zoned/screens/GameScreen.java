@@ -115,6 +115,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        //TODO: Draw cool background, bloom and particle effects
+
         if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
             gameManager.connectionManager.serverClientCommunicate();
         } else {                                // We're playing on the same device (Splitscreen)
