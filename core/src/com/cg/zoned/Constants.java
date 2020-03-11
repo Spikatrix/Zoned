@@ -1,0 +1,91 @@
+package com.cg.zoned;
+
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public final class Constants {
+    public static final float WORLD_SIZE = 480.0f;
+
+    public static final int SERVER_PORT = 22355;
+
+    public static final float CELL_SIZE = 25.0f;
+    public static final Color MAP_GRID_COLOR = Color.WHITE;
+    public static final float MAP_GRID_LINE_WIDTH = 3f;
+
+    /**
+     * Width and color of the viewport divider between splitscreens
+     */
+    public static final float VIEWPORT_DIVIDER_TOTAL_WIDTH = 50f;
+    public static final Color VIEWPORT_DIVIDER_FADE_COLOR = new Color(0f, 0f, 0f, 0f);
+
+    /**
+     * The number of players when playing on the same device
+     *
+     * Beware: There may not be enough horizontal space especially on mobile devices to play comfortably
+     */
+    //public static final int NO_OF_PLAYERS = PLAYER_CONTROLS.length; // TODO: Max number of players
+
+    public static final Color PLAYER_CIRCLE_COLOR = Color.WHITE;
+    public static final float PLAYER_CIRCLE_WIDTH = 2.5f;
+
+    /**
+     * Values for smooth player movement among cells in the map
+     */
+    public static final float PLAYER_MOVEMENT_LERP_VALUE = .5f;  // Best value IMO: .5f
+    public static final float PLAYER_MOVEMENT_MAX_TIME   = .25f; // Best value IMO: .25f
+
+    public static final Map<String, Color> PLAYER_COLORS = new LinkedHashMap<String, Color>() {
+        {
+            put("GREEN",  new Color(0,    0.8f, 0,    1.0f));
+            put("RED",    new Color(0.8f, 0,    0,    1.0f));
+            put("BLUE",   new Color(0,    0,    0.8f, 1.0f));
+            put("YELLOW", new Color(0.8f, 0.8f, 0,    1.0f));
+            put("PURPLE", new Color(0.4f, 0,    0.8f, 1.0f));
+        }
+    };
+
+    /**
+     * Controls for players playing in splitscreen mode. Player one has the first control scheme, two has the second etc
+     * In case of server-client multiplayer mode, the player will have the first control scheme.
+     *
+     * Note that you may face issues when playing with the number of players unequal to the number of control schemes specified
+     */
+    public static final int[][] PLAYER_CONTROLS = new int[][]{
+            {Input.Keys.W,  Input.Keys.D,     Input.Keys.S,    Input.Keys.A},
+            {Input.Keys.UP, Input.Keys.RIGHT, Input.Keys.DOWN, Input.Keys.LEFT},
+            {Input.Keys.I,  Input.Keys.L,     Input.Keys.K,    Input.Keys.J},
+            {Input.Keys.T,  Input.Keys.H,     Input.Keys.G,    Input.Keys.F},
+    };
+
+    /**
+     * Zoom minimum and maximum values
+     *
+     * The camera can be zoomed in/out by the scroll wheel on Desktop and pinch/expand on Mobile
+     */
+    public static final float ZOOM_MIN_VALUE = 0.5f;
+    public static final float ZOOM_MAX_VALUE = 1.5f;
+
+    public static final int TRAIL_COUNT = 100;
+    public static final int TRAIL_LENGTH = 100;
+    public static final int TRAIL_WIDTH = 1;
+
+    public enum Direction {UP, RIGHT, DOWN, LEFT}
+
+    public enum FONT_SIZE_MANAGER {
+        LARGE(80),
+        REGULAR(35);
+
+        private int size;
+
+        FONT_SIZE_MANAGER(int size) {
+            this.size = size;
+        }
+
+        public int getSize() {
+            return size;
+        }
+    }
+}

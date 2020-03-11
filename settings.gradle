@@ -1,0 +1,2 @@
+//include 'desktop', 'android', 'html', 'core'
+include 'desktop', 'android', 'core'
