@@ -2,6 +2,7 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
@@ -39,7 +40,7 @@ public class Map {
 
     public void update(Player[] players, int[] playerScores, float delta) {
         boolean waitForMovementCompletion = false; // Used to synchronize movement of all players
-                                                   // so that every one of them moves together
+        // so that every one of them moves together
 
         for (Player player : players) {
             if (player.direction != null) {
@@ -167,54 +168,74 @@ public class Map {
         }
     }
 
-    public void render(Player[] players, ShapeRenderer renderer, float delta) {
-        drawColors(renderer, delta);
-        drawPlayers(players, renderer);
-        drawGrid(renderer);
+    public void render(Player[] players, ShapeRenderer renderer, OrthographicCamera camera, float delta) {
+        drawColors(renderer, camera, delta);
+        drawPlayers(players, camera, renderer);
+        drawGrid(camera, renderer);
     }
 
-    private void drawPlayers(Player[] players, ShapeRenderer renderer) {
+    private void drawPlayers(Player[] players, OrthographicCamera camera, ShapeRenderer renderer) {
         Gdx.gl.glLineWidth(Constants.PLAYER_CIRCLE_WIDTH);
         renderer.set(ShapeRenderer.ShapeType.Line);
         for (Player player : players) {
-            player.render(renderer);
+            player.render(camera, renderer);
         }
         renderer.set(ShapeRenderer.ShapeType.Filled);
     }
 
-    private void drawColors(ShapeRenderer renderer, float delta) {
+    private void drawColors(ShapeRenderer renderer, OrthographicCamera camera, float delta) {
+        float x = camera.position.x;
+        float y = camera.position.y;
+        float width = camera.viewportWidth * camera.zoom;
+        float height = camera.viewportHeight * camera.zoom;
+
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
-                if (mapGrid[i][j].cellColor != null) {
-                    renderer.setColor(mapGrid[i][j].cellColor);
-                    renderer.rect(j * Constants.CELL_SIZE, i * Constants.CELL_SIZE,
-                            Constants.CELL_SIZE, Constants.CELL_SIZE);
+                float startX = j * Constants.CELL_SIZE;
+                float startY = i * Constants.CELL_SIZE;
 
-                    mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
+                if ((startX >= x - width) && (startX + Constants.CELL_SIZE <= x + width) &&
+                        (startY >= y - height) && (startY + Constants.CELL_SIZE <= y + height)) {
+                    if (mapGrid[i][j].cellColor != null) {
+                        renderer.setColor(mapGrid[i][j].cellColor);
+                        renderer.rect(startX, startY,
+                                Constants.CELL_SIZE, Constants.CELL_SIZE);
 
-                    // Use the constant color object to avoid too many redundant color objects
-                    Color constColor = PlayerColorHelper.getConstantColor(mapGrid[i][j].cellColor);
-                    if (constColor != null) {
-                        mapGrid[i][j].cellColor = constColor;
+                        mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
+
+                        // Use the constant color object to avoid too many redundant color objects
+                        Color constColor = PlayerColorHelper.getConstantColor(mapGrid[i][j].cellColor);
+                        if (constColor != null) {
+                            mapGrid[i][j].cellColor = constColor;
+                        }
+                    } else if (!mapGrid[i][j].isMovable) {
+                        renderer.setColor(Constants.MAP_GRID_COLOR);
+                        renderer.rect(startX, startY,
+                                Constants.CELL_SIZE, Constants.CELL_SIZE);
                     }
-                } else if (!mapGrid[i][j].isMovable) {
-                    renderer.setColor(Constants.MAP_GRID_COLOR);
-                    renderer.rect(j * Constants.CELL_SIZE, i * Constants.CELL_SIZE,
-                            Constants.CELL_SIZE, Constants.CELL_SIZE);
                 }
             }
         }
     }
 
-    private void drawGrid(ShapeRenderer renderer) {
+    private void drawGrid(OrthographicCamera camera, ShapeRenderer renderer) {
+        float x = camera.position.x;
+        float y = camera.position.y;
+        float width = camera.viewportWidth * camera.zoom;
+        float height = camera.viewportHeight * camera.zoom;
+
         renderer.setColor(Constants.MAP_GRID_COLOR);
         for (int i = 0; i < this.rows + 1; i++) {
-            renderer.rectLine(0, i * Constants.CELL_SIZE,
-                    this.cols * Constants.CELL_SIZE, i * Constants.CELL_SIZE, Constants.MAP_GRID_LINE_WIDTH);
+            if (i * Constants.CELL_SIZE >= y - height && i * Constants.CELL_SIZE <= y + height) {
+                renderer.rectLine(Math.max(0, x - width), i * Constants.CELL_SIZE,
+                        Math.min(this.cols * Constants.CELL_SIZE, x + width), i * Constants.CELL_SIZE, Constants.MAP_GRID_LINE_WIDTH);
+            }
         }
         for (int i = 0; i < this.cols + 1; i++) {
-            renderer.rectLine(i * Constants.CELL_SIZE, 0,
-                    i * Constants.CELL_SIZE, this.rows * Constants.CELL_SIZE, Constants.MAP_GRID_LINE_WIDTH);
+            if (i * Constants.CELL_SIZE >= x - width && i * Constants.CELL_SIZE <= x + width) {
+                renderer.rectLine(i * Constants.CELL_SIZE, Math.max(0, y - height),
+                        i * Constants.CELL_SIZE, Math.min(this.rows * Constants.CELL_SIZE, y + height), Constants.MAP_GRID_LINE_WIDTH);
+            }
         }
     }
 
@@ -225,7 +246,7 @@ public class Map {
      * @param startPos     Position to start flood filling from
      * @param fillPosStack Array that stores the positions of cells in the grid that were flood filled
      * @return A Color which depicts which color can be filled in the flood filled locations.
-     *         If 'null' or 'Color.BLACK', multiple or no colors were present along the edges, or a wall was in between
+     * If 'null' or 'Color.BLACK', multiple or no colors were present along the edges, or a wall was in between
      */
     private Color floodFill(FloodFillGridState[][] gridState, GridPoint2 startPos, Array<GridPoint2> fillPosStack) {
         Array<GridPoint2> stack = new Array<GridPoint2>();

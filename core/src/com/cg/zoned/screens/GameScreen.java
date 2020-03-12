@@ -23,7 +23,6 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.ScoreBar;
@@ -180,7 +179,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
         renderer.setProjectionMatrix(viewport.getCamera().combined);
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-        map.render(gameManager.playerManager.getPlayers(), renderer, delta); // TODO: Draw only the parts visible to the user
+        map.render(gameManager.playerManager.getPlayers(), renderer, (OrthographicCamera) viewport.getCamera(), delta);
         renderer.end();
     }
 
