@@ -69,7 +69,7 @@ public class LoadingScreen extends ScreenAdapter {
 
         Table table = new Table();
         table.setFillParent(true);
-        table.pad(100);
+        table.pad(100 * game.getScaleFactor());
 
         progressBar = new ProgressBar(0, 1, .01f, false, progressBarSkin);
         progressBar.setAnimateDuration(.5f);
@@ -83,10 +83,8 @@ public class LoadingScreen extends ScreenAdapter {
         FreetypeFontLoader.FreeTypeFontLoaderParameter parameter = new FreetypeFontLoader.FreeTypeFontLoaderParameter();
         parameter.fontFileName = fontName;
 
-        parameter.fontParameters.size = fontSize;
+        parameter.fontParameters.size = (int) (fontSize * game.getScaleFactor());
         //Gdx.app.log("font", "Screen density: " + Gdx.graphics.getDensity());
-        // TODO: Figure out how to generate fonts based on the screen factors
-        // And properly scale up/down so as to get a good UX on both Desktop and Mobile
 
         String fontId;
         if (fontSize == Constants.FONT_SIZE_MANAGER.LARGE.getSize()) {

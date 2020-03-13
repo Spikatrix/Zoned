@@ -68,6 +68,9 @@ public final class Constants {
     public static final float ZOOM_MIN_VALUE = 0.5f;
     public static final float ZOOM_MAX_VALUE = 1.5f;
 
+    public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
+    public static final float ANDROID_FONT_SCALE_FACTOR = 1.3f;
+
     public static final int TRAIL_COUNT = 100;
     public static final int TRAIL_LENGTH = 100;
     public static final int TRAIL_WIDTH = 1;

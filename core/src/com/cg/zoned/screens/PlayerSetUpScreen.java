@@ -16,8 +16,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.reflect.ClassReflection;
-import com.badlogic.gdx.utils.reflect.ReflectionException;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
@@ -28,14 +26,6 @@ import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.Spinner;
-
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
 
 public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
@@ -92,7 +82,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
                 colorButtons[i][j].setColor(PlayerColorHelper.getColorFromIndex(j));
                 colorButtonGroups[i].add(colorButtons[i][j]);
 
-                playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS).height(COLOR_BUTTON_DIMENSIONS);
+                playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS * game.getScaleFactor()).height(COLOR_BUTTON_DIMENSIONS * game.getScaleFactor());
 
                 stage.addFocusableActor(colorButtons[i][j]);
             }
@@ -121,9 +111,9 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         innerTable.add(rowSpinner);
         innerTable.add(x);
         innerTable.add(colSpinner);
-        table.add(innerTable).colspan(NO_OF_COLORS + 1).pad(20);
+        table.add(innerTable).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor());
 
-        table.row().pad(10f);
+        table.row().pad(10f * game.getScaleFactor());
 
         stage.addFocusableActor(rowSpinner.getPlusButton());
         stage.addFocusableActor(rowSpinner.getMinusButton());
@@ -153,7 +143,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             }
 
         });
-        table.add(startButton).width(200).colspan(NO_OF_COLORS + 1);
+        table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1);
         stage.addFocusableActor(startButton, NO_OF_COLORS);
         stage.addActor(table);
     }

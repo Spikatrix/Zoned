@@ -228,7 +228,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
         victoryDialog.getButtonTable().defaults().width(200f);
         victoryDialog.button("OK");
         victoryDialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
-        victoryDialog.text(msg).pad(25f, 25f, 20f, 25f);
+        victoryDialog.text(msg).pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
         Label label = (Label) victoryDialog.getContentTable().getChild(0);
         label.setAlignment(Align.center);
         victoryDialog.show(fullScreenStage);

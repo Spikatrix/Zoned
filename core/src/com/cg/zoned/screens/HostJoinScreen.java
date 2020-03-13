@@ -63,14 +63,14 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         table.add(playerNameLabel).right();
         table.add(playerNameField).left();
 
-        table.row().pad(10);
+        table.row().pad(10 * game.getScaleFactor());
         stage.addFocusableActor(playerNameField, 2);
         stage.row();
 
         TextButton hostButton = new TextButton("Host", game.skin);
         TextButton joinButton = new TextButton("Join", game.skin);
-        table.add(hostButton).width(200);
-        table.add(joinButton).width(200);
+        table.add(hostButton).width(200 * game.getScaleFactor());
+        table.add(joinButton).width(200 * game.getScaleFactor());
 
         stage.addFocusableActor(hostButton);
         stage.addFocusableActor(joinButton);
@@ -83,7 +83,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                 if (!playerNameField.getText().trim().isEmpty()) {
                     startServerLobby(playerNameField.getText().trim());
                 } else {
-                    stage.showInfoDialog("Please enter the name of the player(s)", game.skin);
+                    stage.showInfoDialog("Please enter the name of the player(s)", game.getScaleFactor(), game.skin);
                 }
             }
         });
@@ -96,7 +96,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                 if (!playerNameField.getText().trim().isEmpty()) {
                     startClientLobby(playerNameField.getText().trim());
                 } else {
-                    stage.showInfoDialog("Please enter the name of the player(s)", game.skin);
+                    stage.showInfoDialog("Please enter the name of the player(s)", game.getScaleFactor(), game.skin);
                 }
             }
         });
@@ -124,11 +124,11 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         try {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
-            stage.showInfoDialog("Server bind error\n" + e.getMessage(), game.skin);
+            stage.showInfoDialog("Server bind error\n" + e.getMessage(), game.getScaleFactor(), game.skin);
             e.printStackTrace();
             return;
         } catch (IllegalArgumentException e) {
-            stage.showInfoDialog("Server bind error\n" + e.getMessage(), game.skin);
+            stage.showInfoDialog("Server bind error\n" + e.getMessage(), game.getScaleFactor(), game.skin);
             e.printStackTrace();
             return;
         }
@@ -166,12 +166,12 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             }
             client.connect(4000, addr, Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
-            stage.showInfoDialog("Error connecting to the server\n" + e.getMessage(), game.skin);
+            stage.showInfoDialog("Error connecting to the server\n" + e.getMessage(), game.getScaleFactor(), game.skin);
             return;
         }
 
         if (!client.isConnected()) {
-            stage.showInfoDialog("Failed to connect to the server", game.skin);
+            stage.showInfoDialog("Failed to connect to the server", game.getScaleFactor(), game.skin);
             return;
         }
 
@@ -192,7 +192,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         outTable.setHeight(Gdx.graphics.getHeight() * 2);
         outTable.setWidth(Gdx.graphics.getWidth());
         outTable.setPosition(outTable.getPrefWidth() / 2, -Gdx.graphics.getHeight());
-        outTable.add(restoreLabel).padTop(restoreLabel.getHeight()).align(Align.center);
+        outTable.add(restoreLabel).padTop(restoreLabel.getHeight() * game.getScaleFactor()).align(Align.center);
         outTable.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

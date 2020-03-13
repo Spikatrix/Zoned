@@ -85,7 +85,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         serverLobbyTable.center();
 
         Label onlinePlayersTitle = new Label("Connected Players: ", game.skin, "themed");
-        serverLobbyTable.add(onlinePlayersTitle).pad(10);
+        serverLobbyTable.add(onlinePlayersTitle).pad(10 * game.getScaleFactor());
 
         serverLobbyTable.row();
 
@@ -111,7 +111,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         innerTable.add(rowSpinner);
         innerTable.add(x);
         innerTable.add(colSpinner);
-        serverLobbyTable.add(innerTable).pad(10);
+        serverLobbyTable.add(innerTable).pad(10 * game.getScaleFactor());
 
         serverLobbyTable.row();
 
@@ -124,7 +124,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
                 validateServerData(rows, cols);
             }
         });
-        serverLobbyTable.add(startButton).width(200).pad(10);
+        serverLobbyTable.add(startButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
         stage.addActor(serverLobbyTable);
         stage.addFocusableActor(rowSpinner.getPlusButton());
@@ -138,7 +138,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
 
     private void insertPlayer(String address) {
         HorizontalGroup playerItem = new HorizontalGroup();
-        playerItem.pad(10);
+        playerItem.pad(10 * game.getScaleFactor());
 
         Label name;
         Label who;
@@ -219,7 +219,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
 
     private void validateServerData(int rows, int cols) {
         if (server.getConnections().length < 1) {
-            stage.showInfoDialog("Insufficient players to start the match", game.skin);
+            stage.showInfoDialog("Insufficient players to start the match", game.getScaleFactor(), game.skin);
             return;
         }
 
@@ -228,7 +228,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         for (int i = 1; i < size; i++) {
             String ready = ((Label) playerItems.get(i).findActor("ready-label")).getText().toString();
             if (!ready.equals("Ready")) {
-                stage.showInfoDialog("All players are not ready", game.skin);
+                stage.showInfoDialog("All players are not ready", game.getScaleFactor(), game.skin);
                 return;
             }
         }
@@ -246,7 +246,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         }
 
         if (noOfTeams <= 1) {
-            stage.showInfoDialog("Players must have at least two distinct colors", game.skin);
+            stage.showInfoDialog("Players must have at least two distinct colors", game.getScaleFactor(), game.skin);
             return;
         }
 

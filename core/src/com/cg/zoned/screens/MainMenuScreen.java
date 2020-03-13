@@ -47,7 +47,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         table.center();
 
         Label gameTitle = new Label("ZONED", game.skin, "large-font", Color.GREEN);
-        table.add(gameTitle).pad(5f);
+        table.add(gameTitle).pad(5f * game.getScaleFactor());
         table.row();
 
         mainMenuButtons = new TextButton[]{
@@ -86,7 +86,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         }
 
         for (TextButton button : mainMenuButtons) {
-            table.add(button).padRight(10).padLeft(10).width(350).expandX();
+            table.add(button).padRight(10 * game.getScaleFactor()).padLeft(10 * game.getScaleFactor()).width(350 * game.getScaleFactor()).expandX();
             table.row();
 
             stage.addFocusableActor(button);

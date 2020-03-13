@@ -8,7 +8,6 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.Align;
@@ -183,9 +182,10 @@ public class FocusableStage extends Stage {
      * Focus management for background actors are paused until the dialog is dealt with
      *
      * @param msg  The message to display
+     * @param scaleFactor The game's scaleFactor to scale up/down dialog button width
      * @param skin The skin to use for the dialog
      */
-    public void showInfoDialog(String msg, Skin skin) {
+    public void showInfoDialog(String msg, float scaleFactor, Skin skin) {
         final Actor focusedActor = this.currentFocusedActor;
 
         Dialog dialog = new Dialog("", skin) {
@@ -198,9 +198,9 @@ public class FocusableStage extends Stage {
                 super.result(object);
             }
         };
-        dialog.text(msg).pad(25f, 25f, 20f, 25f);
+        dialog.text(msg).pad(25f * scaleFactor, 25f * scaleFactor, 20f * scaleFactor, 25f * scaleFactor);
         dialog.getColor().a = 0;
-        dialog.getButtonTable().defaults().width(200f);
+        dialog.getButtonTable().defaults().width(200f * scaleFactor);
         Label label = (Label) dialog.getContentTable().getChild(0);
         label.setAlignment(Align.center);
         dialog.button("OK");

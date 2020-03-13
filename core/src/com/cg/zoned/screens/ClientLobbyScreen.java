@@ -92,7 +92,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         clientLobbyTable.center();
 
         Label onlinePlayersTitle = new Label("Connected Players: ", game.skin, "themed");
-        clientLobbyTable.add(onlinePlayersTitle).pad(10);
+        clientLobbyTable.add(onlinePlayersTitle).pad(10 * game.getScaleFactor());
 
         clientLobbyTable.row();
 
@@ -136,7 +136,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
-        clientLobbyTable.add(readyButton).width(200).pad(10);
+        clientLobbyTable.add(readyButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
         stage.addFocusableActor(readyButton);
         stage.row();
@@ -180,7 +180,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
 
     private void insertPlayer(String name, String who, String ready, String color) {
         HorizontalGroup playerItem = new HorizontalGroup();
-        playerItem.pad(10);
+        playerItem.pad(10 * game.getScaleFactor());
 
         Label nameLabel;
         Label whoLabel;
@@ -300,9 +300,9 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         };
-        dialog.text(msg).pad(25f, 25f, 20f, 25f);
+        dialog.text(msg).pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
         dialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
-        dialog.getButtonTable().defaults().width(200f);
+        dialog.getButtonTable().defaults().width(200f * game.getScaleFactor());
         dialog.button("OK");
         dialog.show(stage);
     }

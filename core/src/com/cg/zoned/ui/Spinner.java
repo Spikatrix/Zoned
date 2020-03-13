@@ -1,6 +1,5 @@
 package com.cg.zoned.ui;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -19,7 +18,7 @@ public class Spinner extends Table {
     private float scrollPaneHeight;
 
     private float buttonHeight;
-    private float buttonWidth = 60f;
+    private float buttonWidth;
     private int buttonStepCount = 10;
 
     public Spinner(Skin skin) {
@@ -72,7 +71,7 @@ public class Spinner extends Table {
                     return;
                 }
 
-                if (Math.abs(touchY - y) >= 5) {
+                if (Math.abs(touchY - y) >= 10) {
                     if (touchY > y) {
                         stepScrollPane.snapToStep(-1);
                     } else {
@@ -91,6 +90,7 @@ public class Spinner extends Table {
         this.setTouchable(Touchable.enabled);
 
         buttonHeight = this.plusButton.getPrefHeight();
+        buttonWidth = buttonHeight * .8f;
     }
 
     public void generateValueLabel(int valLowLimit, int valHighLimit, Skin skin) {
