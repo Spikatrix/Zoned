@@ -54,7 +54,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 new TextButton("Play on this device", game.skin),
                 new TextButton("Play on multiple devices", game.skin),
                 new TextButton("Settings", game.skin),
-                //new TextButton("Testing room", game.skin),
+                new TextButton("Testing room", game.skin),
                 new TextButton("Exit", game.skin)
         };
 

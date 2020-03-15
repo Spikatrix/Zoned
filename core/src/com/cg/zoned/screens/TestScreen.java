@@ -4,79 +4,88 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Zoned;
-import com.cg.zoned.managers.AnimationManager;
-import com.cg.zoned.ui.Spinner;
-import com.cg.zoned.ui.StepScrollPane;
-
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import com.crashinvaders.vfx.VfxManager;
+import com.crashinvaders.vfx.effects.BloomEffect;
+import com.crashinvaders.vfx.effects.MotionBlurEffect;
+import com.crashinvaders.vfx.filters.MotionBlurFilter;
 
 // Used for testing purposes, nvm about the crap in here
 public class TestScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
-    private static final String reallyLongString = "This\nIs\nA\nReally\nLong\nString\nThat\nHas\nLots\nOf\nLines\nAnd\nRepeats.\n"
-            + "This\nIs\nA\nReally\nLong\nString\nThat\nHas\nLots\nOf\nLines\nAnd\nRepeats.\n"
-            + "This\nIs\nA\nReally\nLong\nString\nThat\nHas\nLots\nOf\nLines\nAnd\nRepeats.\n";
-
-    private AnimationManager animationManager;
     private ScreenViewport viewport;
-    private Stage stage;
-    private ScrollPane scrollPane;
+    private ShapeRenderer renderer;
+    private SpriteBatch batch;
+    private BitmapFont font;
+
+    private VfxManager vfxManager;
+    private BloomEffect bloomEffect;
+    private MotionBlurEffect motionBlurEffect;
+
+    private Rectangle[] rects;
+    private Color[] colors;
+    private int index = 0;
+
+    private float x;
+    private float y;
+    private float width;
+    private float height;
+    private Color color;
 
     public TestScreen(final Zoned game) {
         this.game = game;
 
+        this.renderer = new ShapeRenderer();
+        this.renderer.setAutoShapeType(true);
+        this.batch = new SpriteBatch();
         this.viewport = new ScreenViewport();
-        this.stage = new Stage(this.viewport);
-        this.animationManager = new AnimationManager(this.game, this);
+        this.font = game.skin.getFont("regular-font");
 
-        Gdx.input.setInputProcessor(this.stage);
+        this.rects = new Rectangle[]{
+                new Rectangle(40, 40, 40, 40),
+                new Rectangle(40, 200, 100, 150),
+                new Rectangle(400, 200, 200, 20),
+                new Rectangle(400, 40, 40, 320),
+        };
+        this.colors = new Color[]{
+                Color.RED,
+                Color.GREEN,
+                Color.BLUE,
+                Color.YELLOW,
+        };
+
+        x = this.rects[0].x;
+        y = this.rects[0].y;
+        width = this.rects[0].width;
+        height = this.rects[0].height;
+        color = new Color(this.colors[0]);
+
+        this.vfxManager = new VfxManager(Pixmap.Format.RGBA8888);
+        this.bloomEffect = new BloomEffect(Pixmap.Format.RGBA8888);
+        this.motionBlurEffect = new MotionBlurEffect(Pixmap.Format.RGBA8888, MotionBlurFilter.BlurFunction.MIX, .5f);
+
+        this.vfxManager.addEffect(this.bloomEffect);
+        this.vfxManager.addEffect(this.motionBlurEffect);
     }
 
     @Override
     public void show() {
-        Table parentTable = new Table();
-        parentTable.setFillParent(true);
-
-        final int LOW_LIMIT = 3, HIGH_LIMIT = 100;
-
-        Label value = new Label("", game.skin);
-        value.setAlignment(Align.center);
-        value.setWrap(true);
-        StringBuilder sb = new StringBuilder();
-        for (int i = LOW_LIMIT; i <= HIGH_LIMIT; i++) {
-            sb.append(i);
-            if (i != HIGH_LIMIT) {
-                sb.append('\n');
-            }
-        }
-        value.setText(sb.toString());
-
-        final float scrollPaneHeight = (value.getPrefHeight() / (HIGH_LIMIT - LOW_LIMIT + 1));
-        final float itemWidth = 60f;
-
-        Spinner spinner = new Spinner(game.skin);
-        spinner.generateValueLabel(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        //spinner.getStepScrollPane().add(value);
-
-        parentTable.add(spinner).width(itemWidth * 3);
-
-        stage.addActor(parentTable);
-        animationManager.fadeInStage(stage);
+        Gdx.input.setInputProcessor(this);
     }
 
     @Override
     public void resize(int width, int height) {
         this.viewport.update(width, height, true);
+        this.vfxManager.resize(width, height);
     }
 
     @Override
@@ -85,20 +94,64 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         this.viewport.apply(true);
+        this.vfxManager.cleanUpBuffers();
 
-        this.stage.draw();
-        this.stage.act(delta);
+        renderer.setProjectionMatrix(this.viewport.getCamera().combined);
+        batch.setProjectionMatrix(this.viewport.getCamera().combined);
+
+        lerpRect(delta);
+
+        vfxManager.beginCapture();
+        vfxManager.setBlendingEnabled(true);
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        renderer.setColor(color);
+        renderer.rect(x, y, width, height);
+
+        renderer.end();
+        vfxManager.endCapture();
+
+        vfxManager.applyEffects();
+        vfxManager.renderToScreen();
+
+        batch.begin();
+        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, Gdx.graphics.getHeight() - 10);
+        font.draw(batch, "Bloom + MotionBlur", 10, Gdx.graphics.getHeight() - 40); // ~10 FPS on my Mobile although I get 60 FPS on my laptop :(
+        batch.end();
+    }
+
+    private void lerpRect(float delta) {
+        float lerp = 1.8f;
+        float threshold = 3f;
+
+        x += (rects[index].x - x) * lerp * delta;
+        y += (rects[index].y - y) * lerp * delta;
+        width += (rects[index].width - width) * lerp * delta;
+        height += (rects[index].height - height) * lerp * delta;
+
+        color.lerp(colors[index], lerp * delta);
+
+        if (Math.abs(x - rects[index].x) <= threshold &&
+                Math.abs(y - rects[index].y) <= threshold &&
+                Math.abs(width - rects[index].width) <= threshold &&
+                Math.abs(height - rects[index].height) <= threshold) {
+            index = (index + 1) % rects.length;
+        }
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
+        vfxManager.dispose();
+        bloomEffect.dispose();
+        motionBlurEffect.dispose();
+        renderer.dispose();
+        batch.dispose();
     }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            game.setScreen(new MainMenuScreen(game));
             return true;
         }
 
