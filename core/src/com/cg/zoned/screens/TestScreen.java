@@ -68,17 +68,17 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         width = this.rects[0].width;
         height = this.rects[0].height;
         color = new Color(this.colors[0]);
+    }
 
+    @Override
+    public void show() {
         this.vfxManager = new VfxManager(Pixmap.Format.RGBA8888);
         this.bloomEffect = new BloomEffect(Pixmap.Format.RGBA8888);
         this.motionBlurEffect = new MotionBlurEffect(Pixmap.Format.RGBA8888, MotionBlurFilter.BlurFunction.MIX, .5f);
 
         this.vfxManager.addEffect(this.bloomEffect);
         this.vfxManager.addEffect(this.motionBlurEffect);
-    }
 
-    @Override
-    public void show() {
         Gdx.input.setInputProcessor(this);
     }
 

@@ -61,7 +61,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         final TextField playerNameField = new TextField("", game.skin);
         playerNameField.setName("Player name textfield");
         table.add(playerNameLabel).right();
-        table.add(playerNameField).left();
+        table.add(playerNameField).width(playerNameField.getPrefWidth() * game.getScaleFactor()).left();
 
         table.row().pad(10 * game.getScaleFactor());
         stage.addFocusableActor(playerNameField, 2);

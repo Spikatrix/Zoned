@@ -31,6 +31,8 @@ import com.cg.zoned.managers.GameManager;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Server;
 
+import java.text.DecimalFormat;
+
 public class GameScreen extends ScreenAdapter implements InputProcessor, GestureDetector.GestureListener {
     final Zoned game;
 
@@ -142,7 +144,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
-        if (!gameComplete && map.gameComplete()) {
+        if (!gameComplete && map.gameComplete(gameManager.playerManager.getPlayerScores())) {
+            gameManager.playerManager.stopPlayers();
             showVictoryDialog();
             gameComplete = true;
             Gdx.input.setInputProcessor(fullScreenStage);
@@ -210,7 +213,13 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
                 winner = players[i].name;
             }
 
-            stringBuilder.append(players[i].name).append(": ").append(score);
+            double capturePercentage = 100 * (score / ((double) map.rows * map.cols));
+            DecimalFormat df = new DecimalFormat("#.##");
+            capturePercentage = Double.parseDouble(df.format(capturePercentage));
+
+            stringBuilder.append(players[i].name).append(": ")
+                    .append(score)
+                    .append(" (").append(capturePercentage).append(" %)");
             if (i != players.length - 1) {
                 stringBuilder.append('\n');
             }

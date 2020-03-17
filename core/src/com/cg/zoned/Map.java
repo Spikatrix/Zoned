@@ -398,8 +398,16 @@ public class Map {
         return fillColor;
     }
 
-    public boolean gameComplete() {
-        //TODO: Account for walls and 50% completion for two player games
+    public boolean gameComplete(int[] playerScores) {
+        //TODO: Account for walls
+        if (playerScores.length == 2) {
+            for (int score : playerScores) {
+                // For two player games, end the game when a player has captured more than 50% of the cells
+                if (100 * (score / ((double) this.rows * this.cols)) > 50.0) {
+                    return true;
+                }
+            }
+        }
         return this.rows * this.cols == this.coloredCells;
     }
 

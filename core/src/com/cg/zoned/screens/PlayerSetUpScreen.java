@@ -7,14 +7,18 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -113,13 +117,22 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         innerTable.add(colSpinner);
         table.add(innerTable).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor());
 
-        table.row().pad(10f * game.getScaleFactor());
+        table.row();
 
         stage.addFocusableActor(rowSpinner.getPlusButton());
         stage.addFocusableActor(rowSpinner.getMinusButton());
         stage.addFocusableActor(colSpinner.getPlusButton(), 2);
         stage.addFocusableActor(colSpinner.getMinusButton());
         stage.row();
+
+        Table infoTable = new Table();
+        infoTable.center();
+        Image infoImage = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_info.png")))));
+        Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
+        infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
+        infoTable.add(infoLabel);
+        table.add(infoTable).colspan(NO_OF_COLORS + 1).padBottom(20f * game.getScaleFactor());
+        table.row();
 
         TextButton startButton = new TextButton("Start game", game.skin);
         startButton.addListener(new ClickListener() {

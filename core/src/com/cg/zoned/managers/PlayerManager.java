@@ -42,10 +42,14 @@ public class PlayerManager extends InputMultiplexer {
     }
 
     public void setPlayerDirections(Direction[] directions) {
-        int size = players.length;
-
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < players.length; i++) {
             players[i].direction = directions[i];
+        }
+    }
+
+    public void stopPlayers() {
+        for (Player player : players) {
+            player.direction = player.updatedDirection = null;
         }
     }
 
