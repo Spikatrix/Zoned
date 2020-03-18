@@ -49,9 +49,9 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             @Override
             public void animationEnd(Stage stage) {
                 emitterLeft.load(Gdx.files.internal("particles/right_emitter.p"), Gdx.files.internal("particles"));
-                emitterLeft.start();
                 emitterRight.load(Gdx.files.internal("particles/left_emitter.p"), Gdx.files.internal("particles"));
                 emitterRight.setPosition(viewport.getScreenWidth(), 0);
+                emitterLeft.start();
                 emitterRight.start();
             }
         });
@@ -98,6 +98,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     emitterLeft.allowCompletion();
+                    emitterRight.allowCompletion();
                     animationManager.fadeOutStage(stage, screens[screenIndex]);
                 }
             });
