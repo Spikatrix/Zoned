@@ -7,7 +7,9 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
@@ -26,18 +28,33 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private TextButton[] mainMenuButtons;
     private AnimationManager animationManager;
 
+    private ParticleEffect emitterLeft, emitterRight;
+
     public MainMenuScreen(final Zoned game) {
         this.game = game;
 
         viewport = new ScreenViewport();
         stage = new FocusableStage(viewport);
         animationManager = new AnimationManager(this.game, this);
+
+        emitterLeft = new ParticleEffect();
+        emitterRight = new ParticleEffect();
     }
 
     @Override
     public void show() {
         setUpMainMenu();
         animationManager.startMainMenuAnimation(stage, mainMenuButtons);
+        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
+            @Override
+            public void animationEnd(Stage stage) {
+                emitterLeft.load(Gdx.files.internal("particles/right_emitter.p"), Gdx.files.internal("particles"));
+                emitterLeft.start();
+                emitterRight.load(Gdx.files.internal("particles/left_emitter.p"), Gdx.files.internal("particles"));
+                emitterRight.setPosition(viewport.getScreenWidth(), 0);
+                emitterRight.start();
+            }
+        });
     }
 
     private void setUpMainMenu() {
@@ -80,6 +97,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             mainMenuButtons[i].addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
+                    emitterLeft.allowCompletion();
                     animationManager.fadeOutStage(stage, screens[screenIndex]);
                 }
             });
@@ -104,6 +122,11 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         viewport.apply(true);
 
+        stage.getBatch().begin();
+        emitterLeft.draw(stage.getBatch(), delta);
+        emitterRight.draw(stage.getBatch(), delta);
+        stage.getBatch().end();
+
         stage.draw();
         stage.act(delta);
     }
@@ -111,11 +134,14 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
+        emitterRight.setPosition(width, 0);
     }
 
     @Override
     public void dispose() {
         stage.dispose();
+        emitterLeft.dispose();
+        emitterRight.dispose();
     }
 
     @Override
