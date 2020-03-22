@@ -4,11 +4,13 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.cg.zoned.screens.LoadingScreen;
 
 public class Zoned extends Game {
     public Skin skin;
+    public Preferences preferences;
 
     private static float SCALE_FACTOR = 1.0f;
 

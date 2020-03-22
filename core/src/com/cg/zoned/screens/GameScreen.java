@@ -23,6 +23,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
+import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.ScoreBar;
@@ -47,6 +48,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
     private Stage fullScreenStage;
     private BitmapFont font;
+    private boolean showFPSCounter;
     private ScoreBar scoreBars;
 
     private Vector2 touchStartPos;
@@ -79,12 +81,13 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
         }
 
         this.fullScreenStage = new Stage(new ScreenViewport());
-        this.font = game.skin.getFont(Constants.FONT_SIZE_MANAGER.REGULAR.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
     }
 
     @Override
     public void show() {
         setUpInputProcessors();
+        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
     }
 
     private void setUpInputProcessors() {
@@ -152,32 +155,34 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
         }
 
         if (gameComplete) {
-            fadeOutOverlay.a += delta * 2f * (2f - fadeOutOverlay.a);
-            fadeOutOverlay.a = Math.min(fadeOutOverlay.a, 1f);
-
-            renderer.begin(ShapeRenderer.ShapeType.Filled);
-            renderer.setColor(fadeOutOverlay);
-            renderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-            renderer.end();
-
-            if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
-                gameCompleteFadeOutDone = true;
-                if (gameManager.connectionManager.isActive) {
-                    gameManager.connectionManager.close();
-                }
-                game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols));
-            }
+            fadeOutScreen(delta);
         }
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
-        fullScreenStage.getBatch().begin();
-        font.draw(fullScreenStage.getBatch(), "FPS: " + Gdx.graphics.getFramesPerSecond(), 5, Gdx.graphics.getHeight() - 15);
-        fullScreenStage.getBatch().end();
+        if (this.showFPSCounter) {
+            FPSDisplayer.displayFPS(fullScreenStage.getBatch(), font, 0, 7);
+        }
         fullScreenStage.act(delta);
         fullScreenStage.draw();
+    }
 
-        // TODO: Fix FPS not showing up in some cases when playing
+    private void fadeOutScreen(float delta) {
+        fadeOutOverlay.a += delta * 2f * (2f - fadeOutOverlay.a);
+        fadeOutOverlay.a = Math.min(fadeOutOverlay.a, 1f);
+
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        renderer.setColor(fadeOutOverlay);
+        renderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        renderer.end();
+
+        if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
+            gameCompleteFadeOutDone = true;
+            if (gameManager.connectionManager.isActive) {
+                gameManager.connectionManager.close();
+            }
+            game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols));
+        }
     }
 
     private void drawViewportDividers() {

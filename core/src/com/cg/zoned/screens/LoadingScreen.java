@@ -60,8 +60,11 @@ public class LoadingScreen extends ScreenAdapter {
         assetManager.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(resolver));
         assetManager.setLoader(BitmapFont.class, ".otf", new FreetypeFontLoader(resolver));
 
-        generateCustomFont("fonts/austere.otf", Constants.FONT_SIZE_MANAGER.LARGE.getSize());
-        generateCustomFont("fonts/glametrix.otf", Constants.FONT_SIZE_MANAGER.REGULAR.getSize());
+        generateCustomFont("fonts/austere.otf", Constants.FONT_MANAGER.LARGE);
+        generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.REGULAR);
+        generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.SMALL);
+
+        game.preferences = Gdx.app.getPreferences(Constants.ZONED_PREFERENCES);
     }
 
     private void setUpLoadingUI() {
@@ -79,19 +82,14 @@ public class LoadingScreen extends ScreenAdapter {
         stage.addActor(table);
     }
 
-    private void generateCustomFont(String fontName, int fontSize) {
+    private void generateCustomFont(String fontName, Constants.FONT_MANAGER fontManager) {
         FreetypeFontLoader.FreeTypeFontLoaderParameter parameter = new FreetypeFontLoader.FreeTypeFontLoaderParameter();
         parameter.fontFileName = fontName;
 
-        parameter.fontParameters.size = (int) (fontSize * game.getScaleFactor());
-        //Gdx.app.log("[Zoned] Scaling", "Screen density: " + Gdx.graphics.getDensity());
+        parameter.fontParameters.size = (int) (fontManager.getSize() * game.getScaleFactor());
+        //Gdx.app.log(Constants.LOG_TAG, "Screen density: " + Gdx.graphics.getDensity());
 
-        String fontId;
-        if (fontSize == Constants.FONT_SIZE_MANAGER.LARGE.getSize()) {
-            fontId = "large-font.otf";
-        } else {
-            fontId = "regular-font.otf";
-        }
+        String fontId = fontManager.getName() + ".otf";
 
         assetManager.load(fontId, BitmapFont.class, parameter);
     }
@@ -103,8 +101,9 @@ public class LoadingScreen extends ScreenAdapter {
 
             if (!loadedFonts) {
                 ObjectMap<String, Object> fontMap = new ObjectMap<String, Object>();
-                fontMap.put(Constants.FONT_SIZE_MANAGER.LARGE.getName(), assetManager.get("large-font.otf", BitmapFont.class));
-                fontMap.put(Constants.FONT_SIZE_MANAGER.REGULAR.getName(), assetManager.get("regular-font.otf", BitmapFont.class));
+                fontMap.put(Constants.FONT_MANAGER.LARGE.getName(), assetManager.get(Constants.FONT_MANAGER.LARGE.getName() + ".otf", BitmapFont.class));
+                fontMap.put(Constants.FONT_MANAGER.REGULAR.getName(), assetManager.get(Constants.FONT_MANAGER.REGULAR.getName() + ".otf", BitmapFont.class));
+                fontMap.put(Constants.FONT_MANAGER.SMALL.getName(), assetManager.get(Constants.FONT_MANAGER.SMALL.getName() + ".otf", BitmapFont.class));
 
                 SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
                 assetManager.load("neon-skin/neon-ui.json", Skin.class, parameter);

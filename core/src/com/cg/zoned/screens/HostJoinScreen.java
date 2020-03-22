@@ -6,6 +6,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -19,6 +20,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
+import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.KryoHelper;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -36,6 +38,8 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     private FocusableStage stage;
     private Viewport viewport;
     private AnimationManager animationManager;
+    private boolean showFPSCounter;
+    private BitmapFont font;
 
     public HostJoinScreen(final Zoned game) {
         this.game = game;
@@ -43,11 +47,13 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
     }
 
     @Override
     public void show() {
         setUpStage();
+        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
         animationManager.fadeInStage(stage);
     }
 
@@ -231,6 +237,10 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         viewport.apply(true);
+
+        if (showFPSCounter) {
+            FPSDisplayer.displayFPS(stage.getBatch(), font);
+        }
 
         stage.draw();
         stage.act(delta);

@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -22,6 +23,8 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Constants;
+import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
@@ -43,6 +46,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
 
     private FocusableStage stage;
     private AnimationManager animationManager;
+    private boolean showFPSCounter;
+    private BitmapFont font;
 
     private Viewport viewport;
 
@@ -58,6 +63,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         viewport = new ScreenViewport();
         stage = new FocusableStage(viewport);
         animationManager = new AnimationManager(this.game, this);
+        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
         this.name = name;
         playerItems = new Array<HorizontalGroup>();
@@ -71,6 +77,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void show() {
         setUpClientLobbyStage();
+        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
 
         insertPlayer(null, null, null, null);
         playerNames.add(this.name);
@@ -363,6 +370,10 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         viewport.apply(true);
+
+        if (showFPSCounter) {
+            FPSDisplayer.displayFPS(stage.getBatch(), font);
+        }
 
         stage.draw();
         stage.act(delta);

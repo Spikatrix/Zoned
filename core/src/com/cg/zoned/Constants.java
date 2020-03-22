@@ -71,20 +71,21 @@ public final class Constants {
     public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
     public static final float ANDROID_FONT_SCALE_FACTOR = 1.3f;
 
-    public static final int TRAIL_COUNT = 100;
-    public static final int TRAIL_LENGTH = 100;
-    public static final int TRAIL_WIDTH = 1;
+    public static final String LOG_TAG = "[Zoned]";
+    public static final String ZONED_PREFERENCES = "Zoned_Preferences";
+    public static final String FPS_PREFERENCE = "FPS_Preference";
 
     public enum Direction {UP, RIGHT, DOWN, LEFT}
 
-    public enum FONT_SIZE_MANAGER {
+    public enum FONT_MANAGER {
         LARGE("large-font", 80),
-        REGULAR("regular-font", 35);
+        REGULAR("regular-font", 36),
+        SMALL("small-font", 24);
 
         private String name;
         private int size;
 
-        FONT_SIZE_MANAGER(String name, int size) {
+        FONT_MANAGER(String name, int size) {
             this.name = name;
             this.size = size;
         }

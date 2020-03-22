@@ -7,6 +7,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -17,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
+import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.ui.FocusableStage;
@@ -28,6 +30,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private Viewport viewport;
     private TextButton[] mainMenuButtons;
     private AnimationManager animationManager;
+    private boolean showFPSCounter;
+    private BitmapFont font;
 
     private ParticleEffect emitterLeft, emitterRight;
 
@@ -40,11 +44,14 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         emitterLeft = new ParticleEffect();
         emitterRight = new ParticleEffect();
+        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+
     }
 
     @Override
     public void show() {
         setUpMainMenu();
+        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
         animationManager.startMainMenuAnimation(stage, mainMenuButtons);
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
@@ -64,7 +71,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         //table.setDebug(true);
         table.center();
 
-        Label gameTitle = new Label("ZONED", game.skin, Constants.FONT_SIZE_MANAGER.LARGE.getName(), Color.GREEN);
+        Label gameTitle = new Label("ZONED", game.skin, Constants.FONT_MANAGER.LARGE.getName(), Color.GREEN);
         table.add(gameTitle).pad(5f * game.getScaleFactor());
         table.row();
 
@@ -129,6 +136,9 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         emitterRight.draw(stage.getBatch(), delta);
         stage.getBatch().end();
 
+        if (showFPSCounter) {
+            FPSDisplayer.displayFPS(stage.getBatch(), font);
+        }
         stage.draw();
         stage.act(delta);
     }

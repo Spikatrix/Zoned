@@ -1,16 +1,10 @@
 package com.cg.zoned;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-
-import java.io.File;
 
 public class AndroidLauncher extends AndroidApplication {
     private final static int WRITE_REQUEST_CODE = 1;
@@ -25,7 +19,7 @@ public class AndroidLauncher extends AndroidApplication {
     private void checkPerms() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             startGame();
-            // TODO: Perms cleanup
+            // TODO: Perms cleanup (Might come in handy for importing external maps)
         } else {
             /*if (this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 this.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_REQUEST_CODE);

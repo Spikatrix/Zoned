@@ -5,14 +5,16 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton.ImageButtonStyle;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Constants;
+import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.ui.FocusableStage;
@@ -23,6 +25,9 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     private FocusableStage stage;
     private Viewport viewport;
     private AnimationManager animationManager;
+    private BitmapFont font;
+
+    private boolean showFPSCounter;
 
     public SettingsScreen(final Zoned game) {
         this.game = game;
@@ -30,6 +35,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
     }
 
     @Override
@@ -44,15 +50,33 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         table.setFillParent(true);
         table.center();
 
-        ImageButton musicButton = new ImageButton(game.skin);
+        /*ImageButton musicButton = new ImageButton(game.skin);
         ImageButton.ImageButtonStyle musicButtonStyle = game.skin.get("default", ImageButtonStyle.class);
         musicButtonStyle.imageChecked = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_music_on.png"))));
         musicButtonStyle.imageUp = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_music_off.png"))));
         musicButton.setStyle(musicButtonStyle);
 
-        table.add(musicButton);
+        table.add(musicButton);*/
+
+        final CheckBox showFPS = new CheckBox("Show FPS counter", game.skin);
+        showFPS.getImageCell().width(showFPS.getLabel().getPrefHeight()).height(showFPS.getLabel().getPrefHeight());
+        showFPS.getImage().setScaling(Scaling.fill);
+        showFPS.setChecked(game.preferences.getBoolean(Constants.FPS_PREFERENCE, false));
+        showFPSCounter = showFPS.isChecked();
+        showFPS.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.preferences.putBoolean(Constants.FPS_PREFERENCE, showFPS.isChecked());
+                game.preferences.flush();
+                showFPSCounter = showFPS.isChecked();
+            }
+        });
+
+        table.add(showFPS);
 
         stage.addActor(table);
+        stage.addFocusableActor(showFPS);
+        stage.setFocusedActor(showFPS);
     }
 
     @Override
@@ -66,6 +90,10 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         viewport.apply(true);
+
+        if (showFPSCounter) {
+            FPSDisplayer.displayFPS(stage.getBatch(), font);
+        }
 
         stage.draw();
         stage.act(delta);
