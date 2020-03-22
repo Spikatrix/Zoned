@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.MathUtils;
@@ -18,7 +19,6 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -31,8 +31,6 @@ import com.cg.zoned.managers.GameManager;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Server;
 
-import java.text.DecimalFormat;
-
 public class GameScreen extends ScreenAdapter implements InputProcessor, GestureDetector.GestureListener {
     final Zoned game;
 
@@ -44,8 +42,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
     private ShapeRenderer renderer;
 
     private boolean gameComplete = false;
+    private Color fadeOutOverlay = new Color(0, 0, 0, 0);
+    private boolean gameCompleteFadeOutDone = false;
 
     private Stage fullScreenStage;
+    private BitmapFont font;
     private ScoreBar scoreBars;
 
     private Vector2 touchStartPos;
@@ -78,6 +79,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
         }
 
         this.fullScreenStage = new Stage(new ScreenViewport());
+        this.font = game.skin.getFont(Constants.FONT_SIZE_MANAGER.REGULAR.getName());
     }
 
     @Override
@@ -118,10 +120,12 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         //TODO: Draw cool background, bloom and particle effects
 
-        if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
-            gameManager.connectionManager.serverClientCommunicate();
-        } else {                                // We're playing on the same device (Splitscreen)
-            gameManager.playerManager.updatePlayerDirections();
+        if (!gameComplete) {
+            if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
+                gameManager.connectionManager.serverClientCommunicate();
+            } else {                                // We're playing on the same device (Splitscreen)
+                gameManager.playerManager.updatePlayerDirections();
+            }
         }
 
         map.update(gameManager.playerManager.getPlayers(), gameManager.playerManager.getPlayerScores(), delta);
@@ -142,19 +146,38 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         scoreBars.render(renderer, delta);
 
-        Gdx.gl.glDisable(GL20.GL_BLEND);
-
         if (!gameComplete && map.gameComplete(gameManager.playerManager.getPlayerScores())) {
             gameManager.playerManager.stopPlayers();
-            showVictoryDialog();
             gameComplete = true;
-            Gdx.input.setInputProcessor(fullScreenStage);
         }
 
         if (gameComplete) {
-            fullScreenStage.act(delta);
-            fullScreenStage.draw();
+            fadeOutOverlay.a += delta * 2f * (2f - fadeOutOverlay.a);
+            fadeOutOverlay.a = Math.min(fadeOutOverlay.a, 1f);
+
+            renderer.begin(ShapeRenderer.ShapeType.Filled);
+            renderer.setColor(fadeOutOverlay);
+            renderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            renderer.end();
+
+            if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
+                gameCompleteFadeOutDone = true;
+                if (gameManager.connectionManager.isActive) {
+                    gameManager.connectionManager.close();
+                }
+                game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols));
+            }
         }
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
+        fullScreenStage.getBatch().begin();
+        font.draw(fullScreenStage.getBatch(), "FPS: " + Gdx.graphics.getFramesPerSecond(), 5, Gdx.graphics.getHeight() - 15);
+        fullScreenStage.getBatch().end();
+        fullScreenStage.act(delta);
+        fullScreenStage.draw();
+
+        // TODO: Fix FPS not showing up in some cases when playing
     }
 
     private void drawViewportDividers() {
@@ -199,57 +222,38 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
         position.y += (posY - position.y) * lerp * delta;
     }
 
-    private void showVictoryDialog() {
-        Player[] players = gameManager.playerManager.getPlayers();
-        StringBuilder stringBuilder = new StringBuilder();
-
-        int highScore = 0;
-        String winner = "";
-        for (int i = 0; i < players.length; i++) {
-            int score = gameManager.playerManager.getPlayerScore(i);
-
-            if (score > highScore) {
-                highScore = score;
-                winner = players[i].name;
-            }
-
-            double capturePercentage = 100 * (score / ((double) map.rows * map.cols));
-            DecimalFormat df = new DecimalFormat("#.##");
-            capturePercentage = Double.parseDouble(df.format(capturePercentage));
-
-            stringBuilder.append(players[i].name).append(": ")
-                    .append(score)
-                    .append(" (").append(capturePercentage).append(" %)");
-            if (i != players.length - 1) {
-                stringBuilder.append('\n');
-            }
-        }
-
-        String msg = winner + " won with a score of " + highScore + "\n" + stringBuilder.toString();
-
-        Dialog victoryDialog = new Dialog("", game.skin) {
+    private void showDisconnectionDialog() {
+        Dialog disconnectionDialog = new Dialog("", game.skin) {
             @Override
             public void result(Object obj) {
                 gameManager.connectionManager.close();
                 game.setScreen(new MainMenuScreen(game));
             }
         };
-        victoryDialog.getButtonTable().defaults().width(200f);
-        victoryDialog.button("OK");
-        victoryDialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
-        victoryDialog.text(msg).pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
-        Label label = (Label) victoryDialog.getContentTable().getChild(0);
+        disconnectionDialog.getButtonTable().defaults().width(200f);
+        disconnectionDialog.button("OK");
+        disconnectionDialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
+        disconnectionDialog.text("Disconnected").pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
+        Label label = (Label) disconnectionDialog.getContentTable().getChild(0);
         label.setAlignment(Align.center);
-        victoryDialog.show(fullScreenStage);
-        Gdx.app.log("Winner", winner + " won with a score of " + highScore);
+        disconnectionDialog.show(fullScreenStage);
     }
 
     private boolean isSplitscreenMultiplayer() {
         return !gameManager.connectionManager.isActive;
     }
 
-    public void switchToMainMenu() {
-        game.setScreen(new MainMenuScreen(game));
+    public void disconnected() {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                if (!gameComplete) {
+                    gameManager.playerManager.stopPlayers();
+                    showDisconnectionDialog();
+                    Gdx.input.setInputProcessor(fullScreenStage);
+                }
+            }
+        });
     }
 
     @Override

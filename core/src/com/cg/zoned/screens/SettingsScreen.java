@@ -40,7 +40,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpStage() {
         Table table = new Table();
-        table.setDebug(true);
+        //table.setDebug(true);
         table.setFillParent(true);
         table.center();
 

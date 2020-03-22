@@ -4,16 +4,27 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Constants;
+import com.cg.zoned.Player;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.PlayerManager;
 import com.cg.zoned.ui.FocusableStage;
+
+import java.text.DecimalFormat;
 
 public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
@@ -22,29 +33,39 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private Viewport viewport;
     private AnimationManager animationManager;
 
-    private SpriteBatch batch;
-    private BitmapFont font;
-    private ParticleEffect emitter;
+    private ParticleEffect trailEffect;
 
-    public VictoryScreen(final Zoned game) {
+    private String victoryString;
+
+    public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols) {
         this.game = game;
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
 
-        this.batch = new SpriteBatch();
-        this.font = game.skin.getFont("regular-font");
+        getVictoryString(playerManager, rows, cols);
     }
 
     @Override
     public void show() {
         setUpStage();
-        animationManager.fadeInStage(stage);
 
-        emitter = new ParticleEffect();
-        emitter.load(Gdx.files.internal("particles/radial_particle_emitter.p"), Gdx.files.internal("particles"));
-        emitter.start();
+        trailEffect = new ParticleEffect();
+        trailEffect.setPosition(0, Gdx.graphics.getHeight() / 2f);
+        trailEffect.load(Gdx.files.internal("particles/trails.p"), Gdx.files.internal("particles"));
+
+        animationManager.startGameOverAnimation(stage, trailEffect);
+        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
+            @Override
+            public void animationEnd(Stage stage) {
+                stage.clear();
+                setUpVictoryUI();
+                stage.getRoot().setPosition(0, 0);
+                animationManager.setAnimationListener(null);
+                animationManager.fadeInStage(stage);
+            }
+        });
     }
 
     private void setUpStage() {
@@ -53,15 +74,70 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         table.setFillParent(true);
         table.center();
 
-        // TODO: Add UI components
+        Label gameOver = new Label("GAME OVER", game.skin, Constants.FONT_SIZE_MANAGER.LARGE.getName(), Color.GREEN);
+        table.add(gameOver);
 
         stage.addActor(table);
+    }
+
+    private void setUpVictoryUI() {
+        Table table = new Table();
+        //table.setDebug(true);
+        table.setFillParent(true);
+        table.center();
+
+        Label victoryLabel = new Label(victoryString, game.skin, "themed");
+        victoryLabel.setAlignment(Align.center);
+        TextButton returnToMainMenuButton = new TextButton("Return to the main menu", game.skin);
+        returnToMainMenuButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            }
+        });
+        table.add(victoryLabel);
+        table.row();
+        table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor());
+
+        stage.addActor(table);
+        stage.addFocusableActor(returnToMainMenuButton);
+        stage.setFocusedActor(returnToMainMenuButton);
+    }
+
+    private void getVictoryString(PlayerManager playerManager, int rows, int cols) {
+        Player[] players = playerManager.getPlayers();
+        StringBuilder stringBuilder = new StringBuilder();
+
+        int highScore = 0;
+        String winner = "";
+        for (int i = 0; i < players.length; i++) {
+            int score = playerManager.getPlayerScore(i);
+
+            if (score > highScore) {
+                highScore = score;
+                winner = players[i].name;
+            }
+
+            double capturePercentage = 100 * (score / ((double) rows * cols));
+            DecimalFormat df = new DecimalFormat("#.##");
+            capturePercentage = Double.parseDouble(df.format(capturePercentage));
+
+            stringBuilder.append(players[i].name).append(": ")
+                    .append(score)
+                    .append(" (").append(capturePercentage).append(" %)");
+            if (i != players.length - 1) {
+                stringBuilder.append('\n');
+            }
+        }
+
+        victoryString = winner + " won with a score of " + highScore + "\n" + stringBuilder.toString();
+        Gdx.app.log("Winner", winner + " won with a score of " + highScore);
     }
 
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
-        emitter.setPosition(width / 2f, height / 2f);
+        trailEffect.setPosition(0, height / 2f);
     }
 
     @Override
@@ -70,12 +146,10 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         viewport.apply(true);
-        batch.setProjectionMatrix(viewport.getCamera().combined);
 
-        batch.begin();
-        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, Gdx.graphics.getHeight() - 10);
-        emitter.draw(batch, delta);
-        batch.end();
+        stage.getBatch().begin();
+        trailEffect.draw(stage.getBatch(), delta);
+        stage.getBatch().end();
 
         stage.draw();
         stage.act(delta);
@@ -84,7 +158,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
-        emitter.dispose();
+        trailEffect.dispose();
     }
 
     @Override

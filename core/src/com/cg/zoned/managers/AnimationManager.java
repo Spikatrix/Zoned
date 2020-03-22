@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -29,8 +30,8 @@ public class AnimationManager {
 
         stage.getRoot().getColor().a = 1;
         stage.getRoot().setPosition(0, Gdx.graphics.getHeight());
-        for (int i = 0; i < mainMenuButtons.length; i++) {
-            mainMenuButtons[i].getColor().a = 0;
+        for (TextButton mainMenuButton : mainMenuButtons) {
+            mainMenuButton.getColor().a = 0;
         }
 
         SequenceAction fallFromAboveAnimation = new SequenceAction();
@@ -56,6 +57,46 @@ public class AnimationManager {
         }));
 
         stage.addAction(fallFromAboveAnimation);
+    }
+
+    public void startGameOverAnimation(final Stage stage, final ParticleEffect trailEffect) {
+        Gdx.input.setInputProcessor(masterInputMultiplexer);
+
+        float screenWidth = Gdx.graphics.getWidth();
+
+        stage.getRoot().getColor().a = 1;
+        stage.getRoot().setPosition(screenWidth, 0);
+
+        SequenceAction slideAnimation = new SequenceAction();
+        slideAnimation.addAction(Actions.run(new Runnable() {
+            @Override
+            public void run() {
+                trailEffect.start();
+            }
+        }));
+        slideAnimation.addAction(Actions.delay(.4f));
+        slideAnimation.addAction(Actions.run(new Runnable() {
+            @Override
+            public void run() {
+                trailEffect.allowCompletion(); // Completion takes time which is why it's done before the move actions
+            }
+        }));
+        slideAnimation.addAction(Actions.moveTo(screenWidth / 8, 0f, .25f, Interpolation.pow2));
+        slideAnimation.addAction(Actions.moveTo(-screenWidth / 8, 0f, 1.6f, Interpolation.linear));
+        slideAnimation.addAction(Actions.moveTo(-screenWidth, 0f, .25f, Interpolation.pow2));
+        slideAnimation.addAction(Actions.run(new Runnable() {
+            @Override
+            public void run() {
+                masterInputMultiplexer.addProcessor(stage);
+                Gdx.input.setInputProcessor(masterInputMultiplexer);
+
+                if (animationListener != null) {
+                    animationListener.animationEnd(stage);
+                }
+            }
+        }));
+
+        stage.addAction(slideAnimation);
     }
 
     public void fadeInStage(final Stage stage) {

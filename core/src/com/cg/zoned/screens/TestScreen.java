@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.cg.zoned.Constants;
 import com.cg.zoned.Zoned;
 import com.crashinvaders.vfx.VfxManager;
 import com.crashinvaders.vfx.effects.BloomEffect;
@@ -48,7 +49,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         this.renderer.setAutoShapeType(true);
         this.batch = new SpriteBatch();
         this.viewport = new ScreenViewport();
-        this.font = game.skin.getFont("regular-font");
+        this.font = game.skin.getFont(Constants.FONT_SIZE_MANAGER.REGULAR.getName());
 
         this.rects = new Rectangle[]{
                 new Rectangle(40, 40, 40, 40),
@@ -115,8 +116,8 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         vfxManager.renderToScreen();
 
         batch.begin();
-        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, Gdx.graphics.getHeight() - 10);
-        font.draw(batch, "Bloom + MotionBlur", 10, Gdx.graphics.getHeight() - 40); // ~10 FPS on my Mobile although I get 60 FPS on my laptop :(
+        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 5, Gdx.graphics.getHeight() - 15);
+        font.draw(batch, "Bloom + MotionBlur", 5, Gdx.graphics.getHeight() - 45); // ~10 FPS on my Mobile although I get 60 FPS on my laptop :(
         batch.end();
     }
 

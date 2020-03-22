@@ -84,7 +84,7 @@ public class LoadingScreen extends ScreenAdapter {
         parameter.fontFileName = fontName;
 
         parameter.fontParameters.size = (int) (fontSize * game.getScaleFactor());
-        //Gdx.app.log("font", "Screen density: " + Gdx.graphics.getDensity());
+        //Gdx.app.log("[Zoned] Scaling", "Screen density: " + Gdx.graphics.getDensity());
 
         String fontId;
         if (fontSize == Constants.FONT_SIZE_MANAGER.LARGE.getSize()) {
@@ -103,8 +103,8 @@ public class LoadingScreen extends ScreenAdapter {
 
             if (!loadedFonts) {
                 ObjectMap<String, Object> fontMap = new ObjectMap<String, Object>();
-                fontMap.put("large-font", assetManager.get("large-font.otf", BitmapFont.class));
-                fontMap.put("regular-font", assetManager.get("regular-font.otf", BitmapFont.class));
+                fontMap.put(Constants.FONT_SIZE_MANAGER.LARGE.getName(), assetManager.get("large-font.otf", BitmapFont.class));
+                fontMap.put(Constants.FONT_SIZE_MANAGER.REGULAR.getName(), assetManager.get("regular-font.otf", BitmapFont.class));
 
                 SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
                 assetManager.load("neon-skin/neon-ui.json", Skin.class, parameter);

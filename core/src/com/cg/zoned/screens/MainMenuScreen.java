@@ -16,6 +16,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Constants;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.ui.FocusableStage;
@@ -48,8 +49,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
-                emitterLeft.load(Gdx.files.internal("particles/right_emitter.p"), Gdx.files.internal("particles"));
-                emitterRight.load(Gdx.files.internal("particles/left_emitter.p"), Gdx.files.internal("particles"));
+                emitterLeft.load(Gdx.files.internal("particles/left_emitter.p"), Gdx.files.internal("particles"));
+                emitterRight.load(Gdx.files.internal("particles/right_emitter.p"), Gdx.files.internal("particles"));
                 emitterRight.setPosition(viewport.getScreenWidth(), 0);
                 emitterLeft.start();
                 emitterRight.start();
@@ -63,7 +64,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         //table.setDebug(true);
         table.center();
 
-        Label gameTitle = new Label("ZONED", game.skin, "large-font", Color.GREEN);
+        Label gameTitle = new Label("ZONED", game.skin, Constants.FONT_SIZE_MANAGER.LARGE.getName(), Color.GREEN);
         table.add(gameTitle).pad(5f * game.getScaleFactor());
         table.row();
 

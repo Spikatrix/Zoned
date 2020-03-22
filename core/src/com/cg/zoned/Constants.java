@@ -23,7 +23,7 @@ public final class Constants {
 
     /**
      * The number of players when playing on the same device
-     *
+     * <p>
      * Beware: There may not be enough horizontal space especially on mobile devices to play comfortably
      */
     //public static final int NO_OF_PLAYERS = PLAYER_CONTROLS.length; // TODO: Max number of players
@@ -50,7 +50,7 @@ public final class Constants {
     /**
      * Controls for players playing in splitscreen mode. Player one has the first control scheme, two has the second etc
      * In case of server-client multiplayer mode, the player will have the first control scheme.
-     *
+     * <p>
      * Note that you may face issues when playing with the number of players unequal to the number of control schemes specified
      */
     public static final int[][] PLAYER_CONTROLS = new int[][]{
@@ -62,7 +62,7 @@ public final class Constants {
 
     /**
      * Zoom minimum and maximum values
-     *
+     * <p>
      * The camera can be zoomed in/out by the scroll wheel on Desktop and pinch/expand on Mobile
      */
     public static final float ZOOM_MIN_VALUE = 0.5f;
@@ -78,17 +78,23 @@ public final class Constants {
     public enum Direction {UP, RIGHT, DOWN, LEFT}
 
     public enum FONT_SIZE_MANAGER {
-        LARGE(80),
-        REGULAR(35);
+        LARGE("large-font", 80),
+        REGULAR("regular-font", 35);
 
+        private String name;
         private int size;
 
-        FONT_SIZE_MANAGER(int size) {
+        FONT_SIZE_MANAGER(String name, int size) {
+            this.name = name;
             this.size = size;
         }
 
         public int getSize() {
             return size;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 }

@@ -21,6 +21,6 @@ public class GameManager {
     }
 
     public void endGame() {
-        gameScreen.switchToMainMenu();
+        gameScreen.disconnected();
     }
 }

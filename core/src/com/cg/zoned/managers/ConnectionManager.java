@@ -137,7 +137,7 @@ public class ConnectionManager implements IConnectionHandlers {
 
     /**
      * Broadcasts directions to other devices
-     *
+     * <p>
      * In case of the server, it will send information about all players to all clients
      * In cast of a   client, it will send information about itself to the server
      */
@@ -168,9 +168,7 @@ public class ConnectionManager implements IConnectionHandlers {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                if (server != null && gameManager.connectionManager.isActive) {
-                    gameManager.connectionManager.close();
-                }
+                gameManager.connectionManager.close();
                 gameManager.endGame();  // TODO: Handle disconnections in a better way
             }
         });
