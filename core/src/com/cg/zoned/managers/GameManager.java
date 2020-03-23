@@ -1,5 +1,6 @@
 package com.cg.zoned.managers;
 
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.cg.zoned.Player;
 import com.cg.zoned.screens.GameScreen;
 import com.esotericsoftware.kryonet.Client;
@@ -12,12 +13,12 @@ public class GameManager {
     public DirectionBufferManager directionBufferManager;
     public PlayerManager playerManager;
 
-    public GameManager(final GameScreen gameScreen, Server server, Client client, Player[] players) {
+    public GameManager(final GameScreen gameScreen, Server server, Client client, Player[] players, Stage stage) {
         this.gameScreen = gameScreen;
 
         this.connectionManager = new ConnectionManager(this, server, client);
         this.directionBufferManager = new DirectionBufferManager(players.length);
-        this.playerManager = new PlayerManager(this, players);
+        this.playerManager = new PlayerManager(this, players, stage);
     }
 
     public void endGame() {

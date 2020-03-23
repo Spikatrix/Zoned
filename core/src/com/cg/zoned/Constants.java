@@ -69,7 +69,8 @@ public final class Constants {
     public static final float ZOOM_MAX_VALUE = 1.5f;
 
     public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
-    public static final float ANDROID_FONT_SCALE_FACTOR = 1.3f;
+    public static final float ANDROID_FONT_SCALE_FACTOR = 1.3f; // TODO: Optimize everything for tablets
+    public static final float ANDROID_DIRECTION_ARROW_SCALE_FACTOR = 3f;
 
     public static final String LOG_TAG = "[Zoned]";
     public static final String ZONED_PREFERENCES = "Zoned_Preferences";

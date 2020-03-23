@@ -58,15 +58,17 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
     public GameScreen(final Zoned game, int rows, int cols, Player[] players, Server server, Client client) {
         this.game = game;
 
-        this.gameManager = new GameManager(this, server, client, players);
+        this.fullScreenStage = new Stage(new ScreenViewport());
+
+        this.gameManager = new GameManager(this, server, client, players, fullScreenStage);
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
         this.map = new Map(rows, cols);
 
-        this.scoreBars = new ScoreBar(players);
-
         initViewports();
+
+        this.scoreBars = new ScoreBar(players);
 
         touchStartPos = new Vector2();
         touchStartPos2 = new Vector2();
@@ -80,7 +82,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
             this.playerViewports[i] = new ExtendViewport(Constants.WORLD_SIZE / noOfViewports, Constants.WORLD_SIZE);
         }
 
-        this.fullScreenStage = new Stage(new ScreenViewport());
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
     }
 

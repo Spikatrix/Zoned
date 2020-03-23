@@ -2,6 +2,7 @@ package com.cg.zoned.managers;
 
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
@@ -14,7 +15,7 @@ public class PlayerManager extends InputMultiplexer {
 
     private Array<Color> teamColors;
 
-    public PlayerManager(GameManager gameManager, Player[] players) {
+    public PlayerManager(GameManager gameManager, Player[] players, Stage stage) {
         this.gameManager = gameManager;
 
         this.players = players;
@@ -30,7 +31,7 @@ public class PlayerManager extends InputMultiplexer {
                 this.addProcessor(player);
             }
         }
-        this.addProcessor(new PlayerTouchManager(players, !gameManager.connectionManager.isActive));
+        this.addProcessor(new PlayerTouchManager(players, !gameManager.connectionManager.isActive, stage));
     }
 
     private void initTeamColors() {
