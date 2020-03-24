@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants.Direction;
+import com.cg.zoned.managers.PlayerManager;
 
 public class Map {
 
@@ -38,11 +39,11 @@ public class Map {
         };
     }
 
-    public void update(Player[] players, int[] playerScores, float delta) {
+    public void update(PlayerManager playerManager, float delta) {
         boolean waitForMovementCompletion = false; // Used to synchronize movement of all players
         // so that every one of them moves together
 
-        for (Player player : players) {
+        for (Player player : playerManager.getPlayers()) {
             if (player.direction != null) {
                 if (waitForMovementCompletion && player.targetPosition == null) {
                     continue;
@@ -72,8 +73,8 @@ public class Map {
         }
 
         if (!waitForMovementCompletion) { // If movement(s) have completed
-            setMapWeights(players);
-            setMapColors(players, playerScores);
+            setMapWeights(playerManager.getPlayers());
+            setMapColors(playerManager);
         }
     }
 
@@ -95,21 +96,24 @@ public class Map {
 
     }
 
-    private void setMapColors(Player[] players, int[] playerScores) {
+    private void setMapColors(PlayerManager playerManager) {
+        Player[] players = playerManager.getPlayers();
         for (int i = 0; i < players.length; i++) {
             int posX = Math.round(players[i].position.x);
             int posY = Math.round(players[i].position.y);
             if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].noOfPlayers == 1) {
                 mapGrid[posY][posX].cellColor = new Color(players[i].color.r, players[i].color.g, players[i].color.b, 0.1f);
-                playerScores[i]++;
+                playerManager.incrementScore(players[i]);
                 coloredCells++;
             }
         }
 
-        fillSurroundedCells(players, playerScores);
+        fillSurroundedCells(playerManager);
     }
 
-    private void fillSurroundedCells(Player[] players, int[] playerScores) {
+    private void fillSurroundedCells(PlayerManager playerManager) {
+        Player[] players = playerManager.getPlayers();
+
         FloodFillGridState[][] gridState = new FloodFillGridState[rows][cols];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -157,7 +161,7 @@ public class Map {
                             GridPoint2 pos = fillPositions.pop();
 
                             mapGrid[pos.x][pos.y].cellColor = new Color(fillColor.r, fillColor.g, fillColor.b, 0.1f);
-                            playerScores[index]++;
+                            playerManager.incrementScore(players[index]);
                             coloredCells++;
                         }
                     } else {
@@ -398,12 +402,12 @@ public class Map {
         return fillColor;
     }
 
-    public boolean gameComplete(int[] playerScores) {
+    public boolean gameComplete(Player[] players) {
         //TODO: Account for walls
-        if (playerScores.length == 2) {
-            for (int score : playerScores) {
+        if (players.length == 2) {
+            for (Player player : players) {
                 // For two player games, end the game when a player has captured more than 50% of the cells
-                if (100 * (score / ((double) this.rows * this.cols)) > 50.0) {
+                if (100 * (player.score / ((double) this.rows * this.cols)) > 50.0) {
                     return true;
                 }
             }

@@ -7,12 +7,10 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.cg.zoned.Constants.Direction;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class Player extends InputAdapter {
     public Color color;
-    public int id;
     public String name;
+    public int score;
 
     public Vector2 position;
     public int[] controls;
@@ -27,12 +25,10 @@ public class Player extends InputAdapter {
     public Vector2 targetPosition;
     private float timeElapsed;
 
-    private static final AtomicInteger idGenerator = new AtomicInteger();
-
     public Player(Color color, String name) {
         this.color = color;
         this.name = name;
-        this.id = idGenerator.getAndIncrement();
+        this.score = 0;
 
         this.position = new Vector2();
         this.prevPosition = null;

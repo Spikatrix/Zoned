@@ -10,20 +10,10 @@ public class ScoreBar {
     private float totalWidth;
     private float totalHeight;
 
-    private Color[] playerColors;
-    private int[] playerScores;
-
     private float[] currentPos;
 
-    public ScoreBar(Player[] players) {
-        playerColors = new Color[players.length];
-        playerScores = new int[players.length];
-        currentPos   = new float[players.length];
-
-        for (int i = 0; i < players.length; i++) {
-            playerColors[i] = players[i].color;
-            playerScores[i] = 0;
-        }
+    public ScoreBar(int size) {
+        currentPos = new float[size];
 
         totalWidth = Gdx.graphics.getWidth();
         totalHeight = Gdx.graphics.getHeight();
@@ -34,37 +24,33 @@ public class ScoreBar {
         totalHeight = height;
     }
 
-    public void update(int[] scores) {
-        System.arraycopy(scores, 0, playerScores, 0, playerScores.length);
-    }
-
-    public void render(ShapeRenderer renderer, float delta) {
+    public void render(ShapeRenderer renderer, Player[] players, float delta) {
         float lerpVal = 3.0f;
 
         float currentWidthPos = 0;
         float offsetY = totalHeight - BAR_HEIGHT;
 
         float totalScore = 0;
-        for (int playerScore : playerScores) {
-            totalScore += playerScore;
+        for (Player player : players) {
+            totalScore += player.score;
         }
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        for (int i = 0; i < playerScores.length; i++) {
-            float barWidth = ((playerScores[i] / totalScore) * totalWidth);
+        for (int i = 0; i < players.length; i++) {
+            float barWidth = ((players[i].score / totalScore) * totalWidth);
             float drawWidth = currentPos[i] + (barWidth - currentPos[i]) * lerpVal * delta;
 
-            renderer.setColor(playerColors[i]);
+            renderer.setColor(players[i].color);
 
             if (i == 0) {                                                                 // First bar
                 renderer.rect(currentWidthPos, offsetY, drawWidth, BAR_HEIGHT);
-            } else if (i == playerScores.length - 1) {                                    // Last bar
+            } else if (i == players.length - 1) {                                    // Last bar
                 renderer.rect(totalWidth - drawWidth, offsetY, drawWidth, BAR_HEIGHT);   // Can draw upto drawWidth or totalWidth. Should be the same
             } else {                                                                      // Mid bar(s)
                 //renderer.rect(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, (drawWidth / 2), BAR_HEIGHT);
                 renderer.rect(currentWidthPos + (barWidth / 2), offsetY, -drawWidth / 2, BAR_HEIGHT);
-                renderer.rect(currentWidthPos + (barWidth / 2), offsetY,  drawWidth / 2, BAR_HEIGHT);
+                renderer.rect(currentWidthPos + (barWidth / 2), offsetY, drawWidth / 2, BAR_HEIGHT);
                 //renderer.rect(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, drawWidth, BAR_HEIGHT);
                 //TODO: Need to polish this I guess?
                 //TODO: Scorebar for teams

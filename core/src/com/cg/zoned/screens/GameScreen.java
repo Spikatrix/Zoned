@@ -68,7 +68,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         initViewports();
 
-        this.scoreBars = new ScoreBar(players);
+        this.scoreBars = new ScoreBar(players.length);
 
         touchStartPos = new Vector2();
         touchStartPos2 = new Vector2();
@@ -132,8 +132,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
             }
         }
 
-        map.update(gameManager.playerManager.getPlayers(), gameManager.playerManager.getPlayerScores(), delta);
-        scoreBars.update(gameManager.playerManager.getPlayerScores());
+        map.update(gameManager.playerManager, delta);
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -148,9 +147,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
             drawViewportDividers();
         }
 
-        scoreBars.render(renderer, delta);
+        scoreBars.render(renderer, gameManager.playerManager.getPlayers(), delta);
 
-        if (!gameComplete && map.gameComplete(gameManager.playerManager.getPlayerScores())) {
+        if (!gameComplete && map.gameComplete(gameManager.playerManager.getPlayers())) {
             gameManager.playerManager.stopPlayers();
             gameComplete = true;
         }

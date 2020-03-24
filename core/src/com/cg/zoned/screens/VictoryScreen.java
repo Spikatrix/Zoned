@@ -6,21 +6,26 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
-import com.cg.zoned.Player;
+import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.TeamData;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.PlayerManager;
@@ -39,7 +44,8 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
     private ParticleEffect trailEffect;
 
-    private String victoryString;
+    private Array<TeamData> teamData;
+    private String[] victoryStrings;
 
     public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols) {
         this.game = game;
@@ -49,7 +55,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        getVictoryString(playerManager, rows, cols);
+        getVictoryStrings(playerManager, rows, cols);
     }
 
     @Override
@@ -92,8 +98,55 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         table.setFillParent(true);
         table.center();
 
-        Label victoryLabel = new Label(victoryString, game.skin, "themed");
-        victoryLabel.setAlignment(Align.center);
+        StringBuilder victoryString = new StringBuilder();
+        for (String victoryStr : victoryStrings) {
+            victoryString.append(victoryStr).append("\n");
+        }
+
+        Color[] rankColors = new Color[4];
+        rankColors[0] = Color.GOLD;
+        rankColors[1] = Color.LIGHT_GRAY;
+        rankColors[2] = Color.BROWN;
+        rankColors[3] = Color.GRAY;
+
+        String[] rankImageLocations = new String[]{
+                "icons/rank_icons/ic_no1.png",
+                "icons/rank_icons/ic_no2.png",
+                "icons/rank_icons/ic_no3.png",
+        };
+        Image[] rankImages = new Image[victoryStrings.length];
+        Label[] victoryLabels = new Label[victoryStrings.length];
+        Label[] rankLabels = new Label[victoryStrings.length];
+        int rankIndex = 0;
+        for (int i = 0; i < victoryStrings.length; i++, rankIndex++) {
+            if (i > 0 && teamData.get(i - 1).score == teamData.get(i).score) {
+                rankIndex--;
+            }
+            rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
+            victoryLabels[i] = new Label(victoryStrings[i], game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
+            if (rankIndex < rankImageLocations.length) {
+                rankImages[i] = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal(rankImageLocations[rankIndex])))));
+            } else {
+                rankImages[i] = null;
+            }
+        }
+
+        for (int i = 0; i < victoryStrings.length; i++) {
+            Table innerTable = new Table();
+            innerTable.left();
+
+            innerTable.add(rankLabels[i]).padRight(10f);
+            if (rankImages[i] != null) {
+                innerTable.add(rankImages[i]).height(victoryLabels[0].getPrefHeight()).width(victoryLabels[0].getPrefHeight()).padRight(10f);
+                innerTable.add(victoryLabels[i]);
+            } else {
+                innerTable.add(victoryLabels[i]).padLeft(victoryLabels[0].getPrefHeight() + 10f);
+            }
+
+            table.add(innerTable).pad(10f).left();
+            table.row();
+        }
+
         TextButton returnToMainMenuButton = new TextButton("Return to the main menu", game.skin);
         returnToMainMenuButton.addListener(new ClickListener() {
             @Override
@@ -101,8 +154,6 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
                 animationManager.fadeOutStage(stage, new MainMenuScreen(game));
             }
         });
-        table.add(victoryLabel);
-        table.row();
         table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor());
 
         stage.addActor(table);
@@ -110,34 +161,18 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         stage.setFocusedActor(returnToMainMenuButton);
     }
 
-    private void getVictoryString(PlayerManager playerManager, int rows, int cols) {
-        Player[] players = playerManager.getPlayers();
-        StringBuilder stringBuilder = new StringBuilder();
+    private void getVictoryStrings(PlayerManager playerManager, int rows, int cols) {
+        teamData = playerManager.getTeamData();
+        this.victoryStrings = new String[teamData.size];
 
-        int highScore = 0;
-        String winner = "";
-        for (int i = 0; i < players.length; i++) {
-            int score = playerManager.getPlayerScore(i);
-
-            if (score > highScore) {
-                highScore = score;
-                winner = players[i].name;
-            }
-
-            double capturePercentage = 100 * (score / ((double) rows * cols));
-            DecimalFormat df = new DecimalFormat("#.##");
+        DecimalFormat df = new DecimalFormat("#.##");
+        for (int i = 0; i < teamData.size; i++) {
+            double capturePercentage = 100 * (teamData.get(i).score / ((double) rows * cols));
             capturePercentage = Double.parseDouble(df.format(capturePercentage));
 
-            stringBuilder.append(players[i].name).append(": ")
-                    .append(score)
-                    .append(" (").append(capturePercentage).append(" %)");
-            if (i != players.length - 1) {
-                stringBuilder.append('\n');
-            }
+            this.victoryStrings[i] = PlayerColorHelper.getStringFromColor(teamData.get(i).color)
+                    + " got a score of " + teamData.get(i).score + " (" + capturePercentage + "%)";
         }
-
-        victoryString = winner + " won with a score of " + highScore + "\n" + stringBuilder.toString();
-        Gdx.app.log(Constants.LOG_TAG, winner + " won with a score of " + highScore);
     }
 
     @Override

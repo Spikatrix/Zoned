@@ -1,27 +1,28 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Sort;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
+import com.cg.zoned.TeamData;
+
+import java.util.Comparator;
 
 public class PlayerManager extends InputMultiplexer {
     private final GameManager gameManager;
 
     private Player[] players;
-    private int[] playerScores;
 
-    private Array<Color> teamColors;
+    private Array<TeamData> teamData;
 
     public PlayerManager(GameManager gameManager, Player[] players, Stage stage) {
         this.gameManager = gameManager;
 
         this.players = players;
-        this.playerScores = new int[players.length];
 
-        this.teamColors = new Array<Color>();
+        this.teamData = new Array<TeamData>();
         initTeamColors();
 
         if (gameManager.connectionManager.isActive) { // Not split screen; only add first player's inputs
@@ -36,8 +37,16 @@ public class PlayerManager extends InputMultiplexer {
 
     private void initTeamColors() {
         for (Player player : players) {
-            if (!teamColors.contains(player.color, false)) {
-                teamColors.add(player.color);
+            boolean alreadyExists = false;
+            for (TeamData teamData : this.teamData) {
+                if (player.color.equals(teamData.color)) {
+                    alreadyExists = true;
+                    break;
+                }
+            }
+
+            if (!alreadyExists) {
+                teamData.add(new TeamData(player.color, player.score));
             }
         }
     }
@@ -67,6 +76,16 @@ public class PlayerManager extends InputMultiplexer {
         }
     }
 
+    public void incrementScore(Player player) {
+        player.score++;
+        for (TeamData teamData : this.teamData) {
+            if (player.color.equals(teamData.color)) {
+                teamData.score++;
+                return;
+            }
+        }
+    }
+
     public Player getPlayer(int index) {
         return players[index];
     }
@@ -75,15 +94,15 @@ public class PlayerManager extends InputMultiplexer {
         return players;
     }
 
-    public int getPlayerScore(int index) {
-        return playerScores[index];
+    public Array<TeamData> getTeamData() {
+        new Sort().sort(teamData, new TeamDataComparator());
+        return teamData;
     }
 
-    public int[] getPlayerScores() {
-        return playerScores;
-    }
-
-    public int getTeamCount() {
-        return teamColors.size;
+    private static class TeamDataComparator implements Comparator<TeamData> {
+        @Override
+        public int compare(TeamData t1, TeamData t2) {
+            return t2.score - t1.score;
+        }
     }
 }
