@@ -50,14 +50,6 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         table.setFillParent(true);
         table.center();
 
-        /*ImageButton musicButton = new ImageButton(game.skin);
-        ImageButton.ImageButtonStyle musicButtonStyle = game.skin.get("default", ImageButtonStyle.class);
-        musicButtonStyle.imageChecked = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_music_on.png"))));
-        musicButtonStyle.imageUp = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_music_off.png"))));
-        musicButton.setStyle(musicButtonStyle);
-
-        table.add(musicButton);*/
-
         final CheckBox showFPS = new CheckBox("Show FPS counter", game.skin);
         showFPS.getImageCell().width(showFPS.getLabel().getPrefHeight()).height(showFPS.getLabel().getPrefHeight());
         showFPS.getImage().setScaling(Scaling.fill);

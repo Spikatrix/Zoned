@@ -9,15 +9,21 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -29,6 +35,7 @@ import com.cg.zoned.Player;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.GameManager;
+import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Server;
 
@@ -53,7 +60,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
     private Vector2 touchStartPos;
     private Vector2 touchStartPos2;
-    private float previousZoomDistance = -1;
+    private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
     public GameScreen(final Zoned game, int rows, int cols, Player[] players, Server server, Client client) {
         this.game = game;
@@ -89,14 +96,37 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
     public void show() {
         setUpInputProcessors();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        setUpZoomButton();
     }
 
     private void setUpInputProcessors() {
         InputMultiplexer inputMultiplexer = new InputMultiplexer();
+        inputMultiplexer.addProcessor(fullScreenStage);
         inputMultiplexer.addProcessor(new GestureDetector(this));
         inputMultiplexer.addProcessor(gameManager.playerManager);
         inputMultiplexer.addProcessor(this); // ESC key, Back button etc
         Gdx.input.setInputProcessor(inputMultiplexer);
+    }
+
+    private void setUpZoomButton() {
+        Table table = new Table();
+        table.setFillParent(true);
+        table.top();
+        Drawable zoomInImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_in.png"))));
+        Drawable zoomOutImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_out.png"))));
+        final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomOutImage, zoomInImage);
+        zoomButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (targetZoom == Constants.ZOOM_MIN_VALUE) {
+                    targetZoom = Constants.ZOOM_MAX_VALUE;
+                } else if (targetZoom == Constants.ZOOM_MAX_VALUE) {
+                    targetZoom = Constants.ZOOM_MIN_VALUE;
+                }
+            }
+        });
+        table.add(zoomButton).padTop(ScoreBar.BAR_HEIGHT);
+        fullScreenStage.addActor(table);
     }
 
     @Override
@@ -225,6 +255,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         position.x += (posX - position.x) * lerp * delta;
         position.y += (posY - position.y) * lerp * delta;
+
+        camera.zoom += (targetZoom - camera.zoom) * lerp * 3 * delta;
     }
 
     private void showDisconnectionDialog() {
@@ -298,17 +330,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        if (previousZoomDistance == -2) {
-            previousZoomDistance = -1; // Got second finger touch up; reset zoom
-            return true;
-        } else if (previousZoomDistance != -1) {
-            if (pointer >= 2) { // Ignore other fingers when zoom was triggered
-                return true;
-            }
-            previousZoomDistance = -2; // Wait for second finger touch up
-            return true;
-        }
-
         return false;
     }
 
@@ -324,21 +345,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
     @Override
     public boolean scrolled(int amount) {
-        if (gameManager.connectionManager.isActive) {
-            OrthographicCamera camera = (OrthographicCamera) this.playerViewports[0].getCamera();
-
-            if (amount > 0) {
-                camera.zoom += .1f;
-            } else {
-                camera.zoom -= .1f;
-            }
-
-            camera.zoom = MathUtils.clamp(camera.zoom, Constants.ZOOM_MIN_VALUE, Constants.ZOOM_MAX_VALUE);
-            camera.update();
-
-            return true;
-        }
-
         return false;
     }
 
@@ -374,22 +380,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
     @Override
     public boolean zoom(float initialDistance, float distance) {
-        if (gameManager.connectionManager.isActive) {
-            OrthographicCamera camera = (OrthographicCamera) this.playerViewports[0].getCamera();
-
-            if (previousZoomDistance == -1) {
-                camera.zoom = (initialDistance / distance) * camera.zoom;
-            } else {
-                camera.zoom = (previousZoomDistance / distance) * camera.zoom;
-            }
-            camera.zoom = MathUtils.clamp(camera.zoom, Constants.ZOOM_MIN_VALUE, Constants.ZOOM_MAX_VALUE);
-            camera.update();
-
-            previousZoomDistance = distance;
-
-            return true;
-        }
-
         return false;
     }
 

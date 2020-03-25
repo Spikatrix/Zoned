@@ -65,8 +65,8 @@ public final class Constants {
      * <p>
      * The camera can be zoomed in/out by the scroll wheel on Desktop and pinch/expand on Mobile
      */
-    public static final float ZOOM_MIN_VALUE = 0.5f;
-    public static final float ZOOM_MAX_VALUE = 1.5f;
+    public static final float ZOOM_MIN_VALUE = 1f;
+    public static final float ZOOM_MAX_VALUE = 1.6f;
 
     public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
     public static final float ANDROID_FONT_SCALE_FACTOR = 1.3f; // TODO: Optimize everything for tablets

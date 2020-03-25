@@ -132,18 +132,15 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         }
 
         for (int i = 0; i < victoryStrings.length; i++) {
-            Table innerTable = new Table();
-            innerTable.left();
-
-            innerTable.add(rankLabels[i]).padRight(10f);
+            table.add(rankLabels[i]).padRight(20f).left().padTop(10f).padBottom(10f);
             if (rankImages[i] != null) {
-                innerTable.add(rankImages[i]).height(victoryLabels[0].getPrefHeight()).width(victoryLabels[0].getPrefHeight()).padRight(10f);
-                innerTable.add(victoryLabels[i]);
+                table.add(rankImages[i]).height(victoryLabels[0].getPrefHeight()).width(victoryLabels[0].getPrefHeight()).padRight(10f).padTop(10f).padBottom(10f);
+                table.add(victoryLabels[i]).right().padLeft(20f).padTop(10f).padBottom(10f);
             } else {
-                innerTable.add(victoryLabels[i]).padLeft(victoryLabels[0].getPrefHeight() + 10f);
+                table.add(victoryLabels[i]).padLeft(victoryLabels[0].getPrefHeight() + 30f).right().colspan(2).padTop(10f).padBottom(10f);
             }
+            // TODO: Improve this, add animations
 
-            table.add(innerTable).pad(10f).left();
             table.row();
         }
 
@@ -154,7 +151,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
                 animationManager.fadeOutStage(stage, new MainMenuScreen(game));
             }
         });
-        table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor());
+        table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor()).colspan(3);
 
         stage.addActor(table);
         stage.addFocusableActor(returnToMainMenuButton);
