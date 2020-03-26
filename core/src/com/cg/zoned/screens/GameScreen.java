@@ -115,6 +115,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
         Drawable zoomInImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_in.png"))));
         Drawable zoomOutImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_out.png"))));
         final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomOutImage, zoomInImage);
+        zoomButton.setNormalAlpha(.8f);
         zoomButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

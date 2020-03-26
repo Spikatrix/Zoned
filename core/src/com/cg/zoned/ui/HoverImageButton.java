@@ -8,9 +8,9 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 
 public class HoverImageButton extends ImageButton {
-    private static final float normalAlpha = .8f;
-    private static final float hoverAlpha = .5f;
-    private static final float clickAlpha = .25f;
+    private float normalAlpha = 1f;
+    private float hoverAlpha = .5f;
+    private float clickAlpha = .25f;
 
     private static final float animationDuration = .15f;
 
@@ -49,12 +49,21 @@ public class HoverImageButton extends ImageButton {
                 clearActions();
                 addAction(Actions.alpha(normalAlpha, animationDuration));
             }
-
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                toggle();
-                super.clicked(event, x, y);
-            }
         });
+    }
+
+    public void setNormalAlpha(float normalAlpha) {
+        this.normalAlpha = normalAlpha;
+
+        getColor().a = normalAlpha;
+        getImage().getColor().a = normalAlpha;
+    }
+
+    public void setHoverAlpha(float hoverAlpha) {
+        this.hoverAlpha = hoverAlpha;
+    }
+
+    public void setClickAlpha(float clickAlpha) {
+        this.clickAlpha = clickAlpha;
     }
 }
