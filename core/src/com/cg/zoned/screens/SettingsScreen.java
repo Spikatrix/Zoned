@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
@@ -25,6 +24,7 @@ import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.ui.FocusableStage;
+import com.cg.zoned.ui.HoverCheckBox;
 import com.cg.zoned.ui.HoverImageButton;
 
 public class SettingsScreen extends ScreenAdapter implements InputProcessor {
@@ -92,28 +92,6 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
-        flingControlLabel.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                InputEvent event1 = new InputEvent();
-                InputEvent event2 = new InputEvent();
-                event1.setType(InputEvent.Type.touchDown);
-                event2.setType(InputEvent.Type.touchUp);
-                flingControl.fire(event1);
-                flingControl.fire(event2);
-            }
-        });
-        piemenuControlLabel.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                InputEvent event1 = new InputEvent();
-                InputEvent event2 = new InputEvent();
-                event1.setType(InputEvent.Type.touchDown);
-                event2.setType(InputEvent.Type.touchUp);
-                piemenuControl.fire(event1);
-                piemenuControl.fire(event2);
-            }
-        });
 
         table.add(controlLabel).colspan(2).padBottom(10f);
         table.row();
@@ -124,7 +102,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         table.add(piemenuControlLabel).padLeft(5f);
         table.row();
 
-        final CheckBox showFPS = new CheckBox("Show FPS counter", game.skin);
+        final HoverCheckBox showFPS = new HoverCheckBox("Show FPS counter", game.skin);
         showFPS.getImageCell().width(showFPS.getLabel().getPrefHeight()).height(showFPS.getLabel().getPrefHeight());
         showFPS.getImage().setScaling(Scaling.fill);
         showFPS.setChecked(game.preferences.getBoolean(Constants.FPS_PREFERENCE, false));
@@ -141,8 +119,10 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         table.add(showFPS).colspan(2).padTop(30f);
 
         stage.addActor(table);
-        stage.addFocusableActor(showFPS);
-        stage.setFocusedActor(showFPS);
+        stage.addFocusableActor(flingControl);
+        stage.addFocusableActor(piemenuControl);
+        stage.row();
+        stage.addFocusableActor(showFPS, 2);
     }
 
     @Override

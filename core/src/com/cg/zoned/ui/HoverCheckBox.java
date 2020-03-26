@@ -3,22 +3,19 @@ package com.cg.zoned.ui;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 
-public class HoverImageButton extends ImageButton {
+public class HoverCheckBox extends CheckBox {
     private float normalAlpha = 1f;
     private float hoverAlpha = .5f;
-    private float clickAlpha = .25f;
+    private float clickAlpha = .5f;
 
-    private float animationDuration = .15f;
+    private float animationDuration = .1f;
 
-    public HoverImageButton(Drawable imageUp, Drawable imageDown, Drawable imageChecked) {
-        super(imageUp, imageDown, imageChecked);
-
-        getColor().a = normalAlpha;
-        getImage().getColor().a = normalAlpha;
+    public HoverCheckBox(String text, Skin skin) {
+        super(text, skin);
 
         applyMouseEffects();
     }
@@ -58,9 +55,6 @@ public class HoverImageButton extends ImageButton {
 
     public void setNormalAlpha(float normalAlpha) {
         this.normalAlpha = normalAlpha;
-
-        getColor().a = normalAlpha;
-        getImage().getColor().a = normalAlpha;
     }
 
     public void setHoverAlpha(float hoverAlpha) {
