@@ -17,7 +17,7 @@ public class PlayerManager extends InputMultiplexer {
 
     private Array<TeamData> teamData;
 
-    public PlayerManager(GameManager gameManager, Player[] players, Stage stage) {
+    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controls) {
         this.gameManager = gameManager;
 
         this.players = players;
@@ -32,7 +32,9 @@ public class PlayerManager extends InputMultiplexer {
                 this.addProcessor(player);
             }
         }
-        this.addProcessor(new PlayerTouchManager(players, !gameManager.connectionManager.isActive, stage));
+
+        ControlManager controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls);
+        this.addProcessor(controlManager.getControls());
     }
 
     private void initTeamColors() {

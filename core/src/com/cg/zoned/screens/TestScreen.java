@@ -2,46 +2,40 @@ package com.cg.zoned.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Zoned;
-import com.crashinvaders.vfx.VfxManager;
-import com.crashinvaders.vfx.effects.BloomEffect;
-import com.crashinvaders.vfx.effects.MotionBlurEffect;
-import com.crashinvaders.vfx.filters.MotionBlurFilter;
+import com.payne.games.piemenu.PieMenu;
 
 // Used for testing purposes, nvm about the crap in here
 public class TestScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
     private ScreenViewport viewport;
+    private Stage stage;
     private ShapeRenderer renderer;
     private SpriteBatch batch;
     private BitmapFont font;
 
-    private VfxManager vfxManager;
-    private BloomEffect bloomEffect;
-    private MotionBlurEffect motionBlurEffect;
-
-    private Rectangle[] rects;
-    private Color[] colors;
-    private int index = 0;
-
-    private float x;
-    private float y;
-    private float width;
-    private float height;
-    private Color color;
+    private PieMenu menu;
 
     public TestScreen(final Zoned game) {
         this.game = game;
@@ -50,44 +44,82 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         this.renderer.setAutoShapeType(true);
         this.batch = new SpriteBatch();
         this.viewport = new ScreenViewport();
+        this.stage = new Stage(this.viewport);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
-
-        this.rects = new Rectangle[]{
-                new Rectangle(40, 40, 40, 40),
-                new Rectangle(40, 200, 100, 150),
-                new Rectangle(400, 200, 200, 20),
-                new Rectangle(400, 40, 40, 320),
-        };
-        this.colors = new Color[]{
-                Color.RED,
-                Color.GREEN,
-                Color.BLUE,
-                Color.YELLOW,
-        };
-
-        x = this.rects[0].x;
-        y = this.rects[0].y;
-        width = this.rects[0].width;
-        height = this.rects[0].height;
-        color = new Color(this.colors[0]);
     }
 
     @Override
     public void show() {
-        this.vfxManager = new VfxManager(Pixmap.Format.RGBA8888);
-        this.bloomEffect = new BloomEffect(Pixmap.Format.RGBA8888);
-        this.motionBlurEffect = new MotionBlurEffect(Pixmap.Format.RGBA8888, MotionBlurFilter.BlurFunction.MIX, .5f);
+        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pixmap.setColor(1, 1, 1, 1);
+        pixmap.fill();
+        Texture tmpTex = new Texture(pixmap);
+        pixmap.dispose();
+        TextureRegion whitePixel = new TextureRegion(tmpTex);
 
-        this.vfxManager.addEffect(this.bloomEffect);
-        this.vfxManager.addEffect(this.motionBlurEffect);
+        PieMenu.PieMenuStyle style = new PieMenu.PieMenuStyle();
+        style.separatorWidth = 1;
+        style.backgroundColor = Color.BLACK;
+        style.separatorColor = Color.BLACK;
+        style.downColor = Color.WHITE;
+        style.sliceColor = Color.RED;
+        menu = new PieMenu(whitePixel, style, 92);
 
-        Gdx.input.setInputProcessor(this);
+        menu.setInfiniteSelectionRange(true);
+        menu.setSelectionButton(Input.Buttons.LEFT); // right-click for interactions with the widget
+
+        /* Populating the widget. */
+        final Drawable arrow = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_arrow.png"))));
+        final Image img1 = new Image(arrow);
+        img1.setOrigin(img1.getWidth() / 2, img1.getHeight() / 2);
+        img1.setRotation(-45f);
+        final Image img2 = new Image(arrow);
+        img2.setOrigin(img1.getWidth() / 2, img1.getHeight() / 2);
+        img2.setRotation(45f);
+        final Image img3 = new Image(arrow);
+        img3.setOrigin(img1.getWidth() / 2, img1.getHeight() / 2);
+        img3.setRotation(135f);
+        final Image img4 = new Image(arrow);
+        img4.setOrigin(img1.getWidth() / 2, img1.getHeight() / 2);
+        img4.setRotation(-135f);
+        menu.addActor(img1);
+        menu.addActor(img2);
+        menu.addActor(img3);
+        menu.addActor(img4);
+
+        menu.setRotation(45f);
+
+        menu.addListener(new PieMenu.PieMenuCallbacks() {
+            @Override
+            public void onHighlightChange(int highlightedIndex) {
+                img1.setColor(Color.WHITE);
+                img2.setColor(Color.WHITE);
+                img3.setColor(Color.WHITE);
+                img4.setColor(Color.WHITE);
+                System.out.println("onHighlightChange - highlighted index: " + highlightedIndex);
+                if (highlightedIndex == 0) img1.setColor(Color.BLACK);
+                if (highlightedIndex == 1) img2.setColor(Color.BLACK);
+                if (highlightedIndex == 2) img3.setColor(Color.BLACK);
+                if (highlightedIndex == 3) img4.setColor(Color.BLACK);
+
+            }
+        });
+        menu.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeListener.ChangeEvent event, Actor actor) {
+                System.out.println("ChangeListener - selected index: " + menu.getSelectedIndex());
+                menu.setVisible(false);
+                menu.remove();
+            }
+        });
+
+        InputMultiplexer inputMultiplexer = new InputMultiplexer(stage, this);
+        Gdx.input.setInputProcessor(inputMultiplexer);
     }
 
     @Override
     public void resize(int width, int height) {
         this.viewport.update(width, height, true);
-        this.vfxManager.resize(width, height);
     }
 
     @Override
@@ -96,56 +128,39 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         this.viewport.apply(true);
-        this.vfxManager.cleanUpBuffers();
+
+        stage.act(delta);
+        stage.draw();
+
+        if (Gdx.input.isButtonJustPressed(menu.getSelectionButton())) {
+            stage.addActor(menu);
+            menu.centerOnMouse();
+            menu.setVisible(true);
+            transferInteraction(stage, menu);
+        }
 
         renderer.setProjectionMatrix(this.viewport.getCamera().combined);
         batch.setProjectionMatrix(this.viewport.getCamera().combined);
 
-        lerpRect(delta);
-
-        vfxManager.beginCapture();
-        vfxManager.setBlendingEnabled(true);
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        renderer.setColor(color);
-        renderer.rect(x, y, width, height);
-
         renderer.end();
-        vfxManager.endCapture();
 
-        vfxManager.applyEffects();
-        vfxManager.renderToScreen();
+        batch.begin();
+        batch.end();
 
         FPSDisplayer.displayFPS(batch, font);
-        batch.begin();
-        font.draw(batch, "Bloom + MotionBlur", 5, Gdx.graphics.getHeight() - 24); // ~10 FPS on my Mobile although I get 60 FPS on my laptop :(
-        batch.end();
     }
 
-    private void lerpRect(float delta) {
-        float lerp = 1.8f;
-        float threshold = 3f;
-
-        x += (rects[index].x - x) * lerp * delta;
-        y += (rects[index].y - y) * lerp * delta;
-        width += (rects[index].width - width) * lerp * delta;
-        height += (rects[index].height - height) * lerp * delta;
-
-        color.lerp(colors[index], lerp * delta);
-
-        if (Math.abs(x - rects[index].x) <= threshold &&
-                Math.abs(y - rects[index].y) <= threshold &&
-                Math.abs(width - rects[index].width) <= threshold &&
-                Math.abs(height - rects[index].height) <= threshold) {
-            index = (index + 1) % rects.length;
-        }
+    private void transferInteraction(Stage stage, PieMenu widget) {
+        if (widget == null) throw new IllegalArgumentException("widget cannot be null.");
+        if (widget.getPieMenuListener() == null)
+            throw new IllegalArgumentException("inputListener cannot be null.");
+        stage.addTouchFocus(widget.getPieMenuListener(), widget, widget, 0, widget.getSelectionButton());
     }
 
     @Override
     public void dispose() {
-        vfxManager.dispose();
-        bloomEffect.dispose();
-        motionBlurEffect.dispose();
+        stage.dispose();
         renderer.dispose();
         batch.dispose();
     }

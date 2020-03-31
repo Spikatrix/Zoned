@@ -67,7 +67,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         this.fullScreenStage = new Stage(new ScreenViewport());
 
-        this.gameManager = new GameManager(this, server, client, players, fullScreenStage);
+        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE));
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);

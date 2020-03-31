@@ -16,14 +16,14 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Player;
 
-public class PlayerTouchManager extends InputAdapter {
+public class FlingControlManager extends InputAdapter {
     private Stage stage;
     private Player[] players;
     private boolean isSplitScreenMultiplayer;
 
     private Array<GameTouchPoint> clickPoints;
 
-    public PlayerTouchManager(Player[] players, boolean isSplitScreen, Stage stage) {
+    public FlingControlManager(Player[] players, boolean isSplitScreen, Stage stage) {
         this.clickPoints = new Array<GameTouchPoint>();
         this.players = players;
         this.isSplitScreenMultiplayer = isSplitScreen;

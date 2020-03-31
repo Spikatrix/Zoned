@@ -71,11 +71,18 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         piemenuControl.setHoverAlpha(.7f);
         flingControl.setClickAlpha(.4f);
         piemenuControl.setClickAlpha(.4f);
-        flingControl.setChecked(true);
+        int currentControl = game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL);
+        if (currentControl == Constants.PIE_MENU_CONTROL) {
+            piemenuControl.setChecked(true);
+        } else if (currentControl == Constants.FLING_CONTROL) {
+            flingControl.setChecked(true);
+        }
         flingControl.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if (piemenuControl.isChecked()) {
+                    game.preferences.putInteger(Constants.CONTROL_PREFERENCE, Constants.FLING_CONTROL);
+                    game.preferences.flush();
                     piemenuControl.toggle();
                 } else {
                     flingControl.toggle();
@@ -86,6 +93,8 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if (flingControl.isChecked()) {
+                    game.preferences.putInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL);
+                    game.preferences.flush();
                     flingControl.toggle();
                 } else {
                     piemenuControl.toggle();
@@ -95,11 +104,11 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
 
         table.add(controlLabel).colspan(2).padBottom(10f);
         table.row();
-        table.add(flingControl).padRight(5f);
         table.add(piemenuControl).padLeft(5f);
+        table.add(flingControl).padRight(5f);
         table.row();
-        table.add(flingControlLabel).padRight(5f);
         table.add(piemenuControlLabel).padLeft(5f);
+        table.add(flingControlLabel).padRight(5f);
         table.row();
 
         final HoverCheckBox showFPS = new HoverCheckBox("Show FPS counter", game.skin);

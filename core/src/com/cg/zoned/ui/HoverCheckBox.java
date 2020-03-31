@@ -12,7 +12,7 @@ public class HoverCheckBox extends CheckBox {
     private float hoverAlpha = .5f;
     private float clickAlpha = .5f;
 
-    private float animationDuration = .1f;
+    private float animationDuration = .15f;
 
     public HoverCheckBox(String text, Skin skin) {
         super(text, skin);

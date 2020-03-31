@@ -13,12 +13,12 @@ public class GameManager {
     public DirectionBufferManager directionBufferManager;
     public PlayerManager playerManager;
 
-    public GameManager(final GameScreen gameScreen, Server server, Client client, Player[] players, Stage stage) {
+    public GameManager(final GameScreen gameScreen, Server server, Client client, Player[] players, Stage stage, int controls) {
         this.gameScreen = gameScreen;
 
         this.connectionManager = new ConnectionManager(this, server, client);
         this.directionBufferManager = new DirectionBufferManager(players.length);
-        this.playerManager = new PlayerManager(this, players, stage);
+        this.playerManager = new PlayerManager(this, players, stage, controls);
     }
 
     public void endGame() {
