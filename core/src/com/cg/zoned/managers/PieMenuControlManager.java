@@ -168,7 +168,12 @@ public class PieMenuControlManager extends InputAdapter {
                 coords[i].x = screenX;
                 coords[i].y = screenY;
                 Vector2 coord = stage.screenToStageCoordinates(coords[i]);
-                menus[i].selectSliceAtStage(coord.x, coord.y);
+                if (menus[i].getHighlightedIndex() != -1) {
+                    menus[i].selectSliceAtStage(coord.x, coord.y);
+                } else {
+                    menus[i].setVisible(false);
+                    menus[i].remove();
+                }
                 pointers[i] = -1;
 
                 return true;
