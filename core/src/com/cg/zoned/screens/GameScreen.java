@@ -13,8 +13,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -39,7 +37,7 @@ import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Server;
 
-public class GameScreen extends ScreenAdapter implements InputProcessor, GestureDetector.GestureListener {
+public class GameScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
     private GameManager gameManager;
@@ -58,8 +56,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
     private boolean showFPSCounter;
     private ScoreBar scoreBars;
 
-    private Vector2 touchStartPos;
-    private Vector2 touchStartPos2;
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
     public GameScreen(final Zoned game, int rows, int cols, Player[] players, Server server, Client client) {
@@ -67,7 +63,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         this.fullScreenStage = new Stage(new ScreenViewport());
 
-        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE));
+        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL));
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
@@ -77,8 +73,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         this.scoreBars = new ScoreBar(players.length);
 
-        touchStartPos = new Vector2();
-        touchStartPos2 = new Vector2();
     }
 
     private void initViewports() {
@@ -102,7 +96,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
     private void setUpInputProcessors() {
         InputMultiplexer inputMultiplexer = new InputMultiplexer();
         inputMultiplexer.addProcessor(fullScreenStage);
-        inputMultiplexer.addProcessor(new GestureDetector(this));
         inputMultiplexer.addProcessor(gameManager.playerManager);
         inputMultiplexer.addProcessor(this); // ESC key, Back button etc
         Gdx.input.setInputProcessor(inputMultiplexer);
@@ -178,6 +171,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
             drawViewportDividers();
         }
 
+        if (!gameComplete) {
+            gameManager.playerManager.renderPlayerControlPrompt(renderer, delta);
+        }
+
         scoreBars.render(renderer, gameManager.playerManager.getPlayers(), delta);
 
         if (!gameComplete && map.gameComplete(gameManager.playerManager.getPlayers())) {
@@ -191,7 +188,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
-        if (this.showFPSCounter) {
+        if (showFPSCounter) {
             FPSDisplayer.displayFPS(fullScreenStage.getBatch(), font, 0, 7);
         }
         fullScreenStage.act(delta);
@@ -347,49 +344,5 @@ public class GameScreen extends ScreenAdapter implements InputProcessor, Gesture
     @Override
     public boolean scrolled(int amount) {
         return false;
-    }
-
-    @Override
-    public boolean touchDown(float x, float y, int pointer, int button) {
-        return false;
-    }
-
-    @Override
-    public boolean tap(float x, float y, int count, int button) {
-        return false;
-    }
-
-    @Override
-    public boolean longPress(float x, float y) {
-        return false;
-    }
-
-    @Override
-    public boolean fling(float velocityX, float velocityY, int button) {
-        return false;
-    }
-
-    @Override
-    public boolean pan(float x, float y, float deltaX, float deltaY) {
-        return false;
-    }
-
-    @Override
-    public boolean panStop(float x, float y, int pointer, int button) {
-        return false;
-    }
-
-    @Override
-    public boolean zoom(float initialDistance, float distance) {
-        return false;
-    }
-
-    @Override
-    public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2, Vector2 pointer1, Vector2 pointer2) {
-        return false;
-    }
-
-    @Override
-    public void pinchStop() {
     }
 }

@@ -1,6 +1,7 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Sort;
@@ -12,6 +13,8 @@ import java.util.Comparator;
 
 public class PlayerManager extends InputMultiplexer {
     private final GameManager gameManager;
+
+    private ControlManager controlManager;
 
     private Player[] players;
 
@@ -33,7 +36,7 @@ public class PlayerManager extends InputMultiplexer {
             }
         }
 
-        ControlManager controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls);
+        controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls);
         this.addProcessor(controlManager.getControls());
     }
 
@@ -99,6 +102,10 @@ public class PlayerManager extends InputMultiplexer {
     public Array<TeamData> getTeamData() {
         new Sort().sort(teamData, new TeamDataComparator());
         return teamData;
+    }
+
+    public void renderPlayerControlPrompt(ShapeRenderer renderer, float delta) {
+        controlManager.renderPlayerControlPrompt(renderer, delta);
     }
 
     private static class TeamDataComparator implements Comparator<TeamData> {
