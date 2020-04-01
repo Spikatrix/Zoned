@@ -128,8 +128,8 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         table.add(showFPS).colspan(2).padTop(30f);
 
         stage.addActor(table);
-        stage.addFocusableActor(flingControl);
         stage.addFocusableActor(piemenuControl);
+        stage.addFocusableActor(flingControl);
         stage.row();
         stage.addFocusableActor(showFPS, 2);
     }
@@ -181,6 +181,11 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.BACK) {
+            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            return true;
+        }
+
         return false;
     }
 

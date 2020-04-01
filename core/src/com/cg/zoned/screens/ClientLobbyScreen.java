@@ -416,6 +416,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.BACK) {
+            if (client.isConnected()) {
+                client.close();
+            }
+
+            return true;
+        }
+
         return false;
     }
 

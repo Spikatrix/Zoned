@@ -433,6 +433,17 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.BACK) {
+            server.close();
+            playerList.clear();
+            playerItems.clear();
+            playerConnections.clear();
+
+            animationManager.fadeOutStage(stage, new HostJoinScreen(game));
+
+            return true;
+        }
+
         return false;
     }
 

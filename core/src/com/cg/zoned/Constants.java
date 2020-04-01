@@ -76,6 +76,7 @@ public final class Constants {
     public static final String ZONED_PREFERENCES = "Zoned_Preferences";
     public static final String FPS_PREFERENCE = "FPS_Preference";
     public static final String CONTROL_PREFERENCE = "Control_Preference";
+    public static final String NAME_PREFERENCE = "Name_Preference"; // The last used name
 
     public static final int PIE_MENU_CONTROL = 0;
     public static final int FLING_CONTROL = 1;

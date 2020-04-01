@@ -66,6 +66,8 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         Label playerNameLabel = new Label("Player name: ", game.skin, "themed");
         final TextField playerNameField = new TextField("", game.skin);
         playerNameField.setName("Player name textfield");
+        playerNameField.setText(game.preferences.getString(Constants.NAME_PREFERENCE, null));
+        playerNameField.setCursorPosition(playerNameField.getText().length());
         table.add(playerNameLabel).right();
         table.add(playerNameField).width(playerNameField.getPrefWidth() * game.getScaleFactor()).left();
 
@@ -86,7 +88,11 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             public void clicked(InputEvent event, float x, float y) {
                 restoreScreen();
 
-                if (!playerNameField.getText().trim().isEmpty()) {
+                String name = playerNameField.getText().trim();
+                if (!name.isEmpty()) {
+                    game.preferences.putString(Constants.NAME_PREFERENCE, name);
+                    game.preferences.flush();
+
                     startServerLobby(playerNameField.getText().trim());
                 } else {
                     stage.showInfoDialog("Please enter the name of the player(s)", game.getScaleFactor(), game.skin);
@@ -273,6 +279,11 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.BACK) {
+            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            return true;
+        }
+
         return false;
     }
 

@@ -230,6 +230,11 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.BACK) {
+            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            return true;
+        }
+
         return false;
     }
 

@@ -147,6 +147,7 @@ public class Spinner extends Table {
 
     @Override
     public float getPrefWidth() {
-        return this.plusButton.getWidth() + this.stepScrollPane.getWidth() / 2 + this.minusButton.getWidth();
+        return this.plusButton.getWidth() + this.stepScrollPane.getWidth() / 1.8f + this.minusButton.getWidth();
+        // Don't ask me where the magic 1.8f came from
     }
 }
