@@ -123,7 +123,7 @@ public class PieMenuControlManager extends InputAdapter {
             int playerIndex = 0;
             if (isSplitScreenMultiplayer) {
                 for (int i = 1; i < this.players.length; i++) {
-                    if (screenX > ((Gdx.graphics.getWidth() / this.players.length) * i)) {
+                    if (screenX > ((stage.getWidth() / this.players.length) * i)) {
                         playerIndex++;
                     } else {
                         break;
@@ -133,7 +133,7 @@ public class PieMenuControlManager extends InputAdapter {
 
             if (!menus[playerIndex].isVisible() && pointers[playerIndex] == -1) {
                 stage.addActor(menus[playerIndex]);
-                menus[playerIndex].setPosition(screenX, Gdx.graphics.getHeight() - screenY, Align.center);
+                menus[playerIndex].setPosition(screenX, stage.getHeight() - screenY, Align.center);
                 menus[playerIndex].setVisible(true);
                 coords[playerIndex].x = screenX;
                 coords[playerIndex].y = screenY;
@@ -173,6 +173,7 @@ public class PieMenuControlManager extends InputAdapter {
                 } else {
                     menus[i].setVisible(false);
                     menus[i].remove();
+
                 }
                 pointers[i] = -1;
 

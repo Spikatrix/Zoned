@@ -104,6 +104,10 @@ public class PlayerManager extends InputMultiplexer {
         return teamData;
     }
 
+    public void resize() {
+        controlManager.resize();
+    }
+
     public void renderPlayerControlPrompt(ShapeRenderer renderer, float delta) {
         controlManager.renderPlayerControlPrompt(renderer, delta);
     }

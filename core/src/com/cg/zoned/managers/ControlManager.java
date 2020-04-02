@@ -52,6 +52,13 @@ public class ControlManager {
         }
     }
 
+    public void resize() {
+        float colorWidth = stage.getWidth() / overlayColors.length;
+        for (int i = 0; i < controlImage.length; i++) {
+            controlImage[i].setPosition(i * colorWidth + colorWidth / 2 - controlImage[i].getWidth() / 2, stage.getHeight() / 2 - controlImage[i].getHeight() / 2);
+        }
+    }
+
     public void renderPlayerControlPrompt(ShapeRenderer renderer, float delta) {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         float colorWidth = stage.getWidth() / overlayColors.length;

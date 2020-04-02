@@ -53,7 +53,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.noOfPlayers = 2;
+        this.noOfPlayers = Constants.NO_OF_PLAYERS;
         this.playerList = new Table();
     }
 
@@ -196,7 +196,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         viewport.apply(true);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(stage.getBatch(), font);
+            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();

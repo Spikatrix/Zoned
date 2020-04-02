@@ -372,7 +372,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         viewport.apply(true);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(stage.getBatch(), font);
+            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();

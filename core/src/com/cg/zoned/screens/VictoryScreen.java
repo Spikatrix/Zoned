@@ -64,7 +64,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
 
         trailEffect = new ParticleEffect();
-        trailEffect.setPosition(0, Gdx.graphics.getHeight() / 2f);
+        trailEffect.setPosition(0, stage.getHeight() / 2f);
         trailEffect.load(Gdx.files.internal("particles/trails.p"), Gdx.files.internal("particles"));
 
         animationManager.startGameOverAnimation(stage, trailEffect);
@@ -190,7 +190,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         stage.getBatch().end();
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(stage.getBatch(), font);
+            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();

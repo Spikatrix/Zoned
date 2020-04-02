@@ -36,7 +36,7 @@ public class FlingControlManager extends InputAdapter {
             int playerIndex = 0;
             if (isSplitScreenMultiplayer) {
                 for (int i = 1; i < this.players.length; i++) {
-                    if (screenX > ((Gdx.graphics.getWidth() / this.players.length) * i)) {
+                    if (screenX > ((stage.getWidth() / this.players.length) * i)) {
                         playerIndex++;
                     } else {
                         break;
@@ -50,7 +50,7 @@ public class FlingControlManager extends InputAdapter {
                 clickImage.setScale(Constants.ANDROID_DIRECTION_ARROW_SCALE_FACTOR, Constants.ANDROID_DIRECTION_ARROW_SCALE_FACTOR);
             }
             clickImage.setColor(players[playerIndex].color);
-            clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, Gdx.graphics.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
+            clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
 
             clickPoints.add(new GameTouchPoint(screenX, screenY, pointer, clickImage, playerIndex));
             stage.addActor(clickImage);
@@ -74,18 +74,18 @@ public class FlingControlManager extends InputAdapter {
                 if (Math.abs(subPoint.x) > Math.abs(subPoint.y)) {
                     if (subPoint.x > 0) { // RIGHT
                         clickImage.setRotation(-90f);
-                        clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, Gdx.graphics.getHeight() - screenY + clickImage.getHeight() * clickImage.getScaleX() / 2);
+                        clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY + clickImage.getHeight() * clickImage.getScaleX() / 2);
                     } else {              // LEFT
                         clickImage.setRotation(90f);
-                        clickImage.setPosition(screenX + clickImage.getWidth() * clickImage.getScaleX() / 2, Gdx.graphics.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
+                        clickImage.setPosition(screenX + clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
                     }
                 } else {
                     if (subPoint.y > 0) { //DOWN
                         clickImage.setRotation(-180f);
-                        clickImage.setPosition(screenX + clickImage.getWidth() * clickImage.getScaleX() / 2, Gdx.graphics.getHeight() - screenY + clickImage.getHeight() * clickImage.getScaleX() / 2);
+                        clickImage.setPosition(screenX + clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY + clickImage.getHeight() * clickImage.getScaleX() / 2);
                     } else {              // UP
                         clickImage.setRotation(0f);
-                        clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, Gdx.graphics.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
+                        clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
                     }
                 }
 

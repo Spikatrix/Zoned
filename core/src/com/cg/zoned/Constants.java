@@ -26,7 +26,7 @@ public final class Constants {
      * <p>
      * Beware: There may not be enough horizontal space especially on mobile devices to play comfortably
      */
-    //public static final int NO_OF_PLAYERS = PLAYER_CONTROLS.length; // TODO: Max number of players
+    public static final int NO_OF_PLAYERS = 2;
 
     public static final Color PLAYER_CIRCLE_COLOR = Color.WHITE;
     public static final float PLAYER_CIRCLE_WIDTH = 2.5f;

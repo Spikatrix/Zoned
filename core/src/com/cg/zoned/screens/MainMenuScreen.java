@@ -58,7 +58,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             public void animationEnd(Stage stage) {
                 emitterLeft.load(Gdx.files.internal("particles/left_emitter.p"), Gdx.files.internal("particles"));
                 emitterRight.load(Gdx.files.internal("particles/right_emitter.p"), Gdx.files.internal("particles"));
-                emitterRight.setPosition(viewport.getScreenWidth(), 0);
+                emitterRight.setPosition(viewport.getWorldWidth(), 0);
                 emitterLeft.start();
                 emitterRight.start();
             }
@@ -137,7 +137,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         stage.getBatch().end();
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(stage.getBatch(), font);
+            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
         stage.draw();
         stage.act(delta);
@@ -146,7 +146,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
-        emitterRight.setPosition(width, 0);
+        emitterRight.setPosition(viewport.getWorldWidth(), 0);
     }
 
     @Override

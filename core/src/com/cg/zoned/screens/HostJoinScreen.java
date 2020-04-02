@@ -201,9 +201,9 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         Table outTable = new Table();
         outTable.setTouchable(Touchable.enabled);
         Label restoreLabel = new Label("Tap anywhere else to restore the screen", game.skin);
-        outTable.setHeight(Gdx.graphics.getHeight() * 2);
-        outTable.setWidth(Gdx.graphics.getWidth());
-        outTable.setPosition(outTable.getPrefWidth() / 2, -Gdx.graphics.getHeight());
+        outTable.setHeight(stage.getHeight() * 2);
+        outTable.setWidth(stage.getWidth());
+        outTable.setPosition(outTable.getPrefWidth() / 2, -stage.getHeight());
         outTable.add(restoreLabel).padTop(restoreLabel.getHeight() * game.getScaleFactor()).align(Align.center);
         outTable.addListener(new ClickListener() {
             @Override
@@ -245,7 +245,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         viewport.apply(true);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(stage.getBatch(), font);
+            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();

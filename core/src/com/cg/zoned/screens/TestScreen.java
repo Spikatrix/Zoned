@@ -148,7 +148,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         batch.begin();
         batch.end();
 
-        FPSDisplayer.displayFPS(batch, font);
+        FPSDisplayer.displayFPS(viewport, batch, font);
     }
 
     private void transferInteraction(Stage stage, PieMenu widget) {

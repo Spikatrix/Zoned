@@ -29,7 +29,7 @@ public class AnimationManager {
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
         stage.getRoot().getColor().a = 1;
-        stage.getRoot().setPosition(0, Gdx.graphics.getHeight());
+        stage.getRoot().setPosition(0, stage.getHeight());
         for (TextButton mainMenuButton : mainMenuButtons) {
             mainMenuButton.getColor().a = 0;
         }
@@ -62,7 +62,7 @@ public class AnimationManager {
     public void startGameOverAnimation(final Stage stage, final ParticleEffect trailEffect) {
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
-        float screenWidth = Gdx.graphics.getWidth();
+        float screenWidth = stage.getWidth();
 
         stage.getRoot().getColor().a = 1;
         stage.getRoot().setPosition(screenWidth, 0);

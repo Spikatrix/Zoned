@@ -1,8 +1,8 @@
 package com.cg.zoned;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class ScoreBar {
     public static final float BAR_HEIGHT = 10f;
@@ -12,11 +12,11 @@ public class ScoreBar {
 
     private float[] currentPos;
 
-    public ScoreBar(int size) {
+    public ScoreBar(Viewport viewport, int size) {
         currentPos = new float[size];
 
-        totalWidth = Gdx.graphics.getWidth();
-        totalHeight = Gdx.graphics.getHeight();
+        totalWidth = viewport.getWorldWidth();
+        totalHeight = viewport.getWorldHeight();
     }
 
     public void resize(int width, int height) {

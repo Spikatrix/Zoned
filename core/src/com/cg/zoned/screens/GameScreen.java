@@ -71,7 +71,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         initViewports();
 
-        this.scoreBars = new ScoreBar(players.length);
+        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
 
     }
 
@@ -133,6 +133,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         scoreBars.resize(width, height);
         fullScreenStage.getViewport().update(width, height, true);
+        gameManager.playerManager.resize();
     }
 
     private void updateCamera(Camera camera, int width, int height) {
@@ -189,7 +190,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(fullScreenStage.getBatch(), font, 0, 7);
+            FPSDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, 0, 7);
         }
         fullScreenStage.act(delta);
         fullScreenStage.draw();
@@ -201,7 +202,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         renderer.setColor(fadeOutOverlay);
-        renderer.rect(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        renderer.rect(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
         renderer.end();
 
         if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
