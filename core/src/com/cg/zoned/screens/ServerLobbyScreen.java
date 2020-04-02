@@ -240,19 +240,16 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        int noOfTeams = 0;
         Array<String> uniqueColors = new Array<String>();
         uniqueColors.add(((DropDownMenu) playerItems.get(0).findActor("color-selector SelectBox")).getSelected());
-        noOfTeams++;
         for (int i = 1; i < size; i++) {
             String color = ((Label) playerItems.get(i).findActor("color-label")).getText().toString();
             if (!uniqueColors.contains(color, false)) {
                 uniqueColors.add(color);
-                noOfTeams++;
             }
         }
 
-        if (noOfTeams <= 1) {
+        if (uniqueColors.size <= 1) {
             stage.showInfoDialog("Players must have at least two distinct colors", game.getScaleFactor(), game.skin);
             return;
         }

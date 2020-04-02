@@ -64,7 +64,7 @@ public class PlayerManager extends InputMultiplexer {
 
     public void stopPlayers() {
         for (Player player : players) {
-            player.direction = player.updatedDirection = null;
+            player.updatedDirection = null;
         }
     }
 

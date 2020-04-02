@@ -85,7 +85,6 @@ public class Player extends InputAdapter {
         }
     }
 
-
     public void render(OrthographicCamera camera, ShapeRenderer renderer) {
         float x = camera.position.x;
         float y = camera.position.y;

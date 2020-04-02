@@ -16,7 +16,20 @@ public class HoverImageButton extends ImageButton {
 
     public HoverImageButton(Drawable imageUp, Drawable imageDown, Drawable imageChecked) {
         super(imageUp, imageDown, imageChecked);
+        setupImageButton();
+    }
 
+    public HoverImageButton(Drawable image, Drawable imageChecked) {
+        super(image, image, imageChecked);
+        setupImageButton();
+    }
+
+    public HoverImageButton(Drawable image) {
+        super(image, image, image);
+        setupImageButton();
+    }
+
+    private void setupImageButton() {
         getColor().a = normalAlpha;
         getImage().getColor().a = normalAlpha;
 

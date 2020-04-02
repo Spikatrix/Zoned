@@ -42,7 +42,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private BitmapFont font;
 
-    private int noOfPlayers;
+    private int playerCount;
     private Table playerList;
 
     public PlayerSetUpScreen(final Zoned game) {
@@ -53,7 +53,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.noOfPlayers = Constants.NO_OF_PLAYERS;
+        this.playerCount = Constants.NO_OF_PLAYERS;
         this.playerList = new Table();
     }
 
@@ -73,10 +73,10 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         //table.setDebug(true);
         table.center();
 
-        Label[] promptLabels = new Label[noOfPlayers];
-        Button[][] colorButtons = new Button[noOfPlayers][];
-        final ButtonGroup[] colorButtonGroups = new ButtonGroup[noOfPlayers]; // TODO: Modify to list to get rid of warning?
-        for (int i = 0; i < noOfPlayers; i++) {
+        Label[] promptLabels = new Label[playerCount];
+        Button[][] colorButtons = new Button[playerCount][];
+        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount]; // TODO: Modify to list to get rid of warning?
+        for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
             playerItem.center();
             promptLabels[i] = new Label("Player " + (i + 1) + " color: ", game.skin, "themed");

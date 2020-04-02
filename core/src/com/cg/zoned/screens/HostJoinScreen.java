@@ -105,8 +105,12 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             public void clicked(InputEvent event, float x, float y) {
                 restoreScreen();
 
-                if (!playerNameField.getText().trim().isEmpty()) {
-                    startClientLobby(playerNameField.getText().trim());
+                String name = playerNameField.getText().trim();
+                if (!name.isEmpty()) {
+                    game.preferences.putString(Constants.NAME_PREFERENCE, name);
+                    game.preferences.flush();
+
+                    startClientLobby(name);
                 } else {
                     stage.showInfoDialog("Please enter the name of the player(s)", game.getScaleFactor(), game.skin);
                 }

@@ -76,11 +76,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void initViewports() {
-        int noOfViewports = isSplitscreenMultiplayer() ? gameManager.playerManager.getPlayers().length : 1;
+        int viewportCount = isSplitscreenMultiplayer() ? gameManager.playerManager.getPlayers().length : 1;
 
-        this.playerViewports = new ExtendViewport[noOfViewports];
+        this.playerViewports = new ExtendViewport[viewportCount];
         for (int i = 0; i < this.playerViewports.length; i++) {
-            this.playerViewports[i] = new ExtendViewport(Constants.WORLD_SIZE / noOfViewports, Constants.WORLD_SIZE);
+            this.playerViewports[i] = new ExtendViewport(Constants.WORLD_SIZE / viewportCount, Constants.WORLD_SIZE);
         }
 
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
@@ -90,6 +90,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     public void show() {
         setUpInputProcessors();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        setUpPauseButton();
         setUpZoomButton();
     }
 
@@ -101,13 +102,30 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.input.setInputProcessor(inputMultiplexer);
     }
 
+    private void setUpPauseButton() {
+        Table table = new Table();
+        table.setFillParent(true);
+        table.top();
+        Drawable pauseImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_pause.png"))));
+        final HoverImageButton pauseButton = new HoverImageButton(pauseImage);
+        pauseButton.setNormalAlpha(.8f);
+        pauseButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showPauseDialog();
+            }
+        });
+        table.add(pauseButton).padTop(ScoreBar.BAR_HEIGHT);
+        fullScreenStage.addActor(table);
+    }
+
     private void setUpZoomButton() {
         Table table = new Table();
         table.setFillParent(true);
         table.top();
         Drawable zoomInImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_in.png"))));
         Drawable zoomOutImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_out.png"))));
-        final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomOutImage, zoomInImage);
+        final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomInImage);
         zoomButton.setNormalAlpha(.8f);
         zoomButton.addListener(new ClickListener() {
             @Override
@@ -119,7 +137,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
-        table.add(zoomButton).padTop(ScoreBar.BAR_HEIGHT);
+        table.add(zoomButton).padTop(ScoreBar.BAR_HEIGHT + zoomButton.getHeight());
         fullScreenStage.addActor(table);
     }
 
@@ -179,6 +197,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         scoreBars.render(renderer, gameManager.playerManager.getPlayers(), delta);
 
         if (!gameComplete && map.gameComplete(gameManager.playerManager.getPlayers())) {
+            gameManager.directionBufferManager.clearBuffer();
             gameManager.playerManager.stopPlayers();
             gameComplete = true;
         }
@@ -275,6 +294,40 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         disconnectionDialog.show(fullScreenStage);
     }
 
+    private void showPauseDialog() {
+        gameManager.playerManager.stopPlayers();
+        if (!gameManager.connectionManager.isActive) {
+            gameManager.directionBufferManager.clearBuffer();
+        }
+        Dialog pauseDialog = new Dialog("", game.skin) {
+            @Override
+            public void result(Object obj) {
+                int optionNo = (Integer) obj;
+                if (optionNo == 2) {
+                    if (gameManager.connectionManager.isActive) {
+                        gameManager.connectionManager.close();
+                    } else {
+                        game.setScreen(new MainMenuScreen(game));
+                    }
+                }
+            }
+        };
+        pauseDialog.getButtonTable().defaults().width(200f);
+        pauseDialog.button("Resume", 0);
+        pauseDialog.getButtonTable().row();
+        /*if (!gameManager.connectionManager.isActive) {
+            pauseDialog.button("Restart", 1);         Coming soon *wink*
+            pauseDialog.getButtonTable().row();
+        }*/
+        pauseDialog.button("Main Menu", 2);
+        pauseDialog.getButtonTable().row();
+        pauseDialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
+        pauseDialog.text("Game Paused").pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
+        Label label = (Label) pauseDialog.getContentTable().getChild(0);
+        label.setAlignment(Align.center);
+        pauseDialog.show(fullScreenStage);
+    }
+
     private boolean isSplitscreenMultiplayer() {
         return !gameManager.connectionManager.isActive;
     }
@@ -285,6 +338,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             public void run() {
                 if (!gameComplete) {
                     gameManager.playerManager.stopPlayers();
+                    gameManager.directionBufferManager.clearBuffer();
                     showDisconnectionDialog();
                     Gdx.input.setInputProcessor(fullScreenStage);
                 }
@@ -300,11 +354,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            if (gameManager.connectionManager.isActive) {
-                gameManager.connectionManager.close();
-            } else {
-                game.setScreen(new MainMenuScreen(game));
-            }
+            showPauseDialog();
 
             return true;
         }
@@ -325,11 +375,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            if (gameManager.connectionManager.isActive) {
-                gameManager.connectionManager.close();
-            } else {
-                game.setScreen(new MainMenuScreen(game));
-            }
+            showPauseDialog();
 
             return true;
         }

@@ -13,7 +13,7 @@ public class BotController {
         // On Android: /storage/emulated/0 (Need permission first)
         // On Desktop: /home/username/
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            File f = new File(Gdx.files.getExternalStoragePath() + "/Zoned/Bots");
+            File f = new File(Gdx.files.getExternalStoragePath());
             try {
                 Gdx.app.log(Constants.LOG_TAG, "Starting file list: ");
                 for (File file : f.listFiles()) {

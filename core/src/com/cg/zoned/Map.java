@@ -16,16 +16,21 @@ public class Map {
     public int rows;
     public int cols;
     public int coloredCells;
+    public int wallCount;
 
     public Map(int rows, int cols) {
         this.rows = rows;
         this.cols = cols;
-        this.coloredCells = 0;
+        this.coloredCells = this.wallCount = 0;
 
         this.mapGrid = new Cell[this.rows][this.cols];
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
                 mapGrid[i][j] = new Cell();
+
+                if (!mapGrid[i][j].isMovable) {
+                    wallCount++;
+                }
             }
         }
     }
@@ -82,12 +87,12 @@ public class Map {
         for (Player player : players) {
             if (player.prevPosition != player.position) {
                 if (player.prevPosition != null) {
-                    mapGrid[Math.round(player.prevPosition.y)][Math.round(player.prevPosition.x)].noOfPlayers--;
+                    mapGrid[Math.round(player.prevPosition.y)][Math.round(player.prevPosition.x)].playerCount--;
                 } else {
                     player.prevPosition = new Vector2();
                 }
 
-                mapGrid[Math.round(player.position.y)][Math.round(player.position.x)].noOfPlayers++;
+                mapGrid[Math.round(player.position.y)][Math.round(player.position.x)].playerCount++;
 
                 player.prevPosition.x = Math.round(player.position.x);
                 player.prevPosition.y = Math.round(player.position.y);
@@ -101,7 +106,7 @@ public class Map {
         for (int i = 0; i < players.length; i++) {
             int posX = Math.round(players[i].position.x);
             int posY = Math.round(players[i].position.y);
-            if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].noOfPlayers == 1) {
+            if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].playerCount == 1) {
                 mapGrid[posY][posX].cellColor = new Color(players[i].color.r, players[i].color.g, players[i].color.b, 0.1f);
                 playerManager.incrementScore(players[i]);
                 coloredCells++;
@@ -266,132 +271,28 @@ public class Map {
             GridPoint2 pos = stack.pop();
 
             if (pos.x > 0) {
-                if (!mapGrid[pos.x - 1][pos.y].isMovable) {
-                    fillColor = Color.BLACK;
-                } else if (mapGrid[pos.x - 1][pos.y].cellColor != null) {
-                    if (fillColor == null) {
-                        fillColor = mapGrid[pos.x - 1][pos.y].cellColor;
-                    } else if (!equalColors(fillColor, mapGrid[pos.x - 1][pos.y].cellColor)) {
-                        fillColor = Color.BLACK;
-                    }
-                }
-
-                if (gridState[pos.x - 1][pos.y].state == FloodFillGridState.State.UNVISITED) {
-                    gridState[pos.x - 1][pos.y].state = FloodFillGridState.State.VISITED;
-                    stack.add(new GridPoint2(pos.x - 1, pos.y));
-                }
+                fillColor = fillColorHelper(pos.x - 1, pos.y, fillColor, gridState, stack);
             }
             if (pos.x < rows - 1) {
-                if (!mapGrid[pos.x + 1][pos.y].isMovable) {
-                    fillColor = Color.BLACK;
-                } else if (mapGrid[pos.x + 1][pos.y].cellColor != null) {
-                    if (fillColor == null) {
-                        fillColor = mapGrid[pos.x + 1][pos.y].cellColor;
-                    } else if (!equalColors(fillColor, mapGrid[pos.x + 1][pos.y].cellColor)) {
-                        fillColor = Color.BLACK;
-                    }
-                }
-
-                if (gridState[pos.x + 1][pos.y].state == FloodFillGridState.State.UNVISITED) {
-                    gridState[pos.x + 1][pos.y].state = FloodFillGridState.State.VISITED;
-                    stack.add(new GridPoint2(pos.x + 1, pos.y));
-                }
+                fillColor = fillColorHelper(pos.x + 1, pos.y, fillColor, gridState, stack);
             }
             if (pos.y > 0) {
-                if (!mapGrid[pos.x][pos.y - 1].isMovable) {
-                    fillColor = Color.BLACK;
-                } else if (mapGrid[pos.x][pos.y - 1].cellColor != null) {
-                    if (fillColor == null) {
-                        fillColor = mapGrid[pos.x][pos.y - 1].cellColor;
-                    } else if (!equalColors(fillColor, mapGrid[pos.x][pos.y - 1].cellColor)) {
-                        fillColor = Color.BLACK;
-                    }
-                }
-
-                if (gridState[pos.x][pos.y - 1].state == FloodFillGridState.State.UNVISITED) {
-                    gridState[pos.x][pos.y - 1].state = FloodFillGridState.State.VISITED;
-                    stack.add(new GridPoint2(pos.x, pos.y - 1));
-                }
+                fillColor = fillColorHelper(pos.x, pos.y - 1, fillColor, gridState, stack);
             }
             if (pos.y < cols - 1) {
-                if (!mapGrid[pos.x][pos.y + 1].isMovable) {
-                    fillColor = Color.BLACK;
-                } else if (mapGrid[pos.x][pos.y + 1].cellColor != null) {
-                    if (fillColor == null) {
-                        fillColor = mapGrid[pos.x][pos.y + 1].cellColor;
-                    } else if (!equalColors(fillColor, mapGrid[pos.x][pos.y + 1].cellColor)) {
-                        fillColor = Color.BLACK;
-                    }
-                }
-
-                if (gridState[pos.x][pos.y + 1].state == FloodFillGridState.State.UNVISITED) {
-                    gridState[pos.x][pos.y + 1].state = FloodFillGridState.State.VISITED;
-                    stack.add(new GridPoint2(pos.x, pos.y + 1));
-                }
+                fillColor = fillColorHelper(pos.x, pos.y + 1, fillColor, gridState, stack);
             }
             if (pos.x > 0 && pos.y > 0) {
-                if (!mapGrid[pos.x - 1][pos.y - 1].isMovable) {
-                    fillColor = Color.BLACK;
-                } else if (mapGrid[pos.x - 1][pos.y - 1].cellColor != null) {
-                    if (fillColor == null) {
-                        fillColor = mapGrid[pos.x - 1][pos.y - 1].cellColor;
-                    } else if (!equalColors(fillColor, mapGrid[pos.x - 1][pos.y - 1].cellColor)) {
-                        fillColor = Color.BLACK;
-                    }
-                }
-
-                if (gridState[pos.x - 1][pos.y - 1].state == FloodFillGridState.State.UNVISITED) {
-                    gridState[pos.x - 1][pos.y - 1].state = FloodFillGridState.State.VISITED;
-                    stack.add(new GridPoint2(pos.x - 1, pos.y - 1));
-                }
+                fillColor = fillColorHelper(pos.x - 1, pos.y - 1, fillColor, gridState, stack);
             }
             if (pos.x > 0 && pos.y < cols - 1) {
-                if (!mapGrid[pos.x - 1][pos.y + 1].isMovable) {
-                    fillColor = Color.BLACK;
-                } else if (mapGrid[pos.x - 1][pos.y + 1].cellColor != null) {
-                    if (fillColor == null) {
-                        fillColor = mapGrid[pos.x - 1][pos.y + 1].cellColor;
-                    } else if (!equalColors(fillColor, mapGrid[pos.x - 1][pos.y + 1].cellColor)) {
-                        fillColor = Color.BLACK;
-                    }
-                }
-
-                if (gridState[pos.x - 1][pos.y + 1].state == FloodFillGridState.State.UNVISITED) {
-                    gridState[pos.x - 1][pos.y + 1].state = FloodFillGridState.State.VISITED;
-                    stack.add(new GridPoint2(pos.x - 1, pos.y + 1));
-                }
+                fillColor = fillColorHelper(pos.x - 1, pos.y + 1, fillColor, gridState, stack);
             }
             if (pos.x < rows - 1 && pos.y > 0) {
-                if (!mapGrid[pos.x + 1][pos.y - 1].isMovable) {
-                    fillColor = Color.BLACK;
-                } else if (mapGrid[pos.x + 1][pos.y - 1].cellColor != null) {
-                    if (fillColor == null) {
-                        fillColor = mapGrid[pos.x + 1][pos.y - 1].cellColor;
-                    } else if (!equalColors(fillColor, mapGrid[pos.x + 1][pos.y - 1].cellColor)) {
-                        fillColor = Color.BLACK;
-                    }
-                }
-
-                if (gridState[pos.x + 1][pos.y - 1].state == FloodFillGridState.State.UNVISITED) {
-                    gridState[pos.x + 1][pos.y - 1].state = FloodFillGridState.State.VISITED;
-                    stack.add(new GridPoint2(pos.x + 1, pos.y - 1));
-                }
+                fillColor = fillColorHelper(pos.x + 1, pos.y - 1, fillColor, gridState, stack);
             }
             if (pos.x < rows - 1 && pos.y < cols - 1) {
-                if (!mapGrid[pos.x + 1][pos.y + 1].isMovable) {
-                    fillColor = Color.BLACK;
-                } else if (mapGrid[pos.x + 1][pos.y + 1].cellColor != null) {
-                    if (fillColor == null) {
-                        fillColor = mapGrid[pos.x + 1][pos.y + 1].cellColor;
-                    } else if (!equalColors(fillColor, mapGrid[pos.x + 1][pos.y + 1].cellColor)) {
-                        fillColor = Color.BLACK;
-                    }
-                }
-
-                if (gridState[pos.x + 1][pos.y + 1].state == FloodFillGridState.State.UNVISITED) {
-                    gridState[pos.x + 1][pos.y + 1].state = FloodFillGridState.State.VISITED;
-                    stack.add(new GridPoint2(pos.x + 1, pos.y + 1));
-                }
+                fillColor = fillColorHelper(pos.x + 1, pos.y + 1, fillColor, gridState, stack);
             }
 
             if (fillPosStack != null) {
@@ -402,17 +303,38 @@ public class Map {
         return fillColor;
     }
 
+    /**
+     * Helper method for flood fill
+     */
+    private Color fillColorHelper(int x, int y, Color fillColor, FloodFillGridState[][] gridState, Array<GridPoint2> stack) {
+        if (!mapGrid[x][y].isMovable) {
+            fillColor = Color.BLACK;
+        } else if (mapGrid[x][y].cellColor != null) {
+            if (fillColor == null) {
+                fillColor = mapGrid[x][y].cellColor;
+            } else if (!equalColors(fillColor, mapGrid[x][y].cellColor)) {
+                fillColor = Color.BLACK;
+            }
+        }
+
+        if (gridState[x][y].state == FloodFillGridState.State.UNVISITED) {
+            gridState[x][y].state = FloodFillGridState.State.VISITED;
+            stack.add(new GridPoint2(x, y));
+        }
+
+        return fillColor;
+    }
+
     public boolean gameComplete(Player[] players) {
-        //TODO: Account for walls
         if (players.length == 2) {
             for (Player player : players) {
                 // For two player games, end the game when a player has captured more than 50% of the cells
-                if (100 * (player.score / ((double) this.rows * this.cols)) > 50.0) {
+                if (100 * (player.score / (((double) this.rows * this.cols)) - this.wallCount) > 50.0) {
                     return true;
                 }
             }
         }
-        return this.rows * this.cols == this.coloredCells;
+        return ((this.rows * this.cols) - this.wallCount) == this.coloredCells;
     }
 
     /**

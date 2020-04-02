@@ -63,8 +63,8 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         Drawable controlFlingOn = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_control_fling_on.png"))));
         Drawable controlPiemenuOn = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_control_piemenu_on.png"))));
         Drawable controlPiemenuOff = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_control_piemenu_off.png"))));
-        final HoverImageButton flingControl = new HoverImageButton(controlFlingOff, controlFlingOff, controlFlingOn);
-        final HoverImageButton piemenuControl = new HoverImageButton(controlPiemenuOff, controlPiemenuOff, controlPiemenuOn);
+        final HoverImageButton flingControl = new HoverImageButton(controlFlingOff, controlFlingOn);
+        final HoverImageButton piemenuControl = new HoverImageButton(controlPiemenuOff, controlPiemenuOn);
         final Label flingControlLabel = new Label("Fling", game.skin);
         Label piemenuControlLabel = new Label("Piemenu", game.skin);
         flingControl.setHoverAlpha(.7f);
