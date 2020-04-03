@@ -118,9 +118,9 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         colSpinner.getStepScrollPane().snapToStep(snapValue - LOW_LIMIT);
 
         innerTable.add(gridSizeLabel);
-        innerTable.add(rowSpinner);
+        innerTable.add(rowSpinner).width(rowSpinner.getPrefWidth() * game.getScaleFactor());
         innerTable.add(x);
-        innerTable.add(colSpinner);
+        innerTable.add(colSpinner).width(colSpinner.getPrefWidth() * game.getScaleFactor());
         table.add(innerTable).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor());
 
         table.row();

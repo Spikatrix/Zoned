@@ -115,9 +115,9 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         colSpinner.getStepScrollPane().snapToStep(snapValue - LOW_LIMIT);
 
         innerTable.add(gridSizeLabel);
-        innerTable.add(rowSpinner);
+        innerTable.add(rowSpinner).width(rowSpinner.getPrefWidth() * game.getScaleFactor());
         innerTable.add(x);
-        innerTable.add(colSpinner);
+        innerTable.add(colSpinner).width(colSpinner.getPrefWidth() * game.getScaleFactor());
         serverLobbyTable.add(innerTable).pad(10 * game.getScaleFactor());
 
         serverLobbyTable.row();

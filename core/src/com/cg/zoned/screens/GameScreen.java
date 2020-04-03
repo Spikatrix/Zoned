@@ -92,20 +92,27 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
         setUpPauseButton();
         setUpZoomButton();
+        setUpUI();
     }
 
-    private void setUpInputProcessors() {
-        InputMultiplexer inputMultiplexer = new InputMultiplexer();
-        inputMultiplexer.addProcessor(fullScreenStage);
-        inputMultiplexer.addProcessor(gameManager.playerManager);
-        inputMultiplexer.addProcessor(this); // ESC key, Back button etc
-        Gdx.input.setInputProcessor(inputMultiplexer);
-    }
+    private void setUpUI() {
+        HoverImageButton pauseButton = setUpPauseButton();
+        HoverImageButton zoomButton = setUpZoomButton();
 
-    private void setUpPauseButton() {
         Table table = new Table();
         table.setFillParent(true);
         table.top();
+
+        table.add(pauseButton).padTop(ScoreBar.BAR_HEIGHT)
+                .width(pauseButton.getWidth() * game.getScaleFactor()).height(pauseButton.getHeight() * game.getScaleFactor());
+        table.row();
+        table.add(zoomButton)
+                .width(zoomButton.getWidth() * game.getScaleFactor()).height(zoomButton.getHeight() * game.getScaleFactor());
+
+        fullScreenStage.addActor(table);
+    }
+
+    private HoverImageButton setUpPauseButton() {
         Drawable pauseImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_pause.png"))));
         final HoverImageButton pauseButton = new HoverImageButton(pauseImage);
         pauseButton.setNormalAlpha(.8f);
@@ -115,14 +122,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 showPauseDialog();
             }
         });
-        table.add(pauseButton).padTop(ScoreBar.BAR_HEIGHT);
-        fullScreenStage.addActor(table);
+        return pauseButton;
     }
 
-    private void setUpZoomButton() {
-        Table table = new Table();
-        table.setFillParent(true);
-        table.top();
+    private HoverImageButton setUpZoomButton() {
         Drawable zoomInImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_in.png"))));
         Drawable zoomOutImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_out.png"))));
         final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomInImage);
@@ -137,8 +140,15 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
-        table.add(zoomButton).padTop(ScoreBar.BAR_HEIGHT + zoomButton.getHeight());
-        fullScreenStage.addActor(table);
+        return zoomButton;
+    }
+
+    private void setUpInputProcessors() {
+        InputMultiplexer inputMultiplexer = new InputMultiplexer();
+        inputMultiplexer.addProcessor(fullScreenStage);
+        inputMultiplexer.addProcessor(gameManager.playerManager);
+        inputMultiplexer.addProcessor(this); // ESC key, Back button etc
+        Gdx.input.setInputProcessor(inputMultiplexer);
     }
 
     @Override
@@ -237,9 +247,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         int lineCount = gameManager.playerManager.getPlayers().length;
 
-        float height = fullScreenStage.getViewport().getScreenHeight();
+        float height = fullScreenStage.getViewport().getWorldHeight();
         for (int i = 1; i < lineCount; i++) {
-            float startX = (fullScreenStage.getViewport().getScreenWidth() / (float) lineCount) * i;
+            float startX = (fullScreenStage.getViewport().getWorldWidth() / (float) lineCount) * i;
 
             renderer.rect(startX, 0,
                     Constants.VIEWPORT_DIVIDER_TOTAL_WIDTH / 2, height,
@@ -285,7 +295,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 game.setScreen(new MainMenuScreen(game));
             }
         };
-        disconnectionDialog.getButtonTable().defaults().width(200f);
+        disconnectionDialog.getButtonTable().defaults().width(200f * game.getScaleFactor());
         disconnectionDialog.button("OK");
         disconnectionDialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
         disconnectionDialog.text("Disconnected").pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
@@ -312,7 +322,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         };
-        pauseDialog.getButtonTable().defaults().width(200f);
+        pauseDialog.getButtonTable().defaults().width(200f * game.getScaleFactor());
         pauseDialog.button("Resume", 0);
         pauseDialog.getButtonTable().row();
         /*if (!gameManager.connectionManager.isActive) {
