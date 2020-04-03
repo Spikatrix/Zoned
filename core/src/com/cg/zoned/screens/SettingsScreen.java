@@ -49,6 +49,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void show() {
         setUpStage();
+        setUpBackButton();
         animationManager.fadeInStage(stage);
     }
 
@@ -134,6 +135,25 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         stage.addFocusableActor(showFPS, 2);
     }
 
+    private void setUpBackButton() {
+        Table table = new Table();
+        table.setFillParent(true);
+        table.left().top();
+        Drawable backImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_back.png"))));
+        final HoverImageButton backButton = new HoverImageButton(backImage);
+        backButton.setNormalAlpha(1f);
+        backButton.setHoverAlpha(.75f);
+        backButton.setClickAlpha(.5f);
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                onBackPressed();
+            }
+        });
+        table.add(backButton).padLeft(20f).padTop(35f);
+        stage.addActor(table);
+    }
+
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
@@ -159,10 +179,14 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         stage.dispose();
     }
 
+    private void onBackPressed() {
+        animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+    }
+
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 
@@ -182,7 +206,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 

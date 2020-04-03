@@ -14,15 +14,19 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.ui.HoverImageButton;
 import com.payne.games.piemenu.PieMenu;
 
 // Used for testing purposes, nvm about the crap in here
@@ -113,8 +117,29 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
             }
         });
 
+        setUpBackButton();
+
         InputMultiplexer inputMultiplexer = new InputMultiplexer(stage, this);
         Gdx.input.setInputProcessor(inputMultiplexer);
+    }
+
+    private void setUpBackButton() {
+        Table table = new Table();
+        table.setFillParent(true);
+        table.left().top();
+        Drawable backImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_back.png"))));
+        final HoverImageButton backButton = new HoverImageButton(backImage);
+        backButton.setNormalAlpha(1f);
+        backButton.setHoverAlpha(.75f);
+        backButton.setClickAlpha(.5f);
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                onBackPressed();
+            }
+        });
+        table.add(backButton).padLeft(20f).padTop(35f);
+        stage.addActor(table);
     }
 
     @Override
@@ -165,10 +190,14 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         batch.dispose();
     }
 
+    private void onBackPressed() {
+        game.setScreen(new MainMenuScreen(game));
+    }
+
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            game.setScreen(new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 
@@ -188,7 +217,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            game.setScreen(new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 

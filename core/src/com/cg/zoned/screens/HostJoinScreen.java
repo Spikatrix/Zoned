@@ -6,7 +6,9 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -16,6 +18,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -25,6 +29,7 @@ import com.cg.zoned.KryoHelper;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.ui.FocusableStage;
+import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Server;
@@ -53,6 +58,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void show() {
         setUpStage();
+        setUpBackButton();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
         animationManager.fadeInStage(stage);
     }
@@ -128,6 +134,25 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         }
         stage.addActor(table);
         stage.setFocusedActor(playerNameField);
+    }
+
+    private void setUpBackButton() {
+        Table table = new Table();
+        table.setFillParent(true);
+        table.left().top();
+        Drawable backImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_back.png"))));
+        final HoverImageButton backButton = new HoverImageButton(backImage);
+        backButton.setNormalAlpha(1f);
+        backButton.setHoverAlpha(.75f);
+        backButton.setClickAlpha(.5f);
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                onBackPressed();
+            }
+        });
+        table.add(backButton).padLeft(20f).padTop(35f);
+        stage.addActor(table);
     }
 
     private void startServerLobby(final String playerName) {
@@ -261,10 +286,14 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         stage.dispose();
     }
 
+    private void onBackPressed() {
+        animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+    }
+
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 
@@ -284,7 +313,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 
