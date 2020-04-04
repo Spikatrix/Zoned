@@ -85,9 +85,15 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         TextButton joinButton = new TextButton("Join", game.skin);
         table.add(hostButton).width(200 * game.getScaleFactor());
         table.add(joinButton).width(200 * game.getScaleFactor());
+        table.row();
 
         stage.addFocusableActor(hostButton);
         stage.addFocusableActor(joinButton);
+
+        final Label searchingLabel = new Label("Searching for servers...", game.skin);
+        searchingLabel.getColor().a = 0;
+        table.add(searchingLabel).colspan(2);
+        table.row();
 
         hostButton.addListener(new ClickListener() {
             @Override
@@ -113,10 +119,15 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
                 String name = playerNameField.getText().trim();
                 if (!name.isEmpty()) {
-                    game.preferences.putString(Constants.NAME_PREFERENCE, name);
-                    game.preferences.flush();
+                    if (searchingLabel.getColor().a == 0) {
+                        game.preferences.putString(Constants.NAME_PREFERENCE, name);
+                        game.preferences.flush();
 
-                    startClientLobby(name);
+                        searchingLabel.setText("Searching for servers...");
+                        startClientLobby(name, searchingLabel);
+                    } else {
+                        searchingLabel.setText("Already searching for servers...");
+                    }
                 } else {
                     stage.showInfoDialog("Please enter the name of the player(s)", game.getScaleFactor(), game.skin);
                 }
@@ -177,13 +188,14 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         animationManager.fadeOutStage(stage, new ServerLobbyScreen(game, server, playerName));
     }
 
-    private void startClientLobby(final String playerName) {
+    private void startClientLobby(final String playerName, final Label searchingLabel) {
         final Client client = new Client();
 
         Kryo kryo = client.getKryo();
         KryoHelper.registerClasses(kryo);
 
         client.start();
+        searchingLabel.addAction(Actions.fadeIn(.2f));
 
         new Thread(new Runnable() {
             @Override
@@ -192,15 +204,16 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
-                        checkAndStartClientScreen(client, playerName, addr);
+                        checkAndStartClientScreen(client, playerName, addr, searchingLabel);
                     }
                 });
             }
         }).start();
-
     }
 
-    private void checkAndStartClientScreen(Client client, String playerName, InetAddress addr) {
+    private void checkAndStartClientScreen(Client client, String playerName, InetAddress addr, Label searchingLabel) {
+        searchingLabel.clearActions();
+
         try {
             if (addr == null) {
                 throw new IOException("Failed to find the host");
@@ -208,11 +221,13 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             client.connect(4000, addr, Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
             stage.showInfoDialog("Error connecting to the server\n" + e.getMessage(), game.getScaleFactor(), game.skin);
+            searchingLabel.addAction(Actions.fadeOut(.2f));
             return;
         }
 
         if (!client.isConnected()) {
             stage.showInfoDialog("Failed to connect to the server", game.getScaleFactor(), game.skin);
+            searchingLabel.addAction(Actions.fadeOut(.2f));
             return;
         }
 
