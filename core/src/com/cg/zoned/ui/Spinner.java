@@ -55,6 +55,12 @@ public class Spinner extends Table {
             int touchY = RESET_VALUE;
 
             @Override
+            public boolean scrolled(InputEvent event, float x, float y, int amount) {
+                stepScrollPane.snapToStep(amount);
+                return true;
+            }
+
+            @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 Rectangle rectangle = new Rectangle(stepScrollPane.getX(), stepScrollPane.getY(),
                         stepScrollPane.getWidth(), stepScrollPane.getHeight());
