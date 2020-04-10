@@ -12,6 +12,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
+import com.cg.zoned.controls.FlingControlManager;
+import com.cg.zoned.controls.PieMenuControlManager;
 
 public class ControlManager {
     private FlingControlManager flingControlManager = null;

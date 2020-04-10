@@ -71,7 +71,6 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
         Label playerNameLabel = new Label("Player name: ", game.skin, "themed");
         final TextField playerNameField = new TextField("", game.skin);
-        playerNameField.setName("Player name textfield");
         playerNameField.setText(game.preferences.getString(Constants.NAME_PREFERENCE, null));
         playerNameField.setCursorPosition(playerNameField.getText().length());
         table.add(playerNameLabel).right();

@@ -204,7 +204,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
 
         if (address == null) {
             DropDownMenu colorSelector = new DropDownMenu(game.skin);
-            colorSelector.setName("color-selector SelectBox");
+            colorSelector.setName("color-selector");
             colorSelector.setItems("Green", "Red", "Blue", "Yellow");
             colorSelector.addListener(new ChangeListener() {
                 @Override
@@ -266,7 +266,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         }
 
         Array<String> uniqueColors = new Array<String>();
-        uniqueColors.add(((DropDownMenu) playerItems.get(0).findActor("color-selector SelectBox")).getSelected());
+        uniqueColors.add(((DropDownMenu) playerItems.get(0).findActor("color-selector")).getSelected());
         for (int i = 1; i < size; i++) {
             String color = ((Label) playerItems.get(i).findActor("color-label")).getText().toString();
             if (!uniqueColors.contains(color, false)) {
@@ -304,7 +304,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
             String name = ((Label) this.playerItems.get(i).findActor("name-label")).getText().toString();
             String color;
             if (i == 0) {
-                color = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector SelectBox")).getSelected();
+                color = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector")).getSelected();
             } else {
                 color = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
             }
@@ -358,7 +358,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
                 if (i != 0) {
                     bpd.colorStrings[i] = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
                 } else {
-                    bpd.colorStrings[i] = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector SelectBox")).getSelected();
+                    bpd.colorStrings[i] = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector")).getSelected();
                 }
             } else {
                 bpd.nameStrings[0] = ((Label) this.playerItems.get(index).findActor("name-label")).getText().toString();
@@ -368,7 +368,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
                 if (index != 0) {
                     bpd.colorStrings[0] = ((Label) this.playerItems.get(index).findActor("color-label")).getText().toString();
                 } else {
-                    bpd.colorStrings[0] = ((DropDownMenu) this.playerItems.get(index).findActor("color-selector SelectBox")).getSelected();
+                    bpd.colorStrings[0] = ((DropDownMenu) this.playerItems.get(index).findActor("color-selector")).getSelected();
                 }
             }
         }

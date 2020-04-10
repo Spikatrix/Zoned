@@ -141,7 +141,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
                         ((Label) playerItems.get(0).findActor("ready-label")).getText().toString()
                 };
                 bpd.colorStrings = new String[]{
-                        ((DropDownMenu) playerItems.get(0).findActor("color-selector SelectBox")).getSelected()
+                        ((DropDownMenu) playerItems.get(0).findActor("color-selector")).getSelected()
                 };
 
                 if (client.isConnected()) {
@@ -260,7 +260,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         if (color == null) {
             //final SelectBox<String> colorSelector = new SelectBox<String>(game.skin);
             final DropDownMenu colorSelector = new DropDownMenu(game.skin);
-            colorSelector.setName("color-selector SelectBox");
+            colorSelector.setName("color-selector");
             colorSelector.setItems("Green", "Red", "Blue", "Yellow");
             colorSelector.getList().setAlignment(Align.center);
             colorSelector.setAlignment(Align.center);
@@ -366,7 +366,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
             String name = ((Label) this.playerItems.get(i).findActor("name-label")).getText().toString();
             String color;
             if (i == 0) {
-                color = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector SelectBox")).getSelected();
+                color = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector")).getSelected();
             } else {
                 color = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
             }

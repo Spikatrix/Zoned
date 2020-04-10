@@ -1,4 +1,4 @@
-package com.cg.zoned.managers;
+package com.cg.zoned.controls;
 
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;

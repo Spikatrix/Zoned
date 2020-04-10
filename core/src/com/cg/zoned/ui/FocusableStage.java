@@ -94,7 +94,7 @@ public class FocusableStage extends Stage {
         while (colspan-- > 0) {
             focusableActorArray.add(actor);
 
-            if (isATextField(actor)) {
+            if (actor instanceof TextField) {
                 final int TAB = 9; // 9 is the ASCII code for a TAB character
                 /*
                  * Disable TextField's default TAB and SHIFT + TAB focus navigation
@@ -385,7 +385,7 @@ public class FocusableStage extends Stage {
      * false if the Actor is "busy"
      */
     private boolean actorIsNotBusy(int keyCode) {
-        if (isATextField(currentFocusedActor)) {
+        if (currentFocusedActor instanceof TextField) {
             if (keyCode == Input.Keys.SPACE) {
                 return false;
             }
@@ -396,7 +396,7 @@ public class FocusableStage extends Stage {
             } else if (keyCode == Input.Keys.RIGHT) {
                 return textField.getCursorPosition() == textField.getText().length() && textField.getSelection().isEmpty();
             }
-        } else if (isASelectBox(currentFocusedActor)) {
+        } else if (currentFocusedActor instanceof DropDownMenu) {
             DropDownMenu selectBox = (DropDownMenu) currentFocusedActor;
             boolean isExpanded = selectBox.isExpanded();
 
@@ -413,42 +413,6 @@ public class FocusableStage extends Stage {
         }
 
         return true;
-    }
-
-    /**
-     * Determines if the Actor is a TextField.
-     * This is done by examining if the name of the Actor object contains "TEXTFIELD"
-     * So yes, you'll need to name your Actors beforehand
-     *
-     * @param actor The Actor to check
-     * @return true if the Actor is a TextField
-     * false if the Actor is not a TextField
-     */
-    private boolean isATextField(Actor actor) {
-        if (actor == null) {
-            return false;
-        }
-
-        String name = actor.getName();
-        return name != null && name.toUpperCase().contains("TEXTFIELD");
-    }
-
-    /**
-     * Determines if the Actor is a SelectBox.
-     * This is done by examining if the name of the Actor object contains "SELECTBOX"
-     * So yes, you'll need to name your Actors beforehand
-     *
-     * @param actor The Actor to check
-     * @return true if the Actor is a SelectBox
-     * false if the Actor is not a SelectBox
-     */
-    private boolean isASelectBox(Actor actor) {
-        if (actor == null) {
-            return false;
-        }
-
-        String name = actor.getName();
-        return name != null && name.toUpperCase().contains("SELECTBOX");
     }
 
     /**
