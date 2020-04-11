@@ -10,4 +10,6 @@ public interface MapEntity {
     int getRowCount();
 
     int getColCount();
+
+    String getMapData();
 }

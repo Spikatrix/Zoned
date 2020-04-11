@@ -132,12 +132,12 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         Label x = new Label("  x  ", game.skin);
         final int LOW_LIMIT = 3, HIGH_LIMIT = 100;
         int snapValue = 10;
-        final Spinner rowSpinner = new Spinner(game.skin);
-        final Spinner colSpinner = new Spinner(game.skin);
+        final Spinner rowSpinner = new Spinner(game.skin, game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight());
+        final Spinner colSpinner = new Spinner(game.skin, game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight());
         rowSpinner.generateValueLabel(LOW_LIMIT, HIGH_LIMIT, game.skin);
         colSpinner.generateValueLabel(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        rowSpinner.getStepScrollPane().snapToStep(snapValue - LOW_LIMIT);
-        colSpinner.getStepScrollPane().snapToStep(snapValue - LOW_LIMIT);
+        rowSpinner.snapToStep(snapValue - LOW_LIMIT);
+        colSpinner.snapToStep(snapValue - LOW_LIMIT);
 
         innerTable.add(gridSizeLabel);
         innerTable.add(rowSpinner).width(rowSpinner.getPrefWidth() * game.getScaleFactor());
@@ -147,10 +147,10 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         table.row();
 
-        stage.addFocusableActor(rowSpinner.getPlusButton());
-        stage.addFocusableActor(rowSpinner.getMinusButton());
-        stage.addFocusableActor(colSpinner.getPlusButton(), 2);
-        stage.addFocusableActor(colSpinner.getMinusButton());
+        stage.addFocusableActor(rowSpinner.getLeftButton());
+        stage.addFocusableActor(rowSpinner.getRightButton());
+        stage.addFocusableActor(colSpinner.getLeftButton(), 2);
+        stage.addFocusableActor(colSpinner.getRightButton());
         stage.row();
 
         Table infoTable = new Table();

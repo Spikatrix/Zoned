@@ -1,6 +1,7 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.maps.DefaultHoloMap;
 import com.cg.zoned.maps.DefaultRectangleMap;
 import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
@@ -22,6 +23,16 @@ public class MapManager {
 
     private void loadDefaultMaps() throws InvalidMapDimensions {
         mapList.add(new DefaultRectangleMap());
+        mapList.add(new DefaultHoloMap());
+    }
+
+    public String getMapNames() {
+        StringBuilder sb = new StringBuilder();
+        for (MapEntity mapEntity : mapList) {
+            sb.append(mapEntity.getName()).append("\n");
+        }
+
+        return sb.toString().trim();
     }
 
     public void clearErrorMessage() {

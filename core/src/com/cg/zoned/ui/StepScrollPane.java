@@ -2,6 +2,9 @@ package com.cg.zoned.ui;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.EventListener;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -19,6 +22,33 @@ public class StepScrollPane extends ScrollPane {
         super(null, skin);
         disableScrollBars();
         setUpContentTable();
+
+        removeDefaultScrollListener();
+        addCustomScrollListener();
+    }
+
+    private void removeDefaultScrollListener() {
+        EventListener eventListener = null;
+        for (EventListener listener : getListeners()) {
+            if (listener instanceof InputListener) {
+                eventListener = listener;
+                break;
+            }
+        }
+
+        if (eventListener != null) {
+            removeListener(eventListener);
+        }
+    }
+
+    private void addCustomScrollListener() {
+        addListener(new InputListener() {
+            @Override
+            public boolean scrolled(InputEvent event, float x, float y, int amount) {
+                snapToStep(amount);
+                return true;
+            }
+        });
     }
 
     private void disableScrollBars() {

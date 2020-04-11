@@ -1,21 +1,21 @@
 package com.cg.zoned.maps;
 
-public class DefaultRectangleMap implements MapEntity {
-    private String mapGridString = "0........2\n" +
+public class DefaultHoloMap implements MapEntity {
+    private String mapGridString = "0...##...2\n" +
             "..........\n" +
             "..........\n" +
+            "....##....\n" +
+            "#........#\n" +
+            "#........#\n" +
+            "....##....\n" +
             "..........\n" +
             "..........\n" +
-            "..........\n" +
-            "..........\n" +
-            "..........\n" +
-            "..........\n" +
-            "3........1\n";
+            "3...##...1\n";
 
     private int rowCount = 10;
     private int colCount = 10;
 
-    public DefaultRectangleMap() throws InvalidMapDimensions {
+    public DefaultHoloMap() throws InvalidMapDimensions {
         String[] mapRows = mapGridString.split("\n");
         if (mapRows.length != rowCount) {
             throw new InvalidMapDimensions("Row count does not match the provided string");
@@ -35,7 +35,7 @@ public class DefaultRectangleMap implements MapEntity {
 
     @Override
     public String getName() {
-        return "Rectangle";
+        return "Holo";
     }
 
     @Override

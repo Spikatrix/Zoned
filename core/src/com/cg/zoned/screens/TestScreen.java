@@ -13,14 +13,17 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 
@@ -59,10 +62,20 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         table.center();
         table.setFillParent(true);
 
-        Spinner spinner = new Spinner(game.skin);
-        spinner.generateValueLabel(0, 5, game.skin);
-        spinner.getStepScrollPane().snapToStep(0);
-        table.add(spinner).width(spinner.getPrefWidth() * game.getScaleFactor());
+        MapManager mapManager = new MapManager();
+        if (mapManager.getErrorMessage() != null) {
+            Label errorMessage = new Label(mapManager.getErrorMessage(), game.skin, "themed");
+            table.add(errorMessage);
+        } else {
+            Spinner spinner = new Spinner(game.skin, game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight());
+            Label mapNames = new Label(mapManager.getMapNames(), game.skin);
+            mapNames.setAlignment(Align.center);
+            mapNames.setWrap(true);
+            spinner.addContent(mapNames);
+            spinner.getLeftButton().setText("<");
+            spinner.getRightButton().setText(">");
+            table.add(spinner).width(spinner.getPrefWidth() * 2);
+        }
 
         stage.addActor(table);
     }
