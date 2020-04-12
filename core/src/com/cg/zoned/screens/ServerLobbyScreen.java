@@ -113,17 +113,21 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         Label x = new Label("  x  ", game.skin);
         final int LOW_LIMIT = 3, HIGH_LIMIT = 100;
         int snapValue = 10;
-        final Spinner rowSpinner = new Spinner(game.skin, game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight());
-        final Spinner colSpinner = new Spinner(game.skin, game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight());
-        rowSpinner.generateValueLabel(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        colSpinner.generateValueLabel(LOW_LIMIT, HIGH_LIMIT, game.skin);
+        final Spinner rowSpinner = new Spinner(game.skin,
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
+                64f * game.getScaleFactor(), true);
+        final Spinner colSpinner = new Spinner(game.skin,
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
+                64f * game.getScaleFactor(), true);
+        rowSpinner.generateValueRange(LOW_LIMIT, HIGH_LIMIT, game.skin);
+        colSpinner.generateValueRange(LOW_LIMIT, HIGH_LIMIT, game.skin);
         rowSpinner.snapToStep(snapValue - LOW_LIMIT);
         colSpinner.snapToStep(snapValue - LOW_LIMIT);
 
         innerTable.add(gridSizeLabel);
-        innerTable.add(rowSpinner).width(rowSpinner.getPrefWidth() * game.getScaleFactor());
+        innerTable.add(rowSpinner);
         innerTable.add(x);
-        innerTable.add(colSpinner).width(colSpinner.getPrefWidth() * game.getScaleFactor());
+        innerTable.add(colSpinner);
         serverLobbyTable.add(innerTable).pad(10 * game.getScaleFactor());
 
         serverLobbyTable.row();
@@ -132,8 +136,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         startButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                int rows = Math.round(rowSpinner.getScrollYPos() / rowSpinner.getScrollPaneHeight()) + LOW_LIMIT;
-                int cols = Math.round(colSpinner.getScrollYPos() / colSpinner.getScrollPaneHeight()) + LOW_LIMIT;
+                int rows = rowSpinner.getPositionIndex() + LOW_LIMIT;
+                int cols = colSpinner.getPositionIndex() + LOW_LIMIT;
                 validateServerData(rows, cols);
             }
         });

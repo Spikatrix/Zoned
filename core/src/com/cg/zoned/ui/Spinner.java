@@ -1,6 +1,5 @@
 package com.cg.zoned.ui;
 
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -16,71 +15,76 @@ public class Spinner extends Table {
     private StepScrollPane stepScrollPane;
     private TextButton rightButton;
 
-    private float scrollPaneHeight;
+    private boolean isVerticalSpinner;
 
+    private float scrollPaneHeight;
+    private float scrollPaneWidth;
     private float buttonHeight;
     private float buttonWidth;
     private int buttonStepCount = 10;
 
-    public Spinner(Skin skin, float scrollPaneHeight) {
+    public Spinner(Skin skin, float scrollPaneHeight, float scrollPaneWidth, boolean isVerticalSpinner) {
         this.scrollPaneHeight = scrollPaneHeight;
+        this.scrollPaneWidth = scrollPaneWidth;
+        this.isVerticalSpinner = isVerticalSpinner;
         init(skin);
     }
 
     private void init(Skin skin) {
         this.leftButton = new TextButton("+", skin);
-        this.stepScrollPane = new StepScrollPane(skin);
+        this.stepScrollPane = new StepScrollPane(skin, isVerticalSpinner);
         this.rightButton = new TextButton("-", skin);
 
         this.leftButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                stepScrollPane.snapToStep(buttonStepCount);
+                snapToStep(buttonStepCount);
             }
         });
 
         this.rightButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                stepScrollPane.snapToStep(-buttonStepCount);
+                snapToStep(-buttonStepCount);
             }
         });
 
         this.addListener(new ClickListener() {
-            final int RESET_VALUE = 100000;
-            int touchY = RESET_VALUE;
+            final float thresholdY = scrollPaneHeight / 2;
+            final float thresholdX = scrollPaneWidth / 2;
+            float touchPos;
 
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                Rectangle rectangle = new Rectangle(stepScrollPane.getX(), stepScrollPane.getY(),
-                        stepScrollPane.getWidth(), stepScrollPane.getHeight());
-                if (!rectangle.contains(x, y)) {
-                    touchY = (int) y;
+                if (isVerticalSpinner) {
+                    touchPos = y;
+                } else {
+                    touchPos = x;
                 }
                 return super.touchDown(event, x, y, pointer, button);
             }
 
             @Override
             public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                if (touchY == RESET_VALUE) {
-                    super.touchDragged(event, x, y, pointer);
-                    return;
-                }
-
-                if (Math.abs(touchY - y) >= 10) {
-                    if (touchY > y) {
-                        stepScrollPane.snapToStep(-1);
-                    } else {
-                        stepScrollPane.snapToStep(+1);
+                if (isVerticalSpinner) {
+                    if (Math.abs(touchPos - y) >= thresholdY) {
+                        if (touchPos > y) {
+                            snapToStep(-1);
+                        } else {
+                            snapToStep(+1);
+                        }
+                        touchPos = y;
                     }
-                    touchY = (int) y;
+                } else {
+                    if (Math.abs(touchPos - x) >= thresholdX) {
+                        if (touchPos > x) {
+                            snapToStep(-1);
+                        } else {
+                            snapToStep(+1);
+                        }
+                        touchPos = x;
+                    }
                 }
-            }
-
-            @Override
-            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
-                touchY = RESET_VALUE;
-                super.touchUp(event, x, y, pointer, button);
             }
         });
         this.setTouchable(Touchable.enabled);
@@ -93,18 +97,22 @@ public class Spinner extends Table {
 
     private void addAllComponentsToSpinner() {
         add(leftButton).width(buttonWidth).height(buttonHeight);
-        add(stepScrollPane).growX().height(scrollPaneHeight);
+        add(stepScrollPane).growX().height(scrollPaneHeight).width(scrollPaneWidth);
         add(rightButton).width(buttonWidth).height(buttonHeight);
 
         stepScrollPane.setHeight(scrollPaneHeight);
-        stepScrollPane.setStepHeight(scrollPaneHeight);
+        stepScrollPane.setWidth(scrollPaneWidth);
+        if (isVerticalSpinner) {
+            stepScrollPane.setStepSize(scrollPaneHeight);
+        } else {
+            stepScrollPane.setStepSize(scrollPaneWidth);
+        }
         stepScrollPane.layout();
     }
 
-    public void generateValueLabel(int valLowLimit, int valHighLimit, Skin skin) {
+    public void generateValueRange(int valLowLimit, int valHighLimit, Skin skin) {
         Label valueLabel = new Label("", skin);
         valueLabel.setAlignment(Align.center);
-        valueLabel.setWrap(true);
         StringBuilder sb = new StringBuilder();
         for (int i = valLowLimit; i <= valHighLimit; i++) {
             sb.append(i);
@@ -114,7 +122,6 @@ public class Spinner extends Table {
         }
         valueLabel.setText(sb.toString());
 
-        this.scrollPaneHeight = (valueLabel.getPrefHeight() / (valHighLimit - valLowLimit + 1));
         stepScrollPane.add(valueLabel);
         stepScrollPane.layout();
     }
@@ -132,12 +139,12 @@ public class Spinner extends Table {
         stepScrollPane.snapToStep(stepOffset);
     }
 
-    public float getScrollYPos() {
-        return stepScrollPane.getDestinationPosition();
-    }
-
-    public float getScrollPaneHeight() {
-        return scrollPaneHeight;
+    public int getPositionIndex() {
+        if (isVerticalSpinner) {
+            return Math.round(stepScrollPane.getDestinationPosition() / scrollPaneHeight);
+        } else {
+            return Math.round(stepScrollPane.getDestinationPosition() / scrollPaneWidth);
+        }
     }
 
     public TextButton getLeftButton() {
@@ -146,11 +153,5 @@ public class Spinner extends Table {
 
     public TextButton getRightButton() {
         return rightButton;
-    }
-
-    @Override
-    public float getPrefWidth() {
-        return this.leftButton.getWidth() + this.stepScrollPane.getWidth() / 2 + this.rightButton.getWidth();
-        // Don't ask me where the magic "/ 2" came from
     }
 }

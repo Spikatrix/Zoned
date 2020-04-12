@@ -1,7 +1,8 @@
 package com.cg.zoned.maps;
 
 public class DefaultHoloMap implements MapEntity {
-    private String mapGridString = "0...##...2\n" +
+    private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
+            "A...##...C\n" +
             "..........\n" +
             "..........\n" +
             "....##....\n" +
@@ -10,7 +11,7 @@ public class DefaultHoloMap implements MapEntity {
             "....##....\n" +
             "..........\n" +
             "..........\n" +
-            "3...##...1\n";
+            "D...##...B\n";
 
     private int rowCount = 10;
     private int colCount = 10;

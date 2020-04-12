@@ -4,6 +4,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeOut;
@@ -20,6 +21,13 @@ public class DropDownMenu extends SelectBox<String> {
     private void customSetup() {
         this.getList().setAlignment(Align.center);
         this.setAlignment(Align.center);
+    }
+
+    public void append(String s) {
+        Array<String> itemList = getItems();
+        itemList.add(s);
+        setItems(itemList);
+        layout();
     }
 
     public boolean isExpanded() {

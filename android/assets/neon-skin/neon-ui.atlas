@@ -91,11 +91,11 @@ font-pressed-export
   index: -1
 list
   rotate: false
-  xy: 1, 1
-  size: 52, 38
-  split: 18, 18, 0, 16
-  pad: 14, 14, 0, 12
-  orig: 52, 38
+  xy: 262, 108
+  size: 56, 46
+  split: 18, 18, 18, 18
+  pad: 14, 14, 14, 14
+  orig: 56, 46
   offset: 0, 0
   index: -1
 minus
