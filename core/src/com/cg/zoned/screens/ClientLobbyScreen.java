@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -29,7 +28,6 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
-import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Zoned;
@@ -356,9 +354,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         });
     }
 
+    // TODO: Fix order issue
     public void startGame(String[] names, int[] indices, final int rows, final int cols) {
-        Vector2[] playerStartPositions = Map.getStartPositions(rows, cols);
-
         int size = this.playerItems.size;
 
         final Player[] players = new Player[size];
@@ -371,14 +368,6 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
                 color = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
             }
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
-            int startPosIndex = -1;
-            for (int j = 0; j < names.length; j++) {
-                if (names[j].equals(name)) {
-                    startPosIndex = j;
-                    break;
-                }
-            }
-            players[i].setStartPos(playerStartPositions[indices[startPosIndex]]);
         }
 
         Gdx.app.postRunnable(new Runnable() {

@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
@@ -26,7 +25,6 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
-import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Zoned;
@@ -299,8 +297,6 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void startGame(final int rows, final int cols) {
-        Vector2[] playerStartPositions = Map.getStartPositions(rows, cols);
-
         int size = this.playerItems.size;
 
         final Player[] players = new Player[size];
@@ -313,7 +309,6 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
                 color = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
             }
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
-            players[i].setStartPos(playerStartPositions[i]);
         }
 
         animationManager.fadeOutStage(stage, new GameScreen(game, rows, cols, players, server, null));

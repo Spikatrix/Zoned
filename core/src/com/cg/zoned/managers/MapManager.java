@@ -5,19 +5,21 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Cell;
 import com.cg.zoned.maps.DefaultHoloMap;
 import com.cg.zoned.maps.DefaultRectangleMap;
+import com.cg.zoned.maps.DefaultXMap;
 import com.cg.zoned.maps.InvalidMapCharacter;
 import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
 
 public class MapManager {
-    final char EMPTY_CHAR = '.';
-    final char WALL_CHAR = '#';
-    final String VALID_START_POSITIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private final char EMPTY_CHAR = '.';
+    private final char WALL_CHAR = '#';
+    private final String VALID_START_POSITIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private Array<MapEntity> mapList;
 
     private Cell[][] preparedMapGrid = null;
     private Array<GridPoint2> preparedStartPositions = null;
+    private int wallCount = 0;
 
     private String errorMessage = null;
 
@@ -34,6 +36,7 @@ public class MapManager {
     private void loadDefaultMaps() throws InvalidMapDimensions {
         mapList.add(new DefaultRectangleMap());
         mapList.add(new DefaultHoloMap());
+        mapList.add(new DefaultXMap());
     }
 
     public Array<String> getMapNames() {
@@ -52,6 +55,7 @@ public class MapManager {
         Array<GridPoint2> startPositions = new Array<GridPoint2>();
         String[] mapRows = mapData.split("\n");
         Cell[][] mapGrid = new Cell[mapRows.length][];
+        int wallCount = 0;
         for (int i = 0; i < mapRows.length; i++) {
             mapGrid[i] = new Cell[mapRows[i].length()];
             for (int j = 0; j < mapRows[i].length(); j++) {
@@ -61,6 +65,7 @@ public class MapManager {
                     continue;
                 } else if (c == WALL_CHAR) {
                     mapGrid[i][j].isMovable = false;
+                    wallCount++;
                 } else if (VALID_START_POSITIONS.indexOf(c) != -1) {
                     startPositions.add(new GridPoint2(i, j));
                 } else {
@@ -71,6 +76,7 @@ public class MapManager {
 
         this.preparedMapGrid = mapGrid;
         this.preparedStartPositions = startPositions;
+        this.wallCount = wallCount;
     }
 
     public Cell[][] getPreparedMapGrid() {
@@ -79,6 +85,10 @@ public class MapManager {
 
     public Array<GridPoint2> getPreparedStartPositions() {
         return preparedStartPositions;
+    }
+
+    public int getWallCount() {
+        return wallCount;
     }
 
     public void clearErrorMessage() {

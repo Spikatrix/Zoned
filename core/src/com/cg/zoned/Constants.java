@@ -51,7 +51,7 @@ public final class Constants {
      * Controls for players playing in splitscreen mode. Player one has the first control scheme, two has the second etc
      * In case of server-client multiplayer mode, the player will have the first control scheme.
      * <p>
-     * Note that you may face issues when playing with the number of players unequal to the number of control schemes specified
+     * Note that you may face issues when playing with the number of players greater than the number of control schemes specified
      */
     public static final int[][] PLAYER_CONTROLS = new int[][]{
             {Input.Keys.W,  Input.Keys.D,     Input.Keys.S,    Input.Keys.A},
@@ -63,7 +63,7 @@ public final class Constants {
     /**
      * Zoom minimum and maximum values
      * <p>
-     * The camera can be zoomed in/out by the scroll wheel on Desktop and pinch/expand on Mobile
+     * The camera can be zoomed in/out by using the button on the top-center in the GameScreen
      */
     public static final float ZOOM_MIN_VALUE = 1f;
     public static final float ZOOM_MAX_VALUE = 1.6f;

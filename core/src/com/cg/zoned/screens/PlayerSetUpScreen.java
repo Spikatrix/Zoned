@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
@@ -26,7 +25,6 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
-import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Zoned;
@@ -199,11 +197,8 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             players[i] = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
         }
 
-        Vector2[] playerStartPositions = Map.getStartPositions(rows, cols);
-
         for (int i = 0; i < players.length; i++) {
-            players[i].setStartPos(playerStartPositions[i % playerStartPositions.length]);
-            players[i].setControlsIndex(i % Constants.PLAYER_CONTROLS.length);
+            players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 
         animationManager.fadeOutStage(stage, new GameScreen(game, rows, cols, players, null, null));

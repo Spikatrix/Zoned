@@ -47,7 +47,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private Array<TeamData> teamData;
     private String[] victoryStrings;
 
-    public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols) {
+    public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols, int wallCount) {
         this.game = game;
 
         this.viewport = new ScreenViewport();
@@ -55,7 +55,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        getVictoryStrings(playerManager, rows, cols);
+        getVictoryStrings(playerManager, rows, cols, wallCount);
     }
 
     @Override
@@ -158,13 +158,13 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         stage.setFocusedActor(returnToMainMenuButton);
     }
 
-    private void getVictoryStrings(PlayerManager playerManager, int rows, int cols) {
+    private void getVictoryStrings(PlayerManager playerManager, int rows, int cols, int wallCount) {
         teamData = playerManager.getTeamData();
         this.victoryStrings = new String[teamData.size];
 
         DecimalFormat df = new DecimalFormat("#.##");
         for (int i = 0; i < teamData.size; i++) {
-            double capturePercentage = 100 * (teamData.get(i).score / ((double) rows * cols));
+            double capturePercentage = 100 * (teamData.get(i).score / (((double) rows * cols) - wallCount));
             capturePercentage = Double.parseDouble(df.format(capturePercentage));
 
             this.victoryStrings[i] = PlayerColorHelper.getStringFromColor(teamData.get(i).color)

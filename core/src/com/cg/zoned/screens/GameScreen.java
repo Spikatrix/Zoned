@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -23,9 +24,11 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Map;
@@ -63,16 +66,38 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         this.fullScreenStage = new Stage(new ScreenViewport());
 
-        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL));
+        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin);
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
         this.map = new Map(rows, cols);
+        Array<GridPoint2> startPositions = this.map.getStartPositions();
+        for (int i = 0; i < players.length; i++) {
+            players[i].setStartPos(startPositions.get(i % startPositions.size));
+        }
 
         initViewports();
 
         this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
+    }
 
+    public GameScreen(final Zoned game, Cell[][] mapGrid, Array<GridPoint2> startPositions, int wallCount, Player[] players, Server server, Client client) {
+        this.game = game;
+
+        this.fullScreenStage = new Stage(new ScreenViewport());
+
+        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin);
+
+        this.renderer = new ShapeRenderer();
+        this.renderer.setAutoShapeType(true);
+        this.map = new Map(mapGrid, startPositions, wallCount);
+        for (int i = 0; i < players.length; i++) {
+            players[i].setStartPos(this.map.getStartPositions().get(i % players.length));
+        }
+
+        initViewports();
+
+        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
     }
 
     private void initViewports() {
@@ -239,7 +264,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             if (gameManager.connectionManager.isActive) {
                 gameManager.connectionManager.close();
             }
-            game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols));
+            game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
         }
     }
 

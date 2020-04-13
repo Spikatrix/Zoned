@@ -25,6 +25,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
+import com.cg.zoned.Player;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.maps.InvalidMapCharacter;
@@ -107,7 +108,26 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
             table.add(loadButton);
             table.row();
 
-            //startPositionMenu.append("testing");
+            TextButton startGameButton = new TextButton("Start Game", game.skin);
+            startGameButton.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    Player p1 = new Player(Constants.PLAYER_COLORS.get("GREEN"), "p1");
+                    p1.setControlIndex(0);
+                    Player p2 = new Player(Constants.PLAYER_COLORS.get("RED"), "p2");
+                    p2.setControlIndex(1);
+                    game.setScreen(
+                            new GameScreen(game,
+                                    mapManager.getPreparedMapGrid(),
+                                    mapManager.getPreparedStartPositions(),
+                                    mapManager.getWallCount(),
+                                    new Player[]{p1, p2},
+                                    null, null));
+                }
+            });
+            table.add(startGameButton);
+            table.row();
+
             table.add(startPositionMenu);
             table.row();
         }

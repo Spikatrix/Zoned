@@ -3,6 +3,7 @@ package com.cg.zoned.managers;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Sort;
 import com.cg.zoned.Constants.Direction;
@@ -20,7 +21,7 @@ public class PlayerManager extends InputMultiplexer {
 
     private Array<TeamData> teamData;
 
-    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controls) {
+    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controls, Skin skin) {
         this.gameManager = gameManager;
 
         this.players = players;
@@ -36,7 +37,7 @@ public class PlayerManager extends InputMultiplexer {
             }
         }
 
-        controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls);
+        controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls, skin);
         this.addProcessor(controlManager.getControls());
     }
 

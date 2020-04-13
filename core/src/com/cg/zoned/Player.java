@@ -4,6 +4,7 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.cg.zoned.Constants.Direction;
 
@@ -42,11 +43,11 @@ public class Player extends InputAdapter {
         this.controls = Constants.PLAYER_CONTROLS[0]; // Default is the first control scheme
     }
 
-    public void setStartPos(Vector2 pos) {
-        position = new Vector2(pos);
+    public void setStartPos(GridPoint2 pos) {
+        position = new Vector2(pos.x, pos.y);
     }
 
-    public void setControlsIndex(int index) {
+    public void setControlIndex(int index) {
         controls = Constants.PLAYER_CONTROLS[index];
     }
 

@@ -13,15 +13,15 @@ import com.cg.zoned.managers.PlayerManager;
 public class Map {
 
     private Cell[][] mapGrid;
+    public int coloredCells = 0;
     public int rows;
     public int cols;
-    public int coloredCells;
-    public int wallCount;
+    public int wallCount = 0;
+    private Array<GridPoint2> startPositions;
 
     public Map(int rows, int cols) {
         this.rows = rows;
         this.cols = cols;
-        this.coloredCells = this.wallCount = 0;
 
         this.mapGrid = new Cell[this.rows][this.cols];
         for (int i = 0; i < this.rows; i++) {
@@ -33,15 +33,24 @@ public class Map {
                 }
             }
         }
+
+        startPositions = new Array<GridPoint2>();
+        startPositions.add(new GridPoint2(0, rows - 1));
+        startPositions.add(new GridPoint2(cols - 1, 0));
+        startPositions.add(new GridPoint2(0, 0));
+        startPositions.add(new GridPoint2(cols - 1, rows - 1));
     }
 
-    public static Vector2[] getStartPositions(int rows, int cols) {
-        return new Vector2[]{
-                new Vector2(0, rows - 1),
-                new Vector2(cols - 1, 0),
-                new Vector2(0, 0),
-                new Vector2(cols - 1, rows - 1),
-        };
+    public Map(Cell[][] mapGrid, Array<GridPoint2> startPositions, int wallCount) {
+        this.rows = mapGrid.length;
+        this.cols = mapGrid[0].length;
+        this.mapGrid = mapGrid;
+        this.startPositions = startPositions;
+        this.wallCount = wallCount;
+    }
+
+    public Array<GridPoint2> getStartPositions() {
+        return startPositions;
     }
 
     public void update(PlayerManager playerManager, float delta) {
@@ -329,7 +338,7 @@ public class Map {
         if (players.length == 2) {
             for (Player player : players) {
                 // For two player games, end the game when a player has captured more than 50% of the cells
-                if (100 * (player.score / (((double) this.rows * this.cols)) - this.wallCount) > 50.0) {
+                if (100 * (player.score / (((double) this.rows * this.cols) - this.wallCount)) > 50.0) {
                     return true;
                 }
             }
