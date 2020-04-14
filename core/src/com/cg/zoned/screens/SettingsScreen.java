@@ -19,6 +19,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.BackButton;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Zoned;
@@ -136,22 +137,13 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        Table table = new Table();
-        table.setFillParent(true);
-        table.left().top();
-        Drawable backImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_back.png"))));
-        final HoverImageButton backButton = new HoverImageButton(backImage);
-        backButton.setNormalAlpha(1f);
-        backButton.setHoverAlpha(.75f);
-        backButton.setClickAlpha(.5f);
+        HoverImageButton backButton = BackButton.addBackButtonToStage(stage, game.getScaleFactor());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 onBackPressed();
             }
         });
-        table.add(backButton).padLeft(20f).padTop(35f);
-        stage.addActor(table);
     }
 
     @Override

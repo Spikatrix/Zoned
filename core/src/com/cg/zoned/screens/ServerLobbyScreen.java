@@ -6,9 +6,7 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
@@ -18,11 +16,10 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.BackButton;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Player;
@@ -152,22 +149,13 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        Table table = new Table();
-        table.setFillParent(true);
-        table.left().top();
-        Drawable backImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_back.png"))));
-        final HoverImageButton backButton = new HoverImageButton(backImage);
-        backButton.setNormalAlpha(1f);
-        backButton.setHoverAlpha(.75f);
-        backButton.setClickAlpha(.5f);
+        HoverImageButton backButton = BackButton.addBackButtonToStage(stage, game.getScaleFactor());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 onBackPressed();
             }
         });
-        table.add(backButton).padLeft(20f).padTop(35f);
-        stage.addActor(table);
     }
 
     private void insertPlayer(String address) {

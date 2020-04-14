@@ -18,6 +18,7 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -72,12 +73,18 @@ public class LoadingScreen extends ScreenAdapter {
 
         Table table = new Table();
         table.setFillParent(true);
-        table.pad(100 * game.getScaleFactor());
+        table.center();
+
+        Image loading = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_loading.png")))));
+        table.add(loading);
+        table.row();
 
         progressBar = new ProgressBar(0, 1, .01f, false, progressBarSkin);
         progressBar.setAnimateDuration(.5f);
 
-        table.add(progressBar).growX();
+        table.add(progressBar).growX()
+                .padLeft(100f * game.getScaleFactor()).padRight(100f * game.getScaleFactor())
+                .padTop(32f * game.getScaleFactor());
 
         stage.addActor(table);
     }
@@ -122,7 +129,7 @@ public class LoadingScreen extends ScreenAdapter {
                     }
                 }));
 
-                progressBar.addAction(sequenceAction);
+                stage.addAction(sequenceAction);
             }
         }
 

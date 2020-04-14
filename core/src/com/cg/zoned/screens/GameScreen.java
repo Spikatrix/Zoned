@@ -18,6 +18,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -72,8 +73,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         this.renderer.setAutoShapeType(true);
         this.map = new Map(rows, cols);
         Array<GridPoint2> startPositions = this.map.getStartPositions();
-        for (int i = 0; i < players.length; i++) {
-            players[i].setStartPos(startPositions.get(i % startPositions.size));
+        for (Player player : players) {
+            player.setStartPos(startPositions.get(0)); // TODO: Fix/Modify this later
+            // Was `get(i % startPositions.size);`
         }
 
         initViewports();
@@ -91,8 +93,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
         this.map = new Map(mapGrid, startPositions, wallCount);
-        for (int i = 0; i < players.length; i++) {
-            players[i].setStartPos(this.map.getStartPositions().get(i % players.length));
+        for (Player player : players) {
+            player.setStartPos(this.map.getStartPositions().get(0)); // TODO: Fix/Modify this later
+            // Was `get(i % startPositions.size);`
         }
 
         initViewports();
@@ -138,8 +141,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private HoverImageButton setUpPauseButton() {
-        Drawable pauseImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_pause.png"))));
-        final HoverImageButton pauseButton = new HoverImageButton(pauseImage);
+        Drawable pauseImageDrawable = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_pause.png"))));
+        final HoverImageButton pauseButton = new HoverImageButton(pauseImageDrawable);
+        Image pauseImage = pauseButton.getImage();
+        pauseImage.setOrigin(pauseImage.getPrefWidth() / 2, pauseImage.getPrefHeight() / 2);
+        pauseImage.setScale(game.getScaleFactor());
         pauseButton.setNormalAlpha(.8f);
         pauseButton.addListener(new ClickListener() {
             @Override
@@ -154,6 +160,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Drawable zoomInImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_in.png"))));
         Drawable zoomOutImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_out.png"))));
         final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomInImage);
+        Image zoomImage = zoomButton.getImage();
+        zoomImage.setOrigin(zoomImage.getPrefWidth() / 2, zoomImage.getPrefHeight() / 2);
+        zoomImage.setScale(game.getScaleFactor());
         zoomButton.setNormalAlpha(.8f);
         zoomButton.addListener(new ClickListener() {
             @Override
@@ -186,7 +195,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         scoreBars.resize(width, height);
         fullScreenStage.getViewport().update(width, height, true);
-        gameManager.playerManager.resize();
     }
 
     private void updateCamera(Camera camera, int width, int height) {

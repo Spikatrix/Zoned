@@ -35,6 +35,10 @@ public class ScoreBar {
             totalScore += player.score;
         }
 
+        if (totalScore == 0) {
+            return;
+        }
+
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
         for (int i = 0; i < players.length; i++) {

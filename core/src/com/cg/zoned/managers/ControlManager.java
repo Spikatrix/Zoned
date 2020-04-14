@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.cg.zoned.Constants;
@@ -26,9 +27,8 @@ public class ControlManager {
 
     private Player[] players;
     private Stage stage;
-    private Image[] controlImage;
     private Color[] overlayColors;
-    private Label[] controlLabels = null;
+    private Table[] controlTables;
 
     public ControlManager(Player[] players, boolean isSplitScreen, Stage stage, int controls, Skin skin) {
         this.stage = stage;
@@ -43,53 +43,56 @@ public class ControlManager {
             controlImagePath = Gdx.files.internal("icons/ic_control_fling_off.png");
         }
 
+        Table masterTable = new Table();
+        masterTable.setFillParent(true);
+
         int splitScreenCount = isSplitScreen ? players.length : 1;
+        Image[] controlImages = new Image[splitScreenCount];
         overlayColors = new Color[splitScreenCount];
-        controlImage = new Image[splitScreenCount];
+        controlTables = new Table[splitScreenCount];
+        Label[] controlLabels = null;
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             controlLabels = new Label[splitScreenCount];
         }
 
-        float colorWidth = stage.getWidth() / overlayColors.length;
+        float splitScreenWidth = stage.getWidth() / overlayColors.length;
         for (int i = 0; i < overlayColors.length; i++) {
             overlayColors[i] = new Color(0, 0, 0, 0);
-            controlImage[i] = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(controlImagePath))));
-            controlImage[i].setPosition(i * colorWidth + colorWidth / 2 - controlImage[i].getWidth() / 2, stage.getHeight() / 2 - controlImage[i].getHeight() / 2);
+            controlImages[i] = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(controlImagePath))));
             if (controlLabels != null) {
-                StringBuilder controlString = new StringBuilder();
-                controlString.append(Input.Keys.toString(players[i].controls[0])).append('\n');
-                controlString.append(Input.Keys.toString(players[i].controls[3]))
-                        .append("  ")
-                        .append(Input.Keys.toString(players[i].controls[2]))
-                        .append("  ")
-                        .append(Input.Keys.toString(players[i].controls[1]));
-                controlLabels[i] = new Label(controlString.toString(), skin);
+                String controlString = Input.Keys.toString(players[i].controls[0]) + '\n' +
+                        Input.Keys.toString(players[i].controls[3]) +
+                        "  " +
+                        Input.Keys.toString(players[i].controls[2]) +
+                        "  " +
+                        Input.Keys.toString(players[i].controls[1]);
+                controlLabels[i] = new Label(controlString, skin);
                 controlLabels[i].setAlignment(Align.center);
-                controlLabels[i].setPosition(i * colorWidth + colorWidth / 2 - controlLabels[i].getPrefWidth() / 2, stage.getHeight() / 2 - controlImage[i].getHeight());
-                stage.addActor(controlLabels[i]);
             }
-            stage.addActor(controlImage[i]);
-        }
-    }
 
-    public void resize() {
-        float colorWidth = stage.getWidth() / overlayColors.length;
-        for (int i = 0; i < controlImage.length; i++) {
-            controlImage[i].setPosition(i * colorWidth + colorWidth / 2 - controlImage[i].getWidth() / 2, stage.getHeight() / 2 - controlImage[i].getHeight() / 2);
+            controlTables[i] = new Table();
+            controlTables[i].center();
+            controlTables[i].setSize(splitScreenWidth, stage.getHeight());
+            controlTables[i].add(controlImages[i]);
             if (controlLabels != null) {
-                controlLabels[i].setPosition(i * colorWidth + colorWidth / 2 - controlLabels[i].getPrefWidth() / 2, stage.getHeight() / 2 - controlImage[i].getHeight());
+                controlTables[i].row();
+                controlTables[i].add(controlLabels[i]);
             }
+
+            masterTable.add(controlTables[i]).uniformX().expand();
         }
+
+        stage.addActor(masterTable);
     }
 
     public void renderPlayerControlPrompt(ShapeRenderer renderer, float delta) {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-        float colorWidth = stage.getWidth() / overlayColors.length;
+        float splitScreenWidth = stage.getWidth() / overlayColors.length;
 
         for (int i = 0; i < overlayColors.length; i++) {
             if (overlayColors[i].a > 0) {
                 renderer.setColor(overlayColors[i]);
-                renderer.rect(i * colorWidth, 0, colorWidth, stage.getHeight());
+                renderer.rect(i * splitScreenWidth, 0, splitScreenWidth, stage.getHeight());
             }
 
             if (players[i].updatedDirection == null) {
@@ -99,11 +102,8 @@ public class ControlManager {
                 overlayColors[i].a -= delta * 2.5f * (2f - overlayColors[i].a);
                 overlayColors[i].a = Math.max(overlayColors[i].a, 0f);
             }
-            controlImage[i].getColor().a = overlayColors[i].a;
 
-            if (controlLabels != null) {
-                controlLabels[i].getColor().a = overlayColors[i].a;
-            }
+            controlTables[i].getColor().a = overlayColors[i].a;
         }
 
         renderer.end();
