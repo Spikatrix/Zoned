@@ -7,7 +7,6 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -37,10 +36,10 @@ public class ControlManager {
         FileHandle controlImagePath = null;
         if (controls == Constants.PIE_MENU_CONTROL) {
             pieMenuControlManager = new PieMenuControlManager(players, isSplitScreen, stage);
-            controlImagePath = Gdx.files.internal("icons/ic_control_piemenu_off.png");
+            controlImagePath = Gdx.files.internal("icons/control_icons/ic_control_piemenu_off.png");
         } else if (controls == Constants.FLING_CONTROL) {
             flingControlManager = new FlingControlManager(players, isSplitScreen, stage);
-            controlImagePath = Gdx.files.internal("icons/ic_control_fling_off.png");
+            controlImagePath = Gdx.files.internal("icons/control_icons/ic_control_fling_off.png");
         }
 
         Table masterTable = new Table();
@@ -58,7 +57,7 @@ public class ControlManager {
         float splitScreenWidth = stage.getWidth() / overlayColors.length;
         for (int i = 0; i < overlayColors.length; i++) {
             overlayColors[i] = new Color(0, 0, 0, 0);
-            controlImages[i] = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(controlImagePath))));
+            controlImages[i] = new Image(new TextureRegionDrawable(new Texture(controlImagePath)));
             if (controlLabels != null) {
                 String controlString = Input.Keys.toString(players[i].controls[0]) + '\n' +
                         Input.Keys.toString(players[i].controls[3]) +

@@ -44,7 +44,7 @@ public class FlingControlManager extends InputAdapter {
                 }
             }
 
-            Image clickImage = new Image(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_arrow.png"))));
+            Image clickImage = new Image(new TextureRegion(new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"))));
             if (Gdx.app.getType() == Application.ApplicationType.Android) {
                 // Scale both X and Y at the same rate or we'll have problems since the code below uses getScaleX only
                 clickImage.setScale(Constants.ANDROID_DIRECTION_ARROW_SCALE_FACTOR, Constants.ANDROID_DIRECTION_ARROW_SCALE_FACTOR);

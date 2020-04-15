@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -125,7 +124,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
             victoryLabels[i] = new Label(victoryStrings[i], game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
             if (rankIndex < rankImageLocations.length) {
-                rankImages[i] = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal(rankImageLocations[rankIndex])))));
+                rankImages[i] = new Image(new TextureRegionDrawable(new Texture(Gdx.files.internal(rankImageLocations[rankIndex]))));
             } else {
                 rankImages[i] = null;
             }

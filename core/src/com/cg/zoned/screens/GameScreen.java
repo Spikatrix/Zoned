@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
@@ -134,14 +133,14 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         table.add(pauseButton).padTop(ScoreBar.BAR_HEIGHT)
                 .width(pauseButton.getWidth() * game.getScaleFactor()).height(pauseButton.getHeight() * game.getScaleFactor());
         table.row();
-        table.add(zoomButton)
+        table.add(zoomButton).padTop(5f)
                 .width(zoomButton.getWidth() * game.getScaleFactor()).height(zoomButton.getHeight() * game.getScaleFactor());
 
         fullScreenStage.addActor(table);
     }
 
     private HoverImageButton setUpPauseButton() {
-        Drawable pauseImageDrawable = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_pause.png"))));
+        Drawable pauseImageDrawable = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ui_icons/ic_pause.png")));
         final HoverImageButton pauseButton = new HoverImageButton(pauseImageDrawable);
         Image pauseImage = pauseButton.getImage();
         pauseImage.setOrigin(pauseImage.getPrefWidth() / 2, pauseImage.getPrefHeight() / 2);
@@ -157,8 +156,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private HoverImageButton setUpZoomButton() {
-        Drawable zoomInImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_in.png"))));
-        Drawable zoomOutImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_zoom_out.png"))));
+        Drawable zoomInImage = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ui_icons/ic_zoom_in.png")));
+        Drawable zoomOutImage = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ui_icons/ic_zoom_out.png")));
         final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomInImage);
         Image zoomImage = zoomButton.getImage();
         zoomImage.setOrigin(zoomImage.getPrefWidth() / 2, zoomImage.getPrefHeight() / 2);

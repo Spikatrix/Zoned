@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
@@ -75,7 +74,7 @@ public class LoadingScreen extends ScreenAdapter {
         table.setFillParent(true);
         table.center();
 
-        Image loading = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_loading.png")))));
+        Image loading = new Image(new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ic_loading.png"))));
         table.add(loading);
         table.row();
 
@@ -177,7 +176,7 @@ public class LoadingScreen extends ScreenAdapter {
         loadingPixmap.fillRectangle(0, 0, width, height);
 
         loadingTexture = new Texture(loadingPixmap);
-        TextureRegionDrawable textureRegionDrawable = new TextureRegionDrawable(new TextureRegion(loadingTexture));
+        TextureRegionDrawable textureRegionDrawable = new TextureRegionDrawable(loadingTexture);
         textureRegionDrawable.setMinWidth(0);
         return textureRegionDrawable;
     }

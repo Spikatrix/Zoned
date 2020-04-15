@@ -51,7 +51,7 @@ public class PieMenuControlManager extends InputAdapter {
         pixmap.dispose();
         TextureRegion whitePixel = new TextureRegion(tmpTex);
 
-        final Drawable arrow = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_arrow.png"))));
+        final Drawable arrow = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png")));
 
         for (int i = 0; i < menus.length; i++) {
             final PieMenu.PieMenuStyle style = new PieMenu.PieMenuStyle();
