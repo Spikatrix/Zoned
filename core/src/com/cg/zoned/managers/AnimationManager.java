@@ -59,6 +59,28 @@ public class AnimationManager {
         stage.addAction(fallFromAboveAnimation);
     }
 
+    public void startPlayModeAnimation(Stage mainStage, Stage playModeStage) {
+        masterInputMultiplexer.removeProcessor(mainStage);
+        masterInputMultiplexer.addProcessor(playModeStage);
+        Gdx.input.setInputProcessor(masterInputMultiplexer);
+
+        mainStage.addAction(Actions.fadeOut(.3f));
+
+        playModeStage.getRoot().setPosition(0, -playModeStage.getHeight());
+        playModeStage.addAction(Actions.fadeIn(.3f, Interpolation.fastSlow));
+        playModeStage.addAction(Actions.moveTo(0, 0, .3f, Interpolation.fastSlow));
+    }
+
+    public void endPlayModeAnimation(Stage mainStage, Stage playModeStage) {
+        masterInputMultiplexer.removeProcessor(playModeStage);
+        masterInputMultiplexer.addProcessor(mainStage);
+        Gdx.input.setInputProcessor(masterInputMultiplexer);
+
+        playModeStage.addAction(Actions.fadeOut(.3f, Interpolation.fastSlow));
+        playModeStage.addAction(Actions.moveTo(0, -playModeStage.getHeight(), .3f, Interpolation.fastSlow));
+        mainStage.addAction(Actions.fadeIn(.3f));
+    }
+
     public void startGameOverAnimation(final Stage stage, final ParticleEffect trailEffect) {
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
