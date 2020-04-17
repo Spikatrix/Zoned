@@ -9,8 +9,10 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -19,13 +21,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.AnimatedDrawable;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Zoned;
@@ -40,7 +43,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private FocusableStage mainStage;
     private FocusableStage playModeStage;
     private Viewport viewport;
-    private TextButton[] mainMenuButtons;
+    private Array<Actor> mainMenuUIButtons;
     private AnimationManager animationManager;
     private boolean showFPSCounter;
     private BitmapFont font;
@@ -58,7 +61,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         emitterLeft = new ParticleEffect();
         emitterRight = new ParticleEffect();
         font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
-
     }
 
     @Override
@@ -66,7 +68,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         setUpMainMenu();
         setUpPlayMenu();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
-        animationManager.startMainMenuAnimation(mainStage, mainMenuButtons);
+        animationManager.startMainMenuAnimation(mainStage, mainMenuUIButtons);
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
@@ -89,68 +91,86 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainTable.add(gameTitle).pad(5f * game.getScaleFactor());
         mainTable.row();
 
-        HoverImageButton playButton = new HoverImageButton(new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ui_icons/ic_play.png"))));
-        playButton.setHoverAlpha(.85f);
-        playButton.setClickAlpha(.75f);
-        playButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                animationManager.startPlayModeAnimation(mainStage, playModeStage);
-            }
-        });
-        mainTable.add(playButton).pad(10f);
-        mainTable.row();
-
+        HoverImageButton playButton = setUpAnimatedPlayButton(mainTable);
         mainStage.addFocusableActor(playButton);
         mainStage.row();
 
-        mainMenuButtons = new TextButton[]{
-                /*new TextButton("Play Splitscreen Multiplayer", game.skin),
-                new TextButton("Play Local Multiplayer", game.skin),*/
-                new TextButton("Settings", game.skin),
-                new TextButton("Testing room", game.skin),
-                new TextButton("Exit", game.skin)
-        };
-
-        final Screen[] screens = new Screen[]{
-                /*new PlayerSetUpScreen(game),
-                new HostJoinScreen(game),*/
-                new SettingsScreen(game),
-                new TestScreen(game),
-        };
-
-        for (int i = 0; i < mainMenuButtons.length; i++) {
-            if (i == mainMenuButtons.length - 1) {
-                mainMenuButtons[i].addListener(new ClickListener() {
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        Gdx.app.exit();
-                    }
-                });
-                continue;
+        HoverImageButton settingsButton = UIButtonManager.addSettingsButtonToStage(mainStage, game.getScaleFactor());
+        HoverImageButton testingButton = UIButtonManager.addTestingButtonToStage(mainStage, game.getScaleFactor());
+        settingsButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                emitterLeft.allowCompletion();
+                emitterRight.allowCompletion();
+                animationManager.fadeOutStage(mainStage, new SettingsScreen(game));
             }
+        });
+        testingButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                emitterLeft.allowCompletion();
+                emitterRight.allowCompletion();
+                animationManager.fadeOutStage(mainStage, new TestScreen(game));
+            }
+        });
 
-            final int screenIndex = i;
-            mainMenuButtons[i].addListener(new ClickListener() {
-                @Override
-                public void clicked(InputEvent event, float x, float y) {
-                    emitterLeft.allowCompletion();
-                    emitterRight.allowCompletion();
-                    animationManager.fadeOutStage(mainStage, screens[screenIndex]);
-                }
-            });
-        }
+        mainStage.addFocusableActor(settingsButton);
+        mainStage.addFocusableActor(testingButton);
 
-        for (TextButton button : mainMenuButtons) {
-            mainTable.add(button).padRight(10 * game.getScaleFactor()).padLeft(10 * game.getScaleFactor()).width(350 * game.getScaleFactor()).expandX();
-            mainTable.row();
+        HoverImageButton exitButton = UIButtonManager.addExitButtonToStage(mainStage, game.getScaleFactor());
+        exitButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                onBackPressed();
+            }
+        });
 
-            mainStage.addFocusableActor(button);
-            mainStage.row();
-        }
+        mainMenuUIButtons = new Array<Actor>();
+        mainMenuUIButtons.add(playButton);
+        mainMenuUIButtons.add(settingsButton);
+        mainMenuUIButtons.add(testingButton);
+        mainMenuUIButtons.add(exitButton);
 
-        mainStage.setFocusedActor(mainMenuButtons[0]);
+        mainStage.setFocusedActor(playButton);
         mainStage.addActor(mainTable);
+    }
+
+    private HoverImageButton setUpAnimatedPlayButton(Table mainTable) {
+        Texture playSheet = new Texture(Gdx.files.internal("icons/ui_icons/ic_play_sheet.png"));
+        int rowCount = 11, colCount = 3;
+
+        TextureRegion[][] tmp = TextureRegion.split(playSheet,
+                playSheet.getWidth() / colCount,
+                playSheet.getHeight() / rowCount);
+
+        TextureRegion[] playFrames = new TextureRegion[rowCount * colCount];
+        int index = 0;
+        for (int i = 0; i < rowCount; i++) {
+            for (int j = 0; j < colCount; j++) {
+                playFrames[index++] = tmp[i][j];
+            }
+        }
+
+        Animation playButtonAnimation = new Animation<TextureRegion>(1 / 20f, playFrames);
+
+        final HoverImageButton playButton = new HoverImageButton(new AnimatedDrawable(playButtonAnimation));
+        playButton.setOrigin((playButton.getPrefWidth() * game.getScaleFactor()) / 2, (playButton.getPrefHeight() * game.getScaleFactor()) / 2);
+        playButton.setTransform(true);
+        playButton.setScale(game.getScaleFactor());
+        playButton.setHoverAlpha(.75f);
+        playButton.setClickAlpha(.6f);
+        playButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                animationManager.startPlayModeAnimation(mainStage, playModeStage, playButton);
+            }
+        });
+        mainTable.add(playButton).pad(10f * game.getScaleFactor())
+                .width(playButton.getPrefWidth() * game.getScaleFactor())
+                .height(playButton.getPrefHeight() * game.getScaleFactor());
+        mainTable.row();
+
+        return playButton;
     }
 
     private void setUpPlayMenu() {
@@ -158,90 +178,95 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeTable.setFillParent(true);
         playModeTable.center();
 
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.WHITE);
-        pixmap.fill();
-        TextureRegionDrawable whiteBG = new TextureRegionDrawable(new Texture(pixmap));
-        pixmap.dispose();
-
-        Table leftTable = new Table();
-        leftTable.center();
-
-        Table rightTable = new Table();
-        rightTable.center();
-
-        final Image leftBackgroundColor = new Image(whiteBG);
-        final Image rightBackgroundColor = new Image(whiteBG);
-
-        leftBackgroundColor.getColor().a = 0;
-        rightBackgroundColor.getColor().a = 0;
-
-        leftBackgroundColor.setScaling(Scaling.stretch);
-        rightBackgroundColor.setScaling(Scaling.stretch);
-
-        Image splitscreenMultiplayerImage = new Image(new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/multiplayer_icons/ic_splitscreen_multiplayer.png"))));
-        Image localMultiplayerImage = new Image(new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/multiplayer_icons/ic_local_multiplayer.png"))));
-
-        splitscreenMultiplayerImage.setScaling(Scaling.fit);
-        localMultiplayerImage.setScaling(Scaling.fit);
-
-        splitscreenMultiplayerImage.getColor().a = .3f;
-        localMultiplayerImage.getColor().a = .3f;
-
-        Label splitscreenMultiplayerLabel = new Label("Splitscreen\nMultiplayer", game.skin);
-        Label localMultiplayerLabel = new Label("Local\nMultiplayer\n(WiFi)", game.skin);
-
-        leftTable.addListener(new ClickListener() {
-            @Override
-            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
-                leftBackgroundColor.addAction(Actions.alpha(.3f, .15f));
-            }
-
-            @Override
-            public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
-                leftBackgroundColor.addAction(Actions.alpha(0, .15f));
-            }
-
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                animationManager.fadeOutStage(playModeStage, new PlayerSetUpScreen(game));
-            }
-        });
-
-        rightTable.addListener(new ClickListener() {
-            @Override
-            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
-                rightBackgroundColor.addAction(Actions.alpha(.3f, .15f));
-            }
-
-            @Override
-            public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
-                rightBackgroundColor.addAction(Actions.alpha(0, .15f));
-            }
-
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                animationManager.fadeOutStage(playModeStage, new HostJoinScreen(game));
-            }
-        });
-
-        splitscreenMultiplayerLabel.setAlignment(Align.center);
-        localMultiplayerLabel.setAlignment(Align.center);
-
-        Stack leftStack = new Stack(leftBackgroundColor, splitscreenMultiplayerImage, splitscreenMultiplayerLabel);
-        Stack rightStack = new Stack(rightBackgroundColor, localMultiplayerImage, localMultiplayerLabel);
-
-        leftTable.add(leftStack).expand().pad(40f);
-        rightTable.add(rightStack).expand().pad(40f);
-
         Label chooseMode = new Label("Choose a game mode", game.skin, "themed");
         playModeTable.add(chooseMode).expandX().pad(10f).colspan(2);
         playModeTable.row();
 
-        playModeTable.add(leftTable).expand().uniform();
-        playModeTable.add(rightTable).expand().uniform();
+        final int gameModeCount = 2;
 
-        HoverImageButton exitButton = UIButtonManager.addBackButtonToStage(playModeStage, game.getScaleFactor());
+        TextureRegionDrawable whiteBG = new TextureRegionDrawable(
+                getRoundedCornerTexture(Color.GREEN, 480, 640, 50));
+
+        String[] backgroundImageLocations = new String[]{
+                "icons/multiplayer_icons/ic_splitscreen_multiplayer.png",
+                "icons/multiplayer_icons/ic_local_multiplayer.png",
+        };
+        String[] modeLabelStrings = new String[]{
+                "Splitscreen\nMultiplayer",
+                "Local\nMultiplayer\n(WiFi)",
+        };
+        final Screen[] screens = new Screen[]{
+                new PlayerSetUpScreen(game),
+                new HostJoinScreen(game),
+        };
+
+        final float normalAlpha = .15f;
+        final float hoverAlpha = .3f;
+        final float clickAlpha = .7f;
+        for (int i = 0; i < gameModeCount; i++) {
+            Table table = new Table();
+            table.center();
+
+            final Image backgroundColorImage = new Image(whiteBG);
+            backgroundColorImage.getColor().a = normalAlpha;
+            backgroundColorImage.setScaling(Scaling.stretch);
+
+            Image backgroundImage = new Image(new TextureRegionDrawable(new Texture(Gdx.files.internal(backgroundImageLocations[i]))));
+            backgroundImage.setScaling(Scaling.fit);
+            backgroundImage.getColor().a = .3f;
+
+            Label modeLabel = new Label(modeLabelStrings[i], game.skin);
+            modeLabel.setAlignment(Align.center);
+
+            final int finalI = i;
+            table.addListener(new ClickListener() {
+                boolean hasTouched = false;
+
+                @Override
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                    if (!hasTouched) {
+                        backgroundColorImage.addAction(Actions.alpha(hoverAlpha, .15f));
+                    }
+                }
+
+                @Override
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+                    if (!hasTouched) {
+                        backgroundColorImage.addAction(Actions.alpha(normalAlpha, .15f));
+                    }
+                }
+
+                @Override
+                public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                    hasTouched = true;
+                    backgroundColorImage.addAction(Actions.alpha(clickAlpha, .15f));
+                    return super.touchDown(event, x, y, pointer, button);
+                }
+
+                @Override
+                public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                    hasTouched = false;
+                    backgroundColorImage.addAction(Actions.alpha(normalAlpha, .15f));
+                    super.touchUp(event, x, y, pointer, button);
+                }
+
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    emitterLeft.allowCompletion();
+                    emitterRight.allowCompletion();
+                    animationManager.fadeOutStage(playModeStage, screens[finalI]);
+                }
+            });
+
+            Stack stack = new Stack(backgroundColorImage, backgroundImage, modeLabel);
+
+            table.add(stack).expand().pad(40f);
+
+            playModeTable.add(table).expand().uniform();
+            playModeStage.addFocusableActor(playModeTable);
+        }
+
+        HoverImageButton exitButton = UIButtonManager.addHideButtonToStage(playModeStage, game.getScaleFactor());
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -251,8 +276,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         playModeStage.getRoot().getColor().a = 0;
 
-        playModeStage.addFocusableActor(leftTable);
-        playModeStage.addFocusableActor(rightTable);
         playModeStage.addActor(playModeTable);
     }
 
@@ -285,6 +308,22 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         emitterRight.setPosition(viewport.getWorldWidth(), 0);
     }
 
+    private Texture getRoundedCornerTexture(Color color, int width, int height, int radius) {
+        Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+        pixmap.setColor(color);
+        pixmap.fillCircle(radius, radius, radius);
+        pixmap.fillCircle(width - radius, radius, radius);
+        pixmap.fillCircle(width - radius, height - radius, radius);
+        pixmap.fillCircle(radius, height - radius, radius);
+        pixmap.fillRectangle(0, radius, width, height - (radius * 2));
+
+        pixmap.fillRectangle(radius, 0, width - (radius * 2), height);
+        Texture texture = new Texture(pixmap);
+        pixmap.dispose();
+
+        return texture;
+    }
+
     @Override
     public void dispose() {
         mainStage.dispose();
@@ -293,9 +332,25 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         emitterRight.dispose();
     }
 
+    private void showExitDialog() {
+        final Array<String> dialogButtonTexts = new Array<String>();
+        dialogButtonTexts.add("Cancel");
+        dialogButtonTexts.add("Exit");
+        mainStage.showDialog("Are you sure that you want to exit?", dialogButtonTexts,
+                false,
+                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
+                    @Override
+                    public void dialogResult(String buttonText) {
+                        if (buttonText.equals(dialogButtonTexts.get(1))) {
+                            Gdx.app.exit();
+                        }
+                    }
+                }, game.skin);
+    }
+
     private void onBackPressed() {
         if (mainStage.getRoot().getColor().a == 1f) {
-            Gdx.app.exit();
+            showExitDialog();
         } else {
             animationManager.endPlayModeAnimation(mainStage, playModeStage);
         }
@@ -350,5 +405,4 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     public boolean scrolled(int amount) {
         return false;
     }
-
 }

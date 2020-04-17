@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -310,19 +309,18 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showDialogAndCloseClient(String msg) {
-        Dialog dialog = new Dialog("", game.skin) {
-            @Override
-            protected void result(Object object) {
-                if (client.isConnected()) {
-                    client.close();
-                }
-            }
-        };
-        dialog.text(msg).pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
-        dialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
-        dialog.getButtonTable().defaults().width(200f * game.getScaleFactor());
-        dialog.button("OK");
-        dialog.show(stage);
+        final Array<String> dialogButtonTexts = new Array<String>();
+        dialogButtonTexts.add("OK");
+        stage.showDialog(msg, dialogButtonTexts,
+                false,
+                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
+                    @Override
+                    public void dialogResult(String buttonText) {
+                        if (client.isConnected()) {
+                            client.close();
+                        }
+                    }
+                }, game.skin);
     }
 
     public void removeListener(Listener listener) {

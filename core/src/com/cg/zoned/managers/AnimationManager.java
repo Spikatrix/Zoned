@@ -6,10 +6,11 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Zoned;
 
 public class AnimationManager {
@@ -25,13 +26,13 @@ public class AnimationManager {
         this.masterInputMultiplexer.addProcessor(inputProcessor);
     }
 
-    public void startMainMenuAnimation(final Stage stage, final TextButton[] mainMenuButtons) {
+    public void startMainMenuAnimation(final Stage stage, final Array<Actor> mainMenuUIButtons) {
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
         stage.getRoot().getColor().a = 1;
         stage.getRoot().setPosition(0, stage.getHeight());
-        for (TextButton mainMenuButton : mainMenuButtons) {
-            mainMenuButton.getColor().a = 0;
+        for (Actor mainMenuUIButton : mainMenuUIButtons) {
+            mainMenuUIButton.getColor().a = 0;
         }
 
         SequenceAction fallFromAboveAnimation = new SequenceAction();
@@ -39,8 +40,9 @@ public class AnimationManager {
         fallFromAboveAnimation.addAction(Actions.run(new Runnable() {
             @Override
             public void run() {
-                for (int i = 0; i < mainMenuButtons.length; i++) {
-                    mainMenuButtons[i].addAction(Actions.delay(.3f * i, Actions.fadeIn(0.3f, Interpolation.smooth)));
+                for (int i = 0; i < mainMenuUIButtons.size; i++) {
+                    mainMenuUIButtons.get(i).addAction(
+                            Actions.delay(((i > 0) ? (.3f) : (0)), Actions.fadeIn(0.3f, Interpolation.smooth)));
                 }
             }
         }));
@@ -59,16 +61,22 @@ public class AnimationManager {
         stage.addAction(fallFromAboveAnimation);
     }
 
-    public void startPlayModeAnimation(Stage mainStage, Stage playModeStage) {
+    public void startPlayModeAnimation(Stage mainStage, Stage playModeStage, Actor playButton) {
         masterInputMultiplexer.removeProcessor(mainStage);
         masterInputMultiplexer.addProcessor(playModeStage);
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
-        mainStage.addAction(Actions.fadeOut(.3f));
+        mainStage.addAction(Actions.fadeOut(.25f, Interpolation.fastSlow));
+        float initScale = playButton.getScaleX();
+        playButton.setOrigin(playButton.getWidth() / 2, playButton.getHeight() / 2);
+        playButton.addAction(Actions.sequence(
+                Actions.scaleTo(2.5f, 2.5f, .2f),
+                Actions.scaleTo(initScale, initScale)
+        ));
 
         playModeStage.getRoot().setPosition(0, -playModeStage.getHeight());
-        playModeStage.addAction(Actions.fadeIn(.3f, Interpolation.fastSlow));
-        playModeStage.addAction(Actions.moveTo(0, 0, .3f, Interpolation.fastSlow));
+        playModeStage.addAction(Actions.fadeIn(.25f, Interpolation.fastSlow));
+        playModeStage.addAction(Actions.moveTo(0, 0, .25f, Interpolation.fastSlow));
     }
 
     public void endPlayModeAnimation(Stage mainStage, Stage playModeStage) {
@@ -76,9 +84,9 @@ public class AnimationManager {
         masterInputMultiplexer.addProcessor(mainStage);
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
-        playModeStage.addAction(Actions.fadeOut(.3f, Interpolation.fastSlow));
-        playModeStage.addAction(Actions.moveTo(0, -playModeStage.getHeight(), .3f, Interpolation.fastSlow));
-        mainStage.addAction(Actions.fadeIn(.3f));
+        playModeStage.addAction(Actions.fadeOut(.25f, Interpolation.fastSlow));
+        playModeStage.addAction(Actions.moveTo(0, -playModeStage.getHeight(), .25f, Interpolation.fastSlow));
+        mainStage.addAction(Actions.fadeIn(.25f, Interpolation.fastSlow));
     }
 
     public void startGameOverAnimation(final Stage stage, final ParticleEffect trailEffect) {

@@ -17,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
@@ -43,6 +44,8 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private BitmapFont font;
 
+    private Array<String> dialogButtonTexts = new Array<String>();
+
     public HostJoinScreen(final Zoned game) {
         this.game = game;
 
@@ -50,6 +53,8 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+
+        dialogButtonTexts.add("OK");
     }
 
     @Override
@@ -103,7 +108,9 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
                     startServerLobby(playerNameField.getText().trim());
                 } else {
-                    stage.showInfoDialog("Please enter the name of the player(s)", game.getScaleFactor(), game.skin);
+                    stage.showDialog("Please enter the name of the player(s)", dialogButtonTexts,
+                            false,
+                            game.getScaleFactor(), null, game.skin);
                 }
             }
         });
@@ -125,7 +132,9 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                         searchingLabel.setText("Already searching for servers...");
                     }
                 } else {
-                    stage.showInfoDialog("Please enter the name of the player(s)", game.getScaleFactor(), game.skin);
+                    stage.showDialog("Please enter the name of the player(s)", dialogButtonTexts,
+                            false,
+                            game.getScaleFactor(), null, game.skin);
                 }
             }
         });
@@ -163,11 +172,15 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         try {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
-            stage.showInfoDialog("Server bind error\n" + e.getMessage(), game.getScaleFactor(), game.skin);
+            stage.showDialog("Server bind error\n" + e.getMessage(), dialogButtonTexts,
+                    false,
+                    game.getScaleFactor(), null, game.skin);
             e.printStackTrace();
             return;
         } catch (IllegalArgumentException e) {
-            stage.showInfoDialog("Server bind error\n" + e.getMessage(), game.getScaleFactor(), game.skin);
+            stage.showDialog("Server bind error\n" + e.getMessage(), dialogButtonTexts,
+                    false,
+                    game.getScaleFactor(), null, game.skin);
             e.printStackTrace();
             return;
         }
@@ -207,13 +220,17 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             }
             client.connect(4000, addr, Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
-            stage.showInfoDialog("Error connecting to the server\n" + e.getMessage(), game.getScaleFactor(), game.skin);
+            stage.showDialog("Error connecting to the server\n" + e.getMessage(), dialogButtonTexts,
+                    false,
+                    game.getScaleFactor(), null, game.skin);
             searchingLabel.addAction(Actions.fadeOut(.2f));
             return;
         }
 
         if (!client.isConnected()) {
-            stage.showInfoDialog("Failed to connect to the server", game.getScaleFactor(), game.skin);
+            stage.showDialog("Failed to connect to the server", dialogButtonTexts,
+                    false,
+                    game.getScaleFactor(), null, game.skin);
             searchingLabel.addAction(Actions.fadeOut(.2f));
             return;
         }

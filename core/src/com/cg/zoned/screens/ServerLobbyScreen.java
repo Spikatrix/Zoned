@@ -240,8 +240,13 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void validateServerData(int rows, int cols) {
+        Array<String> dialogButtonTexts = new Array<String>();
+        dialogButtonTexts.add("OK");
+
         if (server.getConnections().length < 1) {
-            stage.showInfoDialog("Insufficient players to start the match", game.getScaleFactor(), game.skin);
+            stage.showDialog("Insufficient players to start the match", dialogButtonTexts,
+                    false,
+                    game.getScaleFactor(), null, game.skin);
             return;
         }
 
@@ -250,7 +255,9 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         for (int i = 1; i < size; i++) {
             String ready = ((Label) playerItems.get(i).findActor("ready-label")).getText().toString();
             if (!ready.equals("Ready")) {
-                stage.showInfoDialog("All players are not ready", game.getScaleFactor(), game.skin);
+                stage.showDialog("All players are not ready", dialogButtonTexts,
+                        false,
+                        game.getScaleFactor(), null, game.skin);
                 return;
             }
         }
@@ -265,7 +272,9 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         }
 
         if (uniqueColors.size <= 1) {
-            stage.showInfoDialog("Players must have at least two distinct colors", game.getScaleFactor(), game.skin);
+            stage.showDialog("Players must have at least two distinct colors", dialogButtonTexts,
+                    false,
+                    game.getScaleFactor(), null, game.skin);
             return;
         }
 

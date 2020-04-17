@@ -15,15 +15,11 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -36,6 +32,7 @@ import com.cg.zoned.Player;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.GameManager;
+import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Server;
@@ -54,7 +51,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
     private boolean gameCompleteFadeOutDone = false;
 
-    private Stage fullScreenStage;
+    private FocusableStage fullScreenStage;
     private BitmapFont font;
     private boolean showFPSCounter;
     private ScoreBar scoreBars;
@@ -64,7 +61,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     public GameScreen(final Zoned game, int rows, int cols, Player[] players, Server server, Client client) {
         this.game = game;
 
-        this.fullScreenStage = new Stage(new ScreenViewport());
+        this.fullScreenStage = new FocusableStage(new ScreenViewport());
 
         this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin);
 
@@ -85,7 +82,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     public GameScreen(final Zoned game, Cell[][] mapGrid, Array<GridPoint2> startPositions, int wallCount, Player[] players, Server server, Client client) {
         this.game = game;
 
-        this.fullScreenStage = new Stage(new ScreenViewport());
+        this.fullScreenStage = new FocusableStage(new ScreenViewport());
 
         this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin);
 
@@ -320,20 +317,17 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showDisconnectionDialog() {
-        Dialog disconnectionDialog = new Dialog("", game.skin) {
-            @Override
-            public void result(Object obj) {
-                gameManager.connectionManager.close();
-                game.setScreen(new MainMenuScreen(game));
-            }
-        };
-        disconnectionDialog.getButtonTable().defaults().width(200f * game.getScaleFactor());
-        disconnectionDialog.button("OK");
-        disconnectionDialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
-        disconnectionDialog.text("Disconnected").pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
-        Label label = (Label) disconnectionDialog.getContentTable().getChild(0);
-        label.setAlignment(Align.center);
-        disconnectionDialog.show(fullScreenStage);
+        final Array<String> dialogButtonTexts = new Array<String>();
+        dialogButtonTexts.add("OK");
+        fullScreenStage.showDialog("Disconnected", dialogButtonTexts,
+                false,
+                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
+                    @Override
+                    public void dialogResult(String buttonText) {
+                        gameManager.connectionManager.close();
+                        game.setScreen(new MainMenuScreen(game));
+                    }
+                }, game.skin);
     }
 
     private void showPauseDialog() {
@@ -341,33 +335,25 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         if (!gameManager.connectionManager.isActive) {
             gameManager.directionBufferManager.clearBuffer();
         }
-        Dialog pauseDialog = new Dialog("", game.skin) {
-            @Override
-            public void result(Object obj) {
-                int optionNo = (Integer) obj;
-                if (optionNo == 2) {
-                    if (gameManager.connectionManager.isActive) {
-                        gameManager.connectionManager.close();
-                    } else {
-                        game.setScreen(new MainMenuScreen(game));
+
+        final Array<String> dialogButtonTexts = new Array<String>();
+        dialogButtonTexts.add("Resume");
+        //dialogButtonTexts.add("Restart");
+        dialogButtonTexts.add("Main Menu");
+        fullScreenStage.showDialog("Game Paused", dialogButtonTexts,
+                true,
+                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
+                    @Override
+                    public void dialogResult(String buttonText) {
+                        if (buttonText.equals(dialogButtonTexts.get(1))) {
+                            if (gameManager.connectionManager.isActive) {
+                                gameManager.connectionManager.close();
+                            } else {
+                                game.setScreen(new MainMenuScreen(game));
+                            }
+                        }
                     }
-                }
-            }
-        };
-        pauseDialog.getButtonTable().defaults().width(200f * game.getScaleFactor());
-        pauseDialog.button("Resume", 0);
-        pauseDialog.getButtonTable().row();
-        /*if (!gameManager.connectionManager.isActive) {
-            pauseDialog.button("Restart", 1);         Coming soon *wink*
-            pauseDialog.getButtonTable().row();
-        }*/
-        pauseDialog.button("Main Menu", 2);
-        pauseDialog.getButtonTable().row();
-        pauseDialog.getColor().a = 0; // Gets rid of the dialog flicker issue during `show()`
-        pauseDialog.text("Game Paused").pad(25f * game.getScaleFactor(), 25f * game.getScaleFactor(), 20f * game.getScaleFactor(), 25f * game.getScaleFactor());
-        Label label = (Label) pauseDialog.getContentTable().getChild(0);
-        label.setAlignment(Align.center);
-        pauseDialog.show(fullScreenStage);
+                }, game.skin);
     }
 
     private boolean isSplitscreenMultiplayer() {

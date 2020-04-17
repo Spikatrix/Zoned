@@ -62,11 +62,6 @@ public class FocusableStage extends Stage {
     private boolean isActive = true;
 
     /**
-     * Indicates whether a dialog is active or not
-     */
-    private boolean dialogIsActive = false;
-
-    /**
      * Constructor for initializing the Stage
      *
      * @param viewport Viewport for the super class Stage
@@ -182,32 +177,52 @@ public class FocusableStage extends Stage {
      * Focus management for background actors are paused until the dialog is dealt with
      *
      * @param msg  The message to display
+     * @param buttonTexts Texts for each button in the dialog
+     * @param useVerticalButtonList Determines whether the dialog buttons are arranged horizontally or vertically
      * @param scaleFactor The game's scaleFactor to scale up/down dialog button width
+     * @param dialogResultListener Interface for beaming back the selected dialog option
      * @param skin The skin to use for the dialog
      */
-    public void showInfoDialog(String msg, float scaleFactor, Skin skin) {
-        final Actor focusedActor = this.currentFocusedActor;
+    public void showDialog(String msg, Array<String> buttonTexts,
+                           boolean useVerticalButtonList,
+                           float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
+        final Array<Actor> backupCurrentActorArray = new Array<Actor>(this.focusableActorArray);
+        final Actor backupFocusedActor = this.currentFocusedActor;
 
         Dialog dialog = new Dialog("", skin) {
             @Override
             protected void result(Object object) {
-                dialogIsActive = false;
-                if (focusedActor != null) {
-                    focus(focusedActor);
+
+                focusableActorArray = backupCurrentActorArray;
+                if (backupFocusedActor != null) {
+                    focus(backupFocusedActor);
+                }
+                if (dialogResultListener != null) {
+                    dialogResultListener.dialogResult((String) object);
                 }
                 super.result(object);
             }
         };
+
         dialog.text(msg).pad(25f * scaleFactor, 25f * scaleFactor, 20f * scaleFactor, 25f * scaleFactor);
         dialog.getColor().a = 0;
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
+
         Label label = (Label) dialog.getContentTable().getChild(0);
         label.setAlignment(Align.center);
-        dialog.button("OK");
-        dialog.show(this);
 
-        this.dialogIsActive = true;
-        focus(dialog.getButtonTable().getChild(0));
+        this.focusableActorArray.clear();
+        for (int i = 0; i < buttonTexts.size; i++) {
+            dialog.button(buttonTexts.get(i), buttonTexts.get(i));
+            this.focusableActorArray.add(dialog.getButtonTable().getChild(i));
+            if (useVerticalButtonList) {
+                dialog.getButtonTable().row();
+                this.focusableActorArray.add(null);
+            }
+        }
+
+        dialog.show(this);
+        focus(this.focusableActorArray.get(0));
     }
 
     /**
@@ -216,9 +231,7 @@ public class FocusableStage extends Stage {
      * @return The next Actor
      */
     private Actor getNextActor() {
-        if (dialogIsActive) {
-            return null;
-        } else if (currentFocusedActor == null) {
+        if (currentFocusedActor == null) {
             return getFirstActor();
         }
 
@@ -241,9 +254,7 @@ public class FocusableStage extends Stage {
      * @return The Actor behind
      */
     private Actor getPreviousActor() {
-        if (dialogIsActive) {
-            return null;
-        } else if (currentFocusedActor == null) {
+        if (currentFocusedActor == null) {
             return getLastActor();
         }
 
@@ -266,9 +277,7 @@ public class FocusableStage extends Stage {
      * @return The Actor below
      */
     private Actor getBelowActor() {
-        if (dialogIsActive) {
-            return null;
-        } else if (currentFocusedActor == null) {
+        if (currentFocusedActor == null) {
             return getFirstActor();
         }
 
@@ -301,9 +310,7 @@ public class FocusableStage extends Stage {
      * @return The Actor above
      */
     private Actor getAboveActor() {
-        if (dialogIsActive) {
-            return null;
-        } else if (currentFocusedActor == null) {
+        if (currentFocusedActor == null) {
             return getLastActor();
         }
 
@@ -336,10 +343,6 @@ public class FocusableStage extends Stage {
      * @return The first Actor
      */
     private Actor getFirstActor() {
-        if (dialogIsActive) {
-            return null;
-        }
-
         for (Actor actor : focusableActorArray) {
             if (actor != null) {
                 return actor;
@@ -355,10 +358,6 @@ public class FocusableStage extends Stage {
      * @return The last Actor
      */
     private Actor getLastActor() {
-        if (dialogIsActive) {
-            return null;
-        }
-
         for (int i = focusableActorArray.size - 1; i >= 0; i--) {
             Actor actor = focusableActorArray.get(i);
             if (actor != null) {
@@ -543,5 +542,9 @@ public class FocusableStage extends Stage {
         }
 
         super.addTouchFocus(listener, listenerActor, target, pointer, button);
+    }
+
+    public interface DialogResultListener {
+        void dialogResult(String buttonText);
     }
 }
