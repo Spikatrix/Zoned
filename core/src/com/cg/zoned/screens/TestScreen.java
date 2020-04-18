@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -33,6 +34,8 @@ import com.cg.zoned.ui.Spinner;
 // Used for testing purposes, nvm about the crap in here
 public class TestScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
+
+    private Array<Texture> usedTextures = new Array<Texture>();
 
     private ScreenViewport viewport;
     private Stage stage;
@@ -113,6 +116,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                     p1.setControlIndex(0);
                     Player p2 = new Player(Constants.PLAYER_COLORS.get("RED"), "p2");
                     p2.setControlIndex(1);
+                    dispose();
                     game.setScreen(
                             new GameScreen(game,
                                     mapManager.getPreparedMapGrid(),
@@ -133,7 +137,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor());
+        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -174,9 +178,13 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         stage.dispose();
         renderer.dispose();
         batch.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private void onBackPressed() {
+        dispose();
         game.setScreen(new MainMenuScreen(game));
     }
 

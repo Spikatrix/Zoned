@@ -23,6 +23,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Constants;
@@ -31,6 +32,8 @@ import com.cg.zoned.Zoned;
 public class LoadingScreen extends ScreenAdapter {
     final Zoned game;
 
+    private Array<Texture> usedTextures = new Array<Texture>();
+
     private AssetManager assetManager;
 
     private Stage stage;
@@ -38,9 +41,6 @@ public class LoadingScreen extends ScreenAdapter {
     private ProgressBar progressBar;
     private boolean finishedLoading;
     private boolean loadedFonts;
-
-    private Pixmap loadingPixmap;
-    private Texture loadingTexture;
 
     public LoadingScreen(final Zoned game) {
         this.game = game;
@@ -74,7 +74,9 @@ public class LoadingScreen extends ScreenAdapter {
         table.setFillParent(true);
         table.center();
 
-        Image loading = new Image(new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ic_loading.png"))));
+        Texture loadingImageTexture = new Texture(Gdx.files.internal("icons/ic_loading.png"));
+        usedTextures.add(loadingImageTexture);
+        Image loading = new Image(new TextureRegionDrawable(loadingImageTexture));
         table.add(loading);
         table.row();
 
@@ -123,7 +125,7 @@ public class LoadingScreen extends ScreenAdapter {
                     @Override
                     public void run() {
                         game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);
-
+                        dispose();
                         game.setScreen(new MainMenuScreen(game));
                     }
                 }));
@@ -155,9 +157,10 @@ public class LoadingScreen extends ScreenAdapter {
     @Override
     public void dispose() {
         stage.dispose();
-        assetManager.dispose();
-        loadingTexture.dispose();
-        loadingPixmap.dispose();
+        //assetManager.dispose(); Will be auto-disposed on game exit I guess?
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private Skin createProgressBarSkin() {
@@ -171,11 +174,13 @@ public class LoadingScreen extends ScreenAdapter {
     }
 
     private Drawable createDrawable(int width, int height, Color color) {
-        loadingPixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+        Pixmap loadingPixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
         loadingPixmap.setColor(color);
         loadingPixmap.fillRectangle(0, 0, width, height);
 
-        loadingTexture = new Texture(loadingPixmap);
+        Texture loadingTexture = new Texture(loadingPixmap);
+        usedTextures.add(loadingTexture);
+        loadingPixmap.dispose();
         TextureRegionDrawable textureRegionDrawable = new TextureRegionDrawable(loadingTexture);
         textureRegionDrawable.setMinWidth(0);
         return textureRegionDrawable;

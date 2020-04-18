@@ -57,6 +57,6 @@ public class Zoned extends Game {
 
     @Override
     public void dispose() {
-        skin.dispose();
+        //skin.dispose(); Will be auto-disposed on game exit I guess?
     }
 }

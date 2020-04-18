@@ -147,7 +147,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         returnToMainMenuButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+                animationManager.fadeOutStage(stage, VictoryScreen.this, new MainMenuScreen(game));
             }
         });
         table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor()).colspan(3);
@@ -202,10 +202,14 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         trailEffect.dispose();
     }
 
+    public void onBackPressed() {
+        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+    }
+
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 
@@ -225,7 +229,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 

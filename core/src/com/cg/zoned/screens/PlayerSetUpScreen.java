@@ -35,6 +35,8 @@ import com.cg.zoned.ui.Spinner;
 public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
+    private Array<Texture> usedTextures = new Array<Texture>();
+
     private FocusableStage stage;
     private Viewport viewport;
     private AnimationManager animationManager;
@@ -65,7 +67,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor());
+        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -147,7 +149,9 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         Table infoTable = new Table();
         infoTable.center();
-        Image infoImage = new Image(new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"))));
+        Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
+        usedTextures.add(infoIconTexture);
+        Image infoImage = new Image(new TextureRegionDrawable(infoIconTexture));
         Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
         infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
         infoTable.add(infoLabel);
@@ -191,7 +195,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 
-        animationManager.fadeOutStage(stage, new GameScreen(game, rows, cols, players, null, null));
+        animationManager.fadeOutStage(stage, this, new GameScreen(game, rows, cols, players, null, null));
     }
 
     @Override
@@ -217,10 +221,13 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private void onBackPressed() {
-        animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
     }
 
     @Override

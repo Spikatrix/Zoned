@@ -148,7 +148,7 @@ public class AnimationManager {
         stage.addAction(fadeInAnimation);
     }
 
-    public void fadeOutStage(final Stage stage, final Screen toScreen) {
+    public void fadeOutStage(final Stage stage, final Screen fromScreen, final Screen toScreen) {
         masterInputMultiplexer.removeProcessor(stage);
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
@@ -158,7 +158,7 @@ public class AnimationManager {
             @Override
             public void run() {
                 Gdx.input.setInputProcessor(null);
-
+                fromScreen.dispose();
                 game.setScreen(toScreen);
                 if (animationListener != null) {
                     animationListener.animationEnd(stage);

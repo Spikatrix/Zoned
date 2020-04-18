@@ -27,14 +27,13 @@ public class DropDownMenu extends SelectBox<String> {
         Array<String> itemList = getItems();
         itemList.add(s);
         setItems(itemList);
-        layout();
     }
 
     public boolean isExpanded() {
         return this.getList().isTouchable();
     }
 
-    // Decreased fadeIn and fadeOut duration so that the cut-off part is less noticable
+    // Decreased fadeIn and fadeOut duration
     @Override
     protected void onShow(Actor selectBoxList, boolean below) {
         selectBoxList.getColor().a = 0;

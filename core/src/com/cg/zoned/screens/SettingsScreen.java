@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -29,6 +30,8 @@ import com.cg.zoned.ui.HoverImageButton;
 
 public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
+
+    private Array<Texture> usedTextures = new Array<Texture>();
 
     private FocusableStage stage;
     private Viewport viewport;
@@ -60,10 +63,18 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         table.center();
 
         Label controlLabel = new Label("Control scheme", game.skin, "themed");
-        Drawable controlFlingOff = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_off.png")));
-        Drawable controlFlingOn = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_on.png")));
-        Drawable controlPiemenuOn = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/control_icons/ic_control_piemenu_on.png")));
-        Drawable controlPiemenuOff = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/control_icons/ic_control_piemenu_off.png")));
+        Texture controlFlingOffTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_off.png"));
+        Texture controlFlingOnTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_on.png"));
+        Texture controlPiemenuOffTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_piemenu_off.png"));
+        Texture controlPiemenuOnTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_piemenu_on.png"));
+        usedTextures.add(controlFlingOffTexture);
+        usedTextures.add(controlFlingOnTexture);
+        usedTextures.add(controlPiemenuOffTexture);
+        usedTextures.add(controlPiemenuOnTexture);
+        Drawable controlFlingOff = new TextureRegionDrawable(controlFlingOffTexture);
+        Drawable controlFlingOn = new TextureRegionDrawable(controlFlingOnTexture);
+        Drawable controlPiemenuOff = new TextureRegionDrawable(controlPiemenuOffTexture);
+        Drawable controlPiemenuOn = new TextureRegionDrawable(controlPiemenuOnTexture);
         final HoverImageButton flingControl = new HoverImageButton(controlFlingOff, controlFlingOn);
         final HoverImageButton piemenuControl = new HoverImageButton(controlPiemenuOff, controlPiemenuOn);
         final Label flingControlLabel = new Label("Fling", game.skin);
@@ -136,7 +147,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor());
+        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -168,10 +179,13 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private void onBackPressed() {
-        animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
     }
 
     @Override

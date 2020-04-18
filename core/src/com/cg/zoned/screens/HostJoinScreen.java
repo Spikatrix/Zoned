@@ -6,6 +6,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -37,6 +38,8 @@ import java.net.InetAddress;
 
 public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
+
+    private Array<Texture> usedTextures = new Array<Texture>();
 
     private FocusableStage stage;
     private Viewport viewport;
@@ -108,7 +111,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
                     startServerLobby(playerNameField.getText().trim());
                 } else {
-                    stage.showDialog("Please enter the name of the player(s)", dialogButtonTexts,
+                    stage.showDialog("Please enter the player name", dialogButtonTexts,
                             false,
                             game.getScaleFactor(), null, game.skin);
                 }
@@ -153,7 +156,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor());
+        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -185,7 +188,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             return;
         }
 
-        animationManager.fadeOutStage(stage, new ServerLobbyScreen(game, server, playerName));
+        animationManager.fadeOutStage(stage, this, new ServerLobbyScreen(game, server, playerName));
     }
 
     private void startClientLobby(final String playerName, final Label searchingLabel) {
@@ -235,7 +238,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             return;
         }
 
-        animationManager.fadeOutStage(stage, new ClientLobbyScreen(game, client, playerName));
+        animationManager.fadeOutStage(stage, this, new ClientLobbyScreen(game, client, playerName));
     }
 
     private void restoreScreen() {
@@ -303,10 +306,13 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private void onBackPressed() {
-        animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
     }
 
     @Override

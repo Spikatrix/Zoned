@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -39,6 +40,8 @@ import com.esotericsoftware.kryonet.Listener;
 
 public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
+
+    private Array<Texture> usedTextures = new Array<Texture>();
 
     private Client client;
     private ClientLobbyListener clientLobbyListener;
@@ -152,7 +155,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor());
+        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -335,7 +338,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                animationManager.fadeOutStage(stage, new HostJoinScreen(game));
+                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new HostJoinScreen(game));
             }
         });
     }
@@ -359,7 +362,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                animationManager.fadeOutStage(stage, new GameScreen(game, rows, cols, players, null, client));
+                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new GameScreen(game, rows, cols, players, null, client));
             }
         });
     }
@@ -388,6 +391,9 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     public void dispose() {
         removeListener(clientLobbyListener);
         stage.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private void onBackPressed() {

@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -40,6 +41,8 @@ import com.esotericsoftware.kryonet.Server;
 
 public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     private final Zoned game;
+
+    private Array<Texture> usedTextures = new Array<Texture>();
 
     private Server server;
     private ServerLobbyListener serverLobbyListener;
@@ -149,7 +152,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor());
+        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -308,7 +311,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
         }
 
-        animationManager.fadeOutStage(stage, new GameScreen(game, rows, cols, players, server, null));
+        animationManager.fadeOutStage(stage, this, new GameScreen(game, rows, cols, players, server, null));
     }
 
     public void receiveClientName(Connection connection, String name) {
@@ -420,6 +423,9 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     public void dispose() {
         removeListener(serverLobbyListener);
         stage.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private void onBackPressed() {
@@ -428,7 +434,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         playerItems.clear();
         playerConnections.clear();
 
-        animationManager.fadeOutStage(stage, new HostJoinScreen(game));
+        animationManager.fadeOutStage(stage, this, new HostJoinScreen(game));
     }
 
     @Override

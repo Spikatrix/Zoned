@@ -18,7 +18,8 @@ public final class Constants {
     /**
      * Width and color of the viewport divider between splitscreens
      */
-    public static final float VIEWPORT_DIVIDER_TOTAL_WIDTH = 50f;
+    public static final float VIEWPORT_DIVIDER_SOLID_WIDTH = 3f;
+    public static final float VIEWPORT_DIVIDER_FADE_WIDTH = 25f;
     public static final Color VIEWPORT_DIVIDER_FADE_COLOR = new Color(0f, 0f, 0f, 0f);
 
     /**

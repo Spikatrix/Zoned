@@ -40,6 +40,8 @@ import com.esotericsoftware.kryonet.Server;
 public class GameScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
+    private Array<Texture> usedTextures = new Array<Texture>();
+
     private GameManager gameManager;
 
     private Map map;
@@ -137,7 +139,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private HoverImageButton setUpPauseButton() {
-        Drawable pauseImageDrawable = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ui_icons/ic_pause.png")));
+        Texture pauseImageTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_pause.png"));
+        usedTextures.add(pauseImageTexture);
+        Drawable pauseImageDrawable = new TextureRegionDrawable(pauseImageTexture);
         final HoverImageButton pauseButton = new HoverImageButton(pauseImageDrawable);
         Image pauseImage = pauseButton.getImage();
         pauseImage.setOrigin(pauseImage.getPrefWidth() / 2, pauseImage.getPrefHeight() / 2);
@@ -153,8 +157,12 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private HoverImageButton setUpZoomButton() {
-        Drawable zoomInImage = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ui_icons/ic_zoom_in.png")));
-        Drawable zoomOutImage = new TextureRegionDrawable(new Texture(Gdx.files.internal("icons/ui_icons/ic_zoom_out.png")));
+        Texture zoomInTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_zoom_in.png"));
+        Texture zoomOutTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_zoom_out.png"));
+        usedTextures.add(zoomInTexture);
+        usedTextures.add(zoomOutTexture);
+        Drawable zoomInImage = new TextureRegionDrawable(zoomInTexture);
+        Drawable zoomOutImage = new TextureRegionDrawable(zoomOutTexture);
         final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomInImage);
         Image zoomImage = zoomButton.getImage();
         zoomImage.setOrigin(zoomImage.getPrefWidth() / 2, zoomImage.getPrefHeight() / 2);
@@ -268,6 +276,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             if (gameManager.connectionManager.isActive) {
                 gameManager.connectionManager.close();
             }
+            dispose();
             game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
         }
     }
@@ -280,11 +289,14 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         for (int i = 1; i < lineCount; i++) {
             float startX = (fullScreenStage.getViewport().getWorldWidth() / (float) lineCount) * i;
 
-            renderer.rect(startX, 0,
-                    Constants.VIEWPORT_DIVIDER_TOTAL_WIDTH / 2, height,
+            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+                    Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
+                    Color.BLACK, Color.BLACK, Color.BLACK, Color.BLACK);
+            renderer.rect(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+                    Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
                     Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK);
-            renderer.rect(startX, 0,
-                    -Constants.VIEWPORT_DIVIDER_TOTAL_WIDTH / 2, height,
+            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+                    -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
                     Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK);
         }
         renderer.end();
@@ -325,6 +337,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                     @Override
                     public void dialogResult(String buttonText) {
                         gameManager.connectionManager.close();
+                        dispose();
                         game.setScreen(new MainMenuScreen(game));
                     }
                 }, game.skin);
@@ -349,6 +362,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                             if (gameManager.connectionManager.isActive) {
                                 gameManager.connectionManager.close();
                             } else {
+                                dispose();
                                 game.setScreen(new MainMenuScreen(game));
                             }
                         }
@@ -377,6 +391,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         renderer.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     @Override
