@@ -1,5 +1,7 @@
 package com.cg.zoned.maps;
 
+import com.badlogic.gdx.utils.Array;
+
 public class DefaultXMap implements MapEntity {
     private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
             "A.............C\n" +
@@ -32,6 +34,11 @@ public class DefaultXMap implements MapEntity {
                 throw new InvalidMapDimensions("Col count does not match the provided string");
             }
         }
+    }
+
+    @Override
+    public void applyExtraParams(Array<Integer> extraParams) {
+
     }
 
     @Override

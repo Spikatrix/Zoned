@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -78,16 +79,24 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpStage() {
         final int NO_OF_COLORS = Constants.PLAYER_COLORS.size();
-        final float COLOR_BUTTON_DIMENSIONS = 60f;
+        final float COLOR_BUTTON_DIMENSIONS = 60f * game.getScaleFactor();
+
+        Table masterTable = new Table();
+        masterTable.setFillParent(true);
+        //masterTable.setDebug(true);
+        masterTable.center();
 
         Table table = new Table();
-        table.setFillParent(true);
-        //table.setDebug(true);
         table.center();
+        table.pad(20f);
+        ScrollPane screenScrollPane = new ScrollPane(table);
+        screenScrollPane.setOverscroll(false, true);
+        // Have to set overscrollX to false since on Android, it seems to overscroll even when there is space
+        // But on Desktop it works perfectly well.
 
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
-        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount]; // TODO: Modify to list to get rid of warning?
+        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
             playerItem.center();
@@ -104,7 +113,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
                 colorButtons[i][j].setColor(PlayerColorHelper.getColorFromIndex(j));
                 colorButtonGroups[i].add(colorButtons[i][j]);
 
-                playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS * game.getScaleFactor()).height(COLOR_BUTTON_DIMENSIONS * game.getScaleFactor());
+                playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS).height(COLOR_BUTTON_DIMENSIONS);
 
                 stage.addFocusableActor(colorButtons[i][j]);
             }
@@ -138,7 +147,6 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         innerTable.add(x);
         innerTable.add(colSpinner);
         table.add(innerTable).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor());
-
         table.row();
 
         stage.addFocusableActor(rowSpinner.getLeftButton());
@@ -182,7 +190,8 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         });
         table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1);
         stage.addFocusableActor(startButton, NO_OF_COLORS);
-        stage.addActor(table);
+        masterTable.add(screenScrollPane);
+        stage.addActor(masterTable);
     }
 
     private void startGame(Array<Color> playerColors, final int rows, final int cols) {

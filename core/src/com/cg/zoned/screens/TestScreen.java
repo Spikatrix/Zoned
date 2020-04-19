@@ -13,12 +13,15 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
@@ -27,6 +30,7 @@ import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.InvalidMapCharacter;
+import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
@@ -74,15 +78,25 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
             table.add(errorMessage);
         } else {
             final Spinner spinner = new Spinner(game.skin,
-                    game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
-                    140f * game.getScaleFactor(), false);
-            for (String mapName : mapManager.getMapNames()) {
-                Label mapNameLabel = new Label(mapName, game.skin);
+                    game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3,
+                    150f * game.getScaleFactor(), false);
+            for (MapEntity map : mapManager.getMapList()) {
+                Label mapNameLabel = new Label(map.getName(), game.skin);
                 mapNameLabel.setAlignment(Align.center);
-                spinner.addContent(mapNameLabel);
+                Texture mapPreviewTexture = mapManager.getMapPreview(map.getName());
+                if (mapPreviewTexture != null) {
+                    usedTextures.add(mapPreviewTexture);
+                    Image mapPreviewImage = new Image(mapPreviewTexture);
+                    mapPreviewImage.getColor().a = .2f;
+                    mapPreviewImage.setScaling(Scaling.fit);
+                    Stack stack = new Stack(mapPreviewImage, mapNameLabel);
+                    spinner.addContent(stack);
+                } else {
+                    spinner.addContent(mapNameLabel);
+                }
             }
-            spinner.getLeftButton().setText("<");
-            spinner.getRightButton().setText(">");
+            spinner.getLeftButton().setText(" < ");
+            spinner.getRightButton().setText(" > ");
             spinner.setButtonStepCount(1);
             table.add(spinner);
             table.row();
@@ -94,7 +108,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                 public void clicked(InputEvent event, float x, float y) {
                     int mapIndex = spinner.getPositionIndex();
                     try {
-                        mapManager.prepareMap(mapIndex);
+                        mapManager.prepareMap(mapIndex, null);
                     } catch (InvalidMapCharacter e) {
                         e.printStackTrace();
                         return;

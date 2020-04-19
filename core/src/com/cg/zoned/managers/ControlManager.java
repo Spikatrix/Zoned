@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
 import com.cg.zoned.controls.FlingControlManager;
@@ -58,13 +59,14 @@ public class ControlManager {
         for (int i = 0; i < overlayColors.length; i++) {
             overlayColors[i] = new Color(0, 0, 0, 0);
             controlImages[i] = new Image(new TextureRegionDrawable(new Texture(controlImagePath)));
+            controlImages[i].setScaling(Scaling.fit);
             if (controlLabels != null) {
                 String controlString = Input.Keys.toString(players[i].controls[0]) + '\n' +
-                        Input.Keys.toString(players[i].controls[3]) +
+                        Input.Keys.toString(players[i].controls[1]) +
                         "  " +
                         Input.Keys.toString(players[i].controls[2]) +
                         "  " +
-                        Input.Keys.toString(players[i].controls[1]);
+                        Input.Keys.toString(players[i].controls[3]);
                 controlLabels[i] = new Label(controlString, skin);
                 controlLabels[i].setAlignment(Align.center);
             }

@@ -55,10 +55,10 @@ public final class Constants {
      * Note that you may face issues when playing with the number of players greater than the number of control schemes specified
      */
     public static final int[][] PLAYER_CONTROLS = new int[][]{
-            {Input.Keys.W,  Input.Keys.D,     Input.Keys.S,    Input.Keys.A},
-            {Input.Keys.UP, Input.Keys.RIGHT, Input.Keys.DOWN, Input.Keys.LEFT},
-            {Input.Keys.I,  Input.Keys.L,     Input.Keys.K,    Input.Keys.J},
-            {Input.Keys.T,  Input.Keys.H,     Input.Keys.G,    Input.Keys.F},
+            {Input.Keys.W, Input.Keys.A, Input.Keys.S, Input.Keys.D},
+            {Input.Keys.UP, Input.Keys.LEFT, Input.Keys.DOWN, Input.Keys.RIGHT},
+            {Input.Keys.I, Input.Keys.J, Input.Keys.K, Input.Keys.L},
+            {Input.Keys.T, Input.Keys.F, Input.Keys.G, Input.Keys.H},
     };
 
     /**
@@ -88,7 +88,7 @@ public final class Constants {
     public static final int PIE_MENU_CONTROL = 0;
     public static final int FLING_CONTROL = 1;
 
-    public enum Direction {UP, RIGHT, DOWN, LEFT}
+    public enum Direction {UP, LEFT, DOWN, RIGHT}
 
     public enum FONT_MANAGER {
         LARGE("large-font", 80),

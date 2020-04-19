@@ -26,6 +26,7 @@ public class PieMenuControlManager extends InputAdapter {
     private Player[] players;
     private boolean isSplitScreenMultiplayer;
 
+    private int piemenuRadius = 80;
     private PieMenu[] menus;
     private int[] pointers;
     private Vector2[] coords;
@@ -60,7 +61,7 @@ public class PieMenuControlManager extends InputAdapter {
             style.separatorColor = Color.BLACK;
             style.downColor = Color.WHITE;
             style.sliceColor = players[i].color;
-            menus[i] = new PieMenu(whitePixel, style, 80);
+            menus[i] = new PieMenu(whitePixel, style, piemenuRadius);
 
             final Image[] arrowImages = new Image[]{
                     new Image(arrow),
@@ -173,7 +174,6 @@ public class PieMenuControlManager extends InputAdapter {
                 } else {
                     menus[i].setVisible(false);
                     menus[i].remove();
-
                 }
                 pointers[i] = -1;
 

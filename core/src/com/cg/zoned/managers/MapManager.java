@@ -1,8 +1,12 @@
 package com.cg.zoned.managers;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Cell;
+import com.cg.zoned.Constants;
 import com.cg.zoned.maps.DefaultHoloMap;
 import com.cg.zoned.maps.DefaultRectangleMap;
 import com.cg.zoned.maps.DefaultXMap;
@@ -39,17 +43,22 @@ public class MapManager {
         mapList.add(new DefaultXMap());
     }
 
-    public Array<String> getMapNames() {
-        Array<String> mapNames = new Array<String>();
-        for (MapEntity mapEntity : mapList) {
-            mapNames.add(mapEntity.getName().trim());
+    public Texture getMapPreview(String mapName) {
+        try {
+            return new Texture(Gdx.files.internal("icons/map_icons/" + mapName + ".png"));
+        } catch (GdxRuntimeException e) {
+            Gdx.app.log(Constants.LOG_TAG, "Failed to load map preview image for '" + mapName + "'");
+            return null;
         }
-
-        return mapNames;
     }
 
-    public void prepareMap(int mapIndex) throws InvalidMapCharacter {
+    public Array<MapEntity> getMapList() {
+        return mapList;
+    }
+
+    public void prepareMap(int mapIndex, Array<Integer> extraParams) throws InvalidMapCharacter {
         MapEntity selectedMap = mapList.get(mapIndex);
+        // TODO: Apply extraParams here
         String mapData = selectedMap.getMapData();
 
         Array<GridPoint2> startPositions = new Array<GridPoint2>();
