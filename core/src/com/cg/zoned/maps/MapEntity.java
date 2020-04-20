@@ -5,7 +5,7 @@ import com.badlogic.gdx.utils.Array;
 public interface MapEntity {
     String getName();
 
-    void applyExtraParams(Array<Integer> extraParams);
+    void applyExtraParams(Array<Object> extraParams);
 
     int getRowCount();
 

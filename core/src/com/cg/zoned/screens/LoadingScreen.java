@@ -76,7 +76,7 @@ public class LoadingScreen extends ScreenAdapter {
 
         Texture loadingImageTexture = new Texture(Gdx.files.internal("icons/ic_loading.png"));
         usedTextures.add(loadingImageTexture);
-        Image loading = new Image(new TextureRegionDrawable(loadingImageTexture));
+        Image loading = new Image(loadingImageTexture);
         table.add(loading);
         table.row();
 

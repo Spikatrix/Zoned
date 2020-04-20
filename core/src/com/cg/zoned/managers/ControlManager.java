@@ -13,8 +13,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
@@ -30,16 +30,16 @@ public class ControlManager {
     private Color[] overlayColors;
     private Table[] controlTables;
 
-    public ControlManager(Player[] players, boolean isSplitScreen, Stage stage, int controls, Skin skin) {
+    public ControlManager(Player[] players, boolean isSplitScreen, Stage stage, int controls, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
         this.stage = stage;
         this.players = players;
 
         FileHandle controlImagePath = null;
         if (controls == Constants.PIE_MENU_CONTROL) {
-            pieMenuControlManager = new PieMenuControlManager(players, isSplitScreen, stage);
+            pieMenuControlManager = new PieMenuControlManager(players, isSplitScreen, stage, scaleFactor, usedTextures);
             controlImagePath = Gdx.files.internal("icons/control_icons/ic_control_piemenu_off.png");
         } else if (controls == Constants.FLING_CONTROL) {
-            flingControlManager = new FlingControlManager(players, isSplitScreen, stage);
+            flingControlManager = new FlingControlManager(players, isSplitScreen, stage, scaleFactor, usedTextures);
             controlImagePath = Gdx.files.internal("icons/control_icons/ic_control_fling_off.png");
         }
 
@@ -55,10 +55,13 @@ public class ControlManager {
             controlLabels = new Label[splitScreenCount];
         }
 
+        Texture controlImageTexture = new Texture(controlImagePath);
+        usedTextures.add(controlImageTexture);
+
         float splitScreenWidth = stage.getWidth() / overlayColors.length;
         for (int i = 0; i < overlayColors.length; i++) {
             overlayColors[i] = new Color(0, 0, 0, 0);
-            controlImages[i] = new Image(new TextureRegionDrawable(new Texture(controlImagePath)));
+            controlImages[i] = new Image(controlImageTexture);
             controlImages[i].setScaling(Scaling.fit);
             if (controlLabels != null) {
                 String controlString = Input.Keys.toString(players[i].controls[0]) + '\n' +

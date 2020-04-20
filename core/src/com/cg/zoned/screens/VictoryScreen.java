@@ -13,10 +13,10 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -35,6 +35,8 @@ import java.text.DecimalFormat;
 public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
+    private Array<Texture> usedTextures;
+
     private FocusableStage stage;
     private Viewport viewport;
     private AnimationManager animationManager;
@@ -48,6 +50,8 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
     public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols, int wallCount) {
         this.game = game;
+
+        this.usedTextures = new Array<Texture>();
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
@@ -92,10 +96,16 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpVictoryUI() {
-        Table table = new Table();
+        Table masterTable = new Table();
         //table.setDebug(true);
-        table.setFillParent(true);
+        masterTable.setFillParent(true);
+        masterTable.center();
+
+        Table table = new Table();
         table.center();
+        table.pad(20f);
+        ScrollPane screenScrollPane = new ScrollPane(table);
+        screenScrollPane.setOverscroll(false, true);
 
         StringBuilder victoryString = new StringBuilder();
         for (String victoryStr : victoryStrings) {
@@ -113,6 +123,11 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
                 "icons/rank_icons/ic_no2.png",
                 "icons/rank_icons/ic_no3.png",
         };
+        Texture[] rankImageTextures = new Texture[rankImageLocations.length];
+        for (int i = 0; i < rankImageTextures.length; i++) {
+            rankImageTextures[i] = new Texture(Gdx.files.internal(rankImageLocations[i]));
+            usedTextures.add(rankImageTextures[i]);
+        }
         Image[] rankImages = new Image[victoryStrings.length];
         Label[] victoryLabels = new Label[victoryStrings.length];
         Label[] rankLabels = new Label[victoryStrings.length];
@@ -124,7 +139,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
             victoryLabels[i] = new Label(victoryStrings[i], game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
             if (rankIndex < rankImageLocations.length) {
-                rankImages[i] = new Image(new TextureRegionDrawable(new Texture(Gdx.files.internal(rankImageLocations[rankIndex]))));
+                rankImages[i] = new Image(rankImageTextures[rankIndex]);
             } else {
                 rankImages[i] = null;
             }
@@ -152,9 +167,12 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         });
         table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor()).colspan(3);
 
-        stage.addActor(table);
+        masterTable.add(screenScrollPane);
+
         stage.addFocusableActor(returnToMainMenuButton);
         stage.setFocusedActor(returnToMainMenuButton);
+
+        stage.addActor(masterTable);
     }
 
     private void getVictoryStrings(PlayerManager playerManager, int rows, int cols, int wallCount) {
@@ -200,6 +218,9 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     public void dispose() {
         stage.dispose();
         trailEffect.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     public void onBackPressed() {

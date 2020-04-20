@@ -2,23 +2,23 @@ package com.cg.zoned.maps;
 
 import com.badlogic.gdx.utils.Array;
 
-public class DefaultRectangleMap implements MapEntity {
+public class HoloMap implements MapEntity {
     private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
-            "A........C\n" +
+            "A...##...C\n" +
             "..........\n" +
             "..........\n" +
+            "....##....\n" +
+            "#........#\n" +
+            "#........#\n" +
+            "....##....\n" +
             "..........\n" +
             "..........\n" +
-            "..........\n" +
-            "..........\n" +
-            "..........\n" +
-            "..........\n" +
-            "D........B\n";
+            "D...##...B\n";
 
     private int rowCount = 10;
     private int colCount = 10;
 
-    public DefaultRectangleMap() throws InvalidMapDimensions {
+    public HoloMap() throws InvalidMapDimensions {
         String[] mapRows = mapGridString.split("\n");
         if (mapRows.length != rowCount) {
             throw new InvalidMapDimensions("Row count does not match the provided string");
@@ -32,8 +32,8 @@ public class DefaultRectangleMap implements MapEntity {
     }
 
     @Override
-    public void applyExtraParams(Array<Integer> extraParams) {
-        // TODO: This. Tomorrow.
+    public void applyExtraParams(Array<Object> extraParams) {
+
     }
 
     @Override
@@ -43,7 +43,7 @@ public class DefaultRectangleMap implements MapEntity {
 
     @Override
     public String getName() {
-        return "Rectangle";
+        return "Holo";
     }
 
     @Override

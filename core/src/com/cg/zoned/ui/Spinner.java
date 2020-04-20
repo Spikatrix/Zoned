@@ -90,7 +90,7 @@ public class Spinner extends Table {
         this.setTouchable(Touchable.enabled);
 
         buttonHeight = Math.max(this.leftButton.getPrefHeight(), scrollPaneHeight);
-        buttonWidth = Math.min(this.leftButton.getPrefWidth() + 20f, scrollPaneWidth);
+        buttonWidth = Math.min(this.leftButton.getPrefWidth() + 30f, scrollPaneWidth);
 
         addAllComponentsToSpinner();
     }

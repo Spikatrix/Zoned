@@ -30,6 +30,7 @@ import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.ScoreBar;
+import com.cg.zoned.TeamData;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.GameManager;
 import com.cg.zoned.ui.FocusableStage;
@@ -58,6 +59,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private ScoreBar scoreBars;
 
+    private Color currentBgColor, targetBgColor;
+    private float bgAnimSpeed = 1.4f;
+    private float bgAlpha = .15f;
+
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
     public GameScreen(final Zoned game, int rows, int cols, Player[] players, Server server, Client client) {
@@ -65,7 +70,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         this.fullScreenStage = new FocusableStage(new ScreenViewport());
 
-        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin);
+        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin, game.getScaleFactor(), usedTextures);
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
@@ -75,6 +80,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             player.setStartPos(startPositions.get(0)); // TODO: Fix/Modify this later
             // Was `get(i % startPositions.size);`
         }
+
+        currentBgColor = new Color(0, 0, 0, bgAlpha);
+        targetBgColor = new Color(0, 0, 0, bgAlpha);
 
         initViewports();
 
@@ -86,7 +94,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         this.fullScreenStage = new FocusableStage(new ScreenViewport());
 
-        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin);
+        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin, game.getScaleFactor(), usedTextures);
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
@@ -212,7 +220,19 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        //TODO: Draw cool background, bloom and particle effects
+        //TODO: Draw cool background, bloom and particle effects (Maybe...)
+
+        int highscore = 0;
+        for (TeamData teamData : gameManager.playerManager.getTeamData()) {
+            if (teamData.score > highscore) {
+                highscore = teamData.score;
+                targetBgColor.set(teamData.color);
+                targetBgColor.a = bgAlpha;
+            } else if (teamData.score == highscore) {
+                targetBgColor.set(0, 0, 0, bgAlpha);
+            }
+        }
+        currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
 
         if (!gameComplete) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
@@ -226,6 +246,13 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        renderer.setProjectionMatrix(fullScreenStage.getViewport().getCamera().combined);
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        renderer.setColor(currentBgColor);
+        renderer.rect(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
+        renderer.end();
+
         for (int i = 0; i < this.playerViewports.length; i++) {
             focusAndRenderViewport(playerViewports[i], gameManager.playerManager.getPlayer(i), delta);
         }

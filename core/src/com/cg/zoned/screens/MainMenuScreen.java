@@ -226,7 +226,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
             Texture backgroundImageTexture = new Texture(Gdx.files.internal(backgroundImageLocations[i]));
             usedTextures.add(backgroundImageTexture);
-            Image backgroundImage = new Image(new TextureRegionDrawable(backgroundImageTexture));
+            Image backgroundImage = new Image(backgroundImageTexture);
             backgroundImage.setScaling(Scaling.fit);
             backgroundImage.getColor().a = .3f;
 

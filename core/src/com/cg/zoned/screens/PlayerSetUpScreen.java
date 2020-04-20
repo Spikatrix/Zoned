@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
@@ -18,7 +19,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -29,6 +29,7 @@ import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.ui.CustomButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
@@ -44,6 +45,12 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private BitmapFont font;
 
+    private ShapeRenderer renderer;
+    private float bgAlpha = .2f;
+    private float bgAnimSpeed = 1.4f;
+    private Color[] currentBgColors;
+    private Color[] targetBgColors;
+
     private int playerCount;
     private Table playerList;
 
@@ -55,8 +62,17 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
+        this.renderer = new ShapeRenderer();
+
         this.playerCount = Constants.NO_OF_PLAYERS;
         this.playerList = new Table();
+
+        this.currentBgColors = new Color[this.playerCount];
+        this.targetBgColors = new Color[this.playerCount];
+        for (int i = 0; i < this.playerCount; i++) {
+            this.currentBgColors[i] = new Color(0, 0, 0, bgAlpha);
+            this.targetBgColors[i] = new Color(0, 0, 0, bgAlpha);
+        }
     }
 
     @Override
@@ -96,7 +112,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
-        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];
+        final CustomButtonGroup[] colorButtonGroups = new CustomButtonGroup[playerCount];
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
             playerItem.center();
@@ -104,7 +120,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             playerItem.add(promptLabels[i]);
 
             colorButtons[i] = new Button[NO_OF_COLORS];
-            colorButtonGroups[i] = new ButtonGroup<Button>();
+            colorButtonGroups[i] = new CustomButtonGroup();
             colorButtonGroups[i].setMinCheckCount(1);
             colorButtonGroups[i].setMaxCheckCount(1);
 
@@ -118,6 +134,16 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
                 stage.addFocusableActor(colorButtons[i][j]);
             }
 
+            final int finalI = i;
+            colorButtonGroups[i].setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
+                @Override
+                public void buttonPressed(Button button) {
+                    targetBgColors[finalI].set(button.getColor());
+                    targetBgColors[finalI].a = bgAlpha;
+                }
+            });
+
+            colorButtonGroups[i].uncheckAll();
             colorButtons[i][i % NO_OF_COLORS].setChecked(true);
             stage.row();
             playerList.add(playerItem).right();
@@ -159,7 +185,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         infoTable.center();
         Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
         usedTextures.add(infoIconTexture);
-        Image infoImage = new Image(new TextureRegionDrawable(infoIconTexture));
+        Image infoImage = new Image(infoIconTexture);
         Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
         infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
         infoTable.add(infoLabel);
@@ -217,7 +243,23 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        for (int i = 0; i < currentBgColors.length; i++) {
+            currentBgColors[i].lerp(targetBgColors[i], bgAnimSpeed * delta);
+        }
+
         viewport.apply(true);
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        renderer.setProjectionMatrix(viewport.getCamera().combined);
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (int i = 0; i < currentBgColors.length; i++) {
+            renderer.setColor(currentBgColors[i]);
+            renderer.rect(i * stage.getWidth() / currentBgColors.length, 0,
+                    stage.getWidth() / currentBgColors.length, stage.getHeight());
+        }
+        renderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
             FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);

@@ -7,8 +7,10 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -23,6 +25,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.cg.zoned.AnimatedDrawable;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Player;
@@ -84,16 +87,29 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                 Label mapNameLabel = new Label(map.getName(), game.skin);
                 mapNameLabel.setAlignment(Align.center);
                 Texture mapPreviewTexture = mapManager.getMapPreview(map.getName());
+                Stack stack = new Stack();
                 if (mapPreviewTexture != null) {
                     usedTextures.add(mapPreviewTexture);
                     Image mapPreviewImage = new Image(mapPreviewTexture);
                     mapPreviewImage.getColor().a = .2f;
                     mapPreviewImage.setScaling(Scaling.fit);
-                    Stack stack = new Stack(mapPreviewImage, mapNameLabel);
-                    spinner.addContent(stack);
+                    stack.add(mapPreviewImage);
+                    stack.add(mapNameLabel);
                 } else {
-                    spinner.addContent(mapNameLabel);
+                    stack.add(mapNameLabel);
                 }
+                if (map.getName().equals("Rectangle")) {
+                    Table innerTable = new Table();
+                    innerTable.setFillParent(true);
+                    innerTable.top().right();
+
+                    HoverImageButton hoverImageButton = new HoverImageButton(new AnimatedDrawable(getAnimationSettingsDrawable()));
+                    hoverImageButton.getImage().setScaling(Scaling.fit);
+                    hoverImageButton.setPosition(0, 0);
+                    innerTable.add(hoverImageButton).width(20).height(20);
+                    stack.add(innerTable);
+                }
+                spinner.addContent(stack);
             }
             spinner.getLeftButton().setText(" < ");
             spinner.getRightButton().setText(" > ");
@@ -148,6 +164,26 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         }
 
         stage.addActor(table);
+    }
+
+    private Animation getAnimationSettingsDrawable() {
+        Texture settingsSheet = new Texture(Gdx.files.internal("icons/ui_icons/ic_settings_sheet.png"));
+        usedTextures.add(settingsSheet);
+        int rowCount = 10, colCount = 3;
+
+        TextureRegion[][] tmp = TextureRegion.split(settingsSheet,
+                settingsSheet.getWidth() / colCount,
+                settingsSheet.getHeight() / rowCount);
+
+        TextureRegion[] playFrames = new TextureRegion[rowCount * colCount];
+        int index = 0;
+        for (int i = 0; i < rowCount; i++) {
+            for (int j = 0; j < colCount; j++) {
+                playFrames[index++] = tmp[i][j];
+            }
+        }
+
+        return new Animation<TextureRegion>(1 / 40f, playFrames);
     }
 
     private void setUpBackButton() {

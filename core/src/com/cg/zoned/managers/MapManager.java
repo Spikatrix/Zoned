@@ -7,12 +7,12 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
-import com.cg.zoned.maps.DefaultHoloMap;
-import com.cg.zoned.maps.DefaultRectangleMap;
-import com.cg.zoned.maps.DefaultXMap;
+import com.cg.zoned.maps.HoloMap;
 import com.cg.zoned.maps.InvalidMapCharacter;
 import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.RectangleMap;
+import com.cg.zoned.maps.XMap;
 
 public class MapManager {
     private final char EMPTY_CHAR = '.';
@@ -38,9 +38,9 @@ public class MapManager {
     }
 
     private void loadDefaultMaps() throws InvalidMapDimensions {
-        mapList.add(new DefaultRectangleMap());
-        mapList.add(new DefaultHoloMap());
-        mapList.add(new DefaultXMap());
+        mapList.add(new RectangleMap());
+        mapList.add(new HoloMap());
+        mapList.add(new XMap());
     }
 
     public Texture getMapPreview(String mapName) {

@@ -2,23 +2,28 @@ package com.cg.zoned.maps;
 
 import com.badlogic.gdx.utils.Array;
 
-public class DefaultHoloMap implements MapEntity {
+public class XMap implements MapEntity {
     private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
-            "A...##...C\n" +
-            "..........\n" +
-            "..........\n" +
-            "....##....\n" +
-            "#........#\n" +
-            "#........#\n" +
-            "....##....\n" +
-            "..........\n" +
-            "..........\n" +
-            "D...##...B\n";
+            "A.............C\n" +
+            ".#...........#.\n" +
+            "..#.........#..\n" +
+            "...............\n" +
+            "....#.....#....\n" +
+            ".....#...#.....\n" +
+            "...............\n" +
+            ".......#.......\n" +
+            "...............\n" +
+            ".....#...#.....\n" +
+            "....#.....#....\n" +
+            "...............\n" +
+            "..#.........#..\n" +
+            ".#...........#.\n" +
+            "D.............B\n";
 
-    private int rowCount = 10;
-    private int colCount = 10;
+    private int rowCount = 15;
+    private int colCount = 15;
 
-    public DefaultHoloMap() throws InvalidMapDimensions {
+    public XMap() throws InvalidMapDimensions {
         String[] mapRows = mapGridString.split("\n");
         if (mapRows.length != rowCount) {
             throw new InvalidMapDimensions("Row count does not match the provided string");
@@ -32,7 +37,7 @@ public class DefaultHoloMap implements MapEntity {
     }
 
     @Override
-    public void applyExtraParams(Array<Integer> extraParams) {
+    public void applyExtraParams(Array<Object> extraParams) {
 
     }
 
@@ -43,7 +48,7 @@ public class DefaultHoloMap implements MapEntity {
 
     @Override
     public String getName() {
-        return "Holo";
+        return "X";
     }
 
     @Override

@@ -77,7 +77,6 @@ public final class Constants {
     public static final float ANDROID_XHDPI_FONT_SCALE_FACTOR = 2.0f;
     public static final float ANDROID_XXHDPI_FONT_SCALE_FACTOR = 3.0f;
     public static final float ANDROID_XXXHDPI_FONT_SCALE_FACTOR = 4.0f;
-    public static final float ANDROID_DIRECTION_ARROW_SCALE_FACTOR = 3f;
 
     public static final String LOG_TAG = "ZONED";
     public static final String ZONED_PREFERENCES = "Zoned_Preferences";

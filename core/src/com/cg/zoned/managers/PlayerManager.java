@@ -1,6 +1,7 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -21,7 +22,7 @@ public class PlayerManager extends InputMultiplexer {
 
     private Array<TeamData> teamData;
 
-    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controls, Skin skin) {
+    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controls, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
         this.gameManager = gameManager;
 
         this.players = players;
@@ -37,7 +38,7 @@ public class PlayerManager extends InputMultiplexer {
             }
         }
 
-        controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls, skin);
+        controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls, skin, scaleFactor, usedTextures);
         this.addProcessor(controlManager.getControls());
     }
 
