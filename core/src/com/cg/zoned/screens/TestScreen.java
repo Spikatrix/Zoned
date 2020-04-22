@@ -7,34 +7,32 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.cg.zoned.AnimatedDrawable;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Player;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.maps.InvalidMapCharacter;
 import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.MapExtraParams;
 import com.cg.zoned.ui.DropDownMenu;
+import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 
@@ -45,7 +43,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
     private Array<Texture> usedTextures = new Array<Texture>();
 
     private ScreenViewport viewport;
-    private Stage stage;
+    private FocusableStage stage;
     private ShapeRenderer renderer;
     private SpriteBatch batch;
     private BitmapFont font;
@@ -57,7 +55,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         this.renderer.setAutoShapeType(true);
         this.batch = new SpriteBatch();
         this.viewport = new ScreenViewport();
-        this.stage = new Stage(this.viewport);
+        this.stage = new FocusableStage(this.viewport);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
     }
 
@@ -83,7 +81,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
             final Spinner spinner = new Spinner(game.skin,
                     game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3,
                     150f * game.getScaleFactor(), false);
-            for (MapEntity map : mapManager.getMapList()) {
+            for (final MapEntity map : mapManager.getMapList()) {
                 Label mapNameLabel = new Label(map.getName(), game.skin);
                 mapNameLabel.setAlignment(Align.center);
                 Texture mapPreviewTexture = mapManager.getMapPreview(map.getName());
@@ -98,16 +96,27 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                 } else {
                     stack.add(mapNameLabel);
                 }
-                if (map.getName().equals("Rectangle")) {
+                final MapExtraParams extraParams = map.getExtraParamPrompts();
+                if (extraParams != null) {
                     Table innerTable = new Table();
                     innerTable.setFillParent(true);
                     innerTable.top().right();
 
-                    HoverImageButton hoverImageButton = new HoverImageButton(new AnimatedDrawable(getAnimationSettingsDrawable()));
+                    Texture texture = new Texture(Gdx.files.internal("icons/ui_icons/ic_settings.png"));
+                    usedTextures.add(texture);
+                    HoverImageButton hoverImageButton = new HoverImageButton(new TextureRegionDrawable(texture));
                     hoverImageButton.getImage().setScaling(Scaling.fit);
-                    hoverImageButton.setPosition(0, 0);
-                    innerTable.add(hoverImageButton).width(20).height(20);
+                    innerTable.add(hoverImageButton)
+                            .width(hoverImageButton.getPrefWidth() * .6f * game.getScaleFactor())
+                            .height(hoverImageButton.getPrefHeight() * 0.6f * game.getScaleFactor());
                     stack.add(innerTable);
+
+                    hoverImageButton.addListener(new ClickListener() {
+                        @Override
+                        public void clicked(InputEvent event, float x, float y) {
+                            showExtraParamDialog(extraParams, map);
+                        }
+                    });
                 }
                 spinner.addContent(stack);
             }
@@ -116,6 +125,9 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
             spinner.setButtonStepCount(1);
             table.add(spinner);
             table.row();
+            stage.addFocusableActor(spinner.getLeftButton());
+            stage.addFocusableActor(spinner.getRightButton());
+            stage.row();
 
             TextButton loadButton = new TextButton("Load map", game.skin);
             final DropDownMenu startPositionMenu = new DropDownMenu(game.skin);
@@ -123,20 +135,20 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     int mapIndex = spinner.getPositionIndex();
-                    try {
-                        mapManager.prepareMap(mapIndex, null);
-                    } catch (InvalidMapCharacter e) {
-                        e.printStackTrace();
-                        return;
-                    }
-                    Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
-                    for (GridPoint2 startPosition : startPositions) {
-                        startPositionMenu.append("(" + startPosition.x + ", " + startPosition.y + ")");
+                    if (mapManager.prepareMap(mapIndex)) {
+                        Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
+                        for (GridPoint2 startPosition : startPositions) {
+                            startPositionMenu.append("(" + startPosition.x + ", " + startPosition.y + ")");
+                        }
+                    } else {
+                        Gdx.app.log(Constants.LOG_TAG, mapManager.getErrorMessage());
                     }
                 }
             });
             table.add(loadButton);
             table.row();
+            stage.addFocusableActor(loadButton, 2);
+            stage.row();
 
             TextButton startGameButton = new TextButton("Start Game", game.skin);
             startGameButton.addListener(new ClickListener() {
@@ -158,6 +170,8 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
             });
             table.add(startGameButton);
             table.row();
+            stage.addFocusableActor(startGameButton, 2);
+            stage.row();
 
             table.add(startPositionMenu);
             table.row();
@@ -166,28 +180,9 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         stage.addActor(table);
     }
 
-    private Animation getAnimationSettingsDrawable() {
-        Texture settingsSheet = new Texture(Gdx.files.internal("icons/ui_icons/ic_settings_sheet.png"));
-        usedTextures.add(settingsSheet);
-        int rowCount = 10, colCount = 3;
-
-        TextureRegion[][] tmp = TextureRegion.split(settingsSheet,
-                settingsSheet.getWidth() / colCount,
-                settingsSheet.getHeight() / rowCount);
-
-        TextureRegion[] playFrames = new TextureRegion[rowCount * colCount];
-        int index = 0;
-        for (int i = 0; i < rowCount; i++) {
-            for (int j = 0; j < colCount; j++) {
-                playFrames[index++] = tmp[i][j];
-            }
-        }
-
-        return new Animation<TextureRegion>(1 / 40f, playFrames);
-    }
-
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -196,9 +191,58 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         });
     }
 
+    private void showExtraParamDialog(final MapExtraParams prompts, final MapEntity map) {
+        final Spinner[] spinners = new Spinner[prompts.spinnerVars.size];
+
+        Table contentTable = new Table();
+        contentTable.center();
+        for (int i = 0; i < prompts.spinnerVars.size + 1; i++) {
+            Label label;
+            if (i == 0) {
+                /* Title */
+
+                label = new Label(prompts.paramSelectTitle, game.skin, "themed");
+                label.setAlignment(Align.center);
+                contentTable.add(label).colspan(2).padBottom(10f * game.getScaleFactor());
+            } else {
+                /* Params */
+
+                int lowValue = prompts.spinnerVars.get(i - 1).lowValue;
+                int highValue = prompts.spinnerVars.get(i - 1).highValue;
+                int snapValue = prompts.spinnerVars.get(i - 1).snapValue;
+
+                label = new Label(prompts.spinnerVars.get(i - 1).prompt, game.skin);
+                spinners[i - 1] = new Spinner(game.skin, game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
+                        64f * game.getScaleFactor(), true);
+                spinners[i - 1].generateValueRange(lowValue, highValue, game.skin);
+                spinners[i - 1].snapToStep(snapValue - lowValue);
+                contentTable.add(label).left();
+                contentTable.add(spinners[i - 1]);
+            }
+            contentTable.row();
+        }
+
+        Array<String> buttonTexts = new Array<String>();
+        buttonTexts.add("Cancel");
+        buttonTexts.add("Set");
+
+        stage.showDialog(contentTable, buttonTexts, false, game.getScaleFactor(),
+                new FocusableStage.DialogResultListener() {
+                    @Override
+                    public void dialogResult(String buttonText) {
+                        if (buttonText.equals("Set")) {
+                            for (int i = 0; i < prompts.spinnerVars.size; i++) {
+                                prompts.extraParams[i] = spinners[i].getPositionIndex() + prompts.spinnerVars.get(i).lowValue;
+                            }
+                            map.applyExtraParams();
+                        }
+                    }
+                }, game.skin);
+    }
+
     @Override
     public void resize(int width, int height) {
-        this.viewport.update(width, height, true);
+        stage.resize(width, height);
     }
 
     @Override

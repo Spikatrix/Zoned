@@ -191,7 +191,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        stage.resize(width, height);
         trailEffect.setPosition(0, height / 2f);
     }
 

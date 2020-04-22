@@ -63,6 +63,14 @@ public class ControlManager {
             overlayColors[i] = new Color(0, 0, 0, 0);
             controlImages[i] = new Image(controlImageTexture);
             controlImages[i].setScaling(Scaling.fit);
+            controlImages[i].setOrigin(controlImages[i].getWidth() / 2, controlImages[i].getHeight() / 2);
+            if (splitScreenCount > 1 && Gdx.app.getType() == Application.ApplicationType.Android) {
+                if (i < splitScreenCount / 2) {
+                    controlImages[i].setRotation(-90f);
+                } else {
+                    controlImages[i].setRotation(90f);
+                }
+            }
             if (controlLabels != null) {
                 String controlString = Input.Keys.toString(players[i].controls[0]) + '\n' +
                         Input.Keys.toString(players[i].controls[1]) +

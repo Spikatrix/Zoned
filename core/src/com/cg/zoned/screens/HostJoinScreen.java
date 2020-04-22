@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
@@ -74,6 +75,19 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         //table.setDebug(true);
         table.center();
 
+        Table infoTable = new Table();
+        infoTable.setFillParent(true);
+        infoTable.center().bottom();
+        Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
+        usedTextures.add(infoIconTexture);
+        Image infoImage = new Image(infoIconTexture);
+        Label infoLabel = new Label("Make sure that all players\nare on the same local network", game.skin);
+        infoLabel.setAlignment(Align.center);
+        infoTable.add(infoImage).height(game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight())
+                .width(game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight()).padRight(20f);
+        infoTable.add(infoLabel).pad(10f);
+        stage.addActor(infoTable);
+
         Label playerNameLabel = new Label("Player name: ", game.skin, "themed");
         final TextField playerNameField = new TextField("", game.skin);
         playerNameField.setText(game.preferences.getString(Constants.NAME_PREFERENCE, null));
@@ -94,7 +108,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         stage.addFocusableActor(hostButton);
         stage.addFocusableActor(joinButton);
 
-        final Label searchingLabel = new Label("Searching for servers...", game.skin);
+        final Label searchingLabel = new Label("Searching for servers...", game.skin, "themed");
         searchingLabel.getColor().a = 0;
         table.add(searchingLabel).colspan(2);
         table.row();
@@ -135,7 +149,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                         searchingLabel.setText("Already searching for servers...");
                     }
                 } else {
-                    stage.showDialog("Please enter the name of the player(s)", dialogButtonTexts,
+                    stage.showDialog("Please enter the player name", dialogButtonTexts,
                             false,
                             game.getScaleFactor(), null, game.skin);
                 }
@@ -156,7 +170,8 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -285,7 +300,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        stage.resize(width, height);
     }
 
     @Override

@@ -15,11 +15,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -33,6 +29,7 @@ import com.cg.zoned.ScoreBar;
 import com.cg.zoned.TeamData;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.GameManager;
+import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
@@ -60,8 +57,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private ScoreBar scoreBars;
 
     private Color currentBgColor, targetBgColor;
-    private float bgAnimSpeed = 1.4f;
-    private float bgAlpha = .15f;
+    private float bgAnimSpeed = 1.8f;
+    private float bgAlpha = .25f;
 
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
@@ -104,6 +101,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             // Was `get(i % startPositions.size);`
         }
 
+        currentBgColor = new Color(0, 0, 0, bgAlpha);
+        targetBgColor = new Color(0, 0, 0, bgAlpha);
+
         initViewports();
 
         this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
@@ -123,59 +123,28 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void show() {
         setUpInputProcessors();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
-        setUpPauseButton();
-        setUpZoomButton();
         setUpUI();
+        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
     }
 
     private void setUpUI() {
-        HoverImageButton pauseButton = setUpPauseButton();
-        HoverImageButton zoomButton = setUpZoomButton();
-
-        Table table = new Table();
-        table.setFillParent(true);
-        table.top();
-
-        table.add(pauseButton).padTop(ScoreBar.BAR_HEIGHT)
-                .width(pauseButton.getWidth() * game.getScaleFactor()).height(pauseButton.getHeight() * game.getScaleFactor());
-        table.row();
-        table.add(zoomButton).padTop(5f)
-                .width(zoomButton.getWidth() * game.getScaleFactor()).height(zoomButton.getHeight() * game.getScaleFactor());
-
-        fullScreenStage.addActor(table);
+        UIButtonManager uiButtonManager = new UIButtonManager(fullScreenStage, game.getScaleFactor(), usedTextures);
+        setUpPauseButton(uiButtonManager);
+        setUpZoomButton(uiButtonManager);
     }
 
-    private HoverImageButton setUpPauseButton() {
-        Texture pauseImageTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_pause.png"));
-        usedTextures.add(pauseImageTexture);
-        Drawable pauseImageDrawable = new TextureRegionDrawable(pauseImageTexture);
-        final HoverImageButton pauseButton = new HoverImageButton(pauseImageDrawable);
-        Image pauseImage = pauseButton.getImage();
-        pauseImage.setOrigin(pauseImage.getPrefWidth() / 2, pauseImage.getPrefHeight() / 2);
-        pauseImage.setScale(game.getScaleFactor());
-        pauseButton.setNormalAlpha(.8f);
+    private void setUpPauseButton(UIButtonManager uiButtonManager) {
+        final HoverImageButton pauseButton = uiButtonManager.addPauseButtonToStage();
         pauseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 showPauseDialog();
             }
         });
-        return pauseButton;
     }
 
-    private HoverImageButton setUpZoomButton() {
-        Texture zoomInTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_zoom_in.png"));
-        Texture zoomOutTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_zoom_out.png"));
-        usedTextures.add(zoomInTexture);
-        usedTextures.add(zoomOutTexture);
-        Drawable zoomInImage = new TextureRegionDrawable(zoomInTexture);
-        Drawable zoomOutImage = new TextureRegionDrawable(zoomOutTexture);
-        final HoverImageButton zoomButton = new HoverImageButton(zoomOutImage, zoomInImage);
-        Image zoomImage = zoomButton.getImage();
-        zoomImage.setOrigin(zoomImage.getPrefWidth() / 2, zoomImage.getPrefHeight() / 2);
-        zoomImage.setScale(game.getScaleFactor());
-        zoomButton.setNormalAlpha(.8f);
+    private void setUpZoomButton(UIButtonManager uiButtonManager) {
+        final HoverImageButton zoomButton = uiButtonManager.addZoomButtonToStage();
         zoomButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -186,7 +155,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
-        return zoomButton;
     }
 
     private void setUpInputProcessors() {
@@ -206,7 +174,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         }
 
         scoreBars.resize(width, height);
-        fullScreenStage.getViewport().update(width, height, true);
+        fullScreenStage.resize(width, height);
     }
 
     private void updateCamera(Camera camera, int width, int height) {
@@ -233,6 +201,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             }
         }
         currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
+        currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
 
         if (!gameComplete) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)

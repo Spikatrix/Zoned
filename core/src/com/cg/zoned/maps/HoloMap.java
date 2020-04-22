@@ -1,7 +1,5 @@
 package com.cg.zoned.maps;
 
-import com.badlogic.gdx.utils.Array;
-
 public class HoloMap implements MapEntity {
     private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
             "A...##...C\n" +
@@ -32,7 +30,12 @@ public class HoloMap implements MapEntity {
     }
 
     @Override
-    public void applyExtraParams(Array<Object> extraParams) {
+    public MapExtraParams getExtraParamPrompts() {
+        return null;
+    }
+
+    @Override
+    public void applyExtraParams() {
 
     }
 

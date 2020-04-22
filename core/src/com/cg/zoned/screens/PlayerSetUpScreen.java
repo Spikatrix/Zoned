@@ -46,8 +46,8 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     private BitmapFont font;
 
     private ShapeRenderer renderer;
-    private float bgAlpha = .2f;
-    private float bgAnimSpeed = 1.4f;
+    private float bgAlpha = .25f;
+    private float bgAnimSpeed = 1.8f;
     private Color[] currentBgColors;
     private Color[] targetBgColors;
 
@@ -84,7 +84,8 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -235,7 +236,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        stage.resize(width, height);
     }
 
     @Override
@@ -245,6 +246,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         for (int i = 0; i < currentBgColors.length; i++) {
             currentBgColors[i].lerp(targetBgColors[i], bgAnimSpeed * delta);
+            currentBgColors[i].a = Math.min(targetBgColors[i].a, stage.getRoot().getColor().a);
         }
 
         viewport.apply(true);

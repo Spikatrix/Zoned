@@ -97,8 +97,9 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.addFocusableActor(playButton);
         mainStage.row();
 
-        HoverImageButton settingsButton = UIButtonManager.addSettingsButtonToStage(mainStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton testingButton = UIButtonManager.addTestingButtonToStage(mainStage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(mainStage, game.getScaleFactor(), usedTextures);
+        HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage();
+        HoverImageButton testingButton = uiButtonManager.addTestingButtonToStage();
         settingsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -119,7 +120,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.addFocusableActor(settingsButton);
         mainStage.addFocusableActor(testingButton);
 
-        HoverImageButton exitButton = UIButtonManager.addExitButtonToStage(mainStage, game.getScaleFactor(), usedTextures);
+        HoverImageButton exitButton = uiButtonManager.addExitButtonToStage();
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -281,7 +282,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             playModeStage.addFocusableActor(table);
         }
 
-        HoverImageButton exitButton = UIButtonManager.addHideButtonToStage(playModeStage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures);
+        HoverImageButton exitButton = uiButtonManager.addHideButtonToStage();
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -319,7 +321,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        mainStage.resize(width, height);
+        playModeStage.resize(width, height);
         emitterRight.setPosition(viewport.getWorldWidth(), 0);
     }
 

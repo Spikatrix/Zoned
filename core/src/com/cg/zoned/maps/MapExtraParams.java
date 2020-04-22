@@ -1,16 +1,24 @@
 package com.cg.zoned.maps;
 
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
-
-import java.util.ArrayList;
+import com.cg.zoned.SpinnerVars;
 
 public class MapExtraParams {
-    public Array<Object> extraParams;
-
     public String paramSelectTitle;
-    public ArrayList<String> paramPrompts;
+    public Array<SpinnerVars> spinnerVars;
 
-    MapExtraParams() {
-        extraParams = new Array<Object>();
+    public int[] extraParams;
+
+    public MapExtraParams(String paramSelectTitle, Array<SpinnerVars> spinnerVars) {
+        this.paramSelectTitle = paramSelectTitle;
+        this.spinnerVars = spinnerVars;
+
+        this.extraParams = new int[spinnerVars.size];
+        for (int i = 0; i < spinnerVars.size; i++) {
+            this.extraParams[i] = MathUtils.clamp(spinnerVars.get(i).snapValue,
+                    spinnerVars.get(i).lowValue,
+                    spinnerVars.get(i).highValue);
+        }
     }
 }

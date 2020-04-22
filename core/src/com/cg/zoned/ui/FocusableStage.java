@@ -2,13 +2,17 @@ package com.cg.zoned.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
@@ -54,6 +58,11 @@ public class FocusableStage extends Stage {
      * Holds the actor that is held down
      */
     private Actor downActor;
+
+    /**
+     * Dialog that has focus properties for its buttons
+     */
+    private Dialog dialog;
 
     /**
      * Master switch for enabling keyboard based focus management
@@ -173,10 +182,9 @@ public class FocusableStage extends Stage {
     }
 
     /**
-     * Shows an information dialog with an "OK" button
-     * Focus management for background actors are paused until the dialog is dealt with
+     * Shows an dialog with focus properties on its buttons
      *
-     * @param msg  The message to display
+     * @param msg The message to display
      * @param buttonTexts Texts for each button in the dialog
      * @param useVerticalButtonList Determines whether the dialog buttons are arranged horizontally or vertically
      * @param scaleFactor The game's scaleFactor to scale up/down dialog button width
@@ -185,44 +193,73 @@ public class FocusableStage extends Stage {
      */
     public void showDialog(String msg, Array<String> buttonTexts,
                            boolean useVerticalButtonList,
-                           float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
+                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
+        showDialog(new Label(msg, skin), buttonTexts, useVerticalButtonList, scaleFactor, dialogResultListener, skin);
+    }
+
+    public void showDialog(Table contentTable, Array<String> buttonTexts,
+                           boolean useVerticalButtonList,
+                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
+        showDialog((Actor) contentTable, buttonTexts, useVerticalButtonList, scaleFactor, dialogResultListener, skin);
+    }
+
+    private void showDialog(Actor content, Array<String> buttonTexts,
+                            boolean useVerticalButtonList,
+                            float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
         final Array<Actor> backupCurrentActorArray = new Array<Actor>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
 
-        Dialog dialog = new Dialog("", skin) {
+        dialog = new Dialog("", skin) {
             @Override
             protected void result(Object object) {
-
                 focusableActorArray = backupCurrentActorArray;
                 if (backupFocusedActor != null) {
                     focus(backupFocusedActor);
                 }
+
                 if (dialogResultListener != null) {
                     dialogResultListener.dialogResult((String) object);
                 }
-                super.result(object);
+
+                dialog.hide(Actions.scaleTo(0, 0, .2f, Interpolation.fastSlow));
+                dialog = null;
             }
         };
 
-        dialog.text(msg).pad(25f * scaleFactor, 25f * scaleFactor, 20f * scaleFactor, 25f * scaleFactor);
-        dialog.getColor().a = 0;
+        dialog.getContentTable().add(content).pad(20f);
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
+        dialog.getButtonTable().padBottom(10f).padLeft(10f).padRight(10f);
+        dialog.setScale(0, 0);
+        // FIXME: Dialog label texts are getting clipped for some reason. Need some investigation
+        // TODO: Dialog still needs some cleanups and improvements. Also focus props on content
 
-        Label label = (Label) dialog.getContentTable().getChild(0);
-        label.setAlignment(Align.center);
+        if (content instanceof Label) {
+            Label label = (Label) content;
+            label.setAlignment(Align.center);
+        }
 
         this.focusableActorArray.clear();
         for (int i = 0; i < buttonTexts.size; i++) {
-            dialog.button(buttonTexts.get(i), buttonTexts.get(i));
-            this.focusableActorArray.add(dialog.getButtonTable().getChild(i));
+            TextButton textButton = new TextButton(buttonTexts.get(i), skin);
+            dialog.button(textButton, textButton.getText().toString());
+            this.focusableActorArray.add(textButton);
             if (useVerticalButtonList) {
                 dialog.getButtonTable().row();
                 this.focusableActorArray.add(null);
             }
         }
 
-        dialog.show(this);
+        dialog.show(this, Actions.scaleTo(1.0f, 1.0f, .2f, Interpolation.fastSlow));
+        dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
+        dialog.setPosition((getWidth() - dialog.getWidth()) / 2, (getHeight() - dialog.getHeight()) / 2);
         focus(this.focusableActorArray.get(0));
+    }
+
+    public void resize(int width, int height) {
+        getViewport().update(width, height, true);
+        if (dialog != null) {
+            dialog.setPosition((width - dialog.getWidth()) / 2, (height - dialog.getHeight()) / 2);
+        }
     }
 
     /**

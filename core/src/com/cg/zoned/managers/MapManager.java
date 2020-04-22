@@ -56,11 +56,21 @@ public class MapManager {
         return mapList;
     }
 
-    public void prepareMap(int mapIndex, Array<Integer> extraParams) throws InvalidMapCharacter {
+    public boolean prepareMap(int mapIndex) {
         MapEntity selectedMap = mapList.get(mapIndex);
-        // TODO: Apply extraParams here
         String mapData = selectedMap.getMapData();
 
+        try {
+            parseMapData(mapData);
+        } catch (InvalidMapCharacter e) {
+            errorMessage = e.getMessage();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void parseMapData(String mapData) throws InvalidMapCharacter {
         Array<GridPoint2> startPositions = new Array<GridPoint2>();
         String[] mapRows = mapData.split("\n");
         Cell[][] mapGrid = new Cell[mapRows.length][];
@@ -100,11 +110,9 @@ public class MapManager {
         return wallCount;
     }
 
-    public void clearErrorMessage() {
-        this.errorMessage = null;
-    }
-
     public String getErrorMessage() {
+        String errorMessage = this.errorMessage;
+        this.errorMessage = null;
         return errorMessage;
     }
 }

@@ -155,7 +155,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        HoverImageButton backButton = UIButtonManager.addBackButtonToStage(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -384,7 +385,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        stage.resize(width, height);
     }
 
     @Override
