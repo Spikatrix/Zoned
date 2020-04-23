@@ -1,5 +1,7 @@
 package com.cg.zoned.maps;
 
+import com.cg.zoned.maps.internalmaps.RectangleMap;
+
 /**
  * All maps are required to implement this interface
  */

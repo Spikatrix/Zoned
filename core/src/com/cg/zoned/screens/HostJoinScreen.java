@@ -156,15 +156,12 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             }
         });
 
-        Table outTable = null;
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            outTable = createRestoreScreenPrompt();
+            Table outTable = createRestoreScreenPrompt();
             setMoveUpOnClick(playerNameField);
-        }
-
-        if (outTable != null) {
             stage.addActor(outTable);
         }
+
         stage.addActor(table);
         stage.setFocusedActor(playerNameField);
     }
@@ -266,7 +263,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     private Table createRestoreScreenPrompt() {
         Table outTable = new Table();
         outTable.setTouchable(Touchable.enabled);
-        Label restoreLabel = new Label("Tap anywhere else to restore the screen", game.skin);
+        Label restoreLabel = new Label("Tap anywhere else to restore the screen", game.skin, "themed");
         outTable.setHeight(stage.getHeight() * 2);
         outTable.setWidth(stage.getWidth());
         outTable.setPosition(outTable.getPrefWidth() / 2, -stage.getHeight());

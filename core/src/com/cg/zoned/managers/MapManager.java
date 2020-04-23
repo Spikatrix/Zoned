@@ -7,17 +7,20 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
-import com.cg.zoned.maps.HoloMap;
-import com.cg.zoned.maps.InvalidMapCharacter;
-import com.cg.zoned.maps.InvalidMapDimensions;
+import com.cg.zoned.maps.ExternalMapReader;
+import com.cg.zoned.maps.ExternalMapTemplate;
 import com.cg.zoned.maps.MapEntity;
-import com.cg.zoned.maps.RectangleMap;
-import com.cg.zoned.maps.XMap;
+import com.cg.zoned.maps.exceptions.InvalidMapCharacter;
+import com.cg.zoned.maps.exceptions.InvalidMapDimensions;
+import com.cg.zoned.maps.exceptions.NoStartPositionsFound;
+import com.cg.zoned.maps.internalmaps.HoloMap;
+import com.cg.zoned.maps.internalmaps.RectangleMap;
+import com.cg.zoned.maps.internalmaps.XMap;
 
 public class MapManager {
-    private final char EMPTY_CHAR = '.';
-    private final char WALL_CHAR = '#';
-    private final String VALID_START_POSITIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final char EMPTY_CHAR = '.';
+    private static final char WALL_CHAR = '#';
+    private static final String VALID_START_POSITIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private Array<MapEntity> mapList;
 
@@ -25,22 +28,29 @@ public class MapManager {
     private Array<GridPoint2> preparedStartPositions = null;
     private int wallCount = 0;
 
-    private String errorMessage = null;
-
     public MapManager() {
         this.mapList = new Array<MapEntity>();
 
-        try {
-            loadDefaultMaps();
-        } catch (InvalidMapDimensions e) {
-            errorMessage = e.getMessage();
-        }
+        loadDefaultMaps();
     }
 
-    private void loadDefaultMaps() throws InvalidMapDimensions {
+    private void loadDefaultMaps() {
         mapList.add(new RectangleMap());
         mapList.add(new HoloMap());
         mapList.add(new XMap());
+    }
+
+    public void loadExternalMaps() { // TODO: Add interface thingy
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ExternalMapReader externalMapReader = new ExternalMapReader();
+                externalMapReader.scanAndParseExternalMaps();
+                Array<ExternalMapTemplate> externalLoadedMaps = externalMapReader.getLoadedMaps();
+
+                // Complete this and see integrate everything properly
+            }
+        }).start();
     }
 
     public Texture getMapPreview(String mapName) {
@@ -56,21 +66,25 @@ public class MapManager {
         return mapList;
     }
 
-    public boolean prepareMap(int mapIndex) {
+    public void prepareMap(int mapIndex) throws InvalidMapCharacter, NoStartPositionsFound, InvalidMapDimensions {
         MapEntity selectedMap = mapList.get(mapIndex);
         String mapData = selectedMap.getMapData();
 
-        try {
-            parseMapData(mapData);
-        } catch (InvalidMapCharacter e) {
-            errorMessage = e.getMessage();
-            return false;
+        String[] mapRows = mapData.split("\n");
+        if (mapRows.length != selectedMap.getRowCount()) {
+            throw new InvalidMapDimensions("Row count does not match the map grid string");
         }
 
-        return true;
+        for (String mapRow : mapRows) {
+            if (mapRow.length() != selectedMap.getColCount()) {
+                throw new InvalidMapDimensions("Col count does not match the map grid string");
+            }
+        }
+
+        parseMapData(mapData);
     }
 
-    private void parseMapData(String mapData) throws InvalidMapCharacter {
+    private void parseMapData(String mapData) throws InvalidMapCharacter, NoStartPositionsFound {
         Array<GridPoint2> startPositions = new Array<GridPoint2>();
         String[] mapRows = mapData.split("\n");
         Cell[][] mapGrid = new Cell[mapRows.length][];
@@ -93,6 +107,10 @@ public class MapManager {
             }
         }
 
+        if (startPositions.size == 0) {
+            throw new NoStartPositionsFound("No start positions found in the map");
+        }
+
         this.preparedMapGrid = mapGrid;
         this.preparedStartPositions = startPositions;
         this.wallCount = wallCount;
@@ -108,11 +126,5 @@ public class MapManager {
 
     public int getWallCount() {
         return wallCount;
-    }
-
-    public String getErrorMessage() {
-        String errorMessage = this.errorMessage;
-        this.errorMessage = null;
-        return errorMessage;
     }
 }

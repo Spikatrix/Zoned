@@ -1,4 +1,7 @@
-package com.cg.zoned.maps;
+package com.cg.zoned.maps.internalmaps;
+
+import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.MapExtraParams;
 
 public class XMap implements MapEntity {
     private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
@@ -21,17 +24,7 @@ public class XMap implements MapEntity {
     private int rowCount = 15;
     private int colCount = 15;
 
-    public XMap() throws InvalidMapDimensions {
-        String[] mapRows = mapGridString.split("\n");
-        if (mapRows.length != rowCount) {
-            throw new InvalidMapDimensions("Row count does not match the provided string");
-        }
-
-        for (String mapRow : mapRows) {
-            if (colCount != mapRow.length()) {
-                throw new InvalidMapDimensions("Col count does not match the provided string");
-            }
-        }
+    public XMap() {
     }
 
     @Override
@@ -41,7 +34,6 @@ public class XMap implements MapEntity {
 
     @Override
     public void applyExtraParams() {
-
     }
 
     @Override

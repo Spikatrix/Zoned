@@ -31,6 +31,9 @@ import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
+import com.cg.zoned.maps.exceptions.InvalidMapCharacter;
+import com.cg.zoned.maps.exceptions.InvalidMapDimensions;
+import com.cg.zoned.maps.exceptions.NoStartPositionsFound;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -74,110 +77,131 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         table.setFillParent(true);
 
         final MapManager mapManager = new MapManager();
-        if (mapManager.getErrorMessage() != null) {
-            Label errorMessage = new Label(mapManager.getErrorMessage(), game.skin, "themed");
-            table.add(errorMessage);
-        } else {
-            final Spinner spinner = new Spinner(game.skin,
-                    game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3,
-                    150f * game.getScaleFactor(), false);
-            for (final MapEntity map : mapManager.getMapList()) {
-                Label mapNameLabel = new Label(map.getName(), game.skin);
-                mapNameLabel.setAlignment(Align.center);
-                Texture mapPreviewTexture = mapManager.getMapPreview(map.getName());
-                Stack stack = new Stack();
-                if (mapPreviewTexture != null) {
-                    usedTextures.add(mapPreviewTexture);
-                    Image mapPreviewImage = new Image(mapPreviewTexture);
-                    mapPreviewImage.getColor().a = .2f;
-                    mapPreviewImage.setScaling(Scaling.fit);
-                    stack.add(mapPreviewImage);
-                    stack.add(mapNameLabel);
-                } else {
-                    stack.add(mapNameLabel);
-                }
-                final MapExtraParams extraParams = map.getExtraParamPrompts();
-                if (extraParams != null) {
-                    Table innerTable = new Table();
-                    innerTable.setFillParent(true);
-                    innerTable.top().right();
 
-                    Texture texture = new Texture(Gdx.files.internal("icons/ui_icons/ic_settings.png"));
-                    usedTextures.add(texture);
-                    HoverImageButton hoverImageButton = new HoverImageButton(new TextureRegionDrawable(texture));
-                    hoverImageButton.getImage().setScaling(Scaling.fit);
-                    innerTable.add(hoverImageButton)
-                            .width(hoverImageButton.getPrefWidth() * .6f * game.getScaleFactor())
-                            .height(hoverImageButton.getPrefHeight() * 0.6f * game.getScaleFactor());
-                    stack.add(innerTable);
-
-                    hoverImageButton.addListener(new ClickListener() {
-                        @Override
-                        public void clicked(InputEvent event, float x, float y) {
-                            showExtraParamDialog(extraParams, map);
-                        }
-                    });
-                }
-                spinner.addContent(stack);
+        final Spinner spinner = new Spinner(game.skin,
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3,
+                150f * game.getScaleFactor(), false);
+        for (final MapEntity map : mapManager.getMapList()) {
+            Label mapNameLabel = new Label(map.getName(), game.skin);
+            mapNameLabel.setAlignment(Align.center);
+            Texture mapPreviewTexture = mapManager.getMapPreview(map.getName());
+            Stack stack = new Stack();
+            if (mapPreviewTexture != null) {
+                usedTextures.add(mapPreviewTexture);
+                Image mapPreviewImage = new Image(mapPreviewTexture);
+                mapPreviewImage.getColor().a = .2f;
+                mapPreviewImage.setScaling(Scaling.fit);
+                stack.add(mapPreviewImage);
+                stack.add(mapNameLabel);
+            } else {
+                stack.add(mapNameLabel);
             }
-            spinner.getLeftButton().setText(" < ");
-            spinner.getRightButton().setText(" > ");
-            spinner.setButtonStepCount(1);
-            table.add(spinner);
-            table.row();
-            stage.addFocusableActor(spinner.getLeftButton());
-            stage.addFocusableActor(spinner.getRightButton());
-            stage.row();
+            final MapExtraParams extraParams = map.getExtraParamPrompts();
+            if (extraParams != null) {
+                Table innerTable = new Table();
+                innerTable.setFillParent(true);
+                innerTable.top().right();
 
-            TextButton loadButton = new TextButton("Load map", game.skin);
-            final DropDownMenu startPositionMenu = new DropDownMenu(game.skin);
-            loadButton.addListener(new ClickListener() {
-                @Override
-                public void clicked(InputEvent event, float x, float y) {
-                    int mapIndex = spinner.getPositionIndex();
-                    if (mapManager.prepareMap(mapIndex)) {
-                        Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
-                        for (GridPoint2 startPosition : startPositions) {
-                            startPositionMenu.append("(" + startPosition.x + ", " + startPosition.y + ")");
-                        }
-                    } else {
-                        Gdx.app.log(Constants.LOG_TAG, mapManager.getErrorMessage());
+                Texture texture = new Texture(Gdx.files.internal("icons/ui_icons/ic_settings.png"));
+                usedTextures.add(texture);
+                HoverImageButton hoverImageButton = new HoverImageButton(new TextureRegionDrawable(texture));
+                hoverImageButton.getImage().setScaling(Scaling.fit);
+                innerTable.add(hoverImageButton)
+                        .width(hoverImageButton.getPrefWidth() * .6f * game.getScaleFactor())
+                        .height(hoverImageButton.getPrefHeight() * 0.6f * game.getScaleFactor());
+                stack.add(innerTable);
+
+                hoverImageButton.addListener(new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        showExtraParamDialog(extraParams, map);
                     }
-                }
-            });
-            table.add(loadButton);
-            table.row();
-            stage.addFocusableActor(loadButton, 2);
-            stage.row();
-
-            TextButton startGameButton = new TextButton("Start Game", game.skin);
-            startGameButton.addListener(new ClickListener() {
-                @Override
-                public void clicked(InputEvent event, float x, float y) {
-                    Player p1 = new Player(Constants.PLAYER_COLORS.get("GREEN"), "p1");
-                    p1.setControlIndex(0);
-                    Player p2 = new Player(Constants.PLAYER_COLORS.get("RED"), "p2");
-                    p2.setControlIndex(1);
-                    dispose();
-                    game.setScreen(
-                            new GameScreen(game,
-                                    mapManager.getPreparedMapGrid(),
-                                    mapManager.getPreparedStartPositions(),
-                                    mapManager.getWallCount(),
-                                    new Player[]{p1, p2},
-                                    null, null));
-                }
-            });
-            table.add(startGameButton);
-            table.row();
-            stage.addFocusableActor(startGameButton, 2);
-            stage.row();
-
-            table.add(startPositionMenu);
-            table.row();
+                });
+            }
+            spinner.addContent(stack);
         }
+        spinner.getLeftButton().setText(" < ");
+        spinner.getRightButton().setText(" > ");
+        spinner.setButtonStepCount(1);
+        table.add(spinner);
+        table.row();
+        stage.addFocusableActor(spinner.getLeftButton());
+        stage.addFocusableActor(spinner.getRightButton());
+        stage.row();
+
+        TextButton loadButton = new TextButton("Load map", game.skin);
+        final DropDownMenu startPositionMenu = new DropDownMenu(game.skin);
+        loadButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                int mapIndex = spinner.getPositionIndex();
+
+                try {
+                    mapManager.prepareMap(mapIndex);
+                } catch (InvalidMapCharacter e) {
+                    e.printStackTrace();
+                    Gdx.app.log(Constants.LOG_TAG, e.getMessage());
+                    return;
+                } catch (NoStartPositionsFound e) {
+                    e.printStackTrace();
+                    Gdx.app.log(Constants.LOG_TAG, e.getMessage());
+                    return;
+                } catch (InvalidMapDimensions e) {
+                    e.printStackTrace();
+                    Gdx.app.log(Constants.LOG_TAG, e.getMessage());
+                    return;
+                }
+
+                Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
+                for (GridPoint2 startPosition : startPositions) {
+                    startPositionMenu.append("(" + startPosition.x + ", " + startPosition.y + ")");
+                }
+            }
+        });
+        table.add(loadButton);
+        table.row();
+        stage.addFocusableActor(loadButton, 2);
+        stage.row();
+
+        TextButton startGameButton = new TextButton("Start Game", game.skin);
+        startGameButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Player p1 = new Player(Constants.PLAYER_COLORS.get("GREEN"), "p1");
+                p1.setControlIndex(0);
+                Player p2 = new Player(Constants.PLAYER_COLORS.get("RED"), "p2");
+                p2.setControlIndex(1);
+                dispose();
+                game.setScreen(
+                        new GameScreen(game,
+                                mapManager.getPreparedMapGrid(),
+                                mapManager.getPreparedStartPositions(),
+                                mapManager.getWallCount(),
+                                new Player[]{p1, p2},
+                                null, null));
+            }
+        });
+        table.add(startGameButton);
+        table.row();
+        stage.addFocusableActor(startGameButton, 2);
+        stage.row();
+
+        table.add(startPositionMenu);
+        table.row();
 
         stage.addActor(table);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                spinner.addContent(new Label("Hi", game.skin));
+            }
+        }).start();
     }
 
     private void setUpBackButton() {

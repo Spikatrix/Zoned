@@ -1,7 +1,9 @@
-package com.cg.zoned.maps;
+package com.cg.zoned.maps.internalmaps;
 
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.SpinnerVars;
+import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.MapExtraParams;
 
 public class RectangleMap implements MapEntity {
     private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
@@ -21,17 +23,7 @@ public class RectangleMap implements MapEntity {
 
     private MapExtraParams mapExtraParams = null;
 
-    public RectangleMap() throws InvalidMapDimensions {
-        String[] mapRows = mapGridString.split("\n");
-        if (mapRows.length != rowCount) {
-            throw new InvalidMapDimensions("Row count does not match the provided string");
-        }
-
-        for (String mapRow : mapRows) {
-            if (colCount != mapRow.length()) {
-                throw new InvalidMapDimensions("Col count does not match the provided string");
-            }
-        }
+    public RectangleMap() {
     }
 
     @Override

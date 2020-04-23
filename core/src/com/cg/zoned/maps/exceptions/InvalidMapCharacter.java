@@ -1,4 +1,4 @@
-package com.cg.zoned.maps;
+package com.cg.zoned.maps.exceptions;
 
 public class InvalidMapCharacter extends Exception {
 

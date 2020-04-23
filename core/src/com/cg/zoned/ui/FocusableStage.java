@@ -229,9 +229,8 @@ public class FocusableStage extends Stage {
         dialog.getContentTable().add(content).pad(20f);
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
         dialog.getButtonTable().padBottom(10f).padLeft(10f).padRight(10f);
-        dialog.setScale(0, 0);
-        // FIXME: Dialog label texts are getting clipped for some reason. Need some investigation
-        // TODO: Dialog still needs some cleanups and improvements. Also focus props on content
+        dialog.setScale(0);
+        // TODO: Focus props on content table
 
         if (content instanceof Label) {
             Label label = (Label) content;
@@ -249,16 +248,16 @@ public class FocusableStage extends Stage {
             }
         }
 
-        dialog.show(this, Actions.scaleTo(1.0f, 1.0f, .2f, Interpolation.fastSlow));
+        dialog.show(this, Actions.scaleTo(1f, 1f, .2f, Interpolation.fastSlow));
         dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
-        dialog.setPosition((getWidth() - dialog.getWidth()) / 2, (getHeight() - dialog.getHeight()) / 2);
+        dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
         focus(this.focusableActorArray.get(0));
     }
 
     public void resize(int width, int height) {
         getViewport().update(width, height, true);
         if (dialog != null) {
-            dialog.setPosition((width - dialog.getWidth()) / 2, (height - dialog.getHeight()) / 2);
+            dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
         }
     }
 
