@@ -8,46 +8,57 @@ import com.cg.zoned.Constants;
 
 public class ExternalMapReader {
     public static final String mapDirName = "ZonedExternalMaps";
+    private FileHandle externalMapDir;
 
     private Array<ExternalMapTemplate> loadedMaps;
 
     public ExternalMapReader() {
-        this.loadedMaps = new Array<ExternalMapTemplate>();
+        this.loadedMaps = new Array<>();
+
+        setExternalMapDir();
     }
 
-    public void scanAndParseExternalMaps() {
-        Array<FileHandle> mapFiles = scanExternalMaps();
-        parseScannedMaps(mapFiles);
-    }
-
-    private Array<FileHandle> scanExternalMaps() {
+    private void setExternalMapDir() {
         // Gdx.files.getExternalStoragePath() (And Gdx.files.external("") relative to)
         //  - On Android: /storage/emulated/0/
         //  - On Desktop (Linux): /home/<username>/
         //  - On Desktop (Windows): C:\Users\<username>\
 
-        Array<FileHandle> mapFiles = new Array<FileHandle>();
-
-        FileHandle mapDir = null;
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            mapDir = Gdx.files.external("Android/data/com.cg.zoned/files/" + mapDirName);
+            externalMapDir = Gdx.files.external("Android/data/com.cg.zoned/files/" + mapDirName);
         } else if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             if (Gdx.files.getExternalStoragePath().startsWith("/home")) {
                 // Linux
-                mapDir = Gdx.files.external("Zoned/" + mapDirName);
+                externalMapDir = Gdx.files.external("Zoned/" + mapDirName);
             } else {
                 // Windows
-                mapDir = Gdx.files.external("Documents/Zoned/" + mapDirName);
+                externalMapDir = Gdx.files.external("Documents/Zoned/" + mapDirName);
             }
         }
 
         try {
-            mapDir.mkdirs(); // Create them folders if they don't exist
+            externalMapDir.mkdirs(); // Create them folders if they don't exist
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            Gdx.app.log(Constants.LOG_TAG, "Failed to create external map directory");
+        }
+    }
 
+    public void scanAndParseExternalMaps() {
+        Array<FileHandle> mapFiles = scanExternalMaps();
+        if (mapFiles.notEmpty()) {
+            parseScannedMaps(mapFiles);
+        }
+    }
+
+    private Array<FileHandle> scanExternalMaps() {
+        Array<FileHandle> mapFiles = new Array<>();
+
+        try {
             Gdx.app.log(Constants.LOG_TAG, "Scanning for external maps on "
-                    + Gdx.files.getExternalStoragePath() + mapDir.path());
+                    + Gdx.files.getExternalStoragePath() + externalMapDir.path());
 
-            for (FileHandle mapFile : mapDir.list(".map")) {
+            for (FileHandle mapFile : externalMapDir.list(".map")) {
                 if (!mapFile.isDirectory()) {
                     Gdx.app.log(Constants.LOG_TAG, "Map found: " + mapFile.name());
                     mapFiles.add(mapFile);
@@ -68,25 +79,22 @@ public class ExternalMapReader {
         for (FileHandle mapFile : mapFiles) {
             String fileContents = mapFile.readString();
 
-            String mapGrid = null, mapName = null;
+            String mapGrid = null, mapName = mapFile.nameWithoutExtension();
             int rowCount = 0, colCount = 0;
 
             StringBuilder mapGridBuilder = new StringBuilder();
 
-            String mapNamePrompt = "Map name:";
             String rowCountPrompt = "Row count:";
             String colCountPrompt = "Col count:";
 
-            String[] fileLines = fileContents.split("\n");
+            String[] fileLines = fileContents.split("\r?\n");
             for (int i = 0; i < fileLines.length; i++) {
-                if (i == 0 && fileLines[i].startsWith(mapNamePrompt)) {
-                    mapName = fileLines[i].substring(mapNamePrompt.length()).trim();
-                } else if (i == 1 && fileLines[i].startsWith(rowCountPrompt)) {
+                if (i == 0 && fileLines[i].startsWith(rowCountPrompt)) {
                     rowCount = Integer.parseInt(fileLines[i].substring(rowCountPrompt.length()).trim());
-                } else if (i == 2 && fileLines[i].startsWith(colCountPrompt)) {
+                } else if (i == 1 && fileLines[i].startsWith(colCountPrompt)) {
                     colCount = Integer.parseInt(fileLines[i].substring(colCountPrompt.length()).trim());
                 } else {
-                    mapGridBuilder.append(fileLines[i]);
+                    mapGridBuilder.append(fileLines[i]).append('\n');
                 }
             }
 
@@ -104,5 +112,9 @@ public class ExternalMapReader {
 
     public Array<ExternalMapTemplate> getLoadedMaps() {
         return loadedMaps;
+    }
+
+    public FileHandle getExternalMapDir() {
+        return externalMapDir;
     }
 }

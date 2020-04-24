@@ -1,6 +1,7 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.utils.Array;
@@ -28,8 +29,10 @@ public class MapManager {
     private Array<GridPoint2> preparedStartPositions = null;
     private int wallCount = 0;
 
+    private FileHandle externalMapDir = null;
+
     public MapManager() {
-        this.mapList = new Array<MapEntity>();
+        this.mapList = new Array<>();
 
         loadDefaultMaps();
     }
@@ -40,15 +43,21 @@ public class MapManager {
         mapList.add(new XMap());
     }
 
-    public void loadExternalMaps() { // TODO: Add interface thingy
+    public void loadExternalMaps(final OnExternalMapLoadListener mapLoadListener) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 ExternalMapReader externalMapReader = new ExternalMapReader();
+                externalMapDir = externalMapReader.getExternalMapDir();
                 externalMapReader.scanAndParseExternalMaps();
                 Array<ExternalMapTemplate> externalLoadedMaps = externalMapReader.getLoadedMaps();
 
-                // Complete this and see integrate everything properly
+                int externalMapStartIndex = mapList.size;
+                for (MapEntity externalMap : externalLoadedMaps) {
+                    mapList.add(externalMap);
+                }
+
+                mapLoadListener.onExternalMapLoaded(getMapList(), externalMapStartIndex);
             }
         }).start();
     }
@@ -56,8 +65,14 @@ public class MapManager {
     public Texture getMapPreview(String mapName) {
         try {
             return new Texture(Gdx.files.internal("icons/map_icons/" + mapName + ".png"));
-        } catch (GdxRuntimeException e) {
-            Gdx.app.log(Constants.LOG_TAG, "Failed to load map preview image for '" + mapName + "'");
+        } catch (GdxRuntimeException ignored) {
+
+        }
+
+        try {
+            return new Texture(Gdx.files.external(externalMapDir + "/" + mapName + ".png"));
+        } catch (GdxRuntimeException | NullPointerException e) {
+            Gdx.app.log(Constants.LOG_TAG, "Failed to load map preview image for '" + mapName + "' (" + e.getMessage() + ")");
             return null;
         }
     }
@@ -85,7 +100,7 @@ public class MapManager {
     }
 
     private void parseMapData(String mapData) throws InvalidMapCharacter, NoStartPositionsFound {
-        Array<GridPoint2> startPositions = new Array<GridPoint2>();
+        Array<GridPoint2> startPositions = new Array<>();
         String[] mapRows = mapData.split("\n");
         Cell[][] mapGrid = new Cell[mapRows.length][];
         int wallCount = 0;
@@ -100,7 +115,7 @@ public class MapManager {
                     mapGrid[i][j].isMovable = false;
                     wallCount++;
                 } else if (VALID_START_POSITIONS.indexOf(c) != -1) {
-                    startPositions.add(new GridPoint2(i, j));
+                    startPositions.add(new GridPoint2(j, mapRows.length - i - 1));
                 } else {
                     throw new InvalidMapCharacter("Unknown character '" + c + "' found when parsing the map");
                 }
@@ -126,5 +141,9 @@ public class MapManager {
 
     public int getWallCount() {
         return wallCount;
+    }
+
+    public interface OnExternalMapLoadListener {
+        void onExternalMapLoaded(Array<MapEntity> mapList, int externalMapStartIndex);
     }
 }

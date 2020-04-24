@@ -31,7 +31,7 @@ import com.cg.zoned.ui.HoverImageButton;
 public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
-    private Array<Texture> usedTextures = new Array<Texture>();
+    private Array<Texture> usedTextures = new Array<>();
 
     private FocusableStage stage;
     private Viewport viewport;

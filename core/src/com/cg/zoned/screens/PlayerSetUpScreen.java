@@ -37,7 +37,7 @@ import com.cg.zoned.ui.Spinner;
 public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
-    private Array<Texture> usedTextures = new Array<Texture>();
+    private Array<Texture> usedTextures = new Array<>();
 
     private FocusableStage stage;
     private Viewport viewport;
@@ -206,7 +206,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
                     cols = temp;
                 }
 
-                Array<Color> playerColors = new Array<Color>();
+                Array<Color> playerColors = new Array<>();
                 for (ButtonGroup buttonGroup : colorButtonGroups) {
                     playerColors.add(buttonGroup.getChecked().getColor());
                 }
@@ -246,7 +246,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         for (int i = 0; i < currentBgColors.length; i++) {
             currentBgColors[i].lerp(targetBgColors[i], bgAnimSpeed * delta);
-            currentBgColors[i].a = Math.min(targetBgColors[i].a, stage.getRoot().getColor().a);
+            currentBgColors[i].a = Math.min(targetBgColors[i].a, stage.getRoot().getColor().a / 2.5f);
         }
 
         viewport.apply(true);

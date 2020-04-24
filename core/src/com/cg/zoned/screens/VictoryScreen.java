@@ -51,7 +51,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols, int wallCount) {
         this.game = game;
 
-        this.usedTextures = new Array<Texture>();
+        this.usedTextures = new Array<>();
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);

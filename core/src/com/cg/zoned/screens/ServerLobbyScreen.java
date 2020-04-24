@@ -42,7 +42,7 @@ import com.esotericsoftware.kryonet.Server;
 public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     private final Zoned game;
 
-    private Array<Texture> usedTextures = new Array<Texture>();
+    private Array<Texture> usedTextures = new Array<>();
 
     private Server server;
     private ServerLobbyListener serverLobbyListener;
@@ -69,8 +69,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
         this.name = name;
-        playerConnections = new Array<Connection>();
-        playerItems = new Array<HorizontalGroup>();
+        playerConnections = new Array<>();
+        playerItems = new Array<>();
 
         this.server = server;
         serverLobbyListener = new ServerLobbyListener(this);
@@ -244,7 +244,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void validateServerData(int rows, int cols) {
-        Array<String> dialogButtonTexts = new Array<String>();
+        Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("OK");
 
         if (server.getConnections().length < 1) {
@@ -266,7 +266,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        Array<String> uniqueColors = new Array<String>();
+        Array<String> uniqueColors = new Array<>();
         uniqueColors.add(((DropDownMenu) playerItems.get(0).findActor("color-selector")).getSelected());
         for (int i = 1; i < size; i++) {
             String color = ((Label) playerItems.get(i).findActor("color-label")).getText().toString();

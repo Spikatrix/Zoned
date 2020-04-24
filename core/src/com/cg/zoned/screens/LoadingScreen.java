@@ -32,7 +32,7 @@ import com.cg.zoned.Zoned;
 public class LoadingScreen extends ScreenAdapter {
     final Zoned game;
 
-    private Array<Texture> usedTextures = new Array<Texture>();
+    private Array<Texture> usedTextures = new Array<>();
 
     private AssetManager assetManager;
 

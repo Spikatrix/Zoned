@@ -27,7 +27,7 @@ public class PlayerManager extends InputMultiplexer {
 
         this.players = players;
 
-        this.teamData = new Array<TeamData>();
+        this.teamData = new Array<>();
         initTeamColors();
 
         if (gameManager.connectionManager.isActive) { // Not split screen; only add first player's inputs

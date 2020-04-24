@@ -40,7 +40,7 @@ import com.cg.zoned.ui.HoverImageButton;
 public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
-    private Array<Texture> usedTextures = new Array<Texture>();
+    private Array<Texture> usedTextures = new Array<>();
 
     private FocusableStage mainStage;
     private FocusableStage playModeStage;
@@ -128,7 +128,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             }
         });
 
-        mainMenuUIButtons = new Array<Actor>();
+        mainMenuUIButtons = new Array<>();
         mainMenuUIButtons.add(playButton);
         mainMenuUIButtons.add(settingsButton);
         mainMenuUIButtons.add(testingButton);
@@ -356,7 +356,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private void showExitDialog() {
         if (exitDialogIsActive) return;
 
-        final Array<String> dialogButtonTexts = new Array<String>();
+        final Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("Cancel");
         dialogButtonTexts.add("Exit");
         exitDialogIsActive = true;

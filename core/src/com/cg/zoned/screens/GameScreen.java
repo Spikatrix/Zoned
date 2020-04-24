@@ -38,7 +38,7 @@ import com.esotericsoftware.kryonet.Server;
 public class GameScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
-    private Array<Texture> usedTextures = new Array<Texture>();
+    private Array<Texture> usedTextures = new Array<>();
 
     private GameManager gameManager;
 
@@ -325,7 +325,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showDisconnectionDialog() {
-        final Array<String> dialogButtonTexts = new Array<String>();
+        final Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("OK");
         fullScreenStage.showDialog("Disconnected", dialogButtonTexts,
                 false,
@@ -345,7 +345,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             gameManager.directionBufferManager.clearBuffer();
         }
 
-        final Array<String> dialogButtonTexts = new Array<String>();
+        final Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("Resume");
         //dialogButtonTexts.add("Restart");
         dialogButtonTexts.add("Main Menu");

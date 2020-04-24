@@ -26,7 +26,7 @@ public class FlingControlManager extends InputAdapter {
     private Array<GameTouchPoint> clickPoints;
 
     public FlingControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
-        this.clickPoints = new Array<GameTouchPoint>();
+        this.clickPoints = new Array<>();
         this.players = players;
         this.isSplitScreenMultiplayer = isSplitScreen;
         this.stage = stage;

@@ -33,7 +33,7 @@ public class RectangleMap implements MapEntity {
         }
 
         String promptTitle = "Grid size";
-        Array<SpinnerVars> spinnerVars = new Array<SpinnerVars>();
+        Array<SpinnerVars> spinnerVars = new Array<>();
         spinnerVars.add(new SpinnerVars("Row count: ", 3, 100, this.rowCount));
         spinnerVars.add(new SpinnerVars("Col count: ", 3, 100, this.colCount));
 

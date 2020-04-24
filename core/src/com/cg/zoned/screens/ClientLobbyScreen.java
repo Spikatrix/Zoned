@@ -41,7 +41,7 @@ import com.esotericsoftware.kryonet.Listener;
 public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
-    private Array<Texture> usedTextures = new Array<Texture>();
+    private Array<Texture> usedTextures = new Array<>();
 
     private Client client;
     private ClientLobbyListener clientLobbyListener;
@@ -68,8 +68,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
         this.name = name;
-        playerItems = new Array<HorizontalGroup>();
-        playerNames = new Array<String>();
+        playerItems = new Array<>();
+        playerNames = new Array<>();
 
         this.client = client;
         clientLobbyListener = new ClientLobbyListener(this);
@@ -313,7 +313,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showDialogAndCloseClient(String msg) {
-        final Array<String> dialogButtonTexts = new Array<String>();
+        final Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("OK");
         stage.showDialog(msg, dialogButtonTexts,
                 false,

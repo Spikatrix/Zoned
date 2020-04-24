@@ -34,7 +34,7 @@ public class Map {
             }
         }
 
-        startPositions = new Array<GridPoint2>();
+        startPositions = new Array<>();
         startPositions.add(new GridPoint2(0, rows - 1));
         startPositions.add(new GridPoint2(cols - 1, 0));
         startPositions.add(new GridPoint2(0, 0));
@@ -155,7 +155,7 @@ public class Map {
             }
         }
 
-        Array<GridPoint2> fillPositions = new Array<GridPoint2>();
+        Array<GridPoint2> fillPositions = new Array<>();
         Color fillColor;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -267,7 +267,7 @@ public class Map {
      * If 'null' or 'Color.BLACK', multiple or no colors were present along the edges, or a wall was in between
      */
     private Color floodFill(FloodFillGridState[][] gridState, GridPoint2 startPos, Array<GridPoint2> fillPosStack) {
-        Array<GridPoint2> stack = new Array<GridPoint2>();
+        Array<GridPoint2> stack = new Array<>();
         Color fillColor = null;
 
         gridState[startPos.x][startPos.y].state = FloodFillGridState.State.VISITED;

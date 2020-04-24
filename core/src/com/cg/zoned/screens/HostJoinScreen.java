@@ -40,7 +40,7 @@ import java.net.InetAddress;
 public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
-    private Array<Texture> usedTextures = new Array<Texture>();
+    private Array<Texture> usedTextures = new Array<>();
 
     private FocusableStage stage;
     private Viewport viewport;
@@ -48,7 +48,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private BitmapFont font;
 
-    private Array<String> dialogButtonTexts = new Array<String>();
+    private Array<String> dialogButtonTexts = new Array<>();
 
     public HostJoinScreen(final Zoned game) {
         this.game = game;
@@ -186,13 +186,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         server.start();
         try {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
-        } catch (IOException e) {
-            stage.showDialog("Server bind error\n" + e.getMessage(), dialogButtonTexts,
-                    false,
-                    game.getScaleFactor(), null, game.skin);
-            e.printStackTrace();
-            return;
-        } catch (IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException e) {
             stage.showDialog("Server bind error\n" + e.getMessage(), dialogButtonTexts,
                     false,
                     game.getScaleFactor(), null, game.skin);
