@@ -19,14 +19,15 @@ import com.cg.zoned.maps.internalmaps.RectangleMap;
 import com.cg.zoned.maps.internalmaps.XMap;
 
 public class MapManager {
-    private static final char EMPTY_CHAR = '.';
-    private static final char WALL_CHAR = '#';
-    private static final String VALID_START_POSITIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    public static final char EMPTY_CHAR = '.';
+    public static final char WALL_CHAR = '#';
+    public static final String VALID_START_POSITIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private Array<MapEntity> mapList;
 
     private Cell[][] preparedMapGrid = null;
     private Array<GridPoint2> preparedStartPositions = null;
+    private Array<String> preparedStartPosNames = null;
     private int wallCount = 0;
 
     private FileHandle externalMapDir = null;
@@ -66,7 +67,6 @@ public class MapManager {
         try {
             return new Texture(Gdx.files.internal("icons/map_icons/" + mapName + ".png"));
         } catch (GdxRuntimeException ignored) {
-
         }
 
         try {
@@ -96,6 +96,7 @@ public class MapManager {
             }
         }
 
+        this.preparedStartPosNames = selectedMap.getStartPosNames();
         parseMapData(mapData);
     }
 
@@ -104,18 +105,24 @@ public class MapManager {
         String[] mapRows = mapData.split("\n");
         Cell[][] mapGrid = new Cell[mapRows.length][];
         int wallCount = 0;
-        for (int i = 0; i < mapRows.length; i++) {
-            mapGrid[i] = new Cell[mapRows[i].length()];
+        for (int i = mapRows.length - 1; i >= 0; i--) {
+            int mirroredIndex = mapRows.length - i - 1;
+            // Mirrored because reading starts from the top left but rendering starts from the bottom left
+            mapGrid[mirroredIndex] = new Cell[mapRows[i].length()];
             for (int j = 0; j < mapRows[i].length(); j++) {
                 char c = mapRows[i].charAt(j);
-                mapGrid[i][j] = new Cell();
+                mapGrid[mirroredIndex][j] = new Cell();
                 if (c == EMPTY_CHAR) {
                     continue;
                 } else if (c == WALL_CHAR) {
-                    mapGrid[i][j].isMovable = false;
+                    mapGrid[mirroredIndex][j].isMovable = false;
                     wallCount++;
                 } else if (VALID_START_POSITIONS.indexOf(c) != -1) {
-                    startPositions.add(new GridPoint2(j, mapRows.length - i - 1));
+                    int index = c - VALID_START_POSITIONS.charAt(0);
+                    for (int k = startPositions.size; k <= index; k++) {
+                        startPositions.add(null);
+                    }
+                    startPositions.set(index, new GridPoint2(j, mirroredIndex));
                 } else {
                     throw new InvalidMapCharacter("Unknown character '" + c + "' found when parsing the map");
                 }
@@ -133,6 +140,10 @@ public class MapManager {
 
     public Cell[][] getPreparedMapGrid() {
         return preparedMapGrid;
+    }
+
+    public Array<String> getPreparedStartPosNames() {
+        return preparedStartPosNames;
     }
 
     public Array<GridPoint2> getPreparedStartPositions() {

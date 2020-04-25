@@ -128,13 +128,15 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                 Player p2 = new Player(Constants.PLAYER_COLORS.get("RED"), "p2");
                 p2.setControlIndex(1);
                 dispose();
-                game.setScreen(
+                /*game.setScreen(
                         new GameScreen(game,
                                 mapManager.getPreparedMapGrid(),
                                 mapManager.getPreparedStartPositions(),
                                 mapManager.getWallCount(),
                                 new Player[]{p1, p2},
-                                null, null));
+                                null, null));*/
+                game.setScreen(new MapStartPosScreen(game, mapManager.getPreparedMapGrid(),
+                        mapManager.getPreparedStartPositions(), mapManager.getPreparedStartPosNames()));
             }
         });
         table.add(startGameButton);

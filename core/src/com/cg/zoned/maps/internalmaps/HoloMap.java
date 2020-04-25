@@ -1,5 +1,6 @@
 package com.cg.zoned.maps.internalmaps;
 
+import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
 
@@ -29,6 +30,11 @@ public class HoloMap implements MapEntity {
 
     @Override
     public void applyExtraParams() {
+    }
+
+    @Override
+    public Array<String> getStartPosNames() {
+        return null;
     }
 
     @Override

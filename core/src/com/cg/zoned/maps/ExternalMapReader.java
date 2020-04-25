@@ -5,7 +5,22 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants;
+import com.cg.zoned.managers.MapManager;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * ExternalMapReader scans and parses external maps for the MapManager to handle
+ * <p>
+ * Save map files in the "ZonedExternalMaps" directory along optionally with a .png preview
+ * and the game should automatically pick it up and you can play on that map
+ * <p>
+ * Directory to save the .map and the .png preview files
+ * - On Android: /storage/emulated/0/Android/data/com.cg.zoned/files/ZonedExternalMaps/
+ * - On Linux: /home/username/Zoned/ZonedExternalMaps/
+ * - On Windows: C:\\Users\\username\\Documents\\Zoned\|ZonedExternalMaps\\
+ */
 public class ExternalMapReader {
     public static final String mapDirName = "ZonedExternalMaps";
     private FileHandle externalMapDir;
@@ -19,7 +34,7 @@ public class ExternalMapReader {
     }
 
     private void setExternalMapDir() {
-        // Gdx.files.getExternalStoragePath() (And Gdx.files.external("") relative to)
+        // Gdx.files.getExternalStoragePath() (And Gdx.files.external("") is relative to)
         //  - On Android: /storage/emulated/0/
         //  - On Desktop (Linux): /home/<username>/
         //  - On Desktop (Windows): C:\Users\<username>\
@@ -80,6 +95,7 @@ public class ExternalMapReader {
             String fileContents = mapFile.readString();
 
             String mapGrid = null, mapName = mapFile.nameWithoutExtension();
+            Array<String> startPosNames = new Array<>();
             int rowCount = 0, colCount = 0;
 
             StringBuilder mapGridBuilder = new StringBuilder();
@@ -87,21 +103,39 @@ public class ExternalMapReader {
             String rowCountPrompt = "Row count:";
             String colCountPrompt = "Col count:";
 
+            Pattern startPosPattern = Pattern.compile(
+                    "(^[" + MapManager.VALID_START_POSITIONS.charAt(0) + "-" + MapManager.VALID_START_POSITIONS.charAt(MapManager.VALID_START_POSITIONS.length() - 1) + "])" +
+                            ":(.*)",
+                    Pattern.MULTILINE);
+
             String[] fileLines = fileContents.split("\r?\n");
             for (int i = 0; i < fileLines.length; i++) {
-                if (i == 0 && fileLines[i].startsWith(rowCountPrompt)) {
+                if (fileLines[i].startsWith(rowCountPrompt)) {
                     rowCount = Integer.parseInt(fileLines[i].substring(rowCountPrompt.length()).trim());
-                } else if (i == 1 && fileLines[i].startsWith(colCountPrompt)) {
+                } else if (fileLines[i].startsWith(colCountPrompt)) {
                     colCount = Integer.parseInt(fileLines[i].substring(colCountPrompt.length()).trim());
                 } else {
-                    mapGridBuilder.append(fileLines[i]).append('\n');
+                    Matcher matcher = startPosPattern.matcher(fileLines[i]);
+                    if (matcher.matches()) {
+                        char startPosChar = matcher.group(1).trim().charAt(0);
+                        String startPosName = matcher.group(2).trim();
+
+                        int index = startPosChar - MapManager.VALID_START_POSITIONS.charAt(0);
+                        for (int j = startPosNames.size; j <= index; j++) {
+                            startPosNames.add(null);
+                        }
+
+                        startPosNames.set(index, startPosName);
+                    } else {
+                        mapGridBuilder.append(fileLines[i]).append('\n');
+                    }
                 }
             }
 
             mapGrid = mapGridBuilder.toString();
 
             if (!mapGrid.isEmpty() && mapName != null && rowCount > 0 && colCount > 0) {
-                loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, rowCount, colCount));
+                loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPosNames, rowCount, colCount));
                 Gdx.app.log(Constants.LOG_TAG, "Successfully parsed " + mapFile.name());
             } else {
                 Gdx.app.log(Constants.LOG_TAG, "Failed to parse " + mapFile.name());

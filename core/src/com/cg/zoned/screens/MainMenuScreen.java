@@ -155,7 +155,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        Animation playButtonAnimation = new Animation<TextureRegion>(1 / 20f, playFrames);
+        Animation playButtonAnimation = new Animation<>(1 / 20f, playFrames);
 
         final HoverImageButton playButton = new HoverImageButton(new AnimatedDrawable(playButtonAnimation));
         playButton.setOrigin((playButton.getPrefWidth() * game.getScaleFactor()) / 2, (playButton.getPrefHeight() * game.getScaleFactor()) / 2);

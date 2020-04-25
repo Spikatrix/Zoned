@@ -18,12 +18,20 @@ public class RectangleMap implements MapEntity {
             "..........\n" +
             "D........B\n";
 
+    private Array<String> startPosNames = new Array<>();
+
     private int rowCount = 10;
     private int colCount = 10;
 
     private MapExtraParams mapExtraParams = null;
 
     public RectangleMap() {
+        startPosNames.addAll(
+                "Top Left",        // A
+                "Bottom Right",    // B
+                "Top Right",       // C
+                "Bottom Left"      // D
+        );
     }
 
     @Override
@@ -65,6 +73,11 @@ public class RectangleMap implements MapEntity {
         }
 
         this.mapGridString = mapGridBuilder.toString();
+    }
+
+    @Override
+    public Array<String> getStartPosNames() {
+        return startPosNames;
     }
 
     @Override
