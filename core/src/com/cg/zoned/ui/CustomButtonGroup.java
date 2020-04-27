@@ -8,11 +8,13 @@ public class CustomButtonGroup extends ButtonGroup {
 
     @Override
     protected boolean canCheck(Button button, boolean newState) {
+        boolean retVal = super.canCheck(button, newState);
+
         if (newState && onCheckChangeListener != null) {
             onCheckChangeListener.buttonPressed(button);
         }
 
-        return super.canCheck(button, newState);
+        return retVal;
     }
 
     public void setOnCheckChangeListener(OnCheckChangeListener onCheckChangeListener) {

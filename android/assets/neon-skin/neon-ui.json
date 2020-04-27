@@ -257,9 +257,9 @@
 			"checkboxOff": "radio-c",
 			"checkboxOver": "radio-over-c",
 			"font": "regular-font",
-			"fontColor": "color",
+			"fontColor": "custom-color",
 			"downFontColor": "selected",
-			"checkedFontColor": "selected"
+			"checkedFontColor": "text-themed"
 		}
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle": {

@@ -35,10 +35,10 @@ public interface MapEntity {
     void applyExtraParams();
 
     /**
-     * Returns the names of each start position. This is optional but recommended
+     * Returns the names of each start position in the map. This is optional but recommended
      *
      * @return An Array of Strings containing the names of each start position in order
-     * null if the map names are not specified
+     * null if you don't want the map start position names to be specified (It'll display A, B, C, etc instead)
      */
     Array<String> getStartPosNames();
 
