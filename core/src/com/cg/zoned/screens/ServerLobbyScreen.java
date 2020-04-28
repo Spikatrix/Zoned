@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup;
@@ -100,10 +101,14 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
 
         serverLobbyTable.row();
 
+        Table scrollTable = new Table();
+        ScrollPane playerListScrollPane = new ScrollPane(scrollTable);
+        playerListScrollPane.setOverscroll(false, true);
+
         playerList = new VerticalGroup();
         //playerList.setDebug(true);
-        serverLobbyTable.add(playerList).expand();
-
+        scrollTable.add(playerList).expand();
+        serverLobbyTable.add(playerListScrollPane).expand();
         serverLobbyTable.row();
 
         Table innerTable = new Table();

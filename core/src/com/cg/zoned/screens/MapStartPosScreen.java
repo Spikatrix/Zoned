@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -13,11 +14,13 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -31,7 +34,6 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
-import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
@@ -58,15 +60,19 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
 
     private Map map;
+    private Vector2[] dragOffset;
+    private Color mapDarkOverlayColor;
     private ExtendViewport[] mapViewports;
     private Player[] players;
+    private int playerIndex;
 
-    public MapStartPosScreen(final Zoned game, Cell[][] mapGrid, Array<GridPoint2> startPositions, Array<String> startPosNames) {
+    public MapStartPosScreen(final Zoned game, Cell[][] mapGrid, Array<GridPoint2> startPositions, Array<String> startPosNames, Player[] players) {
         this.game = game;
 
         this.mapGrid = mapGrid;
         this.startPositions = startPositions;
         this.startPosNames = startPosNames;
+        this.players = players;
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
@@ -90,14 +96,16 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpMap() {
         map = new Map(mapGrid, startPositions, 0); // Wall count is unnecessary in this case so 0
+        mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitParts];
-        players = new Player[splitParts];
+        for (int i = 0; i < players.length; i++) {
+            players[i].setStartPos(startPositions.get(i % startPositions.size));
+        }
         for (int i = 0; i < splitParts; i++) {
             mapViewports[i] = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
-            players[i] = new Player(PlayerColorHelper.getColorFromIndex(i), "name");
-            players[i].setStartPos(startPositions.get(i % startPositions.size));
             mapGrid[(int) players[i].position.y][(int) players[i].position.x].cellColor = players[i].color;
         }
+        playerIndex = 0;
     }
 
     private void setUpStage() {
@@ -109,18 +117,23 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         masterTable.add(title).colspan(2).expandX().pad(20f * game.getScaleFactor());
         masterTable.row();
 
-        for (int i = 0; i < splitParts; i++) {
+        for (int i = 0; i < splitParts && playerIndex < players.length; i++, playerIndex++) {
             Table table = new Table();
 
             boolean alignLeft = (i % 2 == 0);
 
-            Label playerLabel = new Label("Player " + (i + 1), game.skin, "themed");
+            Label playerLabel = new Label("Player " + (playerIndex + 1), game.skin, "custom-color");
+            playerLabel.setColor(players[playerIndex].color);
             if (alignLeft) {
                 table.add(playerLabel).padBottom(10f * game.getScaleFactor()).left().expandX().colspan(2);
             } else {
                 table.add(playerLabel).padBottom(10f * game.getScaleFactor()).right().expandX().colspan(2);
             }
             table.row();
+
+            Table scrollTable = new Table();
+            ScrollPane startPosScrollPane = new ScrollPane(scrollTable);
+            startPosScrollPane.setOverscroll(false, true);
 
             final CustomButtonGroup buttonGroup = new CustomButtonGroup();
             buttonGroup.setMinCheckCount(1);
@@ -138,20 +151,22 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                 startPosCheckBox.getImageCell().width(startPosCheckBox.getLabel().getPrefHeight()).height(startPosCheckBox.getLabel().getPrefHeight());
                 startPosCheckBox.getImage().setScaling(Scaling.fill);
                 if (alignLeft) {
-                    table.add(startPosCheckBox).left().expandX();
+                    scrollTable.add(startPosCheckBox).left().expandX();
                 } else {
-                    table.add(startPosCheckBox).right().expandX();
+                    scrollTable.add(startPosCheckBox).right().expandX();
                 }
-                table.row();
+                scrollTable.row();
 
                 buttonGroup.add(startPosCheckBox);
 
-                if (j == i % startPositions.size) {
+                if (j == playerIndex % startPositions.size) {
                     startPosCheckBox.setChecked(true);
                 }
             }
 
-            final int finalI = i;
+            table.add(startPosScrollPane);
+
+            final int finalI = playerIndex;
             buttonGroup.setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
                 @Override
                 public void buttonPressed(Button button) {
@@ -183,6 +198,59 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         }
         masterTable.row();
 
+        // TODO: Use playerIndex
+        final GridPoint2[] clickPoint = new GridPoint2[splitParts];
+        final int[] pointers = new int[splitParts];
+        dragOffset = new Vector2[splitParts];
+        for (int i = 0; i < splitParts; i++) {
+            dragOffset[i] = new Vector2(0, 0);
+            clickPoint[i] = new GridPoint2();
+            pointers[i] = -1;
+        }
+        stage.addListener(new ClickListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                int splitPaneIndex = 0;
+                float width = stage.getViewport().getWorldWidth();
+                for (int i = 1; i < splitParts; i++) {
+                    if (x > ((width / splitParts) * i)) {
+                        splitPaneIndex++;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (pointers[splitPaneIndex] == -1) {
+                    pointers[splitPaneIndex] = pointer;
+                    clickPoint[splitPaneIndex].x = (int) x;
+                    clickPoint[splitPaneIndex].y = (int) y;
+                }
+
+                return true;
+            }
+
+            @Override
+            public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                for (int i = 0; i < splitParts; i++) {
+                    if (pointers[i] == pointer) {
+                        dragOffset[i].x = clickPoint[i].x - x;
+                        dragOffset[i].y = clickPoint[i].y - y;
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                for (int i = 0; i < splitParts; i++) {
+                    if (pointers[i] == pointer) {
+                        dragOffset[i].set(0, 0);
+                        pointers[i] = -1;
+                        break;
+                    }
+                }
+            }
+        });
         TextButton doneButton = new TextButton("Done", game.skin);
         masterTable.add(doneButton).expandX().colspan(2).width(200f * game.getScaleFactor()).pad(20f * game.getScaleFactor());
 
@@ -200,8 +268,8 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         });
     }
 
-    private void focusAndRenderViewport(Viewport viewport, Player player, float delta) {
-        focusCameraOnPlayer(viewport, player, delta);
+    private void focusAndRenderViewport(Viewport viewport, Player player, Vector2 vel, float delta) {
+        focusCameraOnPlayer(viewport, player, vel, delta);
         viewport.apply();
 
         renderer.setProjectionMatrix(viewport.getCamera().combined);
@@ -211,7 +279,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         renderer.end();
     }
 
-    private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
+    private void focusCameraOnPlayer(Viewport viewport, Player player, Vector2 vel, float delta) {
         OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
 
         float lerp = 2.5f;
@@ -219,6 +287,9 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
         float posX = (player.position.x * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
         float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
+
+        posX += vel.x;
+        posY += vel.y;
 
         position.x += (posX - position.x) * lerp * delta;
         position.y += (posY - position.y) * lerp * delta;
@@ -241,16 +312,55 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         camera.update();
     }
 
+    private void drawViewportDividers() {
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        int lineCount = 2;
+
+        float height = stage.getViewport().getWorldHeight();
+        for (int i = 1; i < lineCount; i++) {
+            float startX = (stage.getViewport().getWorldWidth() / (float) lineCount) * i;
+
+            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+                    Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
+                    Color.BLACK, Color.BLACK, Color.BLACK, Color.BLACK);
+            renderer.rect(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+                    Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
+                    Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK);
+            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+                    -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
+                    Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK);
+        }
+        renderer.end();
+    }
+
+    private void drawDarkOverlay() {
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        float height = stage.getViewport().getWorldHeight();
+        float width = stage.getViewport().getWorldWidth();
+        renderer.setColor(mapDarkOverlayColor);
+        renderer.rect(0, 0,
+                width, height);
+        renderer.end();
+    }
+
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         for (int i = 0; i < mapViewports.length; i++) {
-            focusAndRenderViewport(mapViewports[i], players[i], delta);
+            focusAndRenderViewport(mapViewports[i], players[i], dragOffset[i], delta);
         }
 
         this.viewport.apply(true);
+        renderer.setProjectionMatrix(this.viewport.getCamera().combined);
+
+        drawViewportDividers();
+        drawDarkOverlay();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
 
         stage.act(delta);
         stage.draw();

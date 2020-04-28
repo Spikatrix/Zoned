@@ -26,12 +26,6 @@ public class RectangleMap implements MapEntity {
     private MapExtraParams mapExtraParams = null;
 
     public RectangleMap() {
-        startPosNames.addAll(
-                "Top Left",        // A
-                "Bottom Right",    // B
-                "Top Right",       // C
-                "Bottom Left"      // D
-        );
     }
 
     @Override
@@ -77,6 +71,15 @@ public class RectangleMap implements MapEntity {
 
     @Override
     public Array<String> getStartPosNames() {
+        if (startPosNames.isEmpty()) {
+            startPosNames.addAll(
+                    "Top Left",        // A
+                    "Bottom Right",    // B
+                    "Top Right",       // C
+                    "Bottom Left"      // D
+            );
+        }
+
         return startPosNames;
     }
 

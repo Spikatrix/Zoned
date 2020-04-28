@@ -64,11 +64,13 @@ public class MapManager {
     }
 
     public Texture getMapPreview(String mapName) {
+        // Scan for the map preview in the internal directory
         try {
             return new Texture(Gdx.files.internal("icons/map_icons/" + mapName + ".png"));
         } catch (GdxRuntimeException ignored) {
         }
 
+        // Scan for the map preview in the external directory
         try {
             return new Texture(Gdx.files.external(externalMapDir + "/" + mapName + ".png"));
         } catch (GdxRuntimeException | NullPointerException e) {

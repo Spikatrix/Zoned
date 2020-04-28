@@ -6,19 +6,21 @@ import com.cg.zoned.maps.MapExtraParams;
 
 public class HoloMap implements MapEntity {
     private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
-            "A...##...C\n" +
-            "..........\n" +
-            "..........\n" +
-            "....##....\n" +
-            "#........#\n" +
-            "#........#\n" +
-            "....##....\n" +
-            "..........\n" +
-            "..........\n" +
-            "D...##...B\n";
+            "........A##C........\n" +
+            "....#..........#....\n" +
+            "....#..........#....\n" +
+            ".........##.........\n" +
+            "#..................#\n" +
+            "#..................#\n" +
+            ".........##.........\n" +
+            "....#..........#....\n" +
+            "....#..........#....\n" +
+            "........D##B........\n";
+
+    private Array<String> startPosNames = new Array<>();
 
     private int rowCount = 10;
-    private int colCount = 10;
+    private int colCount = 20;
 
     public HoloMap() {
     }
@@ -34,7 +36,16 @@ public class HoloMap implements MapEntity {
 
     @Override
     public Array<String> getStartPosNames() {
-        return null;
+        if (startPosNames.isEmpty()) {
+            startPosNames.addAll(
+                    "Top Left",           // A
+                    "Bottom Right",        // B
+                    "Top Right",            // C
+                    "Bottom Left"          // D
+            );
+        }
+
+        return startPosNames;
     }
 
     @Override

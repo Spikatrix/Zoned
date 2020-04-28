@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup;
@@ -106,9 +107,13 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
 
         clientLobbyTable.row();
 
-        playerList = new VerticalGroup();
-        clientLobbyTable.add(playerList).expand();
+        Table scrollTable = new Table();
+        ScrollPane playerListScrollPane = new ScrollPane(scrollTable);
+        playerListScrollPane.setOverscroll(false, true);
 
+        playerList = new VerticalGroup();
+        scrollTable.add(playerList).expand();
+        clientLobbyTable.add(playerListScrollPane).expand();
         clientLobbyTable.row();
 
         final TextButton readyButton = new TextButton("Ready up", game.skin);

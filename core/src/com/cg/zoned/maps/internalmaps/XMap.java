@@ -22,6 +22,8 @@ public class XMap implements MapEntity {
             ".#...........#.\n" +
             "D.............B\n";
 
+    private Array<String> startPosNames = new Array<>();
+
     private int rowCount = 15;
     private int colCount = 15;
 
@@ -39,7 +41,16 @@ public class XMap implements MapEntity {
 
     @Override
     public Array<String> getStartPosNames() {
-        return null;
+        if (startPosNames.isEmpty()) {
+            startPosNames.addAll(
+                    "Top Left",        // A
+                    "Bottom Right",    // B
+                    "Top Right",       // C
+                    "Bottom Left"      // D
+            );
+        }
+
+        return startPosNames;
     }
 
     @Override

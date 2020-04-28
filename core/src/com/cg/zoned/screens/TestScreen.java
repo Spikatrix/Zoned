@@ -100,17 +100,25 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
             public void clicked(InputEvent event, float x, float y) {
                 int mapIndex = spinner.getPositionIndex();
 
+                Array<String> buttonTexts = new Array<>();
+                buttonTexts.add("OK");
+
                 try {
                     mapManager.prepareMap(mapIndex);
                 } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
                     e.printStackTrace();
-                    Gdx.app.log(Constants.LOG_TAG, e.getMessage());
+                    stage.showDialog("Error: " + e.getMessage(), buttonTexts, false, game.getScaleFactor(), null, game.skin);
                     return;
                 }
 
                 Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
                 for (GridPoint2 startPosition : startPositions) {
-                    startPositionMenu.append("(" + startPosition.x + ", " + (mapManager.getPreparedMapGrid().length - startPosition.y - 1) + ")");
+                    try {
+                        startPositionMenu.append("(" + startPosition.x + ", " + (mapManager.getPreparedMapGrid().length - startPosition.y - 1) + ")");
+                    } catch (NullPointerException e) {
+                        stage.showDialog("Error: Please define the start positions in order starting from '" + MapManager.VALID_START_POSITIONS.charAt(0) + "'", buttonTexts, false, game.getScaleFactor(), null, game.skin);
+                        return;
+                    }
                 }
             }
         });
@@ -136,7 +144,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                                 new Player[]{p1, p2},
                                 null, null));*/
                 game.setScreen(new MapStartPosScreen(game, mapManager.getPreparedMapGrid(),
-                        mapManager.getPreparedStartPositions(), mapManager.getPreparedStartPosNames()));
+                        mapManager.getPreparedStartPositions(), mapManager.getPreparedStartPosNames(), new Player[]{p1, p2}));
             }
         });
         table.add(startGameButton);
