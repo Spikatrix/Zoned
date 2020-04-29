@@ -32,6 +32,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
+import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.Zoned;
@@ -45,8 +46,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
     private Array<Texture> usedTextures = new Array<>();
-
-    private int splitParts = 2;
 
     private Cell[][] mapGrid;
     private Array<GridPoint2> startPositions;
@@ -63,16 +62,22 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private Vector2[] dragOffset;
     private Color mapDarkOverlayColor;
     private ExtendViewport[] mapViewports;
+    private int splitScreenCount;
+    private boolean firstPlayerOnly;
     private Player[] players;
+    private Label[] playerLabels;
     private int playerIndex;
 
-    public MapStartPosScreen(final Zoned game, Cell[][] mapGrid, Array<GridPoint2> startPositions, Array<String> startPosNames, Player[] players) {
+    public MapStartPosScreen(final Zoned game, Cell[][] mapGrid, Array<GridPoint2> startPositions, Array<String> startPosNames,
+                             Player[] players, int splitScreenCount, boolean firstPlayerOnly) {
         this.game = game;
 
         this.mapGrid = mapGrid;
         this.startPositions = startPositions;
         this.startPosNames = startPosNames;
         this.players = players;
+        this.splitScreenCount = splitScreenCount;
+        this.firstPlayerOnly = firstPlayerOnly;
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
@@ -97,98 +102,107 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private void setUpMap() {
         map = new Map(mapGrid, startPositions, 0); // Wall count is unnecessary in this case so 0
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
-        mapViewports = new ExtendViewport[splitParts];
+        mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {
             players[i].setStartPos(startPositions.get(i % startPositions.size));
-        }
-        for (int i = 0; i < splitParts; i++) {
-            mapViewports[i] = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
             mapGrid[(int) players[i].position.y][(int) players[i].position.x].cellColor = players[i].color;
+        }
+        for (int i = 0; i < splitScreenCount; i++) {
+            mapViewports[i] = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         }
         playerIndex = 0;
     }
 
     private void setUpStage() {
-        Table masterTable = new Table();
+        final Table masterTable = new Table();
         masterTable.center();
         masterTable.setFillParent(true);
 
         Label title = new Label("Choose start positions", game.skin, "themed");
-        masterTable.add(title).colspan(2).expandX().pad(20f * game.getScaleFactor());
+        masterTable.add(title).colspan(splitScreenCount).expandX().pad(20f * game.getScaleFactor());
         masterTable.row();
 
-        for (int i = 0; i < splitParts && playerIndex < players.length; i++, playerIndex++) {
+        playerLabels = new Label[splitScreenCount];
+        for (int i = 0; i < splitScreenCount; i++) {
             Table table = new Table();
 
-            boolean alignLeft = (i % 2 == 0);
-
-            Label playerLabel = new Label("Player " + (playerIndex + 1), game.skin, "custom-color");
-            playerLabel.setColor(players[playerIndex].color);
-            if (alignLeft) {
-                table.add(playerLabel).padBottom(10f * game.getScaleFactor()).left().expandX().colspan(2);
-            } else {
-                table.add(playerLabel).padBottom(10f * game.getScaleFactor()).right().expandX().colspan(2);
-            }
-            table.row();
-
-            Table scrollTable = new Table();
-            ScrollPane startPosScrollPane = new ScrollPane(scrollTable);
-            startPosScrollPane.setOverscroll(false, true);
-
-            final CustomButtonGroup buttonGroup = new CustomButtonGroup();
-            buttonGroup.setMinCheckCount(1);
-            buttonGroup.setMaxCheckCount(1);
-            for (int j = 0; j < startPositions.size; j++) {
-                String startPosName;
-                try {
-                    startPosName = startPosNames.get(j);
-                } catch (IndexOutOfBoundsException | NullPointerException ignored) {
-                    startPosName = Character.toString((char) (j + MapManager.VALID_START_POSITIONS.charAt(0)));
-                }
-                startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
-
-                CheckBox startPosCheckBox = new CheckBox(startPosName, game.skin, "radio");
-                startPosCheckBox.getImageCell().width(startPosCheckBox.getLabel().getPrefHeight()).height(startPosCheckBox.getLabel().getPrefHeight());
-                startPosCheckBox.getImage().setScaling(Scaling.fill);
+            final boolean alignLeft = (i < (splitScreenCount / 2));
+            if (i < players.length) {
+                playerLabels[i] = new Label("Player " + (i + 1), game.skin, "custom-color");
+                Color labelColor = new Color(players[i].color);
+                labelColor.mul(10);
+                playerLabels[i].setColor(labelColor);
                 if (alignLeft) {
-                    scrollTable.add(startPosCheckBox).left().expandX();
+                    table.add(playerLabels[i]).padBottom(10f * game.getScaleFactor()).left().expandX();
                 } else {
-                    scrollTable.add(startPosCheckBox).right().expandX();
+                    table.add(playerLabels[i]).padBottom(10f * game.getScaleFactor()).right().expandX();
                 }
-                scrollTable.row();
+                table.row();
 
-                buttonGroup.add(startPosCheckBox);
+                Table scrollTable = new Table();
+                ScrollPane startPosScrollPane = new ScrollPane(scrollTable);
+                startPosScrollPane.setOverscroll(false, true);
 
-                if (j == playerIndex % startPositions.size) {
-                    startPosCheckBox.setChecked(true);
-                }
-            }
-
-            table.add(startPosScrollPane);
-
-            final int finalI = playerIndex;
-            buttonGroup.setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
-                @Override
-                public void buttonPressed(Button button) {
-                    int startPosIndex = buttonGroup.getCheckedIndex();
-
-                    int oldPosX = (int) players[finalI].position.x;
-                    int oldPosY = (int) players[finalI].position.y;
-
-                    players[finalI].position.y = startPositions.get(startPosIndex).y;
-                    players[finalI].position.x = startPositions.get(startPosIndex).x;
-
-                    mapGrid[oldPosY][oldPosX].cellColor = null;
-                    for (Player player : players) {
-                        if (player.position.x == oldPosX && player.position.y == oldPosY) {
-                            mapGrid[oldPosY][oldPosX].cellColor = player.color;
-                            break;
-                        }
+                final CustomButtonGroup buttonGroup = new CustomButtonGroup();
+                buttonGroup.setMinCheckCount(1);
+                buttonGroup.setMaxCheckCount(1);
+                for (int j = 0; j < startPositions.size; j++) {
+                    String startPosName;
+                    try {
+                        startPosName = startPosNames.get(j);
+                    } catch (IndexOutOfBoundsException | NullPointerException ignored) {
+                        startPosName = Character.toString((char) (j + MapManager.VALID_START_POSITIONS.charAt(0)));
                     }
+                    startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
 
-                    mapGrid[(int) players[finalI].position.y][(int) players[finalI].position.x].cellColor = players[finalI].color;
+                    CheckBox startPosCheckBox = new CheckBox(startPosName, game.skin, "radio");
+                    startPosCheckBox.getImageCell().width(startPosCheckBox.getLabel().getPrefHeight()).height(startPosCheckBox.getLabel().getPrefHeight());
+                    startPosCheckBox.getImage().setScaling(Scaling.fill);
+                    if (alignLeft) {
+                        scrollTable.add(startPosCheckBox).left().expandX();
+                    } else {
+                        scrollTable.add(startPosCheckBox).right().expandX();
+                    }
+                    scrollTable.row();
+
+                    buttonGroup.add(startPosCheckBox);
+
+                    if (j == i % startPositions.size) {
+                        startPosCheckBox.setChecked(true);
+                    }
                 }
-            });
+
+                table.add(startPosScrollPane);
+
+                final int finalI = i;
+                buttonGroup.setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
+                    @Override
+                    public void buttonPressed(Button button) {
+                        int startPosIndex = buttonGroup.getCheckedIndex();
+
+                        int index = finalI + playerIndex;
+                        if (index >= players.length) {
+                            return;
+                        }
+
+                        int oldPosX = (int) players[index].position.x;
+                        int oldPosY = (int) players[index].position.y;
+
+                        players[index].position.y = startPositions.get(startPosIndex).y;
+                        players[index].position.x = startPositions.get(startPosIndex).x;
+
+                        mapGrid[oldPosY][oldPosX].cellColor = null;
+                        for (Player player : players) {
+                            if (player.position.x == oldPosX && player.position.y == oldPosY) {
+                                mapGrid[oldPosY][oldPosX].cellColor = player.color;
+                                break;
+                            }
+                        }
+
+                        mapGrid[(int) players[index].position.y][(int) players[index].position.x].cellColor = players[index].color;
+                    }
+                });
+            }
 
             if (alignLeft) {
                 masterTable.add(table).expand().uniformX().left().padLeft(20f * game.getScaleFactor());
@@ -198,32 +212,29 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         }
         masterTable.row();
 
-        // TODO: Use playerIndex
-        final GridPoint2[] clickPoint = new GridPoint2[splitParts];
-        final int[] pointers = new int[splitParts];
-        dragOffset = new Vector2[splitParts];
-        for (int i = 0; i < splitParts; i++) {
+        final GameTouchPoint[] touchPoint = new GameTouchPoint[splitScreenCount];
+        dragOffset = new Vector2[splitScreenCount];
+        for (int i = 0; i < splitScreenCount; i++) {
             dragOffset[i] = new Vector2(0, 0);
-            clickPoint[i] = new GridPoint2();
-            pointers[i] = -1;
+            touchPoint[i] = new GameTouchPoint(0, 0, -1, null, -1);
         }
         stage.addListener(new ClickListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 int splitPaneIndex = 0;
                 float width = stage.getViewport().getWorldWidth();
-                for (int i = 1; i < splitParts; i++) {
-                    if (x > ((width / splitParts) * i)) {
+                for (int i = 1; i < splitScreenCount; i++) {
+                    if (x > ((width / splitScreenCount) * i)) {
                         splitPaneIndex++;
                     } else {
                         break;
                     }
                 }
 
-                if (pointers[splitPaneIndex] == -1) {
-                    pointers[splitPaneIndex] = pointer;
-                    clickPoint[splitPaneIndex].x = (int) x;
-                    clickPoint[splitPaneIndex].y = (int) y;
+                if (touchPoint[splitPaneIndex].pointer == -1) {
+                    touchPoint[splitPaneIndex].pointer = pointer;
+                    touchPoint[splitPaneIndex].point.x = (int) x;
+                    touchPoint[splitPaneIndex].point.y = (int) y;
                 }
 
                 return true;
@@ -231,10 +242,10 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
             @Override
             public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                for (int i = 0; i < splitParts; i++) {
-                    if (pointers[i] == pointer) {
-                        dragOffset[i].x = clickPoint[i].x - x;
-                        dragOffset[i].y = clickPoint[i].y - y;
+                for (int i = 0; i < splitScreenCount; i++) {
+                    if (touchPoint[i].pointer == pointer) {
+                        dragOffset[i].x = touchPoint[i].point.x - x;
+                        dragOffset[i].y = touchPoint[i].point.y - y;
                         break;
                     }
                 }
@@ -242,17 +253,48 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
             @Override
             public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
-                for (int i = 0; i < splitParts; i++) {
-                    if (pointers[i] == pointer) {
+                for (int i = 0; i < splitScreenCount; i++) {
+                    if (touchPoint[i].pointer == pointer) {
                         dragOffset[i].set(0, 0);
-                        pointers[i] = -1;
+                        touchPoint[i].pointer = -1;
                         break;
                     }
                 }
             }
         });
         TextButton doneButton = new TextButton("Done", game.skin);
-        masterTable.add(doneButton).expandX().colspan(2).width(200f * game.getScaleFactor()).pad(20f * game.getScaleFactor());
+        doneButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Set player's start pos here
+
+                if (playerIndex == players.length - splitScreenCount) {
+                    onBackPressed(); // Done
+                } /*else if (playerIndex + (2 * splitScreenCount) <= players.length) {
+                    playerIndex += splitScreenCount;
+                    for (int i = 0; i < splitScreenCount; i++) {
+                        playerLabels[i].setText("Player " + (i + playerIndex + 1));
+                        Color labelColor = new Color(players[i + playerIndex].color);
+                        labelColor.mul(10);
+                        playerLabels[i].setColor(labelColor);
+                    }
+                }*/ else {
+                    // ok, I need some sleep. TODO: This. Tomorrow
+                    int offset = Math.min(players.length - splitScreenCount, splitScreenCount);
+                    playerIndex += offset;
+                    for (int i = 0; i < splitScreenCount - offset; i++) {
+                        playerLabels[i].setText("Player " + (i + playerIndex + 1));
+                        Color labelColor = new Color(players[i + playerIndex].color);
+                        labelColor.mul(10);
+                        playerLabels[i].setColor(labelColor);
+                    }
+                    for (int i = 0; i < offset; i++) {
+                        masterTable.removeActor(masterTable.getChild(masterTable.getChildren().size - 2));
+                    }
+                }
+            }
+        });
+        masterTable.add(doneButton).expandX().colspan(splitScreenCount).width(200f * game.getScaleFactor()).pad(20f * game.getScaleFactor());
 
         stage.addActor(masterTable);
     }
@@ -314,7 +356,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     private void drawViewportDividers() {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-        int lineCount = 2;
+        int lineCount = splitScreenCount;
 
         float height = stage.getViewport().getWorldHeight();
         for (int i = 1; i < lineCount; i++) {
@@ -334,13 +376,11 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void drawDarkOverlay() {
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-
         float height = stage.getViewport().getWorldHeight();
         float width = stage.getViewport().getWorldWidth();
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
         renderer.setColor(mapDarkOverlayColor);
-        renderer.rect(0, 0,
-                width, height);
+        renderer.rect(0, 0, width, height);
         renderer.end();
     }
 
@@ -351,14 +391,16 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        for (int i = 0; i < mapViewports.length; i++) {
+        for (int i = 0; i < mapViewports.length && i < players.length; i++) {
             focusAndRenderViewport(mapViewports[i], players[i], dragOffset[i], delta);
         }
 
         this.viewport.apply(true);
         renderer.setProjectionMatrix(this.viewport.getCamera().combined);
 
-        drawViewportDividers();
+        if (splitScreenCount > 1) {
+            drawViewportDividers();
+        }
         drawDarkOverlay();
         Gdx.gl.glDisable(GL20.GL_BLEND);
 

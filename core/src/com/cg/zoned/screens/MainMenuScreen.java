@@ -50,6 +50,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private AnimationManager animationManager;
     private boolean showFPSCounter;
     private BitmapFont font;
+    private Texture roundedCornerBgColorTexture;
 
     private ParticleEffect emitterLeft, emitterRight;
 
@@ -81,6 +82,21 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 emitterRight.start();
             }
         });
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, 480, 640, 50);
+                // I suspect pixmap generation caused a noticable lag so run in a new thread
+                Gdx.app.postRunnable(new Runnable() {
+                    @Override
+                    public void run() {
+                        roundedCornerBgColorTexture = new Texture(pixmap);
+                        usedTextures.add(roundedCornerBgColorTexture);
+                    }
+                });
+            }
+        }).start();
     }
 
     private void setUpMainMenu() {
@@ -166,6 +182,12 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                if (roundedCornerBgColorTexture == null) {
+                    // Thread didn't finish loading the pixmap
+                    // Should almost never happen cause processors are hella fast, even mobile ones
+                    return;
+                }
+
                 if (!playModeStage.getRoot().hasChildren()) {
                     setUpPlayMenu();
                 }
@@ -191,9 +213,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         final int gameModeCount = 2;
 
-        Texture roundedCornerTexture = getRoundedCornerTexture(Color.GREEN, 480, 640, 50);
-        usedTextures.add(roundedCornerTexture);
-        TextureRegionDrawable whiteBG = new TextureRegionDrawable(roundedCornerTexture);
+        TextureRegionDrawable whiteBG = new TextureRegionDrawable(roundedCornerBgColorTexture);
 
         String[] backgroundImageLocations = new String[]{
                 "icons/multiplayer_icons/ic_splitscreen_multiplayer.png",
@@ -326,7 +346,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         emitterRight.setPosition(viewport.getWorldWidth(), 0);
     }
 
-    private Texture getRoundedCornerTexture(Color color, int width, int height, int radius) {
+    private Pixmap getRoundedCornerPixmap(Color color, int width, int height, int radius) {
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
         pixmap.setColor(color);
         pixmap.fillCircle(radius, radius, radius);
@@ -334,12 +354,9 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         pixmap.fillCircle(width - radius, height - radius, radius);
         pixmap.fillCircle(radius, height - radius, radius);
         pixmap.fillRectangle(0, radius, width, height - (radius * 2));
-
         pixmap.fillRectangle(radius, 0, width - (radius * 2), height);
-        Texture texture = new Texture(pixmap);
-        pixmap.dispose();
 
-        return texture;
+        return pixmap;
     }
 
     @Override

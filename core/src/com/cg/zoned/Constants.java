@@ -44,7 +44,7 @@ public final class Constants {
             put("RED",    new Color(0.8f, 0,    0,    1.0f));
             put("BLUE",   new Color(0,    0,    0.8f, 1.0f));
             put("YELLOW", new Color(0.8f, 0.8f, 0,    1.0f));
-            put("PURPLE", new Color(0.4f, 0,    0.8f, 1.0f));
+            put("PINK", new Color(0.8f, 0, 0.8f, 1.0f));
         }
     };
 
