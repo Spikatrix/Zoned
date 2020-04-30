@@ -65,8 +65,10 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private int splitScreenCount;
     private boolean firstPlayerOnly;
     private Player[] players;
+    private CheckBox[][] radioButtons;
     private Label[] playerLabels;
     private int playerIndex;
+    private Color[] dividerLeftColor, dividerRightColor;
 
     public MapStartPosScreen(final Zoned game, Cell[][] mapGrid, Array<GridPoint2> startPositions, Array<String> startPosNames,
                              Player[] players, int splitScreenCount, boolean firstPlayerOnly) {
@@ -76,8 +78,12 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.startPositions = startPositions;
         this.startPosNames = startPosNames;
         this.players = players;
-        this.splitScreenCount = splitScreenCount;
         this.firstPlayerOnly = firstPlayerOnly;
+        if (firstPlayerOnly) {
+            this.splitScreenCount = 1;
+        } else {
+            this.splitScreenCount = splitScreenCount;
+        }
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
@@ -111,6 +117,30 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             mapViewports[i] = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         }
         playerIndex = 0;
+        if (splitScreenCount > 1) {
+            dividerLeftColor = new Color[splitScreenCount - 1];
+            dividerRightColor = new Color[splitScreenCount - 1];
+            updateDividerColors(playerIndex);
+        }
+    }
+
+    private void updateDividerColors(int playerIndex) {
+        for (int i = 0; i < splitScreenCount - 1; i++) {
+            if (i + playerIndex < players.length) {
+                dividerLeftColor[i] = new Color(players[i + playerIndex].color);
+            } else {
+                dividerLeftColor[i] = Color.BLACK;
+            }
+
+            if (i + playerIndex + 1 < players.length) {
+                dividerRightColor[i] = new Color(players[i + playerIndex + 1].color);
+            } else {
+                dividerRightColor[i] = Color.BLACK;
+            }
+
+            dividerLeftColor[i].mul(10);
+            dividerRightColor[i].mul(10);
+        }
     }
 
     private void setUpStage() {
@@ -123,6 +153,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         masterTable.row();
 
         playerLabels = new Label[splitScreenCount];
+        radioButtons = new CheckBox[splitScreenCount][];
         for (int i = 0; i < splitScreenCount; i++) {
             Table table = new Table();
 
@@ -143,6 +174,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                 ScrollPane startPosScrollPane = new ScrollPane(scrollTable);
                 startPosScrollPane.setOverscroll(false, true);
 
+                radioButtons[i] = new CheckBox[startPositions.size];
                 final CustomButtonGroup buttonGroup = new CustomButtonGroup();
                 buttonGroup.setMinCheckCount(1);
                 buttonGroup.setMaxCheckCount(1);
@@ -155,20 +187,20 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     }
                     startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
 
-                    CheckBox startPosCheckBox = new CheckBox(startPosName, game.skin, "radio");
-                    startPosCheckBox.getImageCell().width(startPosCheckBox.getLabel().getPrefHeight()).height(startPosCheckBox.getLabel().getPrefHeight());
-                    startPosCheckBox.getImage().setScaling(Scaling.fill);
+                    radioButtons[i][j] = new CheckBox(startPosName, game.skin, "radio");
+                    radioButtons[i][j].getImageCell().width(radioButtons[i][j].getLabel().getPrefHeight()).height(radioButtons[i][j].getLabel().getPrefHeight());
+                    radioButtons[i][j].getImage().setScaling(Scaling.fill);
                     if (alignLeft) {
-                        scrollTable.add(startPosCheckBox).left().expandX();
+                        scrollTable.add(radioButtons[i][j]).left().expandX();
                     } else {
-                        scrollTable.add(startPosCheckBox).right().expandX();
+                        scrollTable.add(radioButtons[i][j]).right().expandX();
                     }
                     scrollTable.row();
 
-                    buttonGroup.add(startPosCheckBox);
+                    buttonGroup.add(radioButtons[i][j]);
 
                     if (j == i % startPositions.size) {
-                        startPosCheckBox.setChecked(true);
+                        radioButtons[i][j].setChecked(true);
                     }
                 }
 
@@ -268,28 +300,29 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             public void clicked(InputEvent event, float x, float y) {
                 // Set player's start pos here
 
-                if (playerIndex == players.length - splitScreenCount) {
-                    onBackPressed(); // Done
-                } /*else if (playerIndex + (2 * splitScreenCount) <= players.length) {
+                if (firstPlayerOnly || (playerIndex >= players.length - splitScreenCount)) {
+                    // Done with all players
+                    onBackPressed();
+                } else {
+                    // Some more players are remaining
                     playerIndex += splitScreenCount;
+                    if (playerIndex >= players.length) {
+                        playerIndex = players.length - 1;
+                    }
+                    updateDividerColors(playerIndex);
                     for (int i = 0; i < splitScreenCount; i++) {
+                        if (i + playerIndex >= players.length) {
+                            // Excess splitscreens
+                            masterTable.removeActor(masterTable.getChild(masterTable.getChildren().size - 2));
+                            continue;
+                        }
+
                         playerLabels[i].setText("Player " + (i + playerIndex + 1));
                         Color labelColor = new Color(players[i + playerIndex].color);
                         labelColor.mul(10);
                         playerLabels[i].setColor(labelColor);
-                    }
-                }*/ else {
-                    // ok, I need some sleep. TODO: This. Tomorrow
-                    int offset = Math.min(players.length - splitScreenCount, splitScreenCount);
-                    playerIndex += offset;
-                    for (int i = 0; i < splitScreenCount - offset; i++) {
-                        playerLabels[i].setText("Player " + (i + playerIndex + 1));
-                        Color labelColor = new Color(players[i + playerIndex].color);
-                        labelColor.mul(10);
-                        playerLabels[i].setColor(labelColor);
-                    }
-                    for (int i = 0; i < offset; i++) {
-                        masterTable.removeActor(masterTable.getChild(masterTable.getChildren().size - 2));
+
+                        radioButtons[i][(i + playerIndex) % radioButtons[i].length].setChecked(true);
                     }
                 }
             }
@@ -356,21 +389,21 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     private void drawViewportDividers() {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-        int lineCount = splitScreenCount;
+        int lineCount = splitScreenCount - 1;
 
         float height = stage.getViewport().getWorldHeight();
-        for (int i = 1; i < lineCount; i++) {
-            float startX = (stage.getViewport().getWorldWidth() / (float) lineCount) * i;
+        for (int i = 0; i < lineCount; i++) {
+            float startX = (stage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
             renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
-                    Color.BLACK, Color.BLACK, Color.BLACK, Color.BLACK);
+                    dividerLeftColor[i], dividerRightColor[i], dividerRightColor[i], dividerLeftColor[i]);
             renderer.rect(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK);
+                    dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i]);
             renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK);
+                    dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i]);
         }
         renderer.end();
     }
@@ -391,8 +424,10 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        for (int i = 0; i < mapViewports.length && i < players.length; i++) {
-            focusAndRenderViewport(mapViewports[i], players[i], dragOffset[i], delta);
+        for (int i = 0; i < mapViewports.length; i++) {
+            if (playerIndex + i < players.length) {
+                focusAndRenderViewport(mapViewports[i], players[playerIndex + i], dragOffset[i], delta);
+            }
         }
 
         this.viewport.apply(true);

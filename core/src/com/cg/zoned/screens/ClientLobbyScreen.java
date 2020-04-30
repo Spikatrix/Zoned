@@ -39,6 +39,8 @@ import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Listener;
 
+import java.util.Map;
+
 public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
@@ -252,10 +254,13 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         addSpace(playerItem);
 
         if (color == null) {
-            //final SelectBox<String> colorSelector = new SelectBox<String>(game.skin);
             final DropDownMenu colorSelector = new DropDownMenu(game.skin);
             colorSelector.setName("color-selector");
-            colorSelector.setItems("Green", "Red", "Blue", "Yellow");
+            Array<String> colors = new Array<>();
+            for (Map.Entry<String, Color> playerColorEntry : Constants.PLAYER_COLORS.entrySet()) {
+                colors.add(playerColorEntry.getKey());
+            }
+            colorSelector.setItems(colors);
             colorSelector.getList().setAlignment(Align.center);
             colorSelector.setAlignment(Align.center);
             colorSelector.addListener(new ChangeListener() {

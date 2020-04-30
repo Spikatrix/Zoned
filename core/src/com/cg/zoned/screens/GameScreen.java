@@ -46,6 +46,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private ExtendViewport[] playerViewports; // Two viewports in split-screen mode; else one
     private ShapeRenderer renderer;
+    private Color[] dividerLeftColor, dividerRightColor;
 
     private boolean gameComplete = false;
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
@@ -81,7 +82,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
 
-        initViewports();
+        initViewports(players);
 
         this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
     }
@@ -104,17 +105,25 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
 
-        initViewports();
+        initViewports(players);
 
         this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
     }
 
-    private void initViewports() {
-        int viewportCount = isSplitscreenMultiplayer() ? gameManager.playerManager.getPlayers().length : 1;
+    private void initViewports(Player[] players) {
+        int viewportCount = isSplitscreenMultiplayer() ? players.length : 1;
 
         this.playerViewports = new ExtendViewport[viewportCount];
+        if (viewportCount > 1) {
+            this.dividerRightColor = new Color[viewportCount - 1];
+            this.dividerLeftColor = new Color[viewportCount - 1];
+        }
         for (int i = 0; i < this.playerViewports.length; i++) {
             this.playerViewports[i] = new ExtendViewport(Constants.WORLD_SIZE / viewportCount, Constants.WORLD_SIZE);
+            if (i < viewportCount - 1) {
+                this.dividerLeftColor[i] = new Color(players[i].color);
+                this.dividerRightColor[i] = new Color(players[i + 1].color);
+            }
         }
 
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
@@ -279,21 +288,20 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private void drawViewportDividers() {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-        int lineCount = gameManager.playerManager.getPlayers().length;
-
+        int lineCount = gameManager.playerManager.getPlayers().length - 1;
         float height = fullScreenStage.getViewport().getWorldHeight();
-        for (int i = 1; i < lineCount; i++) {
-            float startX = (fullScreenStage.getViewport().getWorldWidth() / (float) lineCount) * i;
+        for (int i = 0; i < lineCount; i++) {
+            float startX = (fullScreenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
             renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
-                    Color.BLACK, Color.BLACK, Color.BLACK, Color.BLACK);
+                    dividerLeftColor[i], dividerRightColor[i], dividerRightColor[i], dividerLeftColor[i]);
             renderer.rect(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK);
+                    dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i]);
             renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK);
+                    dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i]);
         }
         renderer.end();
     }

@@ -34,17 +34,21 @@ public final class Constants {
 
     /**
      * Values for smooth player movement among cells in the map
+     * Also, this animation speed is what determines each turn time
      */
     public static final float PLAYER_MOVEMENT_LERP_VALUE = .5f;  // Best value IMO: .5f
     public static final float PLAYER_MOVEMENT_MAX_TIME   = .25f; // Best value IMO: .25f
 
+    /**
+     * Available player colors
+     */
     public static final Map<String, Color> PLAYER_COLORS = new LinkedHashMap<String, Color>() {
         {
             put("GREEN",  new Color(0,    0.8f, 0,    1.0f));
             put("RED",    new Color(0.8f, 0,    0,    1.0f));
             put("BLUE",   new Color(0,    0,    0.8f, 1.0f));
             put("YELLOW", new Color(0.8f, 0.8f, 0,    1.0f));
-            put("PINK", new Color(0.8f, 0, 0.8f, 1.0f));
+            put("PINK",   new Color(0.8f, 0,    0.8f, 1.0f));
         }
     };
 
@@ -55,10 +59,10 @@ public final class Constants {
      * Note that you may face issues when playing with the number of players greater than the number of control schemes specified
      */
     public static final int[][] PLAYER_CONTROLS = new int[][]{
-            {Input.Keys.W, Input.Keys.A, Input.Keys.S, Input.Keys.D},
+            {Input.Keys.W,  Input.Keys.A,    Input.Keys.S,    Input.Keys.D},
             {Input.Keys.UP, Input.Keys.LEFT, Input.Keys.DOWN, Input.Keys.RIGHT},
-            {Input.Keys.I, Input.Keys.J, Input.Keys.K, Input.Keys.L},
-            {Input.Keys.T, Input.Keys.F, Input.Keys.G, Input.Keys.H},
+            {Input.Keys.I,  Input.Keys.J,    Input.Keys.K,    Input.Keys.L},
+            {Input.Keys.T,  Input.Keys.F,    Input.Keys.G,    Input.Keys.H},
     };
 
     /**

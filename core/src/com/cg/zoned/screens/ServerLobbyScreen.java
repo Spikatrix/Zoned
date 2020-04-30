@@ -40,6 +40,8 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
+import java.util.Map;
+
 public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
     private final Zoned game;
 
@@ -204,7 +206,11 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         if (address == null) {
             DropDownMenu colorSelector = new DropDownMenu(game.skin);
             colorSelector.setName("color-selector");
-            colorSelector.setItems("Green", "Red", "Blue", "Yellow");
+            Array<String> colors = new Array<>();
+            for (Map.Entry<String, Color> playerColorEntry : Constants.PLAYER_COLORS.entrySet()) {
+                colors.add(playerColorEntry.getKey());
+            }
+            colorSelector.setItems(colors);
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {

@@ -135,6 +135,8 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                 p1.setControlIndex(0);
                 Player p2 = new Player(Constants.PLAYER_COLORS.get("RED"), "p2");
                 Player p3 = new Player(Constants.PLAYER_COLORS.get("PINK"), "p3");
+                Player p4 = new Player(Constants.PLAYER_COLORS.get("BLUE"), "p4");
+                Player p5 = new Player(Constants.PLAYER_COLORS.get("YELLOW"), "p5");
                 p2.setControlIndex(1);
                 dispose();
                 /*game.setScreen(
@@ -146,7 +148,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                                 null, null));*/
                 game.setScreen(new MapStartPosScreen(game, mapManager.getPreparedMapGrid(),
                         mapManager.getPreparedStartPositions(), mapManager.getPreparedStartPosNames(),
-                        new Player[]{p1, p2, p3}, 2, false));
+                        new Player[]{p1, p2}, 2, false));
             }
         });
         table.add(startGameButton);
