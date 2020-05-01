@@ -20,7 +20,6 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Map;
@@ -29,6 +28,7 @@ import com.cg.zoned.ScoreBar;
 import com.cg.zoned.TeamData;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.GameManager;
+import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -87,7 +87,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
     }
 
-    public GameScreen(final Zoned game, Cell[][] mapGrid, Array<GridPoint2> startPositions, int wallCount, Player[] players, Server server, Client client) {
+    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
         this.game = game;
 
         this.fullScreenStage = new FocusableStage(new ScreenViewport());
@@ -96,11 +96,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
-        this.map = new Map(mapGrid, startPositions, wallCount);
-        for (Player player : players) {
-            player.setStartPos(this.map.getStartPositions().get(0)); // TODO: Fix/Modify this later
-            // Was `get(i % startPositions.size);`
-        }
+        this.map = new Map(mapManager.getPreparedMapGrid(),
+                mapManager.getPreparedStartPositions(),
+                mapManager.getWallCount());
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
@@ -261,7 +259,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, 0, 7);
+            FPSDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, 0, 12);
         }
         fullScreenStage.act(delta);
         fullScreenStage.draw();

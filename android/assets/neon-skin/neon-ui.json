@@ -309,10 +309,6 @@
 		"themed": {
 			"font": "regular-font",
 			"fontColor": "text-themed"
-		},
-		"custom-color": {
-			"font": "regular-font",
-			"fontColor": "custom-color"
 		}
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle": {

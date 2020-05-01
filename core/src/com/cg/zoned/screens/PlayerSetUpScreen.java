@@ -1,6 +1,5 @@
 package com.cg.zoned.screens;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -24,10 +23,12 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.FPSDisplayer;
+import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.CustomButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
@@ -153,65 +154,43 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         table.add(playerList).colspan(NO_OF_COLORS + 1);
         table.row();
 
-        Table innerTable = new Table();
-        Label gridSizeLabel = new Label("Grid size: ", game.skin, "themed");
-        Label x = new Label("  x  ", game.skin);
-        final int LOW_LIMIT = 3, HIGH_LIMIT = 100;
-        int snapValue = 10;
-        final Spinner rowSpinner = new Spinner(game.skin,
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
-                64f * game.getScaleFactor(), true);
-        final Spinner colSpinner = new Spinner(game.skin,
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
-                64f * game.getScaleFactor(), true);
-        rowSpinner.generateValueRange(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        colSpinner.generateValueRange(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        rowSpinner.snapToStep(snapValue - LOW_LIMIT);
-        colSpinner.snapToStep(snapValue - LOW_LIMIT);
-
-        innerTable.add(gridSizeLabel);
-        innerTable.add(rowSpinner);
-        innerTable.add(x);
-        innerTable.add(colSpinner);
-        table.add(innerTable).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor());
+        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.skin);
+        mapSelector.setUsedTextureArray(usedTextures);
+        Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
+        mapSelector.loadExternalMaps();
+        table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor());
         table.row();
 
-        stage.addFocusableActor(rowSpinner.getLeftButton());
-        stage.addFocusableActor(rowSpinner.getRightButton());
-        stage.addFocusableActor(colSpinner.getLeftButton(), 2);
-        stage.addFocusableActor(colSpinner.getRightButton());
+        stage.addFocusableActor(mapSelector.getLeftButton(), 1);
+        stage.addFocusableActor(mapSelector.getRightButton(), NO_OF_COLORS - 1);
         stage.row();
 
-        Table infoTable = new Table();
-        infoTable.center();
-        Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
-        usedTextures.add(infoIconTexture);
-        Image infoImage = new Image(infoIconTexture);
-        Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
-        infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
-        infoTable.add(infoLabel);
-        table.add(infoTable).colspan(NO_OF_COLORS + 1).padBottom(20f * game.getScaleFactor());
-        table.row();
+        if (playerCount <= 2) {
+            Table infoTable = new Table();
+            infoTable.center();
+            Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
+            usedTextures.add(infoIconTexture);
+            Image infoImage = new Image(infoIconTexture);
+            Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
+            infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
+            infoTable.add(infoLabel);
+            table.add(infoTable).colspan(NO_OF_COLORS + 1).padBottom(20f * game.getScaleFactor());
+            table.row();
+        }
 
-        TextButton startButton = new TextButton("Start game", game.skin);
+        TextButton startButton = new TextButton("Next", game.skin);
         startButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                int rows = rowSpinner.getPositionIndex() + LOW_LIMIT;
-                int cols = colSpinner.getPositionIndex() + LOW_LIMIT;
-
-                if (Gdx.app.getType() == Application.ApplicationType.Android) { // Swap because splitscreen; phone will be rotated (hopefully xD)
-                    int temp = rows;
-                    rows = cols;
-                    cols = temp;
-                }
-
                 Array<Color> playerColors = new Array<>();
                 for (ButtonGroup buttonGroup : colorButtonGroups) {
                     playerColors.add(buttonGroup.getChecked().getColor());
                 }
 
-                startGame(playerColors, rows, cols);
+                if (mapSelector.loadSelectedMap()) {
+                    startGame(playerColors, mapSelector.getMapManager());
+                }
             }
 
         });
@@ -221,7 +200,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         stage.addActor(masterTable);
     }
 
-    private void startGame(Array<Color> playerColors, final int rows, final int cols) {
+    private void startGame(Array<Color> playerColors, MapManager mapManager) {
         final Player[] players = new Player[playerColors.size];
         for (int i = 0; i < players.length; i++) {
             players[i] = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
@@ -231,7 +210,8 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 
-        animationManager.fadeOutStage(stage, this, new GameScreen(game, rows, cols, players, null, null));
+        //animationManager.fadeOutStage(stage, this, new GameScreen(game, mapManager, players, null, null));
+        animationManager.fadeOutStage(stage, this, new MapStartPosScreen(game, mapManager, players, 2, false));
     }
 
     @Override

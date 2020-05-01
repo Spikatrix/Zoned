@@ -1,4 +1,4 @@
-package com.cg.zoned.maps.exceptions;
+package com.cg.zoned.maps;
 
 public class InvalidMapDimensions extends Exception {
 

@@ -29,11 +29,11 @@ import com.cg.zoned.Player;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.InvalidMapCharacter;
+import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
-import com.cg.zoned.maps.exceptions.InvalidMapCharacter;
-import com.cg.zoned.maps.exceptions.InvalidMapDimensions;
-import com.cg.zoned.maps.exceptions.NoStartPositionsFound;
+import com.cg.zoned.maps.NoStartPositionsFound;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -141,13 +141,10 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                 dispose();
                 /*game.setScreen(
                         new GameScreen(game,
-                                mapManager.getPreparedMapGrid(),
-                                mapManager.getPreparedStartPositions(),
-                                mapManager.getWallCount(),
+                                mapManager,
                                 new Player[]{p1, p2},
                                 null, null));*/
-                game.setScreen(new MapStartPosScreen(game, mapManager.getPreparedMapGrid(),
-                        mapManager.getPreparedStartPositions(), mapManager.getPreparedStartPosNames(),
+                game.setScreen(new MapStartPosScreen(game, mapManager,
                         new Player[]{p1, p2}, 2, false));
             }
         });

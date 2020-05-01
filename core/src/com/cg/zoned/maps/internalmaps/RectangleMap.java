@@ -52,12 +52,13 @@ public class RectangleMap implements MapEntity {
         mapExtraParams.spinnerVars.get(1).snapValue = this.colCount;
 
         StringBuilder mapGridBuilder = new StringBuilder();
-        char startPos = 'A';
+        String startPositions = "ACDB";
+        int startPosCharIndex = 0;
         for (int i = 0; i < this.rowCount; i++) {
             for (int j = 0; j < this.colCount; j++) {
                 if ((i == 0 || i == this.rowCount - 1) && (j == 0 || j == this.colCount - 1)) {
-                    mapGridBuilder.append(startPos);
-                    startPos++;
+                    mapGridBuilder.append(startPositions.charAt(startPosCharIndex));
+                    startPosCharIndex++;
                 } else {
                     mapGridBuilder.append('.');
                 }
