@@ -24,8 +24,8 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Player;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
@@ -142,8 +142,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
                 /*game.setScreen(
                         new GameScreen(game,
                                 mapManager,
-                                new Player[]{p1, p2},
-                                null, null));*/
+                                new Player[]{p1, p2}));*/
                 game.setScreen(new MapStartPosScreen(game, mapManager,
                         new Player[]{p1, p2}, 2, false));
             }
@@ -178,7 +177,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
             stack.add(mapNameLabel);
         }
 
-        final MapExtraParams extraParams = map.getExtraParamPrompts();
+        final MapExtraParams extraParams = map.getExtraParams();
         if (extraParams != null) {
             Table innerTable = new Table();
             innerTable.setFillParent(true);
@@ -304,7 +303,7 @@ public class TestScreen extends ScreenAdapter implements InputProcessor {
         batch.begin();
         batch.end();
 
-        FPSDisplayer.displayFPS(viewport, batch, font);
+        UITextDisplayer.displayFPS(viewport, batch, font);
     }
 
     @Override

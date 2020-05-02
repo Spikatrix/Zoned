@@ -25,6 +25,7 @@ public class MapManager {
 
     private Array<MapEntity> mapList;
 
+    private MapEntity preparedMap = null;
     private Cell[][] preparedMapGrid = null;
     private Array<GridPoint2> preparedStartPositions = null;
     private Array<String> preparedStartPosNames = null;
@@ -83,6 +84,20 @@ public class MapManager {
         return mapList;
     }
 
+    public MapEntity getMap(String mapName) {
+        for (MapEntity map : mapList) {
+            if (map.getName().equals(mapName)) {
+                return map;
+            }
+        }
+
+        return null;
+    }
+
+    public void prepareMap(MapEntity map) throws NoStartPositionsFound, InvalidMapDimensions, InvalidMapCharacter {
+        prepareMap(mapList.indexOf(map, false));
+    }
+
     public void prepareMap(int mapIndex) throws InvalidMapCharacter, NoStartPositionsFound, InvalidMapDimensions {
         MapEntity selectedMap = mapList.get(mapIndex);
         String mapData = selectedMap.getMapData();
@@ -98,6 +113,7 @@ public class MapManager {
             }
         }
 
+        this.preparedMap = selectedMap;
         this.preparedStartPosNames = selectedMap.getStartPosNames();
         parseMapData(mapData);
     }
@@ -126,18 +142,30 @@ public class MapManager {
                     }
                     startPositions.set(index, new GridPoint2(j, mirroredIndex));
                 } else {
+                    preparedMap = null;
+                    preparedMapGrid = null;
+                    preparedStartPositions = null;
+                    preparedStartPosNames = null;
                     throw new InvalidMapCharacter("Unknown character '" + c + "' found when parsing the map");
                 }
             }
         }
 
         if (startPositions.size == 0) {
+            preparedMap = null;
+            preparedMapGrid = null;
+            preparedStartPositions = null;
+            preparedStartPosNames = null;
             throw new NoStartPositionsFound("No start positions found in the map");
         }
 
         this.preparedMapGrid = mapGrid;
         this.preparedStartPositions = startPositions;
         this.wallCount = wallCount;
+    }
+
+    public MapEntity getPreparedMap() {
+        return preparedMap;
     }
 
     public Cell[][] getPreparedMapGrid() {

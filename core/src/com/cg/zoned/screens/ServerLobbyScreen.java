@@ -22,16 +22,19 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
+import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.buffers.BufferGameStart;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ServerLobbyListener;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -113,48 +116,31 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         serverLobbyTable.add(playerListScrollPane).expand();
         serverLobbyTable.row();
 
-        Table innerTable = new Table();
-        Label gridSizeLabel = new Label("Grid size: ", game.skin, "themed");
-        Label x = new Label("  x  ", game.skin);
-        final int LOW_LIMIT = 3, HIGH_LIMIT = 100;
-        int snapValue = 10;
-        final Spinner rowSpinner = new Spinner(game.skin,
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
-                64f * game.getScaleFactor(), true);
-        final Spinner colSpinner = new Spinner(game.skin,
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
-                64f * game.getScaleFactor(), true);
-        rowSpinner.generateValueRange(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        colSpinner.generateValueRange(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        rowSpinner.snapToStep(snapValue - LOW_LIMIT);
-        colSpinner.snapToStep(snapValue - LOW_LIMIT);
+        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.skin);
+        mapSelector.setUsedTextureArray(usedTextures);
+        Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
+        // mapSelector.loadExternalMaps(); Not yet
 
-        innerTable.add(gridSizeLabel);
-        innerTable.add(rowSpinner);
-        innerTable.add(x);
-        innerTable.add(colSpinner);
-        serverLobbyTable.add(innerTable).pad(10 * game.getScaleFactor());
-
+        serverLobbyTable.add(mapSpinner).pad(10 * game.getScaleFactor());
         serverLobbyTable.row();
 
         TextButton startButton = new TextButton("Start Game", game.skin);
         startButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                int rows = rowSpinner.getPositionIndex() + LOW_LIMIT;
-                int cols = colSpinner.getPositionIndex() + LOW_LIMIT;
-                validateServerData(rows, cols);
+                if (mapSelector.loadSelectedMap()) {
+                    validateServerData(mapSelector.getMapManager());
+                }
             }
         });
         serverLobbyTable.add(startButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
         stage.addActor(serverLobbyTable);
-        stage.addFocusableActor(rowSpinner.getLeftButton());
-        stage.addFocusableActor(rowSpinner.getRightButton());
-        stage.addFocusableActor(colSpinner.getLeftButton());
-        stage.addFocusableActor(colSpinner.getRightButton());
+        stage.addFocusableActor(mapSelector.getLeftButton());
+        stage.addFocusableActor(mapSelector.getRightButton());
         stage.row();
-        stage.addFocusableActor(startButton, 4);
+        stage.addFocusableActor(startButton, 2);
         stage.row();
     }
 
@@ -219,7 +205,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
             });
             playerItem.addActor(colorSelector);
 
-            stage.addFocusableActor(colorSelector, 4);
+            stage.addFocusableActor(colorSelector, 2);
             stage.row();
             stage.setFocusedActor(colorSelector);
         } else {
@@ -254,7 +240,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         playerConnections.removeIndex(index);
     }
 
-    private void validateServerData(int rows, int cols) {
+    private void validateServerData(MapManager mapManager) {
         Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("OK");
 
@@ -293,11 +279,17 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
             return;
         }
 
+        MapEntity preparedMap = mapManager.getPreparedMap();
+
         BufferGameStart bgs = new BufferGameStart();
         bgs.playerNames = new String[size];
         bgs.startIndices = new int[size];
-        bgs.rows = rows;
-        bgs.cols = cols;
+        bgs.mapName = preparedMap.getName();
+        if (preparedMap.getExtraParams() != null) {
+            bgs.mapExtraParams = preparedMap.getExtraParams().extraParams;
+        } else {
+            bgs.mapExtraParams = null;
+        }
         for (int i = 0; i < size; i++) {
             bgs.playerNames[i] = ((Label) playerItems.get(i).findActor("name-label")).getText().toString();
             bgs.startIndices[i] = i;
@@ -305,10 +297,10 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
 
         server.sendToAllTCP(bgs);
 
-        startGame(rows, cols);
+        startGame(mapManager);
     }
 
-    private void startGame(final int rows, final int cols) {
+    private void startGame(MapManager mapManager) {
         int size = this.playerItems.size;
 
         final Player[] players = new Player[size];
@@ -323,7 +315,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
         }
 
-        animationManager.fadeOutStage(stage, this, new GameScreen(game, rows, cols, players, server, null));
+        animationManager.fadeOutStage(stage, this, new GameScreen(game, mapManager, players, server));
     }
 
     public void receiveClientName(Connection connection, String name) {
@@ -419,7 +411,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements InputProcessor {
         viewport.apply(true);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();

@@ -30,7 +30,7 @@ public class PlayerManager extends InputMultiplexer {
         this.teamData = new Array<>();
         initTeamColors();
 
-        if (gameManager.connectionManager.isActive) { // Not split screen; only add first player's inputs
+        if (gameManager.gameConnectionManager.isActive) { // Not split screen; only add first player's inputs
             this.addProcessor(players[0]);
         } else {
             for (Player player : players) {
@@ -38,7 +38,7 @@ public class PlayerManager extends InputMultiplexer {
             }
         }
 
-        controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls, skin, scaleFactor, usedTextures);
+        controlManager = new ControlManager(players, !gameManager.gameConnectionManager.isActive, stage, controls, skin, scaleFactor, usedTextures);
         this.addProcessor(controlManager.getControls());
     }
 

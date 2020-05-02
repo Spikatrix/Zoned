@@ -74,7 +74,7 @@ public class MapSelector {
             stack.add(mapNameLabel);
         }
 
-        final MapExtraParams extraParams = map.getExtraParamPrompts();
+        final MapExtraParams extraParams = map.getExtraParams();
         if (extraParams != null) {
             Table innerTable = new Table();
             innerTable.setFillParent(true);

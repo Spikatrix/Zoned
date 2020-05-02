@@ -12,7 +12,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -21,11 +20,11 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.TeamData;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.GameManager;
 import com.cg.zoned.managers.MapManager;
@@ -56,6 +55,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private BitmapFont font;
     private boolean showFPSCounter;
     private ScoreBar scoreBars;
+    private boolean gamePaused = false;
 
     private Color currentBgColor, targetBgColor;
     private float bgAnimSpeed = 1.8f;
@@ -63,31 +63,19 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
-    public GameScreen(final Zoned game, int rows, int cols, Player[] players, Server server, Client client) {
-        this.game = game;
-
-        this.fullScreenStage = new FocusableStage(new ScreenViewport());
-
-        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin, game.getScaleFactor(), usedTextures);
-
-        this.renderer = new ShapeRenderer();
-        this.renderer.setAutoShapeType(true);
-        this.map = new Map(rows, cols);
-        Array<GridPoint2> startPositions = this.map.getStartPositions();
-        for (Player player : players) {
-            player.setStartPos(startPositions.get(0)); // TODO: Fix/Modify this later
-            // Was `get(i % startPositions.size);`
-        }
-
-        currentBgColor = new Color(0, 0, 0, bgAlpha);
-        targetBgColor = new Color(0, 0, 0, bgAlpha);
-
-        initViewports(players);
-
-        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
+    public GameScreen(final Zoned game, MapManager mapManager, Player[] players) {
+        this(game, mapManager, players, null, null);
     }
 
-    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
+    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server) {
+        this(game, mapManager, players, server, null);
+    }
+
+    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, Client client) {
+        this(game, mapManager, players, null, client);
+    }
+
+    private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
         this.game = game;
 
         this.fullScreenStage = new FocusableStage(new ScreenViewport());
@@ -96,9 +84,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
-        this.map = new Map(mapManager.getPreparedMapGrid(),
-                mapManager.getPreparedStartPositions(),
-                mapManager.getWallCount());
+        this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount());
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
@@ -212,7 +198,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         if (!gameComplete) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
-                gameManager.connectionManager.serverClientCommunicate();
+                gameManager.gameConnectionManager.serverClientCommunicate();
             } else {                                // We're playing on the same device (Splitscreen)
                 gameManager.playerManager.updatePlayerDirections();
             }
@@ -259,7 +245,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, 0, 12);
+            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, 6, ScoreBar.BAR_HEIGHT + 6);
+            if (gameManager.gameConnectionManager.isActive) {
+                UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, gameManager.gameConnectionManager.getPing(), 6, ScoreBar.BAR_HEIGHT + 6);
+            }
         }
         fullScreenStage.act(delta);
         fullScreenStage.draw();
@@ -276,8 +265,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
             gameCompleteFadeOutDone = true;
-            if (gameManager.connectionManager.isActive) {
-                gameManager.connectionManager.close();
+            if (gameManager.gameConnectionManager.isActive) {
+                gameManager.gameConnectionManager.close();
             }
             dispose();
             game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
@@ -338,7 +327,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
                     public void dialogResult(String buttonText) {
-                        gameManager.connectionManager.close();
+                        gameManager.gameConnectionManager.close();
                         dispose();
                         game.setScreen(new MainMenuScreen(game));
                     }
@@ -346,8 +335,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showPauseDialog() {
+        gamePaused = true;
+
         gameManager.playerManager.stopPlayers();
-        if (!gameManager.connectionManager.isActive) {
+        if (!gameManager.gameConnectionManager.isActive) {
             gameManager.directionBufferManager.clearBuffer();
         }
 
@@ -361,19 +352,21 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                     @Override
                     public void dialogResult(String buttonText) {
                         if (buttonText.equals(dialogButtonTexts.get(1))) {
-                            if (gameManager.connectionManager.isActive) {
-                                gameManager.connectionManager.close();
+                            if (gameManager.gameConnectionManager.isActive) {
+                                gameManager.gameConnectionManager.close();
                             } else {
                                 dispose();
                                 game.setScreen(new MainMenuScreen(game));
                             }
                         }
+
+                        gamePaused = false;
                     }
                 }, game.skin);
     }
 
     private boolean isSplitscreenMultiplayer() {
-        return !gameManager.connectionManager.isActive;
+        return !gameManager.gameConnectionManager.isActive;
     }
 
     public void disconnected() {
@@ -388,6 +381,13 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
+    }
+
+    @Override
+    public void pause() {
+        if (!gamePaused) {
+            showPauseDialog();
+        }
     }
 
     @Override

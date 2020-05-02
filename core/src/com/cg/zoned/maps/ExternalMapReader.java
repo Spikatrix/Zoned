@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * Directory to save the .map and the .png preview files
  * - On Android: /storage/emulated/0/Android/data/com.cg.zoned/files/ZonedExternalMaps/
  * - On Linux: /home/username/Zoned/ZonedExternalMaps/
- * - On Windows: C:\\Users\\username\\Documents\\Zoned\|ZonedExternalMaps\\
+ * - On Windows: C:\\Users\\username\\Documents\\Zoned\\ZonedExternalMaps\\
  */
 public class ExternalMapReader {
     public static final String mapDirName = "ZonedExternalMaps";

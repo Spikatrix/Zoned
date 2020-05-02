@@ -31,7 +31,7 @@ public class XMap implements MapEntity {
     }
 
     @Override
-    public MapExtraParams getExtraParamPrompts() {
+    public MapExtraParams getExtraParams() {
         return null;
     }
 

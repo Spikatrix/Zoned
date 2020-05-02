@@ -30,7 +30,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.AnimatedDrawable;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
@@ -329,7 +329,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.getBatch().end();
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, mainStage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, mainStage.getBatch(), font);
         }
 
         mainStage.draw();

@@ -29,7 +29,7 @@ public class RectangleMap implements MapEntity {
     }
 
     @Override
-    public MapExtraParams getExtraParamPrompts() {
+    public MapExtraParams getExtraParams() {
         if (mapExtraParams != null) {
             return mapExtraParams;
         }

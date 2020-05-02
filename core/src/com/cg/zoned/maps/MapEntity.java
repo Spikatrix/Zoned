@@ -25,12 +25,12 @@ public interface MapEntity {
      * @return The {@link MapExtraParams} object containing the title and prompt strings
      * null if the map does not support extra params
      */
-    MapExtraParams getExtraParamPrompts();
+    MapExtraParams getExtraParams();
 
     /**
      * Used to apply the user selected params if the map supports extra params. The param values
      * set by the user is accessible in the {@link MapExtraParams} object
-     * returned by {@link #getExtraParamPrompts()}
+     * returned by {@link #getExtraParams()}
      */
     void applyExtraParams();
 

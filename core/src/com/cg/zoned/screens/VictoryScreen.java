@@ -22,9 +22,9 @@ import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.TeamData;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.PlayerManager;
@@ -207,7 +207,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         stage.getBatch().end();
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();

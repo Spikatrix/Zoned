@@ -1,12 +1,12 @@
 package com.cg.zoned;
 
+import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.buffers.BufferGameStart;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.esotericsoftware.kryo.Kryo;
-import com.cg.zoned.Constants.Direction;
 
 public class KryoHelper {
 

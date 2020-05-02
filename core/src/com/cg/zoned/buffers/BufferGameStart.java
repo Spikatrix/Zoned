@@ -4,6 +4,6 @@ public class BufferGameStart {
     public String[] playerNames;
     public int[] startIndices;
 
-    public int rows;
-    public int cols;
+    public String mapName;
+    public int[] mapExtraParams;
 }

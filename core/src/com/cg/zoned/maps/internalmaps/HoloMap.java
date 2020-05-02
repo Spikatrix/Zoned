@@ -26,7 +26,7 @@ public class HoloMap implements MapEntity {
     }
 
     @Override
-    public MapExtraParams getExtraParamPrompts() {
+    public MapExtraParams getExtraParams() {
         return null;
     }
 

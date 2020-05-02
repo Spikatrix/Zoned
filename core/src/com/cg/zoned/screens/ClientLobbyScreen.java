@@ -24,15 +24,20 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.listeners.ClientLobbyListener;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.InvalidMapCharacter;
+import com.cg.zoned.maps.InvalidMapDimensions;
+import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.NoStartPositionsFound;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -355,7 +360,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     // TODO: Fix order issue
-    public void startGame(String[] names, int[] indices, final int rows, final int cols) {
+    public void startGame(String[] names, int[] indices, String mapName, int[] mapExtraParams) {
         int size = this.playerItems.size;
 
         final Player[] players = new Player[size];
@@ -370,10 +375,37 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
         }
 
+        Array<String> buttonTexts = new Array<>();
+        buttonTexts.add("OK");
+
+        final MapManager mapManager = new MapManager();
+        MapEntity map = mapManager.getMap(mapName);
+        if (map == null) {
+            // Should never happen cause server loads a valid internal map before sending it to all the clients
+            stage.showDialog("Unknown map received: '" + mapName + "'", buttonTexts, false,
+                    game.getScaleFactor(), null, game.skin);
+            return;
+        }
+
+        if (mapExtraParams != null) {
+            map.getExtraParams().extraParams = mapExtraParams;
+            map.applyExtraParams();
+        }
+
+        try {
+            mapManager.prepareMap(map);
+        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
+            // Should never happen cause the server does this check before sending to all the clients
+            e.printStackTrace();
+            stage.showDialog("Error: " + e.getMessage(), buttonTexts, false,
+                    game.getScaleFactor(), null, game.skin);
+            return;
+        }
+
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new GameScreen(game, rows, cols, players, null, client));
+                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, client));
             }
         });
     }
@@ -386,7 +418,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         viewport.apply(true);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();

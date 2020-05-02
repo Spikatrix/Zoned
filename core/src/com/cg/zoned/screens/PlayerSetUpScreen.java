@@ -22,10 +22,10 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
@@ -210,7 +210,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 
-        //animationManager.fadeOutStage(stage, this, new GameScreen(game, mapManager, players, null, null));
+        //animationManager.fadeOutStage(stage, this, new GameScreen(game, mapManager, players));
         animationManager.fadeOutStage(stage, this, new MapStartPosScreen(game, mapManager, players, 2, false));
     }
 
@@ -244,7 +244,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();

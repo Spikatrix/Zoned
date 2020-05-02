@@ -10,17 +10,18 @@ import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
 
-public class ConnectionManager implements IConnectionHandlers {
-    public boolean isActive;     // ConnectionManager will be inactive when playing in splitscreen mode
+public class GameConnectionManager implements IConnectionHandlers {
+    public boolean isActive;     // GameConnectionManager will be inactive when playing in splitscreen mode
 
     private GameManager gameManager;
 
     private Server server;       // One of these two will be null (or both)
     private Client client;
 
+    private int ping;
     private Boolean sentResponse;
 
-    public ConnectionManager(GameManager gameManager, Server server, Client client) {
+    public GameConnectionManager(GameManager gameManager, Server server, Client client) {
         isActive = server != null || client != null;
         if (!isActive) {
             return;
@@ -34,7 +35,7 @@ public class ConnectionManager implements IConnectionHandlers {
 
         if (server != null) {
             server.addListener(new ServerGameListener(this));
-        } else { // else if Client is not null
+        } else if (client != null) {
             client.addListener(new ClientGameListener(this));
         }
     }
@@ -52,9 +53,10 @@ public class ConnectionManager implements IConnectionHandlers {
      * The server then updates its buffer after finding the proper index of the buffer
      *
      * @param bd BufferDirection object containing client player's name and direction
+     * @param returnTripTime The return trip time a.k.a ping of the packet received
      */
     @Override
-    public void serverUpdateDirections(final BufferDirections bd) {
+    public void serverUpdateDirections(final BufferDirections bd, final int returnTripTime) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
@@ -75,6 +77,8 @@ public class ConnectionManager implements IConnectionHandlers {
                     gameManager.directionBufferManager.clearBuffer();
                     sentResponse = false;
                 }
+
+                ping = returnTripTime;
             }
         });
     }
@@ -84,9 +88,10 @@ public class ConnectionManager implements IConnectionHandlers {
      * The client then updates its buffer after finding the proper index of the buffer
      *
      * @param bd BufferDirection object containing each player's name and direction
+     * @param returnTripTime
      */
     @Override
-    public void clientUpdateDirections(final BufferDirections bd) {
+    public void clientUpdateDirections(final BufferDirections bd, final int returnTripTime) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
@@ -108,6 +113,8 @@ public class ConnectionManager implements IConnectionHandlers {
                     gameManager.directionBufferManager.clearBuffer();
                     sentResponse = false;
                 }
+
+                ping = returnTripTime;
             }
         });
     }
@@ -168,10 +175,14 @@ public class ConnectionManager implements IConnectionHandlers {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                gameManager.connectionManager.close();
+                gameManager.gameConnectionManager.close();
                 gameManager.endGame();  // TODO: Handle disconnections in a better way
             }
         });
+    }
+
+    public int getPing() {
+        return ping;
     }
 
     public void close() {

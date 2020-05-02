@@ -30,10 +30,10 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
@@ -109,7 +109,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpMap() {
-        map = new Map(mapGrid, startPositions, 0); // Wall count is unnecessary in this case so 0
+        map = new Map(mapGrid, 0); // Wall count is unnecessary in this case so 0
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {
@@ -317,7 +317,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     for (Player player : players) {
                         mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
                     }
-                    animationManager.fadeOutStage(stage, thisScreen, new GameScreen(game, mapManager, players, null, null));
+                    animationManager.fadeOutStage(stage, thisScreen, new GameScreen(game, mapManager, players));
                 } else {
                     // Some more players are remaining
                     playerIndex += splitScreenCount;
@@ -455,7 +455,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.act(delta);

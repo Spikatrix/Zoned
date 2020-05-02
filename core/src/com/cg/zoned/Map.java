@@ -13,44 +13,17 @@ import com.cg.zoned.managers.PlayerManager;
 public class Map {
 
     private Cell[][] mapGrid;
-    public int coloredCells = 0;
+    public int wallCount;
+
     public int rows;
     public int cols;
-    public int wallCount = 0;
-    private Array<GridPoint2> startPositions;
+    private int coloredCells = 0;
 
-    public Map(int rows, int cols) {
-        this.rows = rows;
-        this.cols = cols;
-
-        this.mapGrid = new Cell[this.rows][this.cols];
-        for (int i = 0; i < this.rows; i++) {
-            for (int j = 0; j < this.cols; j++) {
-                mapGrid[i][j] = new Cell();
-
-                if (!mapGrid[i][j].isMovable) {
-                    wallCount++;
-                }
-            }
-        }
-
-        startPositions = new Array<>();
-        startPositions.add(new GridPoint2(0, rows - 1));
-        startPositions.add(new GridPoint2(cols - 1, 0));
-        startPositions.add(new GridPoint2(0, 0));
-        startPositions.add(new GridPoint2(cols - 1, rows - 1));
-    }
-
-    public Map(Cell[][] mapGrid, Array<GridPoint2> startPositions, int wallCount) {
+    public Map(Cell[][] mapGrid, int wallCount) {
         this.rows = mapGrid.length;
         this.cols = mapGrid[0].length;
         this.mapGrid = mapGrid;
-        this.startPositions = startPositions;
         this.wallCount = wallCount;
-    }
-
-    public Array<GridPoint2> getStartPositions() {
-        return startPositions;
     }
 
     public void update(PlayerManager playerManager, float delta) {
@@ -112,12 +85,12 @@ public class Map {
 
     private void setMapColors(PlayerManager playerManager) {
         Player[] players = playerManager.getPlayers();
-        for (int i = 0; i < players.length; i++) {
-            int posX = Math.round(players[i].position.x);
-            int posY = Math.round(players[i].position.y);
+        for (Player player : players) {
+            int posX = Math.round(player.position.x);
+            int posY = Math.round(player.position.y);
             if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].playerCount == 1) {
-                mapGrid[posY][posX].cellColor = new Color(players[i].color.r, players[i].color.g, players[i].color.b, 0.1f);
-                playerManager.incrementScore(players[i]);
+                mapGrid[posY][posX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
+                playerManager.incrementScore(player);
                 coloredCells++;
             }
         }
@@ -363,7 +336,7 @@ public class Map {
 
         private State state;
 
-        public FloodFillGridState() {
+        FloodFillGridState() {
             state = State.UNVISITED;
         }
     }
