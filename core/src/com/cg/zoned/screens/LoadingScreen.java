@@ -109,9 +109,9 @@ public class LoadingScreen extends ScreenAdapter {
 
             if (!loadedFonts) {
                 ObjectMap<String, Object> fontMap = new ObjectMap<String, Object>();
-                fontMap.put(Constants.FONT_MANAGER.LARGE.getName(), assetManager.get(Constants.FONT_MANAGER.LARGE.getName() + ".otf", BitmapFont.class));
-                fontMap.put(Constants.FONT_MANAGER.REGULAR.getName(), assetManager.get(Constants.FONT_MANAGER.REGULAR.getName() + ".otf", BitmapFont.class));
-                fontMap.put(Constants.FONT_MANAGER.SMALL.getName(), assetManager.get(Constants.FONT_MANAGER.SMALL.getName() + ".otf", BitmapFont.class));
+                for (Constants.FONT_MANAGER font : Constants.FONT_MANAGER.values()) {
+                    fontMap.put(font.getName(), assetManager.get(font.getName() + ".otf", BitmapFont.class));
+                }
 
                 SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
                 assetManager.load("neon-skin/neon-ui.json", Skin.class, parameter);

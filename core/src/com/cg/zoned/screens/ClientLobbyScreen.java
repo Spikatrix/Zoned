@@ -25,47 +25,33 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
-import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
-import com.cg.zoned.buffers.BufferClientConnect;
-import com.cg.zoned.buffers.BufferPlayerData;
-import com.cg.zoned.listeners.ClientLobbyListener;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.maps.InvalidMapCharacter;
-import com.cg.zoned.maps.InvalidMapDimensions;
-import com.cg.zoned.maps.MapEntity;
-import com.cg.zoned.maps.NoStartPositionsFound;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
-import com.esotericsoftware.kryonet.Listener;
 
 import java.util.Map;
 
-public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
+public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConnectionManager.ClientPlayerListener, InputProcessor {
     final Zoned game;
 
     private Array<Texture> usedTextures = new Array<>();
 
-    private Client client;
-    private ClientLobbyListener clientLobbyListener;
+    private ClientLobbyConnectionManager connectionManager;
 
     private FocusableStage stage;
+    private Viewport viewport;
     private AnimationManager animationManager;
     private boolean showFPSCounter;
     private BitmapFont font;
 
-    private Viewport viewport;
-
     private VerticalGroup playerList;
-    private Array<String> playerNames;
-    private Array<HorizontalGroup> playerItems;
-
-    public String name;
 
     public ClientLobbyScreen(final Zoned game, Client client, String name) {
         this.game = game;
@@ -75,13 +61,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         animationManager = new AnimationManager(this.game, this);
         font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.name = name;
-        playerItems = new Array<>();
-        playerNames = new Array<>();
-
-        this.client = client;
-        clientLobbyListener = new ClientLobbyListener(this);
-        client.addListener(clientLobbyListener);
+        this.connectionManager = new ClientLobbyConnectionManager(client, this, name);
     }
 
     @Override
@@ -89,14 +69,11 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         setUpClientLobbyStage();
         setUpBackButton();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
-
-        insertPlayer(null, null, null, null);
-        playerNames.add(this.name);
-
+        connectionManager.start();
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
-                sendClientNameToServer();
+                connectionManager.sendClientNameToServer();
                 animationManager.setAnimationListener(null);
             }
         });
@@ -109,7 +86,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         //clientLobbyTable.setDebug(true);
         clientLobbyTable.center();
 
-        Label onlinePlayersTitle = new Label("Connected Players: ", game.skin, "themed");
+        Label onlinePlayersTitle = new Label("Connected Players", game.skin, "themed");
         clientLobbyTable.add(onlinePlayersTitle).pad(10 * game.getScaleFactor());
 
         clientLobbyTable.row();
@@ -127,35 +104,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         readyButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                Label readyLabel = playerItems.get(0).findActor("ready-label");
-
-                if (readyLabel.getText().toString().equals("Not ready")) {
-                    readyLabel.setColor(Color.GREEN);
-                    readyLabel.setText("Ready");
-                    readyButton.setText("Unready");
-                } else {
-                    readyLabel.setColor(1f, 0, 0, 1f);
-                    readyLabel.setText("Not ready");
-                    readyButton.setText("Ready up");
-                }
-
-                BufferPlayerData bpd = new BufferPlayerData();
-                bpd.nameStrings = new String[]{
-                        ((Label) playerItems.get(0).findActor("name-label")).getText().toString()
-                };
-                bpd.whoStrings = new String[]{
-                        ((Label) playerItems.get(0).findActor("who-label")).getText().toString()
-                };
-                bpd.readyStrings = new String[]{
-                        ((Label) playerItems.get(0).findActor("ready-label")).getText().toString()
-                };
-                bpd.colorStrings = new String[]{
-                        ((DropDownMenu) playerItems.get(0).findActor("color-selector")).getSelected()
-                };
-
-                if (client.isConnected()) {
-                    client.sendTCP(bpd);
-                }
+                connectionManager.toggleReadyState(readyButton);
             }
         });
         clientLobbyTable.add(readyButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
@@ -181,44 +130,15 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
         playerItem.addActor(new Label("  ", game.skin));
     }
 
-    private void sendClientNameToServer() {
-        BufferClientConnect bcc = new BufferClientConnect();
-        bcc.playerName = this.name;
-        client.sendTCP(bcc);
-    }
-
-    public void receivePlayerData(String[] nameStrings, String[] whoStrings, String[] readyStrings, String[] colorStrings) {
-        for (int i = 0; i < nameStrings.length; i++) {
-            if (nameStrings[i].equals(this.name)) { // No need to update information for this client itself
-                continue;
-            }
-
-            if (whoStrings[i].equals("(DEL)")) {
-                int index = this.playerNames.indexOf(nameStrings[i], false);
-                this.playerNames.removeIndex(index);
-                playerList.removeActor(playerItems.get(index));
-                this.playerItems.removeIndex(index);
-                continue;
-            }
-
-            int index = playerNames.indexOf(nameStrings[i], false);
-            if (index != -1) {
-                updatePlayer(nameStrings[i], whoStrings[i], readyStrings[i], colorStrings[i], index);
-            } else {
-                insertPlayer(nameStrings[i], whoStrings[i], readyStrings[i], colorStrings[i]);
-                playerNames.add(nameStrings[i]);
-            }
-        }
-    }
-
-    private void insertPlayer(String name, String who, String ready, String color) {
+    @Override
+    public HorizontalGroup addPlayer(String name, String who, String ready, String color) {
         HorizontalGroup playerItem = new HorizontalGroup();
         playerItem.pad(10 * game.getScaleFactor());
 
         Label nameLabel;
         Label whoLabel;
         if (name == null) {
-            nameLabel = new Label(this.name, game.skin);
+            nameLabel = new Label(connectionManager.getCurrentUserName(), game.skin);
             whoLabel = new Label("(You)", game.skin, "themed");
         } else {
             nameLabel = new Label(name, game.skin);
@@ -271,23 +191,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    BufferPlayerData bpd = new BufferPlayerData();
-                    bpd.nameStrings = new String[]{
-                            ((Label) playerItems.get(0).findActor("name-label")).getText().toString()
-                    };
-                    bpd.whoStrings = new String[]{
-                            ((Label) playerItems.get(0).findActor("who-label")).getText().toString()
-                    };
-                    bpd.readyStrings = new String[]{
-                            ((Label) playerItems.get(0).findActor("ready-label")).getText().toString()
-                    };
-                    bpd.colorStrings = new String[]{
-                            colorSelector.getSelected()
-                    };
-
-                    if (client.isConnected()) {
-                        client.sendTCP(bpd);
-                    }
+                    connectionManager.broadcastClientInfo();
                 }
             });
             playerItem.addActor(colorSelector);
@@ -300,112 +204,51 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
             playerItem.addActor(colorLabel);
         }
 
-        playerItems.add(playerItem);
         playerList.addActor(playerItem);
+
+        return playerItem;
     }
 
-    private void updatePlayer(String name, String who, String ready, String color, int index) {
-        ((Label) this.playerItems.get(index).findActor("name-label")).setText(name);
-
-        if (who.endsWith("(Host, You)")) {
-            who = who.substring(0, who.lastIndexOf(',')) + ')'; // Replace with "(Host)"
-        }
-        ((Label) this.playerItems.get(index).findActor("who-label")).setText(who);
-
-        Label readyLabel = this.playerItems.get(index).findActor("ready-label");
-        if (ready.equals("Ready")) {
-            readyLabel.setColor(Color.GREEN);
-        } else {
-            readyLabel.setColor(Color.RED);
-        }
-        readyLabel.setText(ready);
-
-        ((Label) this.playerItems.get(index).findActor("color-label")).setText(color);
-    }
-
+    @Override
     public void displayError(String errorMsg) {
-        showDialogAndCloseClient(errorMsg);
-    }
-
-    private void showDialogAndCloseClient(String msg) {
         final Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("OK");
-        stage.showDialog(msg, dialogButtonTexts,
+
+        stage.showDialog(errorMsg, dialogButtonTexts,
                 false,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
                     public void dialogResult(String buttonText) {
-                        if (client.isConnected()) {
-                            client.close();
-                        }
+                        connectionManager.closeConnection();
                     }
                 }, game.skin);
     }
 
-    public void removeListener(Listener listener) {
-        client.removeListener(listener);
+    @Override
+    public void startGame(final MapManager mapManager) {
+        final Player[] players = connectionManager.inflatePlayerList();
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager.getClient()));
+            }
+        });
     }
 
-    public void disconnect() {
-        playerNames.clear();
-        playerItems.clear();
+    @Override
+    public void removePlayer(HorizontalGroup playerItem) {
+        playerList.removeActor(playerItem);
+    }
+
+    @Override
+    public void disconnected() {
+        connectionManager.closeConnection();
         playerList.clear();
 
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
                 animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new HostJoinScreen(game));
-            }
-        });
-    }
-
-    // TODO: Fix order issue
-    public void startGame(String[] names, int[] indices, String mapName, int[] mapExtraParams) {
-        int size = this.playerItems.size;
-
-        final Player[] players = new Player[size];
-        for (int i = 0; i < size; i++) {
-            String name = ((Label) this.playerItems.get(i).findActor("name-label")).getText().toString();
-            String color;
-            if (i == 0) {
-                color = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector")).getSelected();
-            } else {
-                color = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
-            }
-            players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
-        }
-
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("OK");
-
-        final MapManager mapManager = new MapManager();
-        MapEntity map = mapManager.getMap(mapName);
-        if (map == null) {
-            // Should never happen cause server loads a valid internal map before sending it to all the clients
-            stage.showDialog("Unknown map received: '" + mapName + "'", buttonTexts, false,
-                    game.getScaleFactor(), null, game.skin);
-            return;
-        }
-
-        if (mapExtraParams != null) {
-            map.getExtraParams().extraParams = mapExtraParams;
-            map.applyExtraParams();
-        }
-
-        try {
-            mapManager.prepareMap(map);
-        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
-            // Should never happen cause the server does this check before sending to all the clients
-            e.printStackTrace();
-            stage.showDialog("Error: " + e.getMessage(), buttonTexts, false,
-                    game.getScaleFactor(), null, game.skin);
-            return;
-        }
-
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, client));
             }
         });
     }
@@ -432,7 +275,6 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
-        removeListener(clientLobbyListener);
         stage.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
@@ -440,9 +282,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void onBackPressed() {
-        if (client.isConnected()) {
-            client.close();
-        }
+        disconnected();
     }
 
     @Override

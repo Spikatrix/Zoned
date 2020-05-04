@@ -1,26 +1,26 @@
 package com.cg.zoned.listeners;
 
-import com.cg.zoned.screens.ServerLobbyScreen;
 import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferPlayerData;
+import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 
 public class ServerLobbyListener extends Listener {
-    private ServerLobbyScreen serverLobby;
+    private ServerLobbyConnectionManager serverLobbyConnectionManager;
 
-    public ServerLobbyListener(ServerLobbyScreen serverLobby) {
-        this.serverLobby = serverLobby;
+    public ServerLobbyListener(ServerLobbyConnectionManager serverLobbyConnectionManager) {
+        this.serverLobbyConnectionManager = serverLobbyConnectionManager;
     }
 
     @Override
     public void received(Connection connection, Object object) {
         if (object instanceof BufferClientConnect) {
             BufferClientConnect bcc = (BufferClientConnect) object;
-            serverLobby.receiveClientName(connection, bcc.playerName);
+            serverLobbyConnectionManager.receiveClientName(connection, bcc.playerName);
         } else if (object instanceof BufferPlayerData) {
             BufferPlayerData bpd = (BufferPlayerData) object;
-            serverLobby.receiveClientData(connection, bpd.nameStrings[0], bpd.whoStrings[0], bpd.readyStrings[0], bpd.colorStrings[0]);
+            serverLobbyConnectionManager.receiveClientData(connection, bpd.nameStrings[0], bpd.whoStrings[0], bpd.readyStrings[0], bpd.colorStrings[0]);
         }
 
         super.received(connection, object);
@@ -28,13 +28,13 @@ public class ServerLobbyListener extends Listener {
 
     @Override
     public void connected(Connection connection) {
-        serverLobby.connect(connection);
+        serverLobbyConnectionManager.clientConnected(connection);
         super.connected(connection);
     }
 
     @Override
     public void disconnected(Connection connection) {
-        serverLobby.disconnect(connection);
+        serverLobbyConnectionManager.clientDisconnected(connection);
         super.disconnected(connection);
     }
 }

@@ -9,7 +9,7 @@ import java.util.Map;
 public final class Constants {
     public static final float WORLD_SIZE = 480.0f;
 
-    public static final int SERVER_PORT = 22355;
+    public static final int SERVER_PORT = 22355; // Random port I chose *shrug*
 
     public static final float CELL_SIZE = 25.0f;
     public static final Color MAP_GRID_COLOR = Color.WHITE;

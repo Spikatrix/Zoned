@@ -245,11 +245,16 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, 6, ScoreBar.BAR_HEIGHT + 6);
-            if (gameManager.gameConnectionManager.isActive) {
-                UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, gameManager.gameConnectionManager.getPing(), 6, ScoreBar.BAR_HEIGHT + 6);
-            }
+            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, UITextDisplayer.padding, ScoreBar.BAR_HEIGHT + UITextDisplayer.padding);
         }
+        if (gameManager.gameConnectionManager.isActive) {
+            float yOffset = ScoreBar.BAR_HEIGHT + UITextDisplayer.padding;
+            if (!showFPSCounter) {
+                yOffset = -yOffset + UITextDisplayer.padding;
+            }
+            UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
+        }
+
         fullScreenStage.act(delta);
         fullScreenStage.draw();
     }

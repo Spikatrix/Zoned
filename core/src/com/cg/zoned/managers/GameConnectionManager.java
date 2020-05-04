@@ -88,7 +88,7 @@ public class GameConnectionManager implements IConnectionHandlers {
      * The client then updates its buffer after finding the proper index of the buffer
      *
      * @param bd BufferDirection object containing each player's name and direction
-     * @param returnTripTime
+     * @param returnTripTime The return trip time a.k.a ping of the packet received
      */
     @Override
     public void clientUpdateDirections(final BufferDirections bd, final int returnTripTime) {

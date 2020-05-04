@@ -472,7 +472,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void onBackPressed() {
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+        animationManager.fadeOutStage(stage, this, new PlayerSetUpScreen(game));
     }
 
     @Override
