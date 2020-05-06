@@ -171,12 +171,16 @@ public class GameConnectionManager implements IConnectionHandlers {
     /**
      * Called when the server/client disconnects
      */
-    public void disconnect(Connection connection) {
+    public void disconnect(final Connection connection) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
+                //if (client != null) {
                 gameManager.gameConnectionManager.close();
-                gameManager.endGame();  // TODO: Handle disconnections in a better way
+                gameManager.endGame();
+                //} else { UNDER CONSTRUCTION
+                //    gameManager.playerDisconnected(connection);
+                //}
             }
         });
     }

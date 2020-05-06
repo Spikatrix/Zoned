@@ -2,12 +2,12 @@ package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
-import com.cg.zoned.buffers.BufferGameStart;
+import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ServerLobbyListener;
@@ -35,12 +35,15 @@ public class ServerLobbyConnectionManager {
     /**
      * Each row of the playerList which contains information about each player
      */
-    private Array<HorizontalGroup> playerItems;
+    private Array<Table> playerItems;
 
     private ServerPlayerListener serverPlayerListener; // This manager to screen
     private ServerLobbyListener serverLobbyListener; // Kryonet to this manager
 
     private String currentUserName;
+    private String currentMapName;
+
+    // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
 
     public ServerLobbyConnectionManager(Server server, ServerPlayerListener serverPlayerListener, String currentUserName) {
         playerConnections = new Array<>();
@@ -53,7 +56,9 @@ public class ServerLobbyConnectionManager {
         this.server = server;
     }
 
-    public void start() {
+    public void start(String mapName) {
+        this.currentMapName = mapName;
+
         playerItems.add(serverPlayerListener.playerConnected(null));
         playerConnections.add(null);
         playerNameResolved.add(true);
@@ -61,7 +66,6 @@ public class ServerLobbyConnectionManager {
         serverLobbyListener = new ServerLobbyListener(this);
         server.addListener(serverLobbyListener);
     }
-
 
     /**
      * Called when the server receives client name information.
@@ -73,23 +77,34 @@ public class ServerLobbyConnectionManager {
      * @param connection The client connection from where the packet was received
      * @param playerName The name of the client player
      */
-    public void receiveClientName(Connection connection, String playerName) {
-        for (HorizontalGroup hg : playerItems) {
-            String n = ((Label) hg.findActor("name-label")).getText().toString();
+    public void receiveClientName(final Connection connection, final String playerName) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                for (Table playerItem : playerItems) {
+                    String n = ((Label) playerItem.findActor("name-label")).getText().toString();
 
-            if (n.equals(playerName)) {
-                rejectConnection(connection, "Another player is using the same name\nPlease use a different name");
-                return;
+                    if (n.equals(playerName)) {
+                        rejectConnection(connection, "Another player is using the same name\nPlease use a different name");
+                        return;
+                    }
+                }
+
+                int index = playerConnections.indexOf(connection, true);
+                Table playerItem = playerItems.get(index);
+                Label nameLabel = playerItem.findActor("name-label");
+                nameLabel.setText(playerName);
+                playerNameResolved.set(index, true);
+
+                BufferNewMap bnm = new BufferNewMap(); // Send map details
+                bnm.mapName = currentMapName;
+                bnm.mapExtraParams = null;
+                bnm.gameStart = false;
+                connection.sendTCP(bnm);
+
+                broadcastPlayerInfo(-1);
             }
-        }
-
-        int index = playerConnections.indexOf(connection, true);
-        HorizontalGroup hg = playerItems.get(index);
-        Label nameLabel = hg.findActor("name-label");
-        nameLabel.setText(playerName);
-        playerNameResolved.set(index, true);
-
-        broadcastPlayerInfo(-1);
+        });
     }
 
     private void rejectConnection(Connection connection, String rejectionMessage) {
@@ -123,6 +138,7 @@ public class ServerLobbyConnectionManager {
         bpd.whoStrings = new String[size];
         bpd.readyStrings = new String[size];
         bpd.colorStrings = new String[size];
+        bpd.startPosStrings = new String[size];
 
         for (int i = 0; i < size; i++) {
             if (!playerNameResolved.get(i)) {
@@ -136,8 +152,10 @@ public class ServerLobbyConnectionManager {
 
                 if (i != 0) {
                     bpd.colorStrings[i] = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
+                    bpd.startPosStrings[i] = ((Label) this.playerItems.get(i).findActor("startPos-label")).getText().toString();
                 } else {
                     bpd.colorStrings[i] = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector")).getSelected();
+                    bpd.startPosStrings[i] = ((DropDownMenu) this.playerItems.get(i).findActor("startPos-selector")).getSelected();
                 }
             } else {
                 bpd.nameStrings[0] = ((Label) this.playerItems.get(index).findActor("name-label")).getText().toString();
@@ -146,8 +164,10 @@ public class ServerLobbyConnectionManager {
 
                 if (index != 0) {
                     bpd.colorStrings[0] = ((Label) this.playerItems.get(index).findActor("color-label")).getText().toString();
+                    bpd.startPosStrings[0] = ((Label) this.playerItems.get(index).findActor("startPos-label")).getText().toString();
                 } else {
                     bpd.colorStrings[0] = ((DropDownMenu) this.playerItems.get(index).findActor("color-selector")).getSelected();
+                    bpd.startPosStrings[0] = ((DropDownMenu) this.playerItems.get(index).findActor("startPos-selector")).getSelected();
                 }
             }
         }
@@ -161,47 +181,57 @@ public class ServerLobbyConnectionManager {
      * @param connection The newly connected client connection
      */
     public void clientConnected(final Connection connection) {
-        final String clientIpAddress = connection.getRemoteAddressTCP().getAddress().getHostAddress();
-        if (serverPlayerListener != null) {
-            Gdx.app.postRunnable(new Runnable() {
-                @Override
-                public void run() {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                final String clientIpAddress = connection.getRemoteAddressTCP().getAddress().getHostAddress();
+                if (serverPlayerListener != null) {
                     playerItems.add(serverPlayerListener.playerConnected(clientIpAddress));
                     playerNameResolved.add(false);
                     playerConnections.add(connection);
+
+                } else {
+                    rejectConnection(connection, "No listener configured in the host (server) for incoming clients");
                 }
-            });
-        } else {
-            rejectConnection(connection, "No listener configured in the host (server) for incoming clients");
-        }
+            }
+        });
     }
 
     /**
      * Called when the server receives a change in a client's data.
      * This change is broadcasted to all connected clients so that they can update their UI accordingly
      *
-     * @param connection The client connection
-     * @param name       The name of the client
+     * @param connection Client's connection
+     * @param name       Client's name
      * @param who        TODO: Forgot this lol. "(Host)" or "(You)" or "(DEL)" string I think
      * @param ready      Client's ready or not ready status
      * @param color      Client's current color
+     * @param startPos   Client's start position
      */
-    public void receiveClientData(Connection connection, String name, String who, String ready, String color) {
-        int index = playerConnections.indexOf(connection, true);
-        HorizontalGroup playerItem = playerItems.get(index);
+    public void receiveClientData(final Connection connection, String name, String who, final String ready, final String color, final String startPos) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                int index = getConnectionIndex(connection);
+                Table playerItem = playerItems.get(index);
 
-        // Only needs to set the ready and color labels as others will not be changed
-        Label readyLabel = playerItem.findActor("ready-label");
-        if (ready.equals("Ready")) {
-            readyLabel.setColor(Color.GREEN);
-        } else {
-            readyLabel.setColor(Color.RED);
-        }
-        readyLabel.setText(ready);
+                // Only needs to set the ready and color labels as others will not be changed
+                Label readyLabel = playerItem.findActor("ready-label");
+                if (ready.equals("Ready")) {
+                    readyLabel.setColor(Color.GREEN);
+                } else {
+                    readyLabel.setColor(Color.RED);
+                }
+                readyLabel.setText(ready);
 
-        ((Label) playerItem.findActor("color-label")).setText(color);
+                ((Label) playerItem.findActor("color-label")).setText(color);
+                ((Label) playerItem.findActor("startPos-label")).setText(startPos);
 
-        broadcastPlayerInfo(index);
+                serverPlayerListener.updatePlayerDetails(index, color, startPos);
+
+                broadcastPlayerInfo(index);
+            }
+        });
     }
 
     /**
@@ -209,19 +239,49 @@ public class ServerLobbyConnectionManager {
      *
      * @param connection The connection of the client that disconnected
      */
-    public void clientDisconnected(Connection connection) {
-        int index = playerConnections.indexOf(connection, true);
+    public void clientDisconnected(final Connection connection) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                int index = getConnectionIndex(connection);
 
-        ((Label) playerItems.get(index).findActor("who-label")).setText("(DEL)"); // Notify all clients to delete this player
-        broadcastPlayerInfo(index);
+                if (index == -1) {
+                    return; // Some error occurred or server is shutting down
+                }
 
-        HorizontalGroup playerItem = playerItems.get(index);
+                ((Label) playerItems.get(index).findActor("who-label")).setText("(DEL)"); // Notify all clients to delete this player
+                broadcastPlayerInfo(index);
 
-        playerItems.removeIndex(index);
-        playerNameResolved.removeIndex(index);
-        playerConnections.removeIndex(index);
+                Table playerItem = playerItems.get(index);
 
-        serverPlayerListener.playerDisconnected(playerItem);
+                playerItems.removeIndex(index);
+                playerNameResolved.removeIndex(index);
+                playerConnections.removeIndex(index);
+
+                serverPlayerListener.playerDisconnected(playerItem, index);
+            }
+        });
+    }
+
+    public void mapChanged(String mapName, Array<String> startPosLocations) {
+        this.currentMapName = mapName;
+
+        for (Table playerItem : playerItems) {
+            Label startPosLabel = playerItem.findActor("startPos-label");
+            if (startPosLabel != null) {
+                startPosLabel.setText(startPosLocations.first());
+            } else {
+                DropDownMenu startPosSelector = playerItem.findActor("startPos-selector");
+                startPosSelector.setItems(startPosLocations);
+                startPosSelector.setSelectedIndex(0);
+            }
+        }
+
+        BufferNewMap bnm = new BufferNewMap();
+        bnm.mapName = currentMapName;
+        bnm.mapExtraParams = null;
+        bnm.gameStart = false;
+        server.sendToAllTCP(bnm);
     }
 
     public String validateServerData() {
@@ -243,33 +303,48 @@ public class ServerLobbyConnectionManager {
     public void broadcastGameStart(MapManager mapManager) {
         MapEntity preparedMap = mapManager.getPreparedMap();
 
-        BufferGameStart bgs = new BufferGameStart();
-        bgs.mapName = preparedMap.getName();
+        BufferNewMap bnm = new BufferNewMap();
+        bnm.gameStart = true;
+        bnm.mapName = preparedMap.getName();
         if (preparedMap.getExtraParams() != null) {
-            bgs.mapExtraParams = preparedMap.getExtraParams().extraParams;
+            bnm.mapExtraParams = preparedMap.getExtraParams().extraParams;
         } else {
-            bgs.mapExtraParams = null;
+            bnm.mapExtraParams = null;
         }
 
-        server.sendToAllTCP(bgs);
+        server.sendToAllTCP(bnm);
+
+        /*server.removeListener(serverLobbyListener); TODO: THIS ?
+        serverPlayerListener = null;*/
     }
 
-    public Player[] inflatePlayerList() {
+    public Player[] inflatePlayerList(MapManager mapManager) {
         int size = this.playerItems.size;
 
         final Player[] players = new Player[size];
         for (int i = 0; i < size; i++) {
             String name = ((Label) this.playerItems.get(i).findActor("name-label")).getText().toString();
+            String position;
             String color;
             if (i == 0) {
                 color = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector")).getSelected();
+                position = ((DropDownMenu) this.playerItems.get(i).findActor("startPos-selector")).getSelected();
             } else {
                 color = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
+                position = ((Label) this.playerItems.get(i).findActor("startPos-label")).getText().toString();
             }
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
+
+            position = position.substring(0, position.lastIndexOf('(')).trim();
+            int startPosIndex = mapManager.getPreparedStartPosNames().indexOf(position, false);
+            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex));
         }
 
         return players;
+    }
+
+    public int getConnectionIndex(Connection connection) {
+        return playerConnections.indexOf(connection, true);
     }
 
     public void closeConnection() {
@@ -286,7 +361,7 @@ public class ServerLobbyConnectionManager {
         this.serverPlayerListener = serverPlayerListener;
     }
 
-    public Array<HorizontalGroup> getPlayerItems() { // This required? hmm
+    public Array<Table> getPlayerItems() { // This required? hmm
         return playerItems;
     }
 
@@ -299,8 +374,10 @@ public class ServerLobbyConnectionManager {
     }
 
     public interface ServerPlayerListener {
-        HorizontalGroup playerConnected(String ipAddress);
+        Table playerConnected(String ipAddress);
 
-        void playerDisconnected(HorizontalGroup playerItem);
+        void playerDisconnected(Table playerItem, int itemIndex);
+
+        void updatePlayerDetails(int index, String color, String startPos);
     }
 }

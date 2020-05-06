@@ -209,6 +209,8 @@ public class FocusableStage extends Stage {
         final Array<Actor> backupCurrentActorArray = new Array<Actor>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
 
+        final Dialog firstDialog = dialog;
+
         dialog = new Dialog("", skin) {
             @Override
             protected void result(Object object) {
@@ -222,7 +224,7 @@ public class FocusableStage extends Stage {
                 }
 
                 dialog.hide(Actions.scaleTo(0, 0, .2f, Interpolation.fastSlow));
-                dialog = null;
+                dialog = firstDialog;
             }
         };
 

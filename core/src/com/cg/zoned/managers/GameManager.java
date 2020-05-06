@@ -7,6 +7,7 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Player;
 import com.cg.zoned.screens.GameScreen;
 import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
 
 public class GameManager {
@@ -22,6 +23,10 @@ public class GameManager {
         this.gameConnectionManager = new GameConnectionManager(this, server, client);
         this.directionBufferManager = new DirectionBufferManager(players.length);
         this.playerManager = new PlayerManager(this, players, stage, controls, skin, scaleFactor, usedTextures);
+    }
+
+    public void playerDisconnected(Connection connection) {
+        gameScreen.playerDisconnected(connection);
     }
 
     public void endGame() {

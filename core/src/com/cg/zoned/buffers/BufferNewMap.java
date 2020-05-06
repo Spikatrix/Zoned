@@ -1,6 +1,7 @@
 package com.cg.zoned.buffers;
 
-public class BufferGameStart {
+public class BufferNewMap {
+    public boolean gameStart;
     public String mapName;
     public int[] mapExtraParams;
 }

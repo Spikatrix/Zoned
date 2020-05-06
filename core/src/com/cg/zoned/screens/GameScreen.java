@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -26,12 +27,15 @@ import com.cg.zoned.ScoreBar;
 import com.cg.zoned.TeamData;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.GameManager;
 import com.cg.zoned.managers.MapManager;
+import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
 
 public class GameScreen extends ScreenAdapter implements InputProcessor {
@@ -63,16 +67,20 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
+    private Object lobbyConnectionManager;
+
     public GameScreen(final Zoned game, MapManager mapManager, Player[] players) {
         this(game, mapManager, players, null, null);
     }
 
-    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server) {
-        this(game, mapManager, players, server, null);
+    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, ServerLobbyConnectionManager connectionManager) {
+        this(game, mapManager, players, connectionManager.getServer(), null);
+        this.lobbyConnectionManager = connectionManager;
     }
 
-    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, Client client) {
-        this(game, mapManager, players, null, client);
+    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, ClientLobbyConnectionManager connectionManager) {
+        this(game, mapManager, players, null, connectionManager.getClient());
+        this.lobbyConnectionManager = connectionManager;
     }
 
     private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
@@ -372,6 +380,28 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private boolean isSplitscreenMultiplayer() {
         return !gameManager.gameConnectionManager.isActive;
+    }
+
+    public void playerDisconnected(final Connection connection) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                ServerLobbyConnectionManager connectionManager = (ServerLobbyConnectionManager) lobbyConnectionManager;
+                int connIndex = connectionManager.getConnectionIndex(connection);
+                String playerName = ((Label) connectionManager.getPlayerItems().get(connIndex).findActor("name-label")).getText().toString();
+
+                showPlayerDisconnectedDialog(playerName);
+            }
+        });
+    }
+
+    private void showPlayerDisconnectedDialog(String playerName) {
+        Array<String> buttonTexts = new Array<>();
+        buttonTexts.add("OK");
+
+        fullScreenStage.showDialog(playerName + " got disconnected", buttonTexts,
+                false, game.getScaleFactor(),
+                null, game.skin);
     }
 
     public void disconnected() {

@@ -8,21 +8,20 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
 import com.cg.zoned.UITextDisplayer;
@@ -51,7 +50,9 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private boolean showFPSCounter;
     private BitmapFont font;
 
-    private VerticalGroup playerList;
+    private Table playerList;
+    private Label mapLabel;
+    private Array<String> startLocations;
 
     public ClientLobbyScreen(final Zoned game, Client client, String name) {
         this.game = game;
@@ -61,6 +62,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         animationManager = new AnimationManager(this.game, this);
         font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
+        startLocations = new Array<>();
         this.connectionManager = new ClientLobbyConnectionManager(client, this, name);
     }
 
@@ -95,9 +97,13 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         ScrollPane playerListScrollPane = new ScrollPane(scrollTable);
         playerListScrollPane.setOverscroll(false, true);
 
-        playerList = new VerticalGroup();
+        playerList = new Table();
         scrollTable.add(playerList).expand();
         clientLobbyTable.add(playerListScrollPane).expand();
+        clientLobbyTable.row();
+
+        mapLabel = new Label("", game.skin);
+        clientLobbyTable.add(mapLabel).pad(10f * game.getScaleFactor());
         clientLobbyTable.row();
 
         final TextButton readyButton = new TextButton("Ready up", game.skin);
@@ -126,13 +132,9 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         });
     }
 
-    private void addSpace(HorizontalGroup playerItem) {
-        playerItem.addActor(new Label("  ", game.skin));
-    }
-
     @Override
-    public HorizontalGroup addPlayer(String name, String who, String ready, String color) {
-        HorizontalGroup playerItem = new HorizontalGroup();
+    public Table addPlayer(String name, String who, String ready, String color, String startPos) {
+        Table playerItem = new Table();
         playerItem.pad(10 * game.getScaleFactor());
 
         Label nameLabel;
@@ -148,18 +150,10 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             whoLabel = new Label(who, game.skin, "themed");
         }
         nameLabel.setName("name-label");
-        playerItem.addActor(nameLabel);
+        playerItem.add(nameLabel);
 
         whoLabel.setName("who-label");
-        if (!whoLabel.getText().toString().isEmpty()) {
-            addSpace(playerItem);
-        }
-        playerItem.addActor(whoLabel);
-
-        if (name == null) { // SelectBox seems to need one more for proper alignment
-            addSpace(playerItem);
-        }
-        addSpace(playerItem);
+        playerItem.add(whoLabel).space(20f * game.getScaleFactor());
 
         Label readyLabel;
         if (ready == null) {
@@ -174,39 +168,74 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             }
         }
         readyLabel.setName("ready-label");
-        playerItem.addActor(readyLabel);
-
-        addSpace(playerItem);
+        playerItem.add(readyLabel).space(20f * game.getScaleFactor());
 
         if (color == null) {
             final DropDownMenu colorSelector = new DropDownMenu(game.skin);
             colorSelector.setName("color-selector");
-            Array<String> colors = new Array<>();
             for (Map.Entry<String, Color> playerColorEntry : Constants.PLAYER_COLORS.entrySet()) {
-                colors.add(playerColorEntry.getKey());
+                colorSelector.append(playerColorEntry.getKey());
             }
-            colorSelector.setItems(colors);
-            colorSelector.getList().setAlignment(Align.center);
-            colorSelector.setAlignment(Align.center);
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
                     connectionManager.broadcastClientInfo();
                 }
             });
-            playerItem.addActor(colorSelector);
+            playerItem.add(colorSelector);
+
+            DropDownMenu startPosSelector = new DropDownMenu(game.skin);
+            startPosSelector.setName("startPos-selector");
+
+            startPosSelector.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    connectionManager.broadcastClientInfo();
+                }
+            });
+            playerItem.add(startPosSelector);
+
             stage.addFocusableActor(colorSelector);
+            stage.addFocusableActor(startPosSelector);
             stage.row();
             stage.setFocusedActor(colorSelector);
         } else {
             Label colorLabel = new Label(color, game.skin);
             colorLabel.setName("color-label");
-            playerItem.addActor(colorLabel);
+            playerItem.add(colorLabel).space(20f * game.getScaleFactor());
+
+            Label startPosLabel = new Label(startPos, game.skin);
+            startPosLabel.setName("startPos-label");
+            playerItem.add(startPosLabel).space(20f * game.getScaleFactor());
         }
 
-        playerList.addActor(playerItem);
+        playerList.add(playerItem);
+        playerList.row();
 
         return playerItem;
+    }
+
+    @Override
+    public void mapChanged(MapManager mapManager) {
+        startLocations.clear();
+
+        Cell[][] mapGrid = mapManager.getPreparedMapGrid();
+        Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
+        Array<String> startPosNames = mapManager.getPreparedStartPosNames();
+        for (int j = 0; j < startPositions.size; j++) {
+            String startPosName;
+            try {
+                startPosName = startPosNames.get(j);
+            } catch (IndexOutOfBoundsException | NullPointerException ignored) {
+                startPosName = Character.toString((char) (j + MapManager.VALID_START_POSITIONS.charAt(0)));
+            }
+            startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
+
+            startLocations.add(startPosName);
+        }
+
+        connectionManager.mapChanged(startLocations);
+        this.mapLabel.setText(mapManager.getPreparedMap().getName());
     }
 
     @Override
@@ -226,17 +255,17 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     @Override
     public void startGame(final MapManager mapManager) {
-        final Player[] players = connectionManager.inflatePlayerList();
+        final Player[] players = connectionManager.inflatePlayerList(mapManager);
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager.getClient()));
+                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager));
             }
         });
     }
 
     @Override
-    public void removePlayer(HorizontalGroup playerItem) {
+    public void removePlayer(Table playerItem) {
         playerList.removeActor(playerItem);
     }
 

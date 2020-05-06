@@ -22,7 +22,7 @@ public class UIButtonManager {
         this.scaleFactor = scaleFactor;
         this.usedTextures = usedTextures;
 
-        this.buttonPositionTables = new Array<Table>();
+        this.buttonPositionTables = new Array<>();
         for (Position position : Position.values()) {
             Table table = new Table();
             table.setFillParent(true);
