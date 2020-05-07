@@ -1,9 +1,11 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ClientGameListener;
 import com.cg.zoned.listeners.ServerGameListener;
 import com.esotericsoftware.kryonet.Client;
@@ -18,8 +20,12 @@ public class GameConnectionManager implements IConnectionHandlers {
     private Server server;       // One of these two will be null (or both)
     private Client client;
 
+    private Array<Connection> discardConnections; // Used to store client connections that came in when in-game
+
     private int ping;
     private Boolean sentResponse;
+
+    // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
 
     public GameConnectionManager(GameManager gameManager, Server server, Client client) {
         isActive = server != null || client != null;
@@ -33,6 +39,8 @@ public class GameConnectionManager implements IConnectionHandlers {
         this.client = client;
         this.sentResponse = false;
 
+        this.discardConnections = new Array<>();
+
         if (server != null) {
             server.addListener(new ServerGameListener(this));
         } else if (client != null) {
@@ -40,19 +48,11 @@ public class GameConnectionManager implements IConnectionHandlers {
         }
     }
 
-    public void updateServer(Server server) {
-        this.server = server;
-    } // TODO: Might come in handy in the future for reconnecting and shit idk
-
-    public void updateClient(Client client) {
-        this.client = client;
-    }
-
     /**
      * Called when the server receives direction information from a client
      * The server then updates its buffer after finding the proper index of the buffer
      *
-     * @param bd BufferDirection object containing client player's name and direction
+     * @param bd             BufferDirection object containing client player's name and direction
      * @param returnTripTime The return trip time a.k.a ping of the packet received
      */
     @Override
@@ -87,7 +87,7 @@ public class GameConnectionManager implements IConnectionHandlers {
      * Called when the client receives direction information from a server
      * The client then updates its buffer after finding the proper index of the buffer
      *
-     * @param bd BufferDirection object containing each player's name and direction
+     * @param bd             BufferDirection object containing each player's name and direction
      * @param returnTripTime The return trip time a.k.a ping of the packet received
      */
     @Override
@@ -171,7 +171,13 @@ public class GameConnectionManager implements IConnectionHandlers {
     /**
      * Called when the server/client disconnects
      */
+    @Override
     public void disconnect(final Connection connection) {
+        if (discardConnections.indexOf(connection, true) != -1) {
+            discardConnections.removeValue(connection, true);
+            return;
+        }
+
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
@@ -183,6 +189,20 @@ public class GameConnectionManager implements IConnectionHandlers {
                 //}
             }
         });
+    }
+
+    /**
+     * Called in the server when a new client connects when in the GameScreen
+     * Server rejects incoming connections when a match is already underway
+     *
+     * @param connection The client's connection
+     */
+    public void rejectNewConnection(Connection connection) {
+        discardConnections.add(connection);
+
+        BufferServerRejectedConnection bsrc = new BufferServerRejectedConnection();
+        bsrc.errorMsg = "Server is busy playing a match. Please try again later";
+        connection.sendTCP(bsrc);
     }
 
     public int getPing() {

@@ -1,5 +1,6 @@
 package com.cg.zoned.listeners;
 
+import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.managers.GameConnectionManager;
 import com.esotericsoftware.kryonet.Connection;
@@ -18,6 +19,8 @@ public class ServerGameListener extends Listener {
             BufferDirections bd = (BufferDirections) object;
             connection.updateReturnTripTime();
             gameConnectionManager.serverUpdateDirections(bd, connection.getReturnTripTime());
+        } else if (object instanceof BufferClientConnect) {
+            gameConnectionManager.rejectNewConnection(connection);
         }
 
         super.received(connection, object);

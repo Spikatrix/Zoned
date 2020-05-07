@@ -78,7 +78,7 @@ public class ClientLobbyConnectionManager {
                         int index = playerNames.indexOf(nameStrings[i], false);
                         if (index != -1) { // Can be -1 too
                             playerNames.removeIndex(index);
-                            clientPlayerListener.removePlayer(playerItems.get(index));
+                            clientPlayerListener.removePlayer(playerItems.get(index), index);
                             playerItems.removeIndex(index);
                         }
 
@@ -116,6 +116,8 @@ public class ClientLobbyConnectionManager {
 
         ((Label) this.playerItems.get(index).findActor("color-label")).setText(color);
         ((Label) this.playerItems.get(index).findActor("startPos-label")).setText(startPos);
+
+        clientPlayerListener.updatePlayerDetails(index, color, startPos);
     }
 
     public void displayError(final String errorMsg) {
@@ -155,8 +157,9 @@ public class ClientLobbyConnectionManager {
 
                 if (gameStart) {
                     clientPlayerListener.startGame(mapManager);
-            /*client.removeListener(clientLobbyListener); TODO: THIS ?
-            clientPlayerListener = null;*/
+
+                    client.removeListener(clientLobbyListener); // TODO: Restore the listeners after restoring later
+                    clientPlayerListener = null;
                 } else {
                     clientPlayerListener.mapChanged(mapManager);
                 }
@@ -284,10 +287,12 @@ public class ClientLobbyConnectionManager {
 
         void startGame(MapManager mapManager);
 
-        void removePlayer(Table playerItem);
+        void removePlayer(Table playerItem, int index);
 
         void disconnected();
 
         void mapChanged(MapManager mapManager);
+
+        void updatePlayerDetails(int index, String color, String startPos);
     }
 }

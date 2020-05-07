@@ -87,19 +87,18 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         setUpMap();
         setUpBackButton();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
-        connectionManager.start(mapSelector.getMapManager().getMapList().first().getName());
+        connectionManager.start(mapSelector.getMapManager());
         animationManager.fadeInStage(stage);
     }
 
     private void setUpServerLobbyStage() {
         Table serverLobbyTable = new Table();
         serverLobbyTable.setFillParent(true);
-        //serverLobbyTable.setDebug(true);
         serverLobbyTable.center();
+        //serverLobbyTable.setDebug(true);
 
         Label onlinePlayersTitle = new Label("Connected Players", game.skin, "themed");
         serverLobbyTable.add(onlinePlayersTitle).pad(10 * game.getScaleFactor());
-
         serverLobbyTable.row();
 
         Table scrollTable = new Table();
@@ -118,6 +117,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                 game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
         final Table mapSelectorTable = new Table();
         mapSelectorTable.add(mapSpinner).pad(10f);
+
         final TextButton mapButton = new TextButton(mapSelector.getMapManager().getMapList().get(mapSpinner.getPositionIndex()).getName(), game.skin);
         mapButton.addListener(new ClickListener() {
             @Override
@@ -133,13 +133,13 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                             @Override
                             public void dialogResult(String buttonText) {
                                 if (buttonText.equals("Set Map")) {
-                                    repopulateMapStartPosLocations();
-                                    mapButton.setText(mapSelector.getMapManager().getMapList().get(mapSpinner.getPositionIndex()).getName());
-
-                                    mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor = null;
+                                    mapSelector.loadSelectedMap();
+                                    mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
                                     mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
                                     map = new com.cg.zoned.Map(mapGrid, 0);
-                                    mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor = players[0].color;
+
+                                    repopulateMapStartPosLocations();
+                                    updateMapColor(players[0], players[0].color, 0);
                                 } else {
                                     // Cancel was pressed; restore the spinner pos
                                     mapSpinner.snapToStep(mapSpinner.getPositionIndex() - prevIndex);
@@ -190,10 +190,12 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
-        this.mapDarkOverlayColor = new Color(0, 0, 0, .85f);
+        this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
         this.mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
         this.map = new com.cg.zoned.Map(this.mapGrid, 0);
-        this.players = new Player[0]; // This array size is increased in playerConnected
+        this.players = new Player[0];
+        // This array size is increased in playerConnected
+        // I know I should use Arrays (libGDX's ArrayLists) instead but Map works with regular 'ol arrays for now
     }
 
     private void setUpBackButton() {
@@ -227,7 +229,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         who.setName("who-label");
         playerItem.add(who).space(20f * game.getScaleFactor());
 
-        Label ready = new Label("Not Ready", game.skin);
+        Label ready = new Label("Not ready", game.skin);
         ready.setColor(Color.RED);
         ready.setName("ready-label");
         playerItem.add(ready).space(20f * game.getScaleFactor());
@@ -275,11 +277,11 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         } else {
             Label colorLabel = new Label(Constants.PLAYER_COLORS.keySet().iterator().next(), game.skin);
             colorLabel.setName("color-label");
-            playerItem.add(colorLabel).space(20f * game.getScaleFactor()).expandX();
+            playerItem.add(colorLabel).space(20f * game.getScaleFactor());
 
             Label startPosLabel = new Label(startLocations.first(), game.skin);
             startPosLabel.setName("startPos-label");
-            playerItem.add(startPosLabel).space(20f * game.getScaleFactor()).expandX();
+            playerItem.add(startPosLabel).space(20f * game.getScaleFactor());
         }
 
         playerList.add(playerItem).expand();
@@ -302,9 +304,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     }
 
     private void repopulateMapStartPosLocations() {
-        mapSelector.loadSelectedMap();
-        MapManager mapManager = mapSelector.getMapManager();
         startLocations.clear();
+        MapManager mapManager = mapSelector.getMapManager();
 
         Cell[][] mapGrid = mapManager.getPreparedMapGrid();
         Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
@@ -321,7 +322,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             startLocations.add(startPosName);
         }
 
-        connectionManager.mapChanged(mapManager.getPreparedMap().getName(), startLocations);
+        connectionManager.mapChanged(startLocations);
     }
 
     private void startGame(MapManager mapManager) {
@@ -343,7 +344,13 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     }
 
     private void updateMapColor(Player player, Color color, int startPosIndex) {
-        mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
+        boolean outOfBounds = false;
+        try {
+            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            outOfBounds = true; // Probably the map changed
+        }
+
         GridPoint2 prevLoc = new GridPoint2((int) player.position.x, (int) player.position.y);
         player.color = color;
 
@@ -353,10 +360,12 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             mapGrid[(int) player.position.y][(int) player.position.x].cellColor = player.color;
         }
 
-        for (Player p : players) {
-            if ((int) p.position.x == prevLoc.x && (int) p.position.y == prevLoc.y && p.color != Color.BLACK) {
-                mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
-                break;
+        if (!outOfBounds) { // Huh? Excuse me, lint? Always true? Nope.
+            for (Player p : players) {
+                if ((int) p.position.x == prevLoc.x && (int) p.position.y == prevLoc.y && p.color != Color.BLACK) {
+                    mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
+                    break;
+                }
             }
         }
     }

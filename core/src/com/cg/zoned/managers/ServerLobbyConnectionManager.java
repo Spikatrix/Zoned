@@ -12,6 +12,7 @@ import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ServerLobbyListener;
 import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.MapExtraParams;
 import com.cg.zoned.ui.DropDownMenu;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
@@ -41,7 +42,7 @@ public class ServerLobbyConnectionManager {
     private ServerLobbyListener serverLobbyListener; // Kryonet to this manager
 
     private String currentUserName;
-    private String currentMapName;
+    private MapManager mapManager;
 
     // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
 
@@ -56,8 +57,8 @@ public class ServerLobbyConnectionManager {
         this.server = server;
     }
 
-    public void start(String mapName) {
-        this.currentMapName = mapName;
+    public void start(MapManager mapManager) {
+        this.mapManager = mapManager;
 
         playerItems.add(serverPlayerListener.playerConnected(null));
         playerConnections.add(null);
@@ -96,9 +97,11 @@ public class ServerLobbyConnectionManager {
                 nameLabel.setText(playerName);
                 playerNameResolved.set(index, true);
 
+                MapExtraParams extraParams = mapManager.getPreparedMap().getExtraParams();
+
                 BufferNewMap bnm = new BufferNewMap(); // Send map details
-                bnm.mapName = currentMapName;
-                bnm.mapExtraParams = null;
+                bnm.mapName = mapManager.getPreparedMap().getName();
+                bnm.mapExtraParams = extraParams != null ? extraParams.extraParams : null;
                 bnm.gameStart = false;
                 connection.sendTCP(bnm);
 
@@ -123,7 +126,7 @@ public class ServerLobbyConnectionManager {
         int size;
         if (index == -1) { // Broadcast all info
             int resolvedPlayerNameCount = 0;
-            for (boolean playerNameValid : playerNameResolved) { // Will this non-reentrant iterator be unsafe?
+            for (boolean playerNameValid : playerNameResolved) {
                 if (playerNameValid) {
                     resolvedPlayerNameCount++;
                 }
@@ -172,7 +175,12 @@ public class ServerLobbyConnectionManager {
             }
         }
 
-        server.sendToAllTCP(bpd);
+        Connection[] connections = server.getConnections();
+        for (int i = 0; i < connections.length; i++) {
+            if (playerNameResolved.get(i)) {
+                connections[i].sendTCP(bpd);
+            }
+        }
     }
 
     /**
@@ -263,9 +271,7 @@ public class ServerLobbyConnectionManager {
         });
     }
 
-    public void mapChanged(String mapName, Array<String> startPosLocations) {
-        this.currentMapName = mapName;
-
+    public void mapChanged(Array<String> startPosLocations) {
         for (Table playerItem : playerItems) {
             Label startPosLabel = playerItem.findActor("startPos-label");
             if (startPosLabel != null) {
@@ -277,9 +283,11 @@ public class ServerLobbyConnectionManager {
             }
         }
 
+        MapExtraParams extraParams = mapManager.getPreparedMap().getExtraParams();
+
         BufferNewMap bnm = new BufferNewMap();
-        bnm.mapName = currentMapName;
-        bnm.mapExtraParams = null;
+        bnm.mapName = mapManager.getPreparedMap().getName();
+        bnm.mapExtraParams = extraParams != null ? extraParams.extraParams : null;
         bnm.gameStart = false;
         server.sendToAllTCP(bnm);
     }
@@ -314,8 +322,8 @@ public class ServerLobbyConnectionManager {
 
         server.sendToAllTCP(bnm);
 
-        /*server.removeListener(serverLobbyListener); TODO: THIS ?
-        serverPlayerListener = null;*/
+        server.removeListener(serverLobbyListener); // TODO: Restore the listeners after restoring later
+        serverPlayerListener = null;
     }
 
     public Player[] inflatePlayerList(MapManager mapManager) {
