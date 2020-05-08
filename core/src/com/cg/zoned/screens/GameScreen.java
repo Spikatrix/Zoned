@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -382,17 +383,40 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         return !gameManager.gameConnectionManager.isActive;
     }
 
-    public void playerDisconnected(final Connection connection) {
+    public void serverPlayerDisconnected(final Connection connection) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
                 ServerLobbyConnectionManager connectionManager = (ServerLobbyConnectionManager) lobbyConnectionManager;
                 int connIndex = connectionManager.getConnectionIndex(connection);
                 String playerName = ((Label) connectionManager.getPlayerItems().get(connIndex).findActor("name-label")).getText().toString();
+                connectionManager.getPlayerItems().removeIndex(connIndex);
 
+                gameManager.playerManager.stopPlayers();
+
+                gameManager.directionBufferManager.ignorePlayer();
+                gameManager.gameConnectionManager.sendPlayerDisconnectedBroadcast(playerName);
                 showPlayerDisconnectedDialog(playerName);
             }
         });
+    }
+
+    public void clientPlayerDisconnected(String playerName) {
+        ClientLobbyConnectionManager connectionManager = (ClientLobbyConnectionManager) lobbyConnectionManager;
+        int playerItemIndex = 0;
+        for (Table playerItem : connectionManager.getPlayerItems()) {
+            if (((Label) playerItem.findActor("name-label")).getText().toString().equals(playerName)) {
+                break;
+            }
+            playerItemIndex++;
+        }
+        connectionManager.getPlayerItems().removeIndex(playerItemIndex);
+
+        gameManager.playerManager.stopPlayers();
+
+        gameManager.directionBufferManager.ignorePlayer();
+        showPlayerDisconnectedDialog(playerName);
+
     }
 
     private void showPlayerDisconnectedDialog(String playerName) {

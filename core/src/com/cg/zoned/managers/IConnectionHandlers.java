@@ -8,5 +8,7 @@ public interface IConnectionHandlers {
 
     void clientUpdateDirections(BufferDirections bd, int returnTripTime);
 
-    void disconnect(Connection connection);
+    void serverDisconnect(Connection connection);
+
+    void clientDisconnect(Connection connection);
 }

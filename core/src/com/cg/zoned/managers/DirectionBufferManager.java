@@ -7,10 +7,12 @@ import java.util.Arrays;
 public class DirectionBufferManager {
     private Direction[] directionBuffer; // Used to store the directions of all players. Only when it is full will the game start
     private int directionBufferUsed;
+    private int ignoredPlayerCount;
 
     public DirectionBufferManager(int noOfPlayers) {
         directionBuffer = new Direction[noOfPlayers];
         directionBufferUsed = 0;
+        ignoredPlayerCount = 0;
     }
 
     public void updateDirection(Direction direction, int index) {
@@ -38,7 +40,12 @@ public class DirectionBufferManager {
     }
 
     public int getBufferUsedCount() {
-        return directionBufferUsed;
+        return directionBufferUsed + ignoredPlayerCount;
+    }
+
+    public void ignorePlayer() {
+        clearBuffer();
+        ignoredPlayerCount++;
     }
 
     public void clearBuffer() {

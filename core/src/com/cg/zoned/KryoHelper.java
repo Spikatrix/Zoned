@@ -5,6 +5,7 @@ import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
+import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.esotericsoftware.kryo.Kryo;
 
@@ -12,6 +13,7 @@ public class KryoHelper {
 
     public static void registerClasses(Kryo kryo) {
         kryo.register(BufferServerRejectedConnection.class);
+        kryo.register(BufferPlayerDisconnected.class);
         kryo.register(BufferClientConnect.class);
         kryo.register(BufferPlayerData.class);
         kryo.register(BufferDirections.class);

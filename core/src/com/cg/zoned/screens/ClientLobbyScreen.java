@@ -267,12 +267,6 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         startLocations.clear();
         this.mapManager = mapManager;
 
-        if (map != null) {
-            for (Player player : players) {
-                mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
-            }
-        }
-
         this.mapGrid = mapManager.getPreparedMapGrid();
         this.map = new com.cg.zoned.Map(this.mapGrid, 0);
         Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
@@ -290,7 +284,6 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         }
 
         for (Player player : players) {
-            player.setStartPos(mapManager.getPreparedStartPositions().first());
             updateMapColor(player, player.color, 0);
         }
 
@@ -326,7 +319,12 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     @Override
     public void updatePlayerDetails(int index, String color, String startPos) {
-        updateMapColor(players[index], color, startPos);
+        try {
+            updateMapColor(players[index], color, startPos);
+        } catch (NullPointerException e) {
+            // Not sure of the exact reason why this happens, but it's due to the map not being loaded yet
+            // Ignore it now, it'll probably get updated elsewhere
+        }
     }
 
     private void updateMapColor(Player player, String color, String startPos) {
@@ -338,7 +336,13 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     }
 
     private void updateMapColor(Player player, Color color, int startPosIndex) {
-        mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
+        boolean outOfBounds = false;
+        try {
+            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            outOfBounds = true;
+        }
+
         GridPoint2 prevLoc = new GridPoint2((int) player.position.x, (int) player.position.y);
         player.color = color;
 
@@ -348,10 +352,12 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             mapGrid[(int) player.position.y][(int) player.position.x].cellColor = player.color;
         }
 
-        for (Player p : players) {
-            if ((int) p.position.x == prevLoc.x && (int) p.position.y == prevLoc.y && p.color != Color.BLACK) {
-                mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
-                break;
+        if (!outOfBounds) {
+            for (Player p : players) {
+                if ((int) p.position.x == prevLoc.x && (int) p.position.y == prevLoc.y && p.color != Color.BLACK) {
+                    mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
+                    break;
+                }
             }
         }
     }

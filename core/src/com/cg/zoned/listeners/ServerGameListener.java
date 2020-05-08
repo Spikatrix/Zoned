@@ -28,7 +28,7 @@ public class ServerGameListener extends Listener {
 
     @Override
     public void disconnected(Connection connection) {
-        gameConnectionManager.disconnect(connection);
+        gameConnectionManager.serverDisconnect(connection);
         super.disconnected(connection);
     }
 }

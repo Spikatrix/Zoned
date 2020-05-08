@@ -1,6 +1,7 @@
 package com.cg.zoned.listeners;
 
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.managers.GameConnectionManager;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -18,6 +19,9 @@ public class ClientGameListener extends Listener {
             BufferDirections bd = (BufferDirections) object;
             connection.updateReturnTripTime();
             gameConnectionManager.clientUpdateDirections(bd, connection.getReturnTripTime());
+        } else if (object instanceof BufferPlayerDisconnected) {
+            BufferPlayerDisconnected bpd = (BufferPlayerDisconnected) object;
+            gameConnectionManager.clientPlayerDisconnected(bpd.playerName);
         }
 
         super.received(connection, object);
@@ -25,7 +29,7 @@ public class ClientGameListener extends Listener {
 
     @Override
     public void disconnected(Connection connection) {
-        gameConnectionManager.disconnect(connection);
+        gameConnectionManager.clientDisconnect(connection);
         super.disconnected(connection);
     }
 }

@@ -5,6 +5,7 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ClientGameListener;
 import com.cg.zoned.listeners.ServerGameListener;
@@ -169,10 +170,10 @@ public class GameConnectionManager implements IConnectionHandlers {
     }
 
     /**
-     * Called when the server/client disconnects
+     * Called in the server any of its clients disconnects
      */
     @Override
-    public void disconnect(final Connection connection) {
+    public void serverDisconnect(final Connection connection) {
         if (discardConnections.indexOf(connection, true) != -1) {
             discardConnections.removeValue(connection, true);
             return;
@@ -181,14 +182,34 @@ public class GameConnectionManager implements IConnectionHandlers {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                //if (client != null) {
-                gameManager.gameConnectionManager.close();
-                gameManager.endGame();
-                //} else { UNDER CONSTRUCTION
-                //    gameManager.playerDisconnected(connection);
-                //}
+                if (server != null) {
+                    gameManager.serverPlayerDisconnected(connection);
+                    sentResponse = false;
+                    Player player1 = gameManager.playerManager.getPlayers()[0];
+                    player1.updatedDirection = player1.direction = null;
+                } else {
+                    endGame();
+                }
             }
         });
+    }
+
+    /**
+     * Called in the client when the client disconnects
+     */
+    @Override
+    public void clientDisconnect(final Connection connection) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                endGame();
+            }
+        });
+    }
+
+    private void endGame() {
+        gameManager.gameConnectionManager.close();
+        gameManager.endGame();
     }
 
     /**
@@ -201,8 +222,21 @@ public class GameConnectionManager implements IConnectionHandlers {
         discardConnections.add(connection);
 
         BufferServerRejectedConnection bsrc = new BufferServerRejectedConnection();
-        bsrc.errorMsg = "Server is busy playing a match. Please try again later";
+        bsrc.errorMsg = "Server is busy playing a match.\nPlease try again later";
         connection.sendTCP(bsrc);
+    }
+
+    public void sendPlayerDisconnectedBroadcast(String playerName) {
+        BufferPlayerDisconnected bpd = new BufferPlayerDisconnected();
+        bpd.playerName = playerName;
+        server.sendToAllTCP(bpd);
+    }
+
+    public void clientPlayerDisconnected(String playerName) {
+        gameManager.clientPlayerDisconnected(playerName);
+        sentResponse = false;
+        Player player1 = gameManager.playerManager.getPlayers()[0];
+        player1.updatedDirection = player1.direction = null;
     }
 
     public int getPing() {
@@ -213,6 +247,7 @@ public class GameConnectionManager implements IConnectionHandlers {
         if (server != null) {
             server.close();
             server = null;
+            endGame();
         } else if (client != null) {
             client.close();
             client = null;
