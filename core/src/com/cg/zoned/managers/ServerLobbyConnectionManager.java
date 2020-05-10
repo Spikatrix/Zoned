@@ -1,17 +1,17 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.Player;
-import com.cg.zoned.PlayerColorHelper;
+import com.badlogic.gdx.utils.SnapshotArray;
+import com.cg.zoned.Constants;
+import com.cg.zoned.buffers.BufferGameStart;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ServerLobbyListener;
-import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
 import com.cg.zoned.ui.DropDownMenu;
 import com.esotericsoftware.kryonet.Connection;
@@ -26,41 +26,27 @@ public class ServerLobbyConnectionManager {
     private Array<Connection> playerConnections;
 
     /**
-     * If true, that player's name is already resolved; safe to send that player's info to clients
+     * If true, that client player's name is already resolved; safe to send that player's info to clients
      */
     private Array<Boolean> playerNameResolved;
 
     // Why not use playerNames for servers as well since clients already use them?
-    // Cause connections and  disconnections can't be handled using names as we get only the Connection object
-
-    /**
-     * Each row of the playerList which contains information about each player
-     */
-    private Array<Table> playerItems;
+    // Cause connections and disconnections can't be handled using names as we get only the Connection object
 
     private ServerPlayerListener serverPlayerListener; // This manager to screen
     private ServerLobbyListener serverLobbyListener; // Kryonet to this manager
 
-    private String currentUserName;
-    private MapManager mapManager;
-
     // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
 
-    public ServerLobbyConnectionManager(Server server, ServerPlayerListener serverPlayerListener, String currentUserName) {
+    public ServerLobbyConnectionManager(Server server, ServerPlayerListener serverPlayerListener) {
         playerConnections = new Array<>();
         playerNameResolved = new Array<>();
-        playerItems = new Array<>();
 
-        this.currentUserName = currentUserName;
         this.serverPlayerListener = serverPlayerListener;
-
         this.server = server;
     }
 
-    public void start(MapManager mapManager) {
-        this.mapManager = mapManager;
-
-        playerItems.add(serverPlayerListener.playerConnected(null));
+    public void start() {
         playerConnections.add(null);
         playerNameResolved.add(true);
 
@@ -69,47 +55,66 @@ public class ServerLobbyConnectionManager {
     }
 
     /**
-     * Called when the server receives client name information.
-     * <p>
-     * If the name is unique, it is added into {@link ServerLobbyConnectionManager#playerItems} and
-     * is displayed in the lobby screen. The server then broadcasts information about all connected
-     * clients to all of them.
+     * Called when the server detects a new client connection
      *
-     * @param connection The client connection from where the packet was received
-     * @param playerName The name of the client player
+     * @param connection The newly connected client connection
      */
-    public void receiveClientName(final Connection connection, final String playerName) {
+    public void clientConnected(final Connection connection) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                for (Table playerItem : playerItems) {
-                    String n = ((Label) playerItem.findActor("name-label")).getText().toString();
-
-                    if (n.equals(playerName)) {
-                        rejectConnection(connection, "Another player is using the same name\nPlease use a different name");
-                        return;
-                    }
+                final String clientIpAddress = connection.getRemoteAddressTCP().getAddress().getHostAddress();
+                Gdx.app.log(Constants.LOG_TAG, "Creating item for " + clientIpAddress);
+                if (serverPlayerListener != null) {
+                    serverPlayerListener.playerConnected(clientIpAddress);
+                    playerNameResolved.add(false);
+                    playerConnections.add(connection);
+                } else {
+                    rejectConnection(connection, "No listener configured in the host (server) for incoming clients");
                 }
-
-                int index = playerConnections.indexOf(connection, true);
-                Table playerItem = playerItems.get(index);
-                Label nameLabel = playerItem.findActor("name-label");
-                nameLabel.setText(playerName);
-                playerNameResolved.set(index, true);
-
-                MapExtraParams extraParams = mapManager.getPreparedMap().getExtraParams();
-
-                BufferNewMap bnm = new BufferNewMap(); // Send map details
-                bnm.mapName = mapManager.getPreparedMap().getName();
-                bnm.mapExtraParams = extraParams != null ? extraParams.extraParams : null;
-                bnm.gameStart = false;
-                connection.sendTCP(bnm);
-
-                broadcastPlayerInfo(-1);
             }
         });
     }
 
+    /**
+     * Called when the server receives client name information.
+     * <p>
+     * If the name is unique, the client connection is accepted and is displayed in the lobby
+     * screen. The server then broadcasts information about all connected clients to all of them.
+     *
+     * @param connection The client connection from where the packet was received
+     * @param clientName The name of the client player
+     */
+    public void receiveClientName(final Connection connection, final String clientName) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                int index = getConnectionIndex(connection);
+                if (index == -1) {
+                    rejectConnection(connection, "Server is in the process of initializing\nTry connecting again"); // Client came in too fast I guess...
+                    return;
+                }
+                serverPlayerListener.updatePlayerDetails(index, clientName);
+            }
+        });
+    }
+
+    /**
+     * Rejects the index'th client connection
+     *
+     * @param index            The index of the client to send a reject message
+     * @param rejectionMessage The rejection message on why the client was rejected
+     */
+    public void rejectConnection(int index, String rejectionMessage) {
+        rejectConnection(playerConnections.get(index), rejectionMessage);
+    }
+
+    /**
+     * Rejects the client connection
+     *
+     * @param connection       The client connection to reject
+     * @param rejectionMessage The rejection message on why the client was rejected
+     */
     private void rejectConnection(Connection connection, String rejectionMessage) {
         BufferServerRejectedConnection bsrc = new BufferServerRejectedConnection();
         bsrc.errorMsg = rejectionMessage;
@@ -122,7 +127,7 @@ public class ServerLobbyConnectionManager {
      * @param index Index of the player to broadcast
      *              -1 to broadcast information about all clients
      */
-    public void broadcastPlayerInfo(int index) {
+    public void broadcastPlayerInfo(SnapshotArray<Actor> playerItems, int index) {
         int size;
         if (index == -1) { // Broadcast all info
             int resolvedPlayerNameCount = 0;
@@ -148,30 +153,23 @@ public class ServerLobbyConnectionManager {
                 continue;
             }
 
+            Table playerItem;
             if (index == -1) {
-                bpd.nameStrings[i] = ((Label) this.playerItems.get(i).findActor("name-label")).getText().toString();
-                bpd.whoStrings[i] = ((Label) this.playerItems.get(i).findActor("who-label")).getText().toString();
-                bpd.readyStrings[i] = ((Label) this.playerItems.get(i).findActor("ready-label")).getText().toString();
-
-                if (i != 0) {
-                    bpd.colorStrings[i] = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
-                    bpd.startPosStrings[i] = ((Label) this.playerItems.get(i).findActor("startPos-label")).getText().toString();
-                } else {
-                    bpd.colorStrings[i] = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector")).getSelected();
-                    bpd.startPosStrings[i] = ((DropDownMenu) this.playerItems.get(i).findActor("startPos-selector")).getSelected();
-                }
+                playerItem = (Table) playerItems.get(i);
             } else {
-                bpd.nameStrings[0] = ((Label) this.playerItems.get(index).findActor("name-label")).getText().toString();
-                bpd.whoStrings[0] = ((Label) this.playerItems.get(index).findActor("who-label")).getText().toString();
-                bpd.readyStrings[0] = ((Label) this.playerItems.get(index).findActor("ready-label")).getText().toString();
+                playerItem = (Table) playerItems.get(index);
+            }
 
-                if (index != 0) {
-                    bpd.colorStrings[0] = ((Label) this.playerItems.get(index).findActor("color-label")).getText().toString();
-                    bpd.startPosStrings[0] = ((Label) this.playerItems.get(index).findActor("startPos-label")).getText().toString();
-                } else {
-                    bpd.colorStrings[0] = ((DropDownMenu) this.playerItems.get(index).findActor("color-selector")).getSelected();
-                    bpd.startPosStrings[0] = ((DropDownMenu) this.playerItems.get(index).findActor("startPos-selector")).getSelected();
-                }
+            bpd.nameStrings[i] = ((Label) playerItem.findActor("name-label")).getText().toString();
+            bpd.whoStrings[i] = ((Label) playerItem.findActor("who-label")).getText().toString();
+            bpd.readyStrings[i] = ((Label) playerItem.findActor("ready-label")).getText().toString();
+
+            if (index == 0 || (i == 0 && index == -1)) {
+                bpd.colorStrings[i] = ((DropDownMenu) playerItem.findActor("color-selector")).getSelected();
+                bpd.startPosStrings[i] = ((DropDownMenu) playerItem.findActor("startPos-selector")).getSelected();
+            } else {
+                bpd.colorStrings[i] = ((Label) playerItem.findActor("color-label")).getText().toString();
+                bpd.startPosStrings[i] = ((Label) playerItem.findActor("startPos-label")).getText().toString();
             }
         }
 
@@ -184,60 +182,22 @@ public class ServerLobbyConnectionManager {
     }
 
     /**
-     * Called when the server detects a new client connection
-     *
-     * @param connection The newly connected client connection
-     */
-    public void clientConnected(final Connection connection) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                final String clientIpAddress = connection.getRemoteAddressTCP().getAddress().getHostAddress();
-                if (serverPlayerListener != null) {
-                    playerItems.add(serverPlayerListener.playerConnected(clientIpAddress));
-                    playerNameResolved.add(false);
-                    playerConnections.add(connection);
-
-                } else {
-                    rejectConnection(connection, "No listener configured in the host (server) for incoming clients");
-                }
-            }
-        });
-    }
-
-    /**
      * Called when the server receives a change in a client's data.
      * This change is broadcasted to all connected clients so that they can update their UI accordingly
      *
      * @param connection Client's connection
      * @param name       Client's name
-     * @param who        TODO: Forgot this lol. "(Host)" or "(You)" or "(DEL)" string I think
+     * @param who        Client's who string. Not really used here tho so nvm.
      * @param ready      Client's ready or not ready status
      * @param color      Client's current color
      * @param startPos   Client's start position
      */
-    public void receiveClientData(final Connection connection, String name, String who, final String ready, final String color, final String startPos) {
+    public void receiveClientData(final Connection connection, final String name, final String who, final String ready, final String color, final String startPos) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
                 int index = getConnectionIndex(connection);
-                Table playerItem = playerItems.get(index);
-
-                // Only needs to set the ready and color labels as others will not be changed
-                Label readyLabel = playerItem.findActor("ready-label");
-                if (ready.equals("Ready")) {
-                    readyLabel.setColor(Color.GREEN);
-                } else {
-                    readyLabel.setColor(Color.RED);
-                }
-                readyLabel.setText(ready);
-
-                ((Label) playerItem.findActor("color-label")).setText(color);
-                ((Label) playerItem.findActor("startPos-label")).setText(startPos);
-
-                serverPlayerListener.updatePlayerDetails(index, color, startPos);
-
-                broadcastPlayerInfo(index);
+                serverPlayerListener.updatePlayerDetails(index, name, who, ready, color, startPos);
             }
         });
     }
@@ -257,48 +217,51 @@ public class ServerLobbyConnectionManager {
                     return; // Some error occurred or server is shutting down
                 }
 
-                ((Label) playerItems.get(index).findActor("who-label")).setText("(DEL)"); // Notify all clients to delete this player
-                broadcastPlayerInfo(index);
+                serverPlayerListener.playerDisconnected(index);
 
-                Table playerItem = playerItems.get(index);
-
-                playerItems.removeIndex(index);
                 playerNameResolved.removeIndex(index);
                 playerConnections.removeIndex(index);
 
-                serverPlayerListener.playerDisconnected(playerItem, index);
             }
         });
     }
 
-    public void mapChanged(Array<String> startPosLocations) {
-        for (Table playerItem : playerItems) {
-            Label startPosLabel = playerItem.findActor("startPos-label");
-            if (startPosLabel != null) {
-                startPosLabel.setText(startPosLocations.first());
-            } else {
-                DropDownMenu startPosSelector = playerItem.findActor("startPos-selector");
-                startPosSelector.setItems(startPosLocations);
-                startPosSelector.setSelectedIndex(0);
-            }
-        }
+    public void acceptPlayer(int playerIndex, MapManager mapManager) {
+        playerNameResolved.set(playerIndex, true);
+        sendMapDetails(playerIndex, mapManager);
+    }
 
+    /**
+     * Broadcasts new map details to clients
+     *
+     * @param playerIndex Client index to broadcast new map info. -1 if broadcast to all clients
+     * @param mapManager  MapManager object used to fetch map related info to send
+     */
+    public void sendMapDetails(int playerIndex, MapManager mapManager) {
         MapExtraParams extraParams = mapManager.getPreparedMap().getExtraParams();
 
+        // Send map details to the client
         BufferNewMap bnm = new BufferNewMap();
         bnm.mapName = mapManager.getPreparedMap().getName();
         bnm.mapExtraParams = extraParams != null ? extraParams.extraParams : null;
-        bnm.gameStart = false;
-        server.sendToAllTCP(bnm);
+
+        if (playerIndex > -1) {
+            Connection connection = playerConnections.get(playerIndex);
+            connection.sendTCP(bnm);
+        } else {
+            server.sendToAllTCP(bnm);
+        }
     }
 
-    public String validateServerData() {
+    public String validateServerData(SnapshotArray<Actor> playerItems) {
         if (server.getConnections().length < 1) {
             return "Insufficient players to start the match";
         }
 
         for (int i = 1; i < playerItems.size; i++) {
-            String ready = ((Label) playerItems.get(i).findActor("ready-label")).getText().toString();
+            Table playerItem = (Table) playerItems.get(i);
+
+            String ready = ((Label) playerItem.findActor("ready-label")).getText().toString();
             if (!ready.equals("Ready")) {
                 return "All players are not ready";
             }
@@ -308,73 +271,29 @@ public class ServerLobbyConnectionManager {
         return null;
     }
 
-    public void broadcastGameStart(MapManager mapManager) {
-        MapEntity preparedMap = mapManager.getPreparedMap();
+    public void broadcastGameStart() {
+        BufferGameStart bgs = new BufferGameStart();
+        server.sendToAllTCP(bgs);
 
-        BufferNewMap bnm = new BufferNewMap();
-        bnm.gameStart = true;
-        bnm.mapName = preparedMap.getName();
-        if (preparedMap.getExtraParams() != null) {
-            bnm.mapExtraParams = preparedMap.getExtraParams().extraParams;
-        } else {
-            bnm.mapExtraParams = null;
-        }
-
-        server.sendToAllTCP(bnm);
-
-        server.removeListener(serverLobbyListener); // TODO: Restore the listeners after restoring later
-        serverPlayerListener = null;
+        emptyBuffers();
     }
 
-    public Player[] inflatePlayerList(MapManager mapManager) {
-        int size = this.playerItems.size;
-
-        final Player[] players = new Player[size];
-        for (int i = 0; i < size; i++) {
-            String name = ((Label) this.playerItems.get(i).findActor("name-label")).getText().toString();
-            String position;
-            String color;
-            if (i == 0) {
-                color = ((DropDownMenu) this.playerItems.get(i).findActor("color-selector")).getSelected();
-                position = ((DropDownMenu) this.playerItems.get(i).findActor("startPos-selector")).getSelected();
-            } else {
-                color = ((Label) this.playerItems.get(i).findActor("color-label")).getText().toString();
-                position = ((Label) this.playerItems.get(i).findActor("startPos-label")).getText().toString();
-            }
-            players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
-
-            position = position.substring(0, position.lastIndexOf('(')).trim();
-            int startPosIndex = mapManager.getPreparedStartPosNames().indexOf(position, false);
-            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex));
-        }
-
-        return players;
-    }
-
-    public int getConnectionIndex(Connection connection) {
+    private int getConnectionIndex(Connection connection) {
         return playerConnections.indexOf(connection, true);
     }
 
-    public void closeConnection() {
-        playerItems.clear();
+    private void emptyBuffers() {
         playerConnections.clear();
 
-        server.close();
         server.removeListener(serverLobbyListener);
         serverLobbyListener = null;
+        serverPlayerListener = null;
     }
 
-    public void setServerPlayerListener(ServerPlayerListener serverPlayerListener) {
-        // Should not be null. Will cause NPE if null.
-        this.serverPlayerListener = serverPlayerListener;
-    }
+    public void closeConnection() {
+        emptyBuffers();
 
-    public Array<Table> getPlayerItems() { // This required? hmm
-        return playerItems;
-    }
-
-    public String getCurrentUserName() {
-        return currentUserName;
+        server.close();
     }
 
     public Server getServer() {
@@ -382,10 +301,12 @@ public class ServerLobbyConnectionManager {
     }
 
     public interface ServerPlayerListener {
-        Table playerConnected(String ipAddress);
+        void playerConnected(String ipAddress);
 
-        void playerDisconnected(Table playerItem, int itemIndex);
+        void updatePlayerDetails(int index, String clientName);
 
-        void updatePlayerDetails(int index, String color, String startPos);
+        void updatePlayerDetails(int index, String name, String who, String ready, String color, String startPos);
+
+        void playerDisconnected(int itemIndex);
     }
 }

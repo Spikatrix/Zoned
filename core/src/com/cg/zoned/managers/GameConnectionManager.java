@@ -11,6 +11,7 @@ import com.cg.zoned.listeners.ClientGameListener;
 import com.cg.zoned.listeners.ServerGameListener;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
 public class GameConnectionManager implements IConnectionHandlers {
@@ -20,6 +21,8 @@ public class GameConnectionManager implements IConnectionHandlers {
 
     private Server server;       // One of these two will be null (or both)
     private Client client;
+
+    private Listener connListener; // Kryonet to this manager
 
     private Array<Connection> discardConnections; // Used to store client connections that came in when in-game
 
@@ -43,9 +46,11 @@ public class GameConnectionManager implements IConnectionHandlers {
         this.discardConnections = new Array<>();
 
         if (server != null) {
-            server.addListener(new ServerGameListener(this));
+            connListener = new ServerGameListener(this);
+            server.addListener(connListener);
         } else if (client != null) {
-            client.addListener(new ClientGameListener(this));
+            connListener = new ClientGameListener(this);
+            client.addListener(connListener);
         }
     }
 
@@ -245,12 +250,19 @@ public class GameConnectionManager implements IConnectionHandlers {
 
     public void close() {
         if (server != null) {
+            server.removeListener(connListener);
             server.close();
+            connListener = null;
             server = null;
+
             endGame();
         } else if (client != null) {
+            client.removeListener(connListener);
             client.close();
+            connListener = null;
             client = null;
+
+            endGame();
         }
     }
 }

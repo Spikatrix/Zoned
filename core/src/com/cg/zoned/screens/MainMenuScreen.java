@@ -28,12 +28,12 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.cg.zoned.AnimatedDrawable;
 import com.cg.zoned.Constants;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.ui.AnimatedDrawable;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
@@ -93,6 +93,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                     public void run() {
                         roundedCornerBgColorTexture = new Texture(pixmap);
                         usedTextures.add(roundedCornerBgColorTexture);
+                        pixmap.dispose();
                     }
                 });
             }
@@ -223,12 +224,16 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 "Splitscreen\nMultiplayer",
                 "Local\nMultiplayer\n(WiFi)",
         };
-        final Screen[] screens = new Screen[]{
+        final Class[] screenClasses = new Class[]{
+                PlayerSetUpScreen.class,
+                HostJoinScreen.class,
+        };
+        /*final Screen[] screens = new Screen[]{
                 new PlayerSetUpScreen(game),
                 new HostJoinScreen(game),
-        };
+        };*/
 
-        if (screens.length != gameModeCount ||
+        if (screenClasses.length != gameModeCount ||
                 modeLabelStrings.length != gameModeCount ||
                 backgroundImageLocations.length != gameModeCount) {
             throw new IndexOutOfBoundsException("Game mode count does not match asset the count");
@@ -290,7 +295,11 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 public void clicked(InputEvent event, float x, float y) {
                     emitterLeft.allowCompletion();
                     emitterRight.allowCompletion();
-                    animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, screens[finalI]);
+                    try {
+                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) screenClasses[finalI].getConstructors()[0].newInstance(game));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             });
 

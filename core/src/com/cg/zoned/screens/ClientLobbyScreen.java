@@ -36,6 +36,10 @@ import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.InvalidMapCharacter;
+import com.cg.zoned.maps.InvalidMapDimensions;
+import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.NoStartPositionsFound;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -50,6 +54,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private Array<Texture> usedTextures = new Array<>();
 
     private ClientLobbyConnectionManager connectionManager;
+    private String clientName;
 
     private FocusableStage stage;
     private Viewport viewport;
@@ -66,6 +71,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private Player[] players;
 
     private Table playerList;
+
     private Label mapLabel;
     private Array<String> startLocations;
 
@@ -78,7 +84,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
         startLocations = new Array<>();
-        this.connectionManager = new ClientLobbyConnectionManager(client, this, name);
+        this.clientName = name;
+        this.connectionManager = new ClientLobbyConnectionManager(client, this);
     }
 
     @Override
@@ -87,11 +94,13 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         setUpMap();
         setUpBackButton();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
-        connectionManager.start();
+
+        addPlayer(null, null, null, null, null);
+        connectionManager.start(clientName);
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
-                connectionManager.sendClientNameToServer();
+                connectionManager.sendClientNameToServer(clientName);
                 animationManager.setAnimationListener(null);
             }
         });
@@ -126,7 +135,28 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         readyButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                connectionManager.toggleReadyState(readyButton);
+                Table playerItem = (Table) playerList.getChild(0);
+                Label readyLabel = playerItem.findActor("ready-label");
+                DropDownMenu colorSelector = playerItem.findActor("color-selector");
+                DropDownMenu startPosSelector = playerItem.findActor("startPos-selector");
+
+                if (readyLabel.getText().toString().equals("Not ready")) {
+                    readyLabel.setColor(Color.GREEN);
+                    readyLabel.setText("Ready");
+                    readyButton.setText("Unready");
+
+                    //colorSelector.setDisabled(true); Why is there literally no visual indication for being disabled :/
+                    //startPosSelector.setDisabled(true);
+                } else {
+                    readyLabel.setColor(Color.RED);
+                    readyLabel.setText("Not ready");
+                    readyButton.setText("Ready up");
+
+                    //colorSelector.setDisabled(false);
+                    //startPosSelector.setDisabled(false);
+                }
+
+                connectionManager.broadcastClientInfo((Table) playerList.getChild(0));
             }
         });
         clientLobbyTable.add(readyButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
@@ -159,15 +189,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         });
     }
 
-    @Override
-    public Table addPlayer(String name, String who, String ready, String color, String startPos) {
+    private void addPlayer(String name, String who, String ready, String color, String startPos) {
         Table playerItem = new Table();
         playerItem.pad(10 * game.getScaleFactor());
 
         Label nameLabel;
         Label whoLabel;
         if (name == null) {
-            nameLabel = new Label(connectionManager.getCurrentUserName(), game.skin);
+            nameLabel = new Label(clientName, game.skin);
             whoLabel = new Label("(You)", game.skin, "themed");
         } else {
             nameLabel = new Label(name, game.skin);
@@ -201,10 +230,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
+                    if (mapGrid == null) { // Did not receive map info from the server. Server likely died.
+                        return;
+                    }
+
                     players[0].color = PlayerColorHelper.getColorFromString(colorSelector.getSelected());
                     mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor = players[0].color;
 
-                    connectionManager.broadcastClientInfo();
+                    connectionManager.broadcastClientInfo((Table) playerList.getChild(0));
                 }
             });
             playerItem.add(colorSelector);
@@ -217,7 +250,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
                 public void changed(ChangeEvent event, Actor actor) {
                     updateMapColor(players[0], players[0].color, startPosSelector.getSelectedIndex());
 
-                    connectionManager.broadcastClientInfo();
+                    connectionManager.broadcastClientInfo((Table) playerList.getChild(0));
                 }
             });
             playerItem.add(startPosSelector);
@@ -240,8 +273,32 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         playerList.row();
 
         addNewPlayerIntoMap(name, color, startPos);
+    }
 
-        return playerItem;
+    @Override
+    public void updatePlayers(Array<String> playerNames, String[] nameStrings, String[] whoStrings, String[] readyStrings, String[] colorStrings, String[] startPosStrings) {
+        for (int i = 0; i < nameStrings.length; i++) {
+            if (nameStrings[i].equals(clientName)) { // No need to update information for this client itself
+                continue;
+            }
+
+            int index = playerNames.indexOf(nameStrings[i], false);
+            if (whoStrings[i].equals("(DEL)")) {
+                if (index != -1) { // Can be -1 too
+                    playerNames.removeIndex(index);
+                    removePlayer(index);
+                }
+
+                continue;
+            }
+
+            if (index != -1) {
+                updatePlayer(nameStrings[i], whoStrings[i], readyStrings[i], colorStrings[i], startPosStrings[i], index);
+            } else {
+                addPlayer(nameStrings[i], whoStrings[i], readyStrings[i], colorStrings[i], startPosStrings[i]);
+                playerNames.add(nameStrings[i]);
+            }
+        }
     }
 
     private void addNewPlayerIntoMap(String name, String color, String startPos) {
@@ -256,16 +313,20 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         }
         this.players[index] = new Player(
                 playerColor,
-                name == null ? connectionManager.getCurrentUserName() : name);
+                name == null ? clientName : name);
         if (map != null) {
             updateMapColor(this.players[index], color, startPos);
         }
     }
 
     @Override
-    public void mapChanged(MapManager mapManager) {
+    public void mapChanged(String mapName, int[] mapExtraParams) {
         startLocations.clear();
-        this.mapManager = mapManager;
+
+        MapManager mapManager = this.mapManager;
+        if (!loadNewMap(mapManager, mapName, mapExtraParams)) {
+            return;
+        }
 
         this.mapGrid = mapManager.getPreparedMapGrid();
         this.map = new com.cg.zoned.Map(this.mapGrid, 0);
@@ -287,12 +348,51 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             updateMapColor(player, player.color, 0);
         }
 
-        connectionManager.mapChanged(startLocations);
+        resetStartPosLabels(startLocations);
         this.mapLabel.setText(mapManager.getPreparedMap().getName());
     }
 
+    private void resetStartPosLabels(Array<String> startLocations) {
+        for (Actor playerItemActor : playerList.getChildren()) {
+            Table playerItem = (Table) playerItemActor;
+            Label startPosLabel = playerItem.findActor("startPos-label");
+            if (startPosLabel != null) {
+                startPosLabel.setText(startLocations.first());
+            } else {
+                DropDownMenu startPosSelector = playerItem.findActor("startPos-selector");
+                startPosSelector.setItems(startLocations);
+                startPosSelector.setSelectedIndex(0);
+            }
+        }
+    }
+
+    private boolean loadNewMap(MapManager mapManager, String mapName, int[] mapExtraParams) {
+        MapEntity map = mapManager.getMap(mapName);
+        if (map == null) {
+            // Should never happen cause server loads a valid internal map before sending it to all the clients
+            displayServerError("Unknown map received: '" + mapName + "'");
+            return false;
+        }
+
+        if (mapExtraParams != null) {
+            map.getExtraParams().extraParams = mapExtraParams;
+            map.applyExtraParams();
+        }
+
+        try {
+            mapManager.prepareMap(map);
+        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
+            // Should never happen cause the server does this check before sending to all the clients
+            e.printStackTrace();
+            displayServerError("Error: " + e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
     @Override
-    public void displayError(String errorMsg) {
+    public void displayServerError(String errorMsg) {
         final Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("OK");
 
@@ -301,14 +401,65 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
                     public void dialogResult(String buttonText) {
-                        connectionManager.closeConnection();
+                        disconnected();
                     }
                 }, game.skin);
     }
 
+    private void updatePlayer(String name, String who, String ready, String color, String startPos, int index) {
+        Table playerItem = ((Table) this.playerList.getChild(index));
+        ((Label) playerItem.findActor("name-label")).setText(name);
+
+        if (who.endsWith("(Host, You)")) {
+            who = who.substring(0, who.lastIndexOf(',')) + ')'; // Replace with "(Host)"
+        }
+        ((Label) playerItem.findActor("who-label")).setText(who);
+
+        Label readyLabel = playerItem.findActor("ready-label");
+        if (ready.equals("Ready")) {
+            readyLabel.setColor(Color.GREEN);
+        } else {
+            readyLabel.setColor(Color.RED);
+        }
+        readyLabel.setText(ready);
+
+        ((Label) playerItem.findActor("color-label")).setText(color);
+        ((Label) playerItem.findActor("startPos-label")).setText(startPos);
+
+        updatePlayerDetails(index, color, startPos);
+    }
+
+    private Player[] inflatePlayerList() {
+        int size = playerList.getChildren().size;
+
+        final Player[] players = new Player[size];
+        for (int i = 0; i < size; i++) {
+            Table playerItem = ((Table) this.playerList.getChild(i));
+
+            String name = ((Label) playerItem.findActor("name-label")).getText().toString();
+            String position;
+            String color;
+            if (i == 0) {
+                color = ((DropDownMenu) playerItem.findActor("color-selector")).getSelected();
+                position = ((DropDownMenu) playerItem.findActor("startPos-selector")).getSelected();
+            } else {
+                color = ((Label) playerItem.findActor("color-label")).getText().toString();
+                position = ((Label) playerItem.findActor("startPos-label")).getText().toString();
+            }
+            players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
+
+            position = position.substring(0, position.lastIndexOf('(')).trim();
+            int startPosIndex = mapManager.getPreparedStartPosNames().indexOf(position, false);
+            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex));
+        }
+
+        return players;
+    }
+
     @Override
-    public void startGame(final MapManager mapManager) {
-        final Player[] players = connectionManager.inflatePlayerList(mapManager);
+    public void startGame() {
+        final Player[] players = inflatePlayerList();
+        clearMapGrid();
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
@@ -317,13 +468,18 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         });
     }
 
-    @Override
-    public void updatePlayerDetails(int index, String color, String startPos) {
+    private void clearMapGrid() {
+        for (Player player : players) {
+            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
+        }
+    }
+
+    private void updatePlayerDetails(int index, String color, String startPos) {
         try {
             updateMapColor(players[index], color, startPos);
         } catch (NullPointerException e) {
-            // Not sure of the exact reason why this happens, but it's due to the map not being loaded yet
-            // Ignore it now, it'll probably get updated elsewhere
+            // Map has not been loaded yet
+            // Ignore it now, it'll probably get loaded and updated elsewhere
         }
     }
 
@@ -352,7 +508,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             mapGrid[(int) player.position.y][(int) player.position.x].cellColor = player.color;
         }
 
-        if (!outOfBounds) {
+        if (!outOfBounds) { // Huh? Excuse me, lint? Always true? Nope.
             for (Player p : players) {
                 if ((int) p.position.x == prevLoc.x && (int) p.position.y == prevLoc.y && p.color != Color.BLACK) {
                     mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
@@ -362,9 +518,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         }
     }
 
-    @Override
-    public void removePlayer(Table playerItem, int index) {
-        playerList.removeActor(playerItem);
+    private void removePlayer(int index) {
+        playerList.removeActor(playerList.getChild(index));
 
         updateMapColor(players[index], Color.BLACK, -1);
 
@@ -383,8 +538,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     @Override
     public void disconnected() {
-        connectionManager.closeConnection();
         playerList.clear();
+        connectionManager.closeConnection();
 
         Gdx.app.postRunnable(new Runnable() {
             @Override

@@ -1,4 +1,4 @@
-package com.cg.zoned;
+package com.cg.zoned.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Animation;

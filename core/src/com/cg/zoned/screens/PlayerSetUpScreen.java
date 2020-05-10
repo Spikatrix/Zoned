@@ -254,6 +254,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
+        renderer.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

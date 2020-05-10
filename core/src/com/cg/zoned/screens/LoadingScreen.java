@@ -49,6 +49,7 @@ public class LoadingScreen extends ScreenAdapter {
     @Override
     public void show() {
         assetManager = new AssetManager();
+        game.setAssetManager(assetManager); // For disposing
 
         stage = new Stage(new ScreenViewport());
         progressBarSkin = createProgressBarSkin();
@@ -92,8 +93,8 @@ public class LoadingScreen extends ScreenAdapter {
 
     private void generateCustomFont(String fontName, Constants.FONT_MANAGER fontManager) {
         FreetypeFontLoader.FreeTypeFontLoaderParameter parameter = new FreetypeFontLoader.FreeTypeFontLoaderParameter();
-        parameter.fontFileName = fontName;
 
+        parameter.fontFileName = fontName;
         parameter.fontParameters.size = (int) (fontManager.getSize() * game.getScaleFactor());
         //Gdx.app.log(Constants.LOG_TAG, "Screen density: " + Gdx.graphics.getDensity());
 
@@ -157,7 +158,7 @@ public class LoadingScreen extends ScreenAdapter {
     @Override
     public void dispose() {
         stage.dispose();
-        //assetManager.dispose(); Will be auto-disposed on game exit I guess?
+        progressBarSkin.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

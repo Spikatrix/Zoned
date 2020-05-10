@@ -22,6 +22,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.SnapshotArray;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -51,6 +52,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     private Array<Texture> usedTextures = new Array<>();
 
     private ServerLobbyConnectionManager connectionManager;
+    private String serverName;
 
     private FocusableStage stage;
     private Viewport viewport;
@@ -78,7 +80,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
         startLocations = new Array<>();
-        this.connectionManager = new ServerLobbyConnectionManager(server, this, name);
+        this.serverName = name;
+        this.connectionManager = new ServerLobbyConnectionManager(server, this);
     }
 
     @Override
@@ -87,7 +90,10 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         setUpMap();
         setUpBackButton();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
-        connectionManager.start(mapSelector.getMapManager());
+
+        playerConnected(null);
+        connectionManager.start();
+
         animationManager.fadeInStage(stage);
     }
 
@@ -158,7 +164,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if (mapSelector.loadSelectedMap()) {
-                    String errorMsg = connectionManager.validateServerData();
+                    String errorMsg = connectionManager.validateServerData(playerList.getChildren());
                     if (errorMsg != null) {
                         Array<String> dialogButtonTexts = new Array<>();
                         dialogButtonTexts.add("OK");
@@ -170,7 +176,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                     }
 
                     MapManager mapManager = mapSelector.getMapManager();
-                    connectionManager.broadcastGameStart(mapManager);
+                    connectionManager.broadcastGameStart();
                     startGame(mapManager);
                 }
             }
@@ -210,14 +216,14 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     }
 
     @Override
-    public Table playerConnected(String ipAddress) {
+    public void playerConnected(String ipAddress) {
         Table playerItem = new Table();
         playerItem.pad(10 * game.getScaleFactor());
 
         Label name;
         Label who;
         if (ipAddress == null) {
-            name = new Label(connectionManager.getCurrentUserName(), game.skin);
+            name = new Label(serverName, game.skin);
             who = new Label("(Host, You)", game.skin, "themed");
         } else {
             name = new Label(ipAddress, game.skin);
@@ -246,7 +252,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                     players[0].color = PlayerColorHelper.getColorFromString(colorSelector.getSelected());
                     mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor = players[0].color;
 
-                    connectionManager.broadcastPlayerInfo(0);
+                    connectionManager.broadcastPlayerInfo(playerList.getChildren(), 0);
                 }
             });
             playerItem.add(colorSelector);
@@ -264,7 +270,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                     public void changed(ChangeEvent event, Actor actor) {
                         updateMapColor(players[0], players[0].color, startPosSelector.getSelectedIndex());
 
-                        connectionManager.broadcastPlayerInfo(0);
+                        connectionManager.broadcastPlayerInfo(playerList.getChildren(), 0);
                     }
                 });
                 playerItem.add(startPosSelector); // idk why .expandX on stuff added to playerItem doesn't do anything
@@ -289,7 +295,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
         addNewPlayerIntoMap(ipAddress);
 
-        return playerItem;
+        Gdx.app.log(Constants.LOG_TAG, "Done with " + name);
     }
 
     private void addNewPlayerIntoMap(String ipAddress) {
@@ -298,9 +304,50 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
         this.players[index] = new Player(
                 PlayerColorHelper.getColorFromString(Constants.PLAYER_COLORS.keySet().iterator().next()),
-                ipAddress == null ? connectionManager.getCurrentUserName() : ipAddress);
+                ipAddress == null ? serverName : ipAddress);
         this.players[index].setStartPos(mapSelector.getMapManager().getPreparedStartPositions().first());
         this.mapGrid[(int) players[index].position.y][(int) players[index].position.x].cellColor = players[index].color;
+    }
+
+    public void updatePlayerDetails(int playerIndex, String clientName) {
+        for (Actor playerItemActor : playerList.getChildren()) {
+            Table playerItem = (Table) playerItemActor;
+
+            String name = ((Label) playerItem.findActor("name-label")).getText().toString();
+
+            if (clientName.equals(name)) {
+                connectionManager.rejectConnection(playerIndex, "Another player is using the same name\nPlease use a different name");
+                return;
+            }
+        }
+
+        Table playerItem = (Table) playerList.getChild(playerIndex);
+        Label nameLabel = playerItem.findActor("name-label");
+        nameLabel.setText(clientName);
+
+        connectionManager.acceptPlayer(playerIndex, mapSelector.getMapManager());
+        connectionManager.broadcastPlayerInfo(playerList.getChildren(), -1); // Send info about the new player to other clients and vice-versa
+    }
+
+    @Override
+    public void updatePlayerDetails(int playerIndex, String name, String who, String ready, String color, String startPos) {
+        Table playerItem = (Table) playerList.getChild(playerIndex);
+
+        // Only needs to set the ready and color labels as others will not be changed
+        Label readyLabel = playerItem.findActor("ready-label");
+        if (ready.equals("Ready")) {
+            readyLabel.setColor(Color.GREEN);
+        } else {
+            readyLabel.setColor(Color.RED);
+        }
+        readyLabel.setText(ready);
+
+        ((Label) playerItem.findActor("color-label")).setText(color);
+        ((Label) playerItem.findActor("startPos-label")).setText(startPos);
+
+        connectionManager.broadcastPlayerInfo(playerList.getChildren(), playerIndex);
+
+        updateMapColor(players[playerIndex], color, startPos);
     }
 
     private void repopulateMapStartPosLocations() {
@@ -322,17 +369,64 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             startLocations.add(startPosName);
         }
 
-        connectionManager.mapChanged(startLocations);
+        mapChanged(startLocations);
+    }
+
+    private void mapChanged(Array<String> startLocations) {
+        for (Actor playerItemActor : playerList.getChildren()) {
+            Table playerItem = (Table) playerItemActor;
+
+            Label startPosLabel = playerItem.findActor("startPos-label");
+            if (startPosLabel != null) {
+                startPosLabel.setText(startLocations.first());
+            } else {
+                DropDownMenu startPosSelector = playerItem.findActor("startPos-selector");
+                startPosSelector.setItems(startLocations);
+                startPosSelector.setSelectedIndex(0);
+            }
+        }
+
+        connectionManager.sendMapDetails(-1, mapSelector.getMapManager());
     }
 
     private void startGame(MapManager mapManager) {
-        Player[] players = connectionManager.inflatePlayerList(mapManager);
+        Player[] players = inflatePlayerList(mapManager);
+        clearMapGrid();
         animationManager.fadeOutStage(stage, this, new GameScreen(game, mapManager, players, connectionManager));
     }
 
-    @Override
-    public void updatePlayerDetails(int index, String color, String startPos) {
-        updateMapColor(players[index], color, startPos);
+    private Player[] inflatePlayerList(MapManager mapManager) {
+        SnapshotArray<Actor> playerItemArray = playerList.getChildren();
+        int size = playerItemArray.size;
+
+        final Player[] players = new Player[size];
+        for (int i = 0; i < size; i++) {
+            Table playerItem = (Table) playerItemArray.get(i);
+
+            String name = ((Label) playerItem.findActor("name-label")).getText().toString();
+            String position;
+            String color;
+            if (i == 0) {
+                color = ((DropDownMenu) playerItem.findActor("color-selector")).getSelected();
+                position = ((DropDownMenu) playerItem.findActor("startPos-selector")).getSelected();
+            } else {
+                color = ((Label) playerItem.findActor("color-label")).getText().toString();
+                position = ((Label) playerItem.findActor("startPos-label")).getText().toString();
+            }
+            players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
+
+            position = position.substring(0, position.lastIndexOf('(')).trim();
+            int startPosIndex = mapManager.getPreparedStartPosNames().indexOf(position, false);
+            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex));
+        }
+
+        return players;
+    }
+
+    private void clearMapGrid() {
+        for (Player player : players) {
+            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
+        }
     }
 
     private void updateMapColor(Player player, String color, String startPos) {
@@ -371,9 +465,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     }
 
     @Override
-    public void playerDisconnected(Table playerItem, int index) {
-        playerList.removeActor(playerItem);
-
+    public void playerDisconnected(int index) {
         updateMapColor(players[index], Color.BLACK, -1);
 
         Player[] ps = new Player[players.length - 1];
@@ -387,6 +479,12 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         }
 
         this.players = ps;
+
+        Table playerItem = (Table) playerList.getChild(index);
+        ((Label) playerItem.findActor("who-label")).setText("(DEL)"); // Notify all clients to delete this player
+        connectionManager.broadcastPlayerInfo(playerList.getChildren(), index);
+
+        playerList.removeActor(playerItem);
     }
 
     @Override

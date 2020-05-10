@@ -14,8 +14,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -52,7 +50,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private ShapeRenderer renderer;
     private Color[] dividerLeftColor, dividerRightColor;
 
-    private boolean gameComplete = false;
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
     private boolean gameCompleteFadeOutDone = false;
 
@@ -68,20 +65,16 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
-    private Object lobbyConnectionManager;
-
     public GameScreen(final Zoned game, MapManager mapManager, Player[] players) {
         this(game, mapManager, players, null, null);
     }
 
     public GameScreen(final Zoned game, MapManager mapManager, Player[] players, ServerLobbyConnectionManager connectionManager) {
         this(game, mapManager, players, connectionManager.getServer(), null);
-        this.lobbyConnectionManager = connectionManager;
     }
 
     public GameScreen(final Zoned game, MapManager mapManager, Player[] players, ClientLobbyConnectionManager connectionManager) {
         this(game, mapManager, players, null, connectionManager.getClient());
-        this.lobbyConnectionManager = connectionManager;
     }
 
     private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
@@ -205,7 +198,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
         currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
 
-        if (!gameComplete) {
+        if (!gameManager.gameOver) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
                 gameManager.gameConnectionManager.serverClientCommunicate();
             } else {                                // We're playing on the same device (Splitscreen)
@@ -235,19 +228,19 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             drawViewportDividers();
         }
 
-        if (!gameComplete) {
+        if (!gameManager.gameOver) {
             gameManager.playerManager.renderPlayerControlPrompt(renderer, delta);
         }
 
         scoreBars.render(renderer, gameManager.playerManager.getPlayers(), delta);
 
-        if (!gameComplete && map.gameComplete(gameManager.playerManager.getPlayers())) {
+        if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getPlayers())) {
             gameManager.directionBufferManager.clearBuffer();
             gameManager.playerManager.stopPlayers();
-            gameComplete = true;
+            gameManager.gameOver = true;
         }
 
-        if (gameComplete) {
+        if (gameManager.gameOver) {
             fadeOutScreen(delta);
         }
 
@@ -387,10 +380,12 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                ServerLobbyConnectionManager connectionManager = (ServerLobbyConnectionManager) lobbyConnectionManager;
-                int connIndex = connectionManager.getConnectionIndex(connection);
-                String playerName = ((Label) connectionManager.getPlayerItems().get(connIndex).findActor("name-label")).getText().toString();
-                connectionManager.getPlayerItems().removeIndex(connIndex);
+                if (gameManager.gameOver) {
+                    return;
+                }
+
+                int connIndex = connection.getID();
+                String playerName = gameManager.playerManager.getPlayer(connIndex).name;
 
                 gameManager.playerManager.stopPlayers();
 
@@ -402,18 +397,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     public void clientPlayerDisconnected(String playerName) {
-        ClientLobbyConnectionManager connectionManager = (ClientLobbyConnectionManager) lobbyConnectionManager;
-        int playerItemIndex = 0;
-        for (Table playerItem : connectionManager.getPlayerItems()) {
-            if (((Label) playerItem.findActor("name-label")).getText().toString().equals(playerName)) {
-                break;
-            }
-            playerItemIndex++;
-        }
-        connectionManager.getPlayerItems().removeIndex(playerItemIndex);
-
         gameManager.playerManager.stopPlayers();
-
         gameManager.directionBufferManager.ignorePlayer();
         showPlayerDisconnectedDialog(playerName);
 
@@ -432,7 +416,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                if (!gameComplete) {
+                if (!gameManager.gameOver) {
                     gameManager.playerManager.stopPlayers();
                     gameManager.directionBufferManager.clearBuffer();
                     showDisconnectionDialog();
@@ -451,6 +435,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
+        fullScreenStage.dispose();
         renderer.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
