@@ -89,19 +89,22 @@ public class UIButtonManager {
             button = new HoverImageButton(new TextureRegionDrawable(buttonImageTexture1),
                     new TextureRegionDrawable(buttonImageTexture2));
         }
+
+        float buttonWidth = 64f;
+        float buttonHeight = 64f;
+
         Image buttonImage = button.getImage();
-        buttonImage.setOrigin(buttonImage.getPrefWidth() / 2, buttonImage.getPrefHeight() / 2);
+        buttonImage.setOrigin(buttonWidth * scaleFactor / 2, buttonHeight * scaleFactor / 2);
         buttonImage.rotateBy(rotateDegrees);
-        buttonImage.setScale(scaleFactor);
         button.setNormalAlpha(normalAlpha);
         button.setHoverAlpha(hoverAlpha);
         button.setClickAlpha(clickAlpha);
 
         table.add(button)
-                .padLeft(24f * scaleFactor).padRight(24f * scaleFactor)
+                .padLeft(24f).padRight(24f)
                 .padTop(paddingTop * scaleFactor)
-                .width(buttonImage.getPrefWidth() * scaleFactor)
-                .height(buttonImage.getPrefHeight() * scaleFactor);
+                .width(buttonWidth * scaleFactor)
+                .height(buttonHeight * scaleFactor);
         table.row();
 
         stage.addActor(table);

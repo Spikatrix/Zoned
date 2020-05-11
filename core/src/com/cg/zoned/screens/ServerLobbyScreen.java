@@ -294,8 +294,6 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         playerList.row();
 
         addNewPlayerIntoMap(ipAddress);
-
-        Gdx.app.log(Constants.LOG_TAG, "Done with " + name);
     }
 
     private void addNewPlayerIntoMap(String ipAddress) {

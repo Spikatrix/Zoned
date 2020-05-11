@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -42,6 +43,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private AnimationManager animationManager;
     private boolean showFPSCounter;
     private BitmapFont font;
+    private ShapeRenderer renderer;
 
     private ParticleEffect trailEffect;
 
@@ -57,6 +59,8 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.renderer = new ShapeRenderer();
+        this.renderer.setAutoShapeType(true);
 
         getVictoryStrings(playerManager, rows, cols, wallCount);
     }
@@ -200,6 +204,11 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        renderer.setProjectionMatrix(viewport.getCamera().combined);
+
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        renderer.end();
+
         viewport.apply(true);
 
         stage.getBatch().begin();
@@ -212,6 +221,26 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
         stage.draw();
         stage.act(delta);
+    }
+
+    /**
+     * Draws a rectangle with rounded corners of the given radius.
+     */
+    public void roundedRect(float x, float y, float width, float height, float radius) {
+        // Central rectangle
+        renderer.rect(x + radius, y + radius, width - 2 * radius, height - 2 * radius);
+
+        // Four side rectangles, in clockwise order
+        renderer.rect(x + radius, y, width - 2 * radius, radius);
+        renderer.rect(x + width - radius, y + radius, radius, height - 2 * radius);
+        renderer.rect(x + radius, y + height - radius, width - 2 * radius, radius);
+        renderer.rect(x, y + radius, radius, height - 2 * radius);
+
+        // Four arches, clockwise too
+        renderer.arc(x + radius, y + radius, radius, 180f, 90f);
+        renderer.arc(x + width - radius, y + radius, radius, 270f, 90f);
+        renderer.arc(x + width - radius, y + height - radius, radius, 0f, 90f);
+        renderer.arc(x + radius, y + height - radius, radius, 90f, 90f);
     }
 
     @Override

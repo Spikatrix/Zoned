@@ -154,4 +154,12 @@ public class Spinner extends Table {
     public TextButton getRightButton() {
         return rightButton;
     }
+
+    public float getSpinnerHeight() {
+        return scrollPaneHeight;
+    }
+
+    public float getSpinnerWidth() {
+        return scrollPaneWidth;
+    }
 }

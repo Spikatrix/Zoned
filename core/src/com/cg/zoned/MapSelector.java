@@ -84,11 +84,12 @@ public class MapSelector {
             if (usedTextures != null) {
                 usedTextures.add(texture);
             }
+
             HoverImageButton hoverImageButton = new HoverImageButton(new TextureRegionDrawable(texture));
             hoverImageButton.getImage().setScaling(Scaling.fit);
             innerTable.add(hoverImageButton)
-                    .width(hoverImageButton.getPrefWidth() * .6f * scaleFactor)
-                    .height(hoverImageButton.getPrefHeight() * 0.6f * scaleFactor);
+                    .width(mapSpinner.getSpinnerHeight() / 3)
+                    .height(mapSpinner.getSpinnerHeight() / 3);
             stack.add(innerTable);
 
             hoverImageButton.addListener(new ClickListener() {

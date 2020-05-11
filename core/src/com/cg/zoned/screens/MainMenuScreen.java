@@ -158,7 +158,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private HoverImageButton setUpAnimatedPlayButton(Table mainTable) {
         Texture playSheet = new Texture(Gdx.files.internal("icons/ui_icons/ic_play_sheet.png"));
         usedTextures.add(playSheet);
-        int rowCount = 11, colCount = 3;
+        int rowCount = 6, colCount = 5;
 
         TextureRegion[][] tmp = TextureRegion.split(playSheet,
                 playSheet.getWidth() / colCount,
@@ -172,12 +172,13 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        Animation playButtonAnimation = new Animation<>(1 / 20f, playFrames);
+        Animation playButtonAnimation = new Animation<>(1 / 15f, playFrames);
 
-        final HoverImageButton playButton = new HoverImageButton(new AnimatedDrawable(playButtonAnimation));
-        playButton.setOrigin((playButton.getPrefWidth() * game.getScaleFactor()) / 2, (playButton.getPrefHeight() * game.getScaleFactor()) / 2);
+        float buttonWidth = 144f;
+        float buttonHeight = 144f;
+
+        final HoverImageButton playButton = new HoverImageButton(new AnimatedDrawable(playButtonAnimation, buttonWidth, buttonHeight, game.getScaleFactor()));
         playButton.setTransform(true);
-        playButton.setScale(game.getScaleFactor());
         playButton.setHoverAlpha(.75f);
         playButton.setClickAlpha(.6f);
         playButton.addListener(new ClickListener() {
@@ -196,8 +197,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             }
         });
         mainTable.add(playButton).pad(10f * game.getScaleFactor())
-                .width(playButton.getPrefWidth() * game.getScaleFactor())
-                .height(playButton.getPrefHeight() * game.getScaleFactor());
+                .width(buttonWidth * game.getScaleFactor())
+                .height(buttonHeight * game.getScaleFactor());
         mainTable.row();
 
         return playButton;
