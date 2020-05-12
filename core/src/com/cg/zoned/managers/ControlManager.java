@@ -64,8 +64,8 @@ public class ControlManager {
             controlImages[i] = new Image(controlImageTexture);
             controlImages[i].setScaling(Scaling.fit);
             controlImages[i].setOrigin(controlImages[i].getWidth() / 2, controlImages[i].getHeight() / 2);
-            if (splitScreenCount > 1 && Gdx.app.getType() == Application.ApplicationType.Android) {
-                if (i < splitScreenCount / 2) {
+            if (splitScreenCount == 2 && Gdx.app.getType() == Application.ApplicationType.Android) {
+                if (i == 0) {
                     controlImages[i].setRotation(-90f);
                 } else {
                     controlImages[i].setRotation(90f);

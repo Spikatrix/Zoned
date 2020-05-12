@@ -183,8 +183,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        //TODO: Draw cool background, bloom and particle effects (Maybe...)
-
         int highscore = 0;
         for (TeamData teamData : gameManager.playerManager.getTeamData()) {
             if (teamData.score > highscore) {
@@ -275,6 +273,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             if (gameManager.gameConnectionManager.isActive) {
                 gameManager.gameConnectionManager.close();
             }
+            // FIXME: Occasional SIGSEVs around 1 second after transitioning to VictoryScreen. No idea why
             dispose();
             game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
         }
@@ -435,8 +434,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
-        fullScreenStage.dispose();
         renderer.dispose();
+        fullScreenStage.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

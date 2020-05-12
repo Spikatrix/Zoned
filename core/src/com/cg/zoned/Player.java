@@ -113,10 +113,8 @@ public class Player extends InputAdapter {
             updatedDirection = Direction.DOWN;
         } else if (keycode == controls[Direction.LEFT.ordinal()]) {
             updatedDirection = Direction.LEFT;
-        } else {
-            return false;
         }
 
-        return true;
+        return false;
     }
 }

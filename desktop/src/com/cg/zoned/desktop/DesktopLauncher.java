@@ -6,11 +6,11 @@ import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.cg.zoned.Zoned;
 
 public class DesktopLauncher {
-	public static void main (String[] arg) {
-		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		config.title = "Zoned";
-		config.vSyncEnabled = true;
-		config.addIcon("icons/ic_zoned_desktop_icon.png", Files.FileType.Internal);
-		new LwjglApplication(new Zoned(), config);
-	}
+    public static void main(String[] arg) {
+        LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+        config.title = "Zoned";
+        config.vSyncEnabled = true;
+        config.addIcon("icons/ic_zoned_desktop_icon.png", Files.FileType.Internal);
+        new LwjglApplication(new Zoned(), config);
+    }
 }
