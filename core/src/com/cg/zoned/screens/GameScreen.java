@@ -273,9 +273,14 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             if (gameManager.gameConnectionManager.isActive) {
                 gameManager.gameConnectionManager.close();
             }
-            // FIXME: Occasional SIGSEVs around 1 second after transitioning to VictoryScreen. No idea why
-            dispose();
-            game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
+
+            Gdx.app.postRunnable(new Runnable() { // Hopefully fixes the occasional SIGSEGVs around 1 second after transitioning to VictoryScreen
+                @Override
+                public void run() {
+                    dispose();
+                    game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
+                }
+            });
         }
     }
 

@@ -65,6 +65,10 @@ public class UIButtonManager {
         return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_testing.png"), null);
     }
 
+    public HoverImageButton addCreditsButtonToStage() {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_credits.png"), null);
+    }
+
     public HoverImageButton addExitButtonToStage() {
         return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_LEFT, Gdx.files.internal("icons/ui_icons/ic_cross.png"), null);
     }

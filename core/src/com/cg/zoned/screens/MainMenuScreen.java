@@ -116,6 +116,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         UIButtonManager uiButtonManager = new UIButtonManager(mainStage, game.getScaleFactor(), usedTextures);
         HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage();
+        HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage();
         HoverImageButton testingButton = uiButtonManager.addTestingButtonToStage();
         settingsButton.addListener(new ClickListener() {
             @Override
@@ -133,8 +134,17 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new TestScreen(game));
             }
         });
+        creditsButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                emitterLeft.allowCompletion();
+                emitterRight.allowCompletion();
+                animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new CreditsScreen(game));
+            }
+        });
 
         mainStage.addFocusableActor(settingsButton);
+        mainStage.addFocusableActor(creditsButton);
         mainStage.addFocusableActor(testingButton);
 
         HoverImageButton exitButton = uiButtonManager.addExitButtonToStage();
@@ -148,6 +158,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainMenuUIButtons = new Array<>();
         mainMenuUIButtons.add(playButton);
         mainMenuUIButtons.add(settingsButton);
+        mainMenuUIButtons.add(creditsButton);
         mainMenuUIButtons.add(testingButton);
         mainMenuUIButtons.add(exitButton);
 

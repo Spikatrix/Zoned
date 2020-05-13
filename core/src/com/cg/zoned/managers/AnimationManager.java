@@ -9,7 +9,9 @@ import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.actions.ParallelAction;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Zoned;
 
@@ -167,6 +169,36 @@ public class AnimationManager {
         }));
 
         stage.addAction(fadeOutAnimation);
+    }
+
+    public void startVictoryAnimation(final Stage stage, Table[] tableRows) {
+        for (int i = 0; i < tableRows.length; i++) {
+            tableRows[i].setTransform(true);
+            tableRows[i].setOrigin(tableRows[i].getPrefWidth() / 2, tableRows[i].getPrefHeight() / 2);
+            tableRows[i].setScale(0f);
+            tableRows[i].getColor().a = 0f;
+
+            ParallelAction fadeZoomOutAnimation = new ParallelAction();
+            fadeZoomOutAnimation.addAction(Actions.fadeIn((i + 1) * .2f, Interpolation.smooth));
+            fadeZoomOutAnimation.addAction(Actions.scaleTo(1f, 1f, (i + 1) * .2f, Interpolation.smooth));
+
+            if (i == tableRows.length - 1) {
+                SequenceAction finalFadeZoomOutAnimation = new SequenceAction();
+                finalFadeZoomOutAnimation.addAction(fadeZoomOutAnimation);
+                finalFadeZoomOutAnimation.addAction(Actions.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (animationListener != null) {
+                            animationListener.animationEnd(stage);
+                        }
+                    }
+                }));
+
+                tableRows[i].addAction(finalFadeZoomOutAnimation);
+            } else {
+                tableRows[i].addAction(fadeZoomOutAnimation);
+            }
+        }
     }
 
     public void setAnimationListener(AnimationListener animationListener) {
