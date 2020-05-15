@@ -12,7 +12,6 @@ public class UITextDisplayer {
     public static void displayFPS(Viewport viewport, Batch batch, BitmapFont font, float xOffset, float yOffset) {
         int fps = Gdx.graphics.getFramesPerSecond();
 
-        Color origColor = font.getColor();
         if (fps >= 55) {
             font.setColor(Color.GREEN);
         } else if (fps >= 30) {
@@ -25,8 +24,6 @@ public class UITextDisplayer {
         font.draw(batch, "FPS: " + fps,
                 xOffset, viewport.getWorldHeight() - yOffset);
         batch.end();
-
-        font.setColor(origColor);
     }
 
     public static void displayFPS(Viewport viewport, Batch batch, BitmapFont font) {
@@ -34,7 +31,6 @@ public class UITextDisplayer {
     }
 
     public static void displayPing(Viewport viewport, Batch batch, BitmapFont font, int ping, float xOffset, float yOffset) {
-        Color origColor = font.getColor();
         if (ping < 50) {
             font.setColor(Color.GREEN);
         } else if (ping < 100) {
@@ -47,8 +43,6 @@ public class UITextDisplayer {
         font.draw(batch, "Ping: " + ping + " ms",
                 xOffset, viewport.getWorldHeight() - font.getLineHeight() - yOffset);
         batch.end();
-
-        font.setColor(origColor);
     }
 
     public static void displayPing(Viewport viewport, Batch batch, BitmapFont font, int ping) {

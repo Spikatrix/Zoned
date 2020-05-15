@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -48,6 +49,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private ExtendViewport[] playerViewports; // Two viewports in split-screen mode; else one
     private ShapeRenderer renderer;
+    private SpriteBatch batch;
     private Color[] dividerLeftColor, dividerRightColor;
 
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
@@ -86,6 +88,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);
+        this.batch = new SpriteBatch();
         this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount());
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
@@ -244,6 +247,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
+        /*Gdx.gl.glBlendFunc(GL20.GL_ONE_MINUS_SRC_COLOR, GL20.GL_ONE_MINUS_DST_COLOR); Figure this out later
+        Gdx.gl.glBlendEquation(GL20.GL_FUNC_SUBTRACT);*/
+
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, UITextDisplayer.padding, ScoreBar.BAR_HEIGHT + UITextDisplayer.padding);
         }
@@ -309,10 +315,26 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         viewport.apply();
 
         renderer.setProjectionMatrix(viewport.getCamera().combined);
+        batch.setProjectionMatrix(viewport.getCamera().combined);
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         map.render(gameManager.playerManager.getPlayers(), renderer, (OrthographicCamera) viewport.getCamera(), delta);
+        map.renderPlayerLabelBg(gameManager.playerManager.getPlayers(), renderer, font);
         renderer.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+        /*Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_ONE_MINUS_DST_COLOR, GL20.GL_ONE_MINUS_DST_ALPHA);
+        TODO: Debug why blendFunc doesn't seem to have ANY effect whatsoever
+        Gdx.gl.glBlendEquation(GL20.GL_FUNC_ADD);*/
+
+        batch.begin();
+        map.drawPlayerLabels(gameManager.playerManager.getPlayers(), batch, font);
+        batch.end();
+
+        //Gdx.gl.glDisable(GL20.GL_BLEND);
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
@@ -439,8 +461,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
-        renderer.dispose();
         fullScreenStage.dispose();
+        renderer.dispose();
+        batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

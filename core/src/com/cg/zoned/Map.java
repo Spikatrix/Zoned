@@ -3,9 +3,12 @@ package com.cg.zoned;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.managers.PlayerManager;
@@ -228,6 +231,50 @@ public class Map {
                         i * Constants.CELL_SIZE, Math.min(this.rows * Constants.CELL_SIZE, y + height), Constants.MAP_GRID_LINE_WIDTH);
             }
         }
+    }
+
+    public void renderPlayerLabelBg(Player[] players, ShapeRenderer renderer, BitmapFont font) {
+        renderer.setColor(new Color(1f, 1f, 1f, .2f));
+        for (Player player : players) {
+            roundedRect(renderer,
+                    (player.position.x * Constants.CELL_SIZE) - Constants.CELL_SIZE,
+                    (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE,
+                    Constants.CELL_SIZE * 3f,
+                    font.getLineHeight(),
+                    Constants.CELL_SIZE / 2);
+        }
+    }
+
+    public void drawPlayerLabels(Player[] players, Batch batch, BitmapFont font) {
+        float yOffset = (Constants.CELL_SIZE * 1.7f);
+        for (Player player : players) {
+            font.setColor(player.color);
+            font.draw(batch, player.name,
+                    (player.position.x * Constants.CELL_SIZE) - (3 * Constants.CELL_SIZE / 4),
+                    (player.position.y * Constants.CELL_SIZE) + yOffset,
+                    0, player.name.length(),
+                    Constants.CELL_SIZE * 3f - Constants.CELL_SIZE / 2, Align.center, false, "...");
+        }
+    }
+
+    /**
+     * Draws a rectangle with rounded corners of the given radius.
+     */
+    private void roundedRect(ShapeRenderer renderer, float x, float y, float width, float height, float radius) {
+        // Central rectangle
+        renderer.rect(x + radius, y + radius, width - 2 * radius, height - 2 * radius);
+
+        // Four side rectangles, in clockwise order
+        renderer.rect(x + radius, y, width - 2 * radius, radius);
+        renderer.rect(x + width - radius, y + radius, radius, height - 2 * radius);
+        renderer.rect(x + radius, y + height - radius, width - 2 * radius, radius);
+        renderer.rect(x, y + radius, radius, height - 2 * radius);
+
+        // Four arches, clockwise too
+        renderer.arc(x + radius, y + radius, radius, 180f, 90f);
+        renderer.arc(x + width - radius, y + radius, radius, 270f, 90f);
+        renderer.arc(x + width - radius, y + height - radius, radius, 0f, 90f);
+        renderer.arc(x + radius, y + height - radius, radius, 90f, 90f);
     }
 
     /**
