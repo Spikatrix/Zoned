@@ -224,6 +224,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         fullScreenStage.getViewport().apply(true);
         renderer.setProjectionMatrix(fullScreenStage.getCamera().combined);
+        batch.setProjectionMatrix(fullScreenStage.getCamera().combined);
 
         if (isSplitscreenMultiplayer()) { // Draw the viewport divider only when playing on the same device
             drawViewportDividers();
@@ -233,7 +234,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             gameManager.playerManager.renderPlayerControlPrompt(renderer, delta);
         }
 
-        scoreBars.render(renderer, gameManager.playerManager.getPlayers(), delta);
+        scoreBars.render(renderer, batch, font, gameManager.playerManager.getPlayers(), delta);
 
         if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getPlayers())) {
             gameManager.directionBufferManager.clearBuffer();

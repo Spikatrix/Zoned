@@ -473,6 +473,14 @@ public class FocusableStage extends Stage {
     }
 
     /**
+     * Clears the set up focusable array
+     */
+    public void clearFocusableArray() {
+        defocus(currentFocusedActor);
+        focusableActorArray.clear();
+    }
+
+    /**
      * Called to send a touchUp event to the currently focused Actor
      *
      * @return true if there is an Actor that is focused

@@ -6,7 +6,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.SnapshotArray;
-import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferGameStart;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
@@ -64,16 +63,19 @@ public class ServerLobbyConnectionManager {
             @Override
             public void run() {
                 final String clientIpAddress = connection.getRemoteAddressTCP().getAddress().getHostAddress();
-                Gdx.app.log(Constants.LOG_TAG, "Creating item for " + clientIpAddress);
                 if (serverPlayerListener != null) {
-                    serverPlayerListener.playerConnected(clientIpAddress);
-                    playerNameResolved.add(false);
-                    playerConnections.add(connection);
+                    addNewPlayer(connection, clientIpAddress);
                 } else {
                     rejectConnection(connection, "No listener configured in the host (server) for incoming clients");
                 }
             }
         });
+    }
+
+    private void addNewPlayer(Connection connection, String clientIpAddress) {
+        serverPlayerListener.playerConnected(clientIpAddress);
+        playerNameResolved.add(false);
+        playerConnections.add(connection);
     }
 
     /**
@@ -90,9 +92,9 @@ public class ServerLobbyConnectionManager {
             @Override
             public void run() {
                 int index = getConnectionIndex(connection);
-                if (index == -1) {
-                    rejectConnection(connection, "Server is in the process of initializing\nTry connecting again"); // Client came in too fast I guess...
-                    return;
+                if (index == -1) { // Client joined way too fast
+                    addNewPlayer(connection, connection.getRemoteAddressTCP().getAddress().getHostAddress());
+                    index = getConnectionIndex(connection);
                 }
                 serverPlayerListener.updatePlayerDetails(index, clientName);
             }

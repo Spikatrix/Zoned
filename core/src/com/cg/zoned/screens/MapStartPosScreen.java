@@ -298,7 +298,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
-        TextButton doneButton = new TextButton("Start Game", game.skin);
+        final TextButton doneButton = new TextButton("Start Game", game.skin);
         final Screen thisScreen = this;
         doneButton.addListener(new ClickListener() {
             @Override
@@ -325,9 +325,11 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                         playerIndex = players.length - 1;
                     }
                     updateDividerColors(playerIndex);
+                    int excessCount = 0;
                     for (int i = 0; i < splitScreenCount; i++) {
                         if (i + playerIndex >= players.length) {
                             // Excess splitscreens
+                            excessCount++;
                             masterTable.removeActor(masterTable.getChild(masterTable.getChildren().size - 2));
                             continue;
                         }
@@ -339,10 +341,32 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
                         radioButtons[i][(i + playerIndex) % radioButtons[i].length].setChecked(true);
                     }
+
+                    if (excessCount > 0) {
+                        stage.clearFocusableArray();
+                        for (int i = 0; i < radioButtons[0].length; i++) {
+                            for (int j = 0; j < radioButtons.length; j++) {
+                                if (j >= excessCount) {
+                                    break;
+                                }
+                                stage.addFocusableActor(radioButtons[j][i]);
+                            }
+                            stage.row();
+                        }
+                        stage.addFocusableActor(doneButton, splitScreenCount - excessCount);
+                    }
                 }
             }
         });
         masterTable.add(doneButton).expandX().colspan(splitScreenCount).width(200f * game.getScaleFactor()).pad(20f * game.getScaleFactor());
+
+        for (int i = 0; i < radioButtons[0].length; i++) {
+            for (CheckBox[] radioButton : radioButtons) {
+                stage.addFocusableActor(radioButton[i]);
+            }
+            stage.row();
+        }
+        stage.addFocusableActor(doneButton, splitScreenCount);
 
         stage.addActor(masterTable);
     }
