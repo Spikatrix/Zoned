@@ -7,6 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class Constants {
+    public static final String GAME_VERSION = "0.0.1-beta";
+
     public static final float WORLD_SIZE = 480.0f;
 
     public static final int SERVER_PORT = 22355; // Random port I chose *shrug*
@@ -96,7 +98,8 @@ public final class Constants {
     public enum FONT_MANAGER {
         LARGE("large-font", 80),
         REGULAR("regular-font", 36),
-        SMALL("small-font", 24);
+        SMALL("small-font", 24),
+        PLAYER_LABEL("player-label-font", 24);
 
         private String name;
         private int size;

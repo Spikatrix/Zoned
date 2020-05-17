@@ -6,6 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.SnapshotArray;
+import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferGameStart;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
@@ -84,13 +85,19 @@ public class ServerLobbyConnectionManager {
      * If the name is unique, the client connection is accepted and is displayed in the lobby
      * screen. The server then broadcasts information about all connected clients to all of them.
      *
-     * @param connection The client connection from where the packet was received
-     * @param clientName The name of the client player
+     * @param connection        The client connection from where the packet was received
+     * @param clientName        The name of the client player
+     * @param clientGameVersion The game version of the client
      */
-    public void receiveClientName(final Connection connection, final String clientName) {
+    public void receiveClientName(final Connection connection, final String clientName, final String clientGameVersion) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
+                if (!Constants.GAME_VERSION.equals(clientGameVersion)) {
+                    rejectConnection(connection, "Server client version mismatch\nServer game version: " + Constants.GAME_VERSION + "\nYour game version: " + clientGameVersion);
+                    return;
+                }
+
                 int index = getConnectionIndex(connection);
                 if (index == -1) { // Client joined way too fast
                     addNewPlayer(connection, connection.getRemoteAddressTCP().getAddress().getHostAddress());

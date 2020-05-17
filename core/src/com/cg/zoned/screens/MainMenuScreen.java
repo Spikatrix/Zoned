@@ -87,7 +87,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             @Override
             public void run() {
                 final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, 480, 640, 50);
-                // I suspect pixmap generation caused a noticable lag so run in a new thread
+                // I suspect pixmap generation caused a noticeable lag so run in a new thread
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
@@ -240,10 +240,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 PlayerSetUpScreen.class,
                 HostJoinScreen.class,
         };
-        /*final Screen[] screens = new Screen[]{
-                new PlayerSetUpScreen(game),
-                new HostJoinScreen(game),
-        };*/
 
         if (screenClasses.length != gameModeCount ||
                 modeLabelStrings.length != gameModeCount ||

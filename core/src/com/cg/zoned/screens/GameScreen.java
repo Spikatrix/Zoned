@@ -60,6 +60,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private ScoreBar scoreBars;
     private boolean gamePaused = false;
+    private BitmapFont playerLabelFont;
 
     private Color currentBgColor, targetBgColor;
     private float bgAnimSpeed = 1.8f;
@@ -94,9 +95,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
 
+        this.playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
         initViewports(players);
 
-        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length);
+        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length, game.getScaleFactor());
     }
 
     private void initViewports(Player[] players) {
@@ -248,14 +250,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
-        /*Gdx.gl.glBlendFunc(GL20.GL_ONE_MINUS_SRC_COLOR, GL20.GL_ONE_MINUS_DST_COLOR); Figure this out later
-        Gdx.gl.glBlendEquation(GL20.GL_FUNC_SUBTRACT);*/
-
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, UITextDisplayer.padding, ScoreBar.BAR_HEIGHT + UITextDisplayer.padding);
+            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
         }
         if (gameManager.gameConnectionManager.isActive) {
-            float yOffset = ScoreBar.BAR_HEIGHT + UITextDisplayer.padding;
+            float yOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
             if (!showFPSCounter) {
                 yOffset = -yOffset + UITextDisplayer.padding;
             }
@@ -284,6 +283,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             Gdx.app.postRunnable(new Runnable() { // Hopefully fixes the occasional SIGSEGVs around 1 second after transitioning to VictoryScreen
                 @Override
                 public void run() {
+                    Gdx.gl.glDisable(GL20.GL_BLEND);
                     dispose();
                     game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
                 }
@@ -320,20 +320,16 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         map.render(gameManager.playerManager.getPlayers(), renderer, (OrthographicCamera) viewport.getCamera(), delta);
-        map.renderPlayerLabelBg(gameManager.playerManager.getPlayers(), renderer, font);
+        map.renderPlayerLabelBg(gameManager.playerManager.getPlayers(), renderer, playerLabelFont);
         renderer.end();
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
-        /*Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_ONE_MINUS_DST_COLOR, GL20.GL_ONE_MINUS_DST_ALPHA);
-        TODO: Debug why blendFunc doesn't seem to have ANY effect whatsoever
-        Gdx.gl.glBlendEquation(GL20.GL_FUNC_ADD);*/
 
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
         batch.begin();
-        map.drawPlayerLabels(gameManager.playerManager.getPlayers(), batch, font);
+        map.drawPlayerLabels(gameManager.playerManager.getPlayers(), batch, playerLabelFont);
         batch.end();
 
-        //Gdx.gl.glDisable(GL20.GL_BLEND);
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }

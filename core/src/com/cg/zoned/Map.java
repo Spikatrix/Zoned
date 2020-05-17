@@ -234,26 +234,29 @@ public class Map {
     }
 
     public void renderPlayerLabelBg(Player[] players, ShapeRenderer renderer, BitmapFont font) {
-        renderer.setColor(new Color(1f, 1f, 1f, .2f));
         for (Player player : players) {
+            player.color.a = .4f;
+            renderer.setColor(player.color);
             roundedRect(renderer,
                     (player.position.x * Constants.CELL_SIZE) - Constants.CELL_SIZE,
                     (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE,
                     Constants.CELL_SIZE * 3f,
                     font.getLineHeight(),
-                    Constants.CELL_SIZE / 2);
+                    font.getLineHeight() / 2);
+            player.color.a = 1.0f;
         }
     }
 
     public void drawPlayerLabels(Player[] players, Batch batch, BitmapFont font) {
-        float yOffset = (Constants.CELL_SIZE * 1.7f);
+        float yOffset = (Constants.CELL_SIZE * 1.7f); // Not really sure how 1.7f fixes it lol
+        // Get it to work with all fonts as well
         for (Player player : players) {
             font.setColor(player.color);
             font.draw(batch, player.name,
                     (player.position.x * Constants.CELL_SIZE) - (3 * Constants.CELL_SIZE / 4),
                     (player.position.y * Constants.CELL_SIZE) + yOffset,
                     0, player.name.length(),
-                    Constants.CELL_SIZE * 3f - Constants.CELL_SIZE / 2, Align.center, false, "...");
+                    Constants.CELL_SIZE * 3f - (Constants.CELL_SIZE / 2), Align.center, false, "...");
         }
     }
 

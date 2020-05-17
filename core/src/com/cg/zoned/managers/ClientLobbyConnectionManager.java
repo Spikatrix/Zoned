@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.listeners.ClientLobbyListener;
@@ -135,6 +136,7 @@ public class ClientLobbyConnectionManager {
     public void sendClientNameToServer(String clientName) {
         BufferClientConnect bcc = new BufferClientConnect();
         bcc.playerName = clientName;
+        bcc.version = Constants.GAME_VERSION;
         client.sendTCP(bcc);
     }
 

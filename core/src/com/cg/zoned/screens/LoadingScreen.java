@@ -64,6 +64,7 @@ public class LoadingScreen extends ScreenAdapter {
         generateCustomFont("fonts/austere.otf", Constants.FONT_MANAGER.LARGE);
         generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.REGULAR);
         generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.SMALL);
+        generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.PLAYER_LABEL);
 
         game.preferences = Gdx.app.getPreferences(Constants.ZONED_PREFERENCES);
     }
@@ -95,7 +96,11 @@ public class LoadingScreen extends ScreenAdapter {
         FreetypeFontLoader.FreeTypeFontLoaderParameter parameter = new FreetypeFontLoader.FreeTypeFontLoaderParameter();
 
         parameter.fontFileName = fontName;
-        parameter.fontParameters.size = (int) (fontManager.getSize() * game.getScaleFactor());
+        if (fontManager.getName().equals("player-label-font")) {
+            parameter.fontParameters.size = fontManager.getSize();
+        } else {
+            parameter.fontParameters.size = (int) (fontManager.getSize() * game.getScaleFactor());
+        }
         //Gdx.app.log(Constants.LOG_TAG, "Screen density: " + Gdx.graphics.getDensity());
 
         String fontId = fontManager.getName() + ".otf";

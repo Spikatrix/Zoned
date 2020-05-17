@@ -278,7 +278,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     @Override
     public void updatePlayers(Array<String> playerNames, String[] nameStrings, String[] whoStrings, String[] readyStrings, String[] colorStrings, String[] startPosStrings) {
         for (int i = 0; i < nameStrings.length; i++) {
-            if (nameStrings[i].equals(clientName)) { // No need to update information for this client itself
+            if (nameStrings[i] == null || nameStrings[i].equals(clientName)) { // No need to update information for this client itself
                 continue;
             }
 

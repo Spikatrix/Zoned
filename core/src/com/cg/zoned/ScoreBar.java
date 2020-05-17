@@ -6,21 +6,28 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class ScoreBar {
-    public static final float BAR_HEIGHT = 10f;
+    public float scoreBarHeight;
 
     private float totalWidth;
     private float totalHeight;
 
     private float[] currentPos;
+    private float[] scoreBarStartX;
+    private float[] scoreBarWidths;
 
-    public ScoreBar(Viewport viewport, int size) {
+    public ScoreBar(Viewport viewport, int size, float scaleFactor) {
         currentPos = new float[size];
+        scoreBarStartX = new float[size];
+        scoreBarWidths = new float[size];
 
         totalWidth = viewport.getWorldWidth();
         totalHeight = viewport.getWorldHeight();
+
+        scoreBarHeight = 16f * scaleFactor;
     }
 
     public void resize(int width, int height) {
@@ -32,7 +39,7 @@ public class ScoreBar {
         float lerpVal = 3.0f;
 
         float currentWidthPos = 0;
-        float offsetY = totalHeight - BAR_HEIGHT;
+        float offsetY = totalHeight - scoreBarHeight;
 
         float totalScore = 0;
         for (Player player : players) {
@@ -43,9 +50,6 @@ public class ScoreBar {
             return;
         }
 
-        Gdx.gl.glDisable(GL20.GL_BLEND);
-
-        batch.begin();
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
         for (int i = 0; i < players.length; i++) {
@@ -55,34 +59,42 @@ public class ScoreBar {
             renderer.setColor(players[i].color);
 
             if (i == 0) {                                                                 // First bar
-                renderer.rect(currentWidthPos, offsetY, drawWidth, BAR_HEIGHT);
-
-                font.setColor(Color.WHITE);
-                font.draw(batch, players[i].name, drawWidth / 2, totalHeight - BAR_HEIGHT);
-                // TODO: Try to make the text appear on top of renderer stuff
-
+                renderer.rect(currentWidthPos, offsetY, drawWidth, scoreBarHeight);
+                scoreBarStartX[i] = currentWidthPos;
             } else if (i == players.length - 1) {                                         // Last bar
-                renderer.rect(totalWidth - drawWidth, offsetY, drawWidth, BAR_HEIGHT);   // Can draw upto drawWidth or totalWidth. Should be the same
+                renderer.rect(totalWidth - drawWidth, offsetY, drawWidth, scoreBarHeight);   // Can draw upto drawWidth or totalWidth. Should be the same
+                scoreBarStartX[i] = totalWidth - drawWidth;
             } else {                                                                      // Mid bar(s)
                 //renderer.rect(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, (drawWidth / 2), BAR_HEIGHT);
-                renderer.rect(currentWidthPos + (barWidth / 2), offsetY, -drawWidth / 2, BAR_HEIGHT);
-                renderer.rect(currentWidthPos + (barWidth / 2), offsetY, drawWidth / 2, BAR_HEIGHT);
+                renderer.rect(currentWidthPos + (barWidth / 2), offsetY, -drawWidth / 2, scoreBarHeight);
+                renderer.rect(currentWidthPos + (barWidth / 2), offsetY, drawWidth / 2, scoreBarHeight);
                 //renderer.rect(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, drawWidth, BAR_HEIGHT);
                 //TODO: Need to polish this
                 //TODO: Scorebar for teams
+                scoreBarStartX[i] = currentWidthPos;
             }
+            scoreBarWidths[i] = drawWidth;
 
             currentPos[i] = drawWidth;
             currentWidthPos += drawWidth;
         }
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-
         // TODO: Should we fix the line being annoyingly seen even when the scorebar has not been drawn yet?
-        renderer.rect(0, offsetY - BAR_HEIGHT, totalWidth, BAR_HEIGHT, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK, Color.BLACK);
+        renderer.rect(0, offsetY - scoreBarHeight, totalWidth, scoreBarHeight, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK, Color.BLACK);
 
         renderer.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+        batch.begin();
+        for (int i = 0; i < scoreBarWidths.length; i++) {
+            font.setColor(Color.WHITE);
+
+            font.draw(batch, String.valueOf(players[i].score),
+                    scoreBarStartX[i], totalHeight - (scoreBarHeight / 4),
+                    scoreBarWidths[i], Align.center, false);
+        }
         batch.end();
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 }

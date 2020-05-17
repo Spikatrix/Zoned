@@ -17,7 +17,7 @@ public class ServerLobbyListener extends Listener {
     public void received(Connection connection, Object object) {
         if (object instanceof BufferClientConnect) {
             BufferClientConnect bcc = (BufferClientConnect) object;
-            serverLobbyConnectionManager.receiveClientName(connection, bcc.playerName);
+            serverLobbyConnectionManager.receiveClientName(connection, bcc.playerName, bcc.version);
         } else if (object instanceof BufferPlayerData) {
             BufferPlayerData bpd = (BufferPlayerData) object;
             serverLobbyConnectionManager.receiveClientData(connection, bpd.nameStrings[0], bpd.whoStrings[0], bpd.readyStrings[0], bpd.colorStrings[0], bpd.startPosStrings[0]);
