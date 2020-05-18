@@ -249,7 +249,8 @@ public class Map {
 
     public void drawPlayerLabels(Player[] players, Batch batch, BitmapFont font) {
         float yOffset = (Constants.CELL_SIZE * 1.7f); // Not really sure how 1.7f fixes it lol
-        // Get it to work with all fonts as well
+        // TODO: Get it to work with all fonts as well and fix blurry text
+        //       Also, make this and its bg work regardless of camera zoom value
         for (Player player : players) {
             font.setColor(player.color);
             font.draw(batch, player.name,

@@ -38,7 +38,7 @@ public class AnimationManager {
         }
 
         SequenceAction fallFromAboveAnimation = new SequenceAction();
-        fallFromAboveAnimation.addAction(Actions.moveTo(0f, 0f, .6f, Interpolation.swingOut));
+        fallFromAboveAnimation.addAction(Actions.moveTo(0f, 0f, .7f, Interpolation.swingOut));
         fallFromAboveAnimation.addAction(Actions.run(new Runnable() {
             @Override
             public void run() {

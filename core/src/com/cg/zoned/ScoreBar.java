@@ -80,7 +80,7 @@ public class ScoreBar {
         }
 
         // TODO: Should we fix the line being annoyingly seen even when the scorebar has not been drawn yet?
-        renderer.rect(0, offsetY - scoreBarHeight, totalWidth, scoreBarHeight, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK, Color.BLACK);
+        renderer.rect(0, offsetY - 10f, totalWidth, 10f, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK, Color.BLACK);
 
         renderer.end();
 
@@ -89,8 +89,9 @@ public class ScoreBar {
         for (int i = 0; i < scoreBarWidths.length; i++) {
             font.setColor(Color.WHITE);
 
+            // TODO: Properly center align this with a better font and color
             font.draw(batch, String.valueOf(players[i].score),
-                    scoreBarStartX[i], totalHeight - (scoreBarHeight / 4),
+                    scoreBarStartX[i], totalHeight - (scoreBarHeight / 2) + (font.getLineHeight() / 4),
                     scoreBarWidths[i], Align.center, false);
         }
         batch.end();
