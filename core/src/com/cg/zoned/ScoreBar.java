@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -80,16 +81,16 @@ public class ScoreBar {
         }
 
         // TODO: Should we fix the line being annoyingly seen even when the scorebar has not been drawn yet?
-        renderer.rect(0, offsetY - 10f, totalWidth, 10f, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK, Color.BLACK);
+        float shadowHeight = Math.min(scoreBarHeight, 10f);
+        renderer.rect(0, offsetY - shadowHeight, totalWidth, shadowHeight, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK, Color.BLACK);
 
         renderer.end();
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
         batch.begin();
         for (int i = 0; i < scoreBarWidths.length; i++) {
-            font.setColor(Color.WHITE);
+            font.setColor(getGoodTextColor(players[i].color));
 
-            // TODO: Properly center align this with a better font and color
             font.draw(batch, String.valueOf(players[i].score),
                     scoreBarStartX[i], totalHeight - (scoreBarHeight / 2) + (font.getLineHeight() / 4),
                     scoreBarWidths[i], Align.center, false);
@@ -97,5 +98,18 @@ public class ScoreBar {
         batch.end();
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    private Color getGoodTextColor(Color bgColor) {
+        // I forgot where I got this expression from...
+        int o = MathUtils.round(((bgColor.r * 299) +
+                (bgColor.g * 587) +
+                (bgColor.b * 114)) / 1000);
+
+        if (o > 125) {
+            return Color.BLACK;
+        } else {
+            return Color.WHITE;
+        }
     }
 }

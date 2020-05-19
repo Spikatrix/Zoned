@@ -4,11 +4,12 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -38,6 +39,8 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     private FocusableStage stage;
     private AnimationManager animationManager;
     private BitmapFont font;
+
+    private ParticleEffect clickEffect;
 
     private Color linkColor = new Color(.3f, .3f, 1f, 1f);
 
@@ -69,48 +72,32 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         ScrollPane screenScrollPane = new ScrollPane(table);
         screenScrollPane.setOverscroll(false, true);
 
-        Table firstInnerTable = new Table();
-        Texture gameLogo = new Texture(Gdx.files.internal("icons/ic_zoned_desktop_icon.png"));
-        usedTextures.add(gameLogo);
-        Stack stack = new Stack();
-        Image gameLogoImage = new Image(gameLogo);
-        gameLogoImage.setScaling(Scaling.fit);
-        gameLogoImage.getColor().a = .3f;
-        Label gameTitle = new Label("ZONED", game.skin, Constants.FONT_MANAGER.LARGE.getName(), Color.GREEN);
-        gameTitle.setAlignment(Align.center);
-        stack.add(gameLogoImage);
-        stack.add(gameTitle);
-        firstInnerTable.add(stack).height(gameTitle.getPrefHeight() * 3 / 2f);
-        addCreditItemToTable(table, firstInnerTable);
+        addCreditItem(table,
+                Gdx.files.internal("icons/ic_zoned_desktop_icon.png"), "ZONED");
 
-        // TODO: Work on this screen
+        addCreditItem(table,
+                "Developer", "Spikatrix");
 
-        addCreditItemToTable(table,
-                getInnerTable("Developer", "Spikatrix", false));
+        addCreditItem(table,
+                "Neon-UI Skin", "Raymond \"Raeleus\" Buckley");
 
-        addCreditItemToTable(table,
-                getInnerTable("Neon-UI Skin", "Raymond \"Raeleus\" Buckley", false));
+        addCreditItem(table,
+                "Inspired By",
+                Gdx.files.internal("icons/codingame-logo.png"), "Back to the Code",
+                "https://www.codingame.com/multiplayer/bot-programming/back-to-the-code");
 
-        Table fourthInnerTable = new Table();
-        Texture codinGameLogo = new Texture(Gdx.files.internal("icons/codingame-logo.png"));
-        usedTextures.add(codinGameLogo);
-        Image codinGameLogoImage = new Image(codinGameLogo);
-        codinGameLogoImage.setScaling(Scaling.fit);
-        Label inspiredByLabel = new Label("Inspired By", game.skin, "themed");
-        inspiredByLabel.setAlignment(Align.center);
-        fourthInnerTable.add(inspiredByLabel);
-        fourthInnerTable.row();
-        fourthInnerTable.add(codinGameLogoImage).height(inspiredByLabel.getPrefHeight()).width(stage.getWidth() / 2);
-        addCreditItemToTable(table, fourthInnerTable);
+        addCreditItem(table,
+                "Contribute to the game",
+                Gdx.files.internal("icons/github-logo.png"), "GitHub",
+                "https://github.com/Spikatrix/Zoned");
 
-        addCreditItemToTable(table,
-                getInnerTable("Contribute to the game", "https://github.com/Spikatrix/Zoned", true));
+        addCreditItem(table,
+                "Feedback/Bug Reports",
+                Gdx.files.internal("icons/gmail-logo.png"), "cg.devworks@gmail.com",
+                "mailto:cg.devworks@gmail.com");
 
-        addCreditItemToTable(table,
-                getInnerTable("Feedback/Bug Reports", "mailto:cg.devworks@gmail.com", true));
-
-        addCreditItemToTable(table,
-                getInnerTable("Thank You", "for trying out Zoned", false));
+        addCreditItem(table,
+                "Thank You", "for playing");
 
         masterTable.add(screenScrollPane).grow();
 
@@ -118,51 +105,104 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         stage.addActor(masterTable);
     }
 
-    private Table getInnerTable(String title, final String name, boolean link) {
-        Table innerTable = new Table();
+    private void addCreditItem(Table table, FileHandle imageLocation, String title) {
+        final Table innerTable = new Table();
+        Texture gameLogo = new Texture(imageLocation);
+        usedTextures.add(gameLogo);
 
+        final Image gameLogoImage = new Image(gameLogo);
+        gameLogoImage.setScaling(Scaling.fit);
+        gameLogoImage.getColor().a = .3f;
+
+        final Label titleLabel = new Label(title, game.skin, Constants.FONT_MANAGER.LARGE.getName(), Color.GREEN);
+        titleLabel.setAlignment(Align.center);
+
+        Stack stack = new Stack();
+        stack.add(gameLogoImage);
+        stack.add(titleLabel);
+
+        clickEffect = new ParticleEffect();
+        clickEffect.load(Gdx.files.internal("particles/click_effect.p"), Gdx.files.internal("particles"));
+
+        float height = titleLabel.getPrefHeight() * 3 / 2f;
+        innerTable.add(stack).height(height);
+
+        innerTable.setTouchable(Touchable.enabled);
+        innerTable.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                /*clickEffect.setPosition(innerTable.getX(), 100);
+                clickEffect.start();*/
+            }
+        });
+
+        float spaceBottom = (stage.getHeight() / 4) - (height / 2);
+        float padTop = (stage.getHeight() / 2) - (height / 2);
+
+        table.add(innerTable).grow()
+                .spaceBottom(spaceBottom)
+                .padTop(padTop)
+                .padLeft(10f)
+                .padRight(10f);
+        table.row();
+    }
+
+    private void addCreditItem(Table table, String title, FileHandle imageLocation, final String content, final String link) {
         Label titleLabel = new Label(title, game.skin, "themed");
-        Label nameLabel = new Label(name, game.skin);
+        Label contentLabel = new Label(content, game.skin);
 
         titleLabel.setAlignment(Align.center);
-        nameLabel.setAlignment(Align.center);
+        contentLabel.setAlignment(Align.center);
 
-        if (link) {
-            String mailto = "mailto:";
-            if (name.startsWith(mailto)) {
-                nameLabel.setText(nameLabel.getText().toString().substring(mailto.length()));
-            }
-            nameLabel.setColor(linkColor);
-            nameLabel.setTouchable(Touchable.enabled);
-            nameLabel.addListener(new ClickListener() {
+        Texture imageTexture = new Texture(imageLocation);
+        usedTextures.add(imageTexture);
+        Image image = new Image(imageTexture);
+        image.setScaling(Scaling.fit);
+
+        Table contentTable = new Table();
+        contentTable.add(image).height(contentLabel.getPrefHeight()).width(contentLabel.getPrefHeight());
+        contentTable.add(contentLabel).padLeft(20f);
+
+        if (link != null) {
+            contentLabel.setColor(linkColor);
+            contentTable.setTouchable(Touchable.enabled);
+            contentTable.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    Gdx.net.openURI(name);
+                    Gdx.net.openURI(link);
                 }
             });
         }
 
-        innerTable.add(titleLabel);
-        innerTable.row();
-        innerTable.add(nameLabel);
-
-        return innerTable;
+        table.add(titleLabel).growX()
+                .padTop(stage.getHeight() / 5)
+                .padLeft(10f)
+                .padRight(10f);
+        table.row();
+        table.add(contentTable).growX()
+                .padBottom(stage.getHeight() / 5)
+                .padLeft(10f)
+                .padRight(10f);
+        table.row();
     }
 
-    private void addCreditItemToTable(Table table, Actor actor) {
-        float actorHeight = actor.getHeight();
-        if (actor instanceof Table) {
-            for (Actor innerActor : ((Table) actor).getChildren()) {
-                actorHeight += innerActor.getHeight();
-            }
-        }
+    private void addCreditItem(Table table, String title, final String content) {
+        Label titleLabel = new Label(title, game.skin, "themed");
+        Label contentLabel = new Label(content, game.skin);
 
-        float spaceBottom = (stage.getHeight() / 4) - (actorHeight / 2);
-        float padTop = (stage.getHeight() / 2) - (actorHeight / 2);
+        titleLabel.setAlignment(Align.center);
+        contentLabel.setAlignment(Align.center);
 
-        table.add(actor).grow()
-                .spaceBottom(spaceBottom)
-                .padTop(padTop)
+        float lastItemExtraPaddingOffset =
+                ((title.contains("Thank You")) ? (5 / 2f) : (1));
+
+        table.add(titleLabel).growX()
+                .padTop(stage.getHeight() / 5)
+                .padLeft(10f)
+                .padRight(10f);
+        table.row();
+        table.add(contentLabel).growX()
+                .padBottom(lastItemExtraPaddingOffset * stage.getHeight() / 5)
                 .padLeft(10f)
                 .padRight(10f);
         table.row();
@@ -191,6 +231,10 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         this.viewport.apply(true);
 
+        stage.getBatch().begin();
+        clickEffect.draw(stage.getBatch(), delta);
+        stage.getBatch().end();
+
         UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
 
         stage.act(delta);
@@ -200,6 +244,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
+        clickEffect.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

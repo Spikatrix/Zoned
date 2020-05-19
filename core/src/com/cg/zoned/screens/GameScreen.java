@@ -240,7 +240,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getPlayers())) {
             gameManager.directionBufferManager.clearBuffer();
-            gameManager.playerManager.stopPlayers();
+            gameManager.playerManager.stopPlayers(true);
             gameManager.gameOver = true;
         }
 
@@ -256,7 +256,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         if (gameManager.gameConnectionManager.isActive) {
             float yOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
             if (!showFPSCounter) {
-                yOffset = -yOffset + UITextDisplayer.padding;
+                yOffset = -yOffset + scoreBars.scoreBarHeight + UITextDisplayer.padding;
             }
             UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
         }
@@ -367,7 +367,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private void showPauseDialog() {
         gamePaused = true;
 
-        gameManager.playerManager.stopPlayers();
+        gameManager.playerManager.stopPlayers(false);
         if (!gameManager.gameConnectionManager.isActive) {
             gameManager.directionBufferManager.clearBuffer();
         }
@@ -410,7 +410,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 int connIndex = connection.getID();
                 String playerName = gameManager.playerManager.getPlayer(connIndex).name;
 
-                gameManager.playerManager.stopPlayers();
+                gameManager.playerManager.stopPlayers(false);
 
                 gameManager.directionBufferManager.ignorePlayer();
                 gameManager.gameConnectionManager.sendPlayerDisconnectedBroadcast(playerName);
@@ -420,7 +420,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     public void clientPlayerDisconnected(String playerName) {
-        gameManager.playerManager.stopPlayers();
+        gameManager.playerManager.stopPlayers(false);
         gameManager.directionBufferManager.ignorePlayer();
         showPlayerDisconnectedDialog(playerName);
 
@@ -440,7 +440,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             @Override
             public void run() {
                 if (!gameManager.gameOver) {
-                    gameManager.playerManager.stopPlayers();
+                    gameManager.playerManager.stopPlayers(false);
                     gameManager.directionBufferManager.clearBuffer();
                     showDisconnectionDialog();
                     Gdx.input.setInputProcessor(fullScreenStage);

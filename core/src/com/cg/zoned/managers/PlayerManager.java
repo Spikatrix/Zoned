@@ -64,9 +64,13 @@ public class PlayerManager extends InputMultiplexer {
         }
     }
 
-    public void stopPlayers() {
+    public void stopPlayers(boolean freeze) {
         for (Player player : players) {
             player.updatedDirection = null;
+
+            if (freeze) { // Freezing a player might result in the player stopping in between cells
+                player.direction = null;
+            }
         }
     }
 

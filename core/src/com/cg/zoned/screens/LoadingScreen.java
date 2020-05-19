@@ -63,8 +63,8 @@ public class LoadingScreen extends ScreenAdapter {
 
         generateCustomFont("fonts/austere.otf", Constants.FONT_MANAGER.LARGE);
         generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.REGULAR);
-        generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.SMALL);
-        generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.PLAYER_LABEL);
+        generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.SMALL);
+        generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.PLAYER_LABEL);
 
         game.preferences = Gdx.app.getPreferences(Constants.ZONED_PREFERENCES);
     }
