@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -57,10 +58,16 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpStage() {
+        Table masterTable = new Table();
+        //masterTable.setDebug(true);
+        masterTable.setFillParent(true);
+        masterTable.center();
+
         Table table = new Table();
-        //table.setDebug(true);
-        table.setFillParent(true);
         table.center();
+        table.pad(20f);
+        ScrollPane screenScrollPane = new ScrollPane(table);
+        screenScrollPane.setOverscroll(false, true);
 
         Label controlLabel = new Label("Control scheme", game.skin, "themed");
         Texture controlFlingOffTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_off.png"));
@@ -139,11 +146,13 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
 
         table.add(showFPS).colspan(2).padTop(30f);
 
-        stage.addActor(table);
+        masterTable.add(screenScrollPane);
+        stage.addActor(masterTable);
         stage.addFocusableActor(piemenuControl);
         stage.addFocusableActor(flingControl);
         stage.row();
         stage.addFocusableActor(showFPS, 2);
+        stage.setScrollFocus(screenScrollPane);
     }
 
     private void setUpBackButton() {

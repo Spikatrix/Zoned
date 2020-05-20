@@ -189,6 +189,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         stage.row();
         stage.addFocusableActor(startButton, 2);
         stage.row();
+        stage.setScrollFocus(playerListScrollPane);
     }
 
     private void setUpMap() {

@@ -9,9 +9,10 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -39,8 +40,6 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     private FocusableStage stage;
     private AnimationManager animationManager;
     private BitmapFont font;
-
-    private ParticleEffect clickEffect;
 
     private Color linkColor = new Color(.3f, .3f, 1f, 1f);
 
@@ -83,18 +82,23 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         addCreditItem(table,
                 "Inspired By",
-                Gdx.files.internal("icons/codingame-logo.png"), "Back to the Code",
+                Gdx.files.internal("icons/ic_codingame.png"), "Back to the Code",
                 "https://www.codingame.com/multiplayer/bot-programming/back-to-the-code");
 
         addCreditItem(table,
                 "Contribute to the game",
-                Gdx.files.internal("icons/github-logo.png"), "GitHub",
+                Gdx.files.internal("icons/ic_github.png"), "GitHub",
                 "https://github.com/Spikatrix/Zoned");
 
         addCreditItem(table,
                 "Feedback/Bug Reports",
-                Gdx.files.internal("icons/gmail-logo.png"), "cg.devworks@gmail.com",
+                Gdx.files.internal("icons/ic_gmail.png"), "cg.devworks@gmail.com",
                 "mailto:cg.devworks@gmail.com");
+
+        addCreditItem(table,
+                "Hang out with me",
+                Gdx.files.internal("icons/ic_discord.png"), null,
+                "https://discord.gg/MFBkvqw");
 
         addCreditItem(table,
                 "Thank You", "for playing");
@@ -121,25 +125,38 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         stack.add(gameLogoImage);
         stack.add(titleLabel);
 
-        clickEffect = new ParticleEffect();
-        clickEffect.load(Gdx.files.internal("particles/click_effect.p"), Gdx.files.internal("particles"));
-
         float height = titleLabel.getPrefHeight() * 3 / 2f;
         innerTable.add(stack).height(height);
 
-        innerTable.setTouchable(Touchable.enabled);
-        innerTable.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                /*clickEffect.setPosition(innerTable.getX(), 100);
-                clickEffect.start();*/
-            }
-        });
+
+        if (title.equals("ZONED")) {
+            final int[] clickCount = {0}; // Have to use an array here because Java
+
+            innerTable.setTouchable(Touchable.enabled);
+            innerTable.setTransform(true);
+            innerTable.setOrigin(innerTable.getPrefWidth() / 2, height / 2);
+            innerTable.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    innerTable.clearActions();
+                    innerTable.setScale(1.2f);
+                    innerTable.addAction(Actions.scaleTo(1.0f, 1.0f, .3f, Interpolation.smooth));
+
+                    clickCount[0]++;
+                    if (clickCount[0] >= 5) {
+                        toggleDevMode();
+                        clickCount[0] = 0;
+                    }
+                }
+            });
+        }
 
         float spaceBottom = (stage.getHeight() / 4) - (height / 2);
         float padTop = (stage.getHeight() / 2) - (height / 2);
 
-        table.add(innerTable).grow()
+        spaceBottom = Math.max(spaceBottom, 10f);
+
+        table.add(innerTable).expandX()
                 .spaceBottom(spaceBottom)
                 .padTop(padTop)
                 .padLeft(10f)
@@ -160,7 +177,11 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         image.setScaling(Scaling.fit);
 
         Table contentTable = new Table();
-        contentTable.add(image).height(contentLabel.getPrefHeight()).width(contentLabel.getPrefHeight());
+        if (content != null) {
+            contentTable.add(image).height(contentLabel.getPrefHeight()).width(contentLabel.getPrefHeight());
+        } else {
+            contentTable.add(image).height(contentLabel.getPrefHeight() * 4 / 3).width(3 * stage.getWidth() / 4);
+        }
         contentTable.add(contentLabel).padLeft(20f);
 
         if (link != null) {
@@ -208,6 +229,19 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         table.row();
     }
 
+    private void toggleDevMode() {
+        boolean devModeUnlocked = game.preferences.getBoolean(Constants.DEV_MODE_PREFERENCE, false);
+        devModeUnlocked = !devModeUnlocked;
+        game.preferences.putBoolean(Constants.DEV_MODE_PREFERENCE, devModeUnlocked);
+        game.preferences.flush();
+
+        Array<String> buttonTexts = new Array<>();
+        buttonTexts.add("OK");
+        stage.showDialog("Developer mode " + ((devModeUnlocked) ? ("un") : ("re")) + "locked!", buttonTexts,
+                false, game.getScaleFactor(),
+                null, game.skin);
+    }
+
     private void setUpBackButton() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
@@ -231,10 +265,6 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         this.viewport.apply(true);
 
-        stage.getBatch().begin();
-        clickEffect.draw(stage.getBatch(), delta);
-        stage.getBatch().end();
-
         UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
 
         stage.act(delta);
@@ -244,7 +274,6 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
-        clickEffect.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

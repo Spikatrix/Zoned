@@ -54,15 +54,19 @@ public class UIButtonManager {
     }
 
     public HoverImageButton addPauseButtonToStage() {
-        return addButtonToStage(.8f, .65f, .5f, 10f, 0, Position.TOP_CENTER, Gdx.files.internal("icons/ui_icons/ic_pause.png"), null);
+        return addButtonToStage(.8f, .65f, .5f, 20f, 0, Position.TOP_CENTER, Gdx.files.internal("icons/ui_icons/ic_pause.png"), null);
     }
 
     public HoverImageButton addZoomButtonToStage() {
-        return addButtonToStage(.8f, .65f, .5f, 10f, 0, Position.TOP_CENTER, Gdx.files.internal("icons/ui_icons/ic_zoom_out.png"), Gdx.files.internal("icons/ui_icons/ic_zoom_in.png"));
+        return addButtonToStage(.8f, .65f, .5f, 20f, 0, Position.TOP_CENTER, Gdx.files.internal("icons/ui_icons/ic_zoom_out.png"), Gdx.files.internal("icons/ui_icons/ic_zoom_in.png"));
     }
 
-    public HoverImageButton addTestingButtonToStage() {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_testing.png"), null);
+    public HoverImageButton addTutorialButtonToStage() {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_tutorial.png"), null);
+    }
+
+    public HoverImageButton addDevButtonToStage() {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_dev.png"), null);
     }
 
     public HoverImageButton addCreditsButtonToStage() {

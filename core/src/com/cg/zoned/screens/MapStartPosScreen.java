@@ -360,13 +360,18 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         });
         masterTable.add(doneButton).expandX().colspan(splitScreenCount).width(200f * game.getScaleFactor()).pad(20f * game.getScaleFactor());
 
+        int excess = 0;
         for (int i = 0; i < radioButtons[0].length; i++) {
-            for (CheckBox[] radioButton : radioButtons) {
-                stage.addFocusableActor(radioButton[i]);
+            for (int j = 0; j < radioButtons.length; j++) {
+                if (radioButtons[j] == null) {
+                    excess = j - radioButtons.length;
+                    break;
+                }
+                stage.addFocusableActor(radioButtons[j][i]);
             }
             stage.row();
         }
-        stage.addFocusableActor(doneButton, splitScreenCount);
+        stage.addFocusableActor(doneButton, splitScreenCount - excess);
 
         stage.addActor(masterTable);
     }

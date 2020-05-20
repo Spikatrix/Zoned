@@ -117,21 +117,24 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         UIButtonManager uiButtonManager = new UIButtonManager(mainStage, game.getScaleFactor(), usedTextures);
         HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage();
         HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage();
-        HoverImageButton testingButton = uiButtonManager.addTestingButtonToStage();
+        HoverImageButton devButton = null;
+        if (game.preferences.getBoolean(Constants.DEV_MODE_PREFERENCE, false)) {
+            devButton = uiButtonManager.addDevButtonToStage();
+            devButton.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    emitterLeft.allowCompletion();
+                    emitterRight.allowCompletion();
+                    animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new DevScreen(game));
+                }
+            });
+        }
         settingsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 emitterLeft.allowCompletion();
                 emitterRight.allowCompletion();
                 animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new SettingsScreen(game));
-            }
-        });
-        testingButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                emitterLeft.allowCompletion();
-                emitterRight.allowCompletion();
-                animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new TestScreen(game));
             }
         });
         creditsButton.addListener(new ClickListener() {
@@ -145,7 +148,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         mainStage.addFocusableActor(settingsButton);
         mainStage.addFocusableActor(creditsButton);
-        mainStage.addFocusableActor(testingButton);
+        mainStage.addFocusableActor(devButton);
 
         HoverImageButton exitButton = uiButtonManager.addExitButtonToStage();
         exitButton.addListener(new ClickListener() {
@@ -159,7 +162,9 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainMenuUIButtons.add(playButton);
         mainMenuUIButtons.add(settingsButton);
         mainMenuUIButtons.add(creditsButton);
-        mainMenuUIButtons.add(testingButton);
+        if (devButton != null) {
+            mainMenuUIButtons.add(devButton);
+        }
         mainMenuUIButtons.add(exitButton);
 
         mainStage.setFocusedActor(playButton);

@@ -65,7 +65,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         this.renderer = new ShapeRenderer();
 
-        this.playerCount = Constants.NO_OF_PLAYERS;
+        this.playerCount = game.preferences.getInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         this.playerList = new Table();
 
         this.currentBgColors = new Color[this.playerCount];
@@ -79,18 +79,25 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void show() {
         setUpStage();
-        setUpBackButton();
+        setUpUIButtons();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
         animationManager.fadeInStage(stage);
     }
 
-    private void setUpBackButton() {
+    private void setUpUIButtons() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 onBackPressed();
+            }
+        });
+        HoverImageButton tutorialButton = uiButtonManager.addTutorialButtonToStage();
+        tutorialButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showTutorialDialog();
             }
         });
     }
@@ -197,6 +204,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1);
         stage.addFocusableActor(startButton, NO_OF_COLORS);
         masterTable.add(screenScrollPane);
+        stage.setScrollFocus(screenScrollPane);
         stage.addActor(masterTable);
     }
 
@@ -210,8 +218,25 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 
-        //animationManager.fadeOutStage(stage, this, new GameScreen(game, mapManager, players));
-        animationManager.fadeOutStage(stage, this, new MapStartPosScreen(game, mapManager, players, 2, false));
+        int startPosSplitScreenCount = game.preferences.getInteger(Constants.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
+        animationManager.fadeOutStage(stage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount, false));
+    }
+
+    private void showTutorialDialog() {
+        Array<String> buttonTexts = new Array<>();
+        buttonTexts.add("Cancel");
+        buttonTexts.add("Yes");
+
+        stage.showDialog("Start the tutorial?", buttonTexts,
+                false, game.getScaleFactor(),
+                new FocusableStage.DialogResultListener() {
+                    @Override
+                    public void dialogResult(String buttonText) {
+                        if (buttonText.equals("Yes")) {
+                            animationManager.fadeOutStage(stage, PlayerSetUpScreen.this, new TutorialScreen(game));
+                        }
+                    }
+                }, game.skin);
     }
 
     @Override

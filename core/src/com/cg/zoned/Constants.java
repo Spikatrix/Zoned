@@ -29,7 +29,7 @@ public final class Constants {
      * <p>
      * Beware: There may not be enough horizontal space especially on mobile devices to play comfortably
      */
-    public static final int NO_OF_PLAYERS = 2;
+    //public static final int NO_OF_PLAYERS = 2; Moved to dev mode settings
 
     public static final Color PLAYER_CIRCLE_COLOR = Color.WHITE;
     public static final float PLAYER_CIRCLE_WIDTH = 2.5f;
@@ -89,17 +89,21 @@ public final class Constants {
     public static final String FPS_PREFERENCE = "FPS_Preference";
     public static final String CONTROL_PREFERENCE = "Control_Preference";
     public static final String NAME_PREFERENCE = "Name_Preference"; // The last used name
+    public static final String SPLITSCREEN_PLAYER_COUNT_PREFERENCE = "Splitscreen_Player_Count_Preference";
+    public static final String MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE = "Map_Start_Pos_Splitscreen_Count_Preference";
+    public static final String DEV_MODE_PREFERENCE = "Dev_Mode_Preference";
 
     public static final int PIE_MENU_CONTROL = 0;
     public static final int FLING_CONTROL = 1;
 
-    public enum Direction {UP, LEFT, DOWN, RIGHT}
 
+    public enum Direction {UP, LEFT, DOWN, RIGHT}
     public enum FONT_MANAGER {
         LARGE("large-font", 80),
         REGULAR("regular-font", 36),
         SMALL("small-font", 18),
         PLAYER_LABEL("player-label-font", 20);
+
 
         private String name;
         private int size;

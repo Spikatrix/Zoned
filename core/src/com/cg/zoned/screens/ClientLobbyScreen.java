@@ -165,6 +165,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         stage.row();
 
         stage.addActor(clientLobbyTable);
+        stage.setScrollFocus(playerListScrollPane);
     }
 
     private void setUpMap() {
