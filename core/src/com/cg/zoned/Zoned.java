@@ -6,6 +6,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.screens.LoadingScreen;
@@ -52,6 +53,11 @@ public class Zoned extends Game {
 
     public float getScaleFactor() {
         return SCALE_FACTOR;
+    }
+
+    public Texture getPlayButtonTexture() {
+        // This is here because it's loaded by the assetManager
+        return assetManager.get("icons/ui_icons/ic_play_sheet.png", Texture.class);
     }
 
     @Override

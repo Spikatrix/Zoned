@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -81,6 +82,19 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         setUpStage();
         setUpUIButtons();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+
+        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
+            @Override
+            public void animationEnd(Stage stage) {
+                boolean showTutorialDialogPrompt = game.preferences.getBoolean(Constants.SHOW_TUTORIAL_PREFERENCE, true);
+                if (showTutorialDialogPrompt) {
+                    showTutorialDialog();
+
+                    game.preferences.putBoolean(Constants.SHOW_TUTORIAL_PREFERENCE, false);
+                    game.preferences.flush();
+                }
+            }
+        });
         animationManager.fadeInStage(stage);
     }
 
@@ -158,7 +172,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             playerList.add(playerItem).right();
             playerList.row();
         }
-        table.add(playerList).colspan(NO_OF_COLORS + 1);
+        table.add(playerList).colspan(NO_OF_COLORS + 1).expandX();
         table.row();
 
         final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.skin);
@@ -166,7 +180,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
         mapSelector.loadExternalMaps();
-        table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor());
+        table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
 
         stage.addFocusableActor(mapSelector.getLeftButton(), 1);
@@ -182,7 +196,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
             infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
             infoTable.add(infoLabel);
-            table.add(infoTable).colspan(NO_OF_COLORS + 1).padBottom(20f * game.getScaleFactor());
+            table.add(infoTable).colspan(NO_OF_COLORS + 1).padBottom(20f * game.getScaleFactor()).expandX();
             table.row();
         }
 
@@ -201,9 +215,9 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             }
 
         });
-        table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1);
+        table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1).expandX();
         stage.addFocusableActor(startButton, NO_OF_COLORS);
-        masterTable.add(screenScrollPane);
+        masterTable.add(screenScrollPane).grow();
         stage.setScrollFocus(screenScrollPane);
         stage.addActor(masterTable);
     }

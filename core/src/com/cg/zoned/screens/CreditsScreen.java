@@ -41,7 +41,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     private AnimationManager animationManager;
     private BitmapFont font;
 
-    private Color linkColor = new Color(.3f, .3f, 1f, 1f);
+    private Color linkColor = new Color(.4f, .4f, 1f, 1f);
 
     public CreditsScreen(final Zoned game) {
         this.game = game;
@@ -72,13 +72,20 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         screenScrollPane.setOverscroll(false, true);
 
         addCreditItem(table,
-                Gdx.files.internal("icons/ic_zoned_desktop_icon.png"), "ZONED");
+                Gdx.files.internal("icons/ic_zoned_desktop_icon.png"),
+                "ZONED",
+                "Game version: " + Constants.GAME_VERSION);
 
         addCreditItem(table,
                 "Developer", "Spikatrix");
 
         addCreditItem(table,
                 "Neon-UI Skin", "Raymond \"Raeleus\" Buckley");
+
+        addCreditItem(table,
+                "Powered By",
+                Gdx.files.internal("icons/ic_libgdx.png"), null,
+                "https://libgdx.badlogicgames.com");
 
         addCreditItem(table,
                 "Inspired By",
@@ -91,13 +98,13 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
                 "https://github.com/Spikatrix/Zoned");
 
         addCreditItem(table,
-                "Feedback/Bug Reports",
+                "Feedback",
                 Gdx.files.internal("icons/ic_gmail.png"), "cg.devworks@gmail.com",
                 "mailto:cg.devworks@gmail.com");
 
         addCreditItem(table,
                 "Hang out with me",
-                Gdx.files.internal("icons/ic_discord.png"), null,
+                Gdx.files.internal("icons/ic_discord.png"), "Discord",
                 "https://discord.gg/MFBkvqw");
 
         addCreditItem(table,
@@ -109,7 +116,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         stage.addActor(masterTable);
     }
 
-    private void addCreditItem(Table table, FileHandle imageLocation, String title) {
+    private void addCreditItem(Table table, FileHandle imageLocation, String title, String version) {
         final Table innerTable = new Table();
         Texture gameLogo = new Texture(imageLocation);
         usedTextures.add(gameLogo);
@@ -127,7 +134,6 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         float height = titleLabel.getPrefHeight() * 3 / 2f;
         innerTable.add(stack).height(height);
-
 
         if (title.equals("ZONED")) {
             final int[] clickCount = {0}; // Have to use an array here because Java
@@ -151,14 +157,22 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
             });
         }
 
-        float spaceBottom = (stage.getHeight() / 4) - (height / 2);
+        Label versionLabel = new Label(version, game.skin);
+        versionLabel.setAlignment(Align.center);
+
+        float spaceBottom = (stage.getHeight() / 4) - (height / 2) - versionLabel.getPrefHeight();
         float padTop = (stage.getHeight() / 2) - (height / 2);
 
         spaceBottom = Math.max(spaceBottom, 10f);
 
         table.add(innerTable).expandX()
-                .spaceBottom(spaceBottom)
                 .padTop(padTop)
+                .padLeft(10f)
+                .padRight(10f);
+        table.row();
+
+        table.add(versionLabel).growX()
+                .spaceBottom(spaceBottom)
                 .padLeft(10f)
                 .padRight(10f);
         table.row();
@@ -179,10 +193,10 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         Table contentTable = new Table();
         if (content != null) {
             contentTable.add(image).height(contentLabel.getPrefHeight()).width(contentLabel.getPrefHeight());
+            contentTable.add(contentLabel).padLeft(20f);
         } else {
             contentTable.add(image).height(contentLabel.getPrefHeight() * 4 / 3).width(3 * stage.getWidth() / 4);
         }
-        contentTable.add(contentLabel).padLeft(20f);
 
         if (link != null) {
             contentLabel.setColor(linkColor);
@@ -216,6 +230,8 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         float lastItemExtraPaddingOffset =
                 ((title.contains("Thank You")) ? (5 / 2f) : (1));
+        float lastPadding = ((lastItemExtraPaddingOffset == 1) ? (0) : (titleLabel.getPrefHeight() - (titleLabel.getPrefHeight() / 10)));
+        // "/ 10" so that the tail of the Discord logo above is not visible
 
         table.add(titleLabel).growX()
                 .padTop(stage.getHeight() / 5)
@@ -223,7 +239,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
                 .padRight(10f);
         table.row();
         table.add(contentLabel).growX()
-                .padBottom(lastItemExtraPaddingOffset * stage.getHeight() / 5)
+                .padBottom((lastItemExtraPaddingOffset * stage.getHeight() / 5) - lastPadding)
                 .padLeft(10f)
                 .padRight(10f);
         table.row();

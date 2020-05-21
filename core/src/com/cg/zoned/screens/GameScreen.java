@@ -85,7 +85,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         this.fullScreenStage = new FocusableStage(new ScreenViewport());
 
-        this.gameManager = new GameManager(this, server, client, players, fullScreenStage, game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL), game.skin, game.getScaleFactor(), usedTextures);
+        this.gameManager = new GameManager(this);
+        this.gameManager.setUpConnectionManager(server, client);
+        this.gameManager.setUpDirectionAndPlayerBuffer(players, fullScreenStage,
+                game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL),
+                game.skin, game.getScaleFactor(), usedTextures);
 
         this.renderer = new ShapeRenderer();
         this.renderer.setAutoShapeType(true);

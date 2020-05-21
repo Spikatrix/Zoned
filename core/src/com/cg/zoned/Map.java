@@ -30,10 +30,14 @@ public class Map {
     }
 
     public void update(PlayerManager playerManager, float delta) {
+        update(playerManager, playerManager.getPlayers(), delta);
+    }
+
+    public void update(PlayerManager playerManager, Player[] players, float delta) {
         boolean waitForMovementCompletion = false; // Used to synchronize movement of all players
         // so that every one of them moves together
 
-        for (Player player : playerManager.getPlayers()) {
+        for (Player player : players) {
             if (player.direction != null) {
                 if (waitForMovementCompletion && player.targetPosition == null) {
                     continue;
@@ -63,8 +67,8 @@ public class Map {
         }
 
         if (!waitForMovementCompletion) { // If movement(s) have completed
-            setMapWeights(playerManager.getPlayers());
-            setMapColors(playerManager);
+            setMapWeights(players);
+            setMapColors(playerManager, players);
         }
     }
 
@@ -86,24 +90,23 @@ public class Map {
 
     }
 
-    private void setMapColors(PlayerManager playerManager) {
-        Player[] players = playerManager.getPlayers();
+    private void setMapColors(PlayerManager playerManager, Player[] players) {
         for (Player player : players) {
             int posX = Math.round(player.position.x);
             int posY = Math.round(player.position.y);
             if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].playerCount == 1) {
                 mapGrid[posY][posX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
-                playerManager.incrementScore(player);
+                if (playerManager != null) {
+                    playerManager.incrementScore(player);
+                }
                 coloredCells++;
             }
         }
 
-        fillSurroundedCells(playerManager);
+        fillSurroundedCells(playerManager, players);
     }
 
-    private void fillSurroundedCells(PlayerManager playerManager) {
-        Player[] players = playerManager.getPlayers();
-
+    private void fillSurroundedCells(PlayerManager playerManager, Player[] players) {
         FloodFillGridState[][] gridState = new FloodFillGridState[rows][cols];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -151,7 +154,9 @@ public class Map {
                             GridPoint2 pos = fillPositions.pop();
 
                             mapGrid[pos.x][pos.y].cellColor = new Color(fillColor.r, fillColor.g, fillColor.b, 0.1f);
-                            playerManager.incrementScore(players[index]);
+                            if (playerManager != null) {
+                                playerManager.incrementScore(players[index]);
+                            }
                             coloredCells++;
                         }
                     } else {

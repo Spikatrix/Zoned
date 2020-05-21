@@ -30,16 +30,26 @@ public class ControlManager {
     private Color[] overlayColors;
     private Table[] controlTables;
 
-    public ControlManager(Player[] players, boolean isSplitScreen, Stage stage, int controls, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
+    public ControlManager(Player[] players, Stage stage) {
         this.stage = stage;
         this.players = players;
+    }
+
+    public void setUpControls(int controls, boolean isSplitScreen, float scaleFactor, Array<Texture> usedTextures) {
+        if (controls == Constants.PIE_MENU_CONTROL) {
+            pieMenuControlManager = new PieMenuControlManager(players, isSplitScreen, stage, scaleFactor, usedTextures);
+        } else if (controls == Constants.FLING_CONTROL) {
+            flingControlManager = new FlingControlManager(players, isSplitScreen, stage, scaleFactor, usedTextures);
+        }
+    }
+
+    public void setUpOverlay(boolean isSplitScreen, int controls, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
+        setUpControls(controls, isSplitScreen, scaleFactor, usedTextures);
 
         FileHandle controlImagePath = null;
         if (controls == Constants.PIE_MENU_CONTROL) {
-            pieMenuControlManager = new PieMenuControlManager(players, isSplitScreen, stage, scaleFactor, usedTextures);
             controlImagePath = Gdx.files.internal("icons/control_icons/ic_control_piemenu_off.png");
         } else if (controls == Constants.FLING_CONTROL) {
-            flingControlManager = new FlingControlManager(players, isSplitScreen, stage, scaleFactor, usedTextures);
             controlImagePath = Gdx.files.internal("icons/control_icons/ic_control_fling_off.png");
         }
 

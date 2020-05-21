@@ -109,13 +109,13 @@ public class ExternalMapReader {
                     Pattern.MULTILINE);
 
             String[] fileLines = fileContents.split("\r?\n");
-            for (int i = 0; i < fileLines.length; i++) {
-                if (fileLines[i].startsWith(rowCountPrompt)) {
-                    rowCount = Integer.parseInt(fileLines[i].substring(rowCountPrompt.length()).trim());
-                } else if (fileLines[i].startsWith(colCountPrompt)) {
-                    colCount = Integer.parseInt(fileLines[i].substring(colCountPrompt.length()).trim());
+            for (String fileLine : fileLines) {
+                if (fileLine.startsWith(rowCountPrompt)) {
+                    rowCount = Integer.parseInt(fileLine.substring(rowCountPrompt.length()).trim());
+                } else if (fileLine.startsWith(colCountPrompt)) {
+                    colCount = Integer.parseInt(fileLine.substring(colCountPrompt.length()).trim());
                 } else {
-                    Matcher matcher = startPosPattern.matcher(fileLines[i]);
+                    Matcher matcher = startPosPattern.matcher(fileLine);
                     if (matcher.matches()) {
                         char startPosChar = matcher.group(1).trim().charAt(0);
                         String startPosName = matcher.group(2).trim();
@@ -127,7 +127,7 @@ public class ExternalMapReader {
 
                         startPosNames.set(index, startPosName);
                     } else {
-                        mapGridBuilder.append(fileLines[i]).append('\n');
+                        mapGridBuilder.append(fileLine).append('\n');
                     }
                 }
             }

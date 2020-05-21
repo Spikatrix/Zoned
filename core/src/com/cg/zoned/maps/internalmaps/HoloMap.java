@@ -38,9 +38,9 @@ public class HoloMap implements MapEntity {
     public Array<String> getStartPosNames() {
         if (startPosNames.isEmpty()) {
             startPosNames.addAll(
-                    "Top Left",           // A
+                    "Top Left",            // A
                     "Bottom Right",        // B
-                    "Top Right",            // C
+                    "Top Right",           // C
                     "Bottom Left"          // D
             );
         }

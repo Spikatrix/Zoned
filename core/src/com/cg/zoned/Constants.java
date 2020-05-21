@@ -89,6 +89,7 @@ public final class Constants {
     public static final String FPS_PREFERENCE = "FPS_Preference";
     public static final String CONTROL_PREFERENCE = "Control_Preference";
     public static final String NAME_PREFERENCE = "Name_Preference"; // The last used name
+    public static final String SHOW_TUTORIAL_PREFERENCE = "Show_Tutorial_Preference"; // Shows the tutorial dialog prompt the first time
     public static final String SPLITSCREEN_PLAYER_COUNT_PREFERENCE = "Splitscreen_Player_Count_Preference";
     public static final String MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE = "Map_Start_Pos_Splitscreen_Count_Preference";
     public static final String DEV_MODE_PREFERENCE = "Dev_Mode_Preference";
@@ -102,7 +103,7 @@ public final class Constants {
         LARGE("large-font", 80),
         REGULAR("regular-font", 36),
         SMALL("small-font", 18),
-        PLAYER_LABEL("player-label-font", 20);
+        PLAYER_LABEL("player-label-font-noscale", 20);
 
 
         private String name;

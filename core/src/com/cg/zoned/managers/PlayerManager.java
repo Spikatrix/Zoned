@@ -38,7 +38,8 @@ public class PlayerManager extends InputMultiplexer {
             }
         }
 
-        controlManager = new ControlManager(players, !gameManager.gameConnectionManager.isActive, stage, controls, skin, scaleFactor, usedTextures);
+        controlManager = new ControlManager(players, stage);
+        controlManager.setUpOverlay(!gameManager.gameConnectionManager.isActive, controls, skin, scaleFactor, usedTextures);
         this.addProcessor(controlManager.getControls());
     }
 

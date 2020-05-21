@@ -172,8 +172,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private HoverImageButton setUpAnimatedPlayButton(Table mainTable) {
-        Texture playSheet = new Texture(Gdx.files.internal("icons/ui_icons/ic_play_sheet.png"));
-        usedTextures.add(playSheet);
+        Texture playSheet = game.getPlayButtonTexture(); // Loaded via the assetManager since it causes a noticeable lag on my phone otherwise
+        //usedTextures.add(playSheet); Texture is loaded via the assetManager so that will take care of its disposal
         int rowCount = 6, colCount = 5;
 
         TextureRegion[][] tmp = TextureRegion.split(playSheet,

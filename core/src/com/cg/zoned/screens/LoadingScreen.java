@@ -96,7 +96,7 @@ public class LoadingScreen extends ScreenAdapter {
         FreetypeFontLoader.FreeTypeFontLoaderParameter parameter = new FreetypeFontLoader.FreeTypeFontLoaderParameter();
 
         parameter.fontFileName = fontName;
-        if (fontManager.getName().equals("player-label-font")) {
+        if (fontManager.getName().endsWith("noscale")) {
             parameter.fontParameters.size = fontManager.getSize();
         } else {
             parameter.fontParameters.size = (int) (fontManager.getSize() * game.getScaleFactor());
@@ -121,6 +121,7 @@ public class LoadingScreen extends ScreenAdapter {
 
                 SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
                 assetManager.load("neon-skin/neon-ui.json", Skin.class, parameter);
+                assetManager.load("icons/ui_icons/ic_play_sheet.png", Texture.class); // Big image; noticeable lag on my mobile. So load via assetManager
 
                 loadedFonts = true;
                 finishedLoading = false;

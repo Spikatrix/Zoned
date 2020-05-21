@@ -181,7 +181,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                 }
             }
         });
-        serverLobbyTable.add(startButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
+        serverLobbyTable.add(startButton).width(250 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
         stage.addActor(serverLobbyTable);
         stage.addFocusableActor(mapSelector.getLeftButton());
