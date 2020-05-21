@@ -2,13 +2,17 @@ package com.cg.zoned.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
@@ -56,15 +60,15 @@ public class FocusableStage extends Stage {
     private Actor downActor;
 
     /**
+     * Dialog that has focus properties for its buttons
+     */
+    private Dialog dialog;
+
+    /**
      * Master switch for enabling keyboard based focus management
      * When this is false, it will behave like a regular Stage
      */
     private boolean isActive = true;
-
-    /**
-     * Indicates whether a dialog is active or not
-     */
-    private boolean dialogIsActive = false;
 
     /**
      * Constructor for initializing the Stage
@@ -178,36 +182,85 @@ public class FocusableStage extends Stage {
     }
 
     /**
-     * Shows an information dialog with an "OK" button
-     * Focus management for background actors are paused until the dialog is dealt with
+     * Shows an dialog with focus properties on its buttons
      *
-     * @param msg  The message to display
+     * @param msg The message to display
+     * @param buttonTexts Texts for each button in the dialog
+     * @param useVerticalButtonList Determines whether the dialog buttons are arranged horizontally or vertically
      * @param scaleFactor The game's scaleFactor to scale up/down dialog button width
+     * @param dialogResultListener Interface for beaming back the selected dialog option
      * @param skin The skin to use for the dialog
      */
-    public void showInfoDialog(String msg, float scaleFactor, Skin skin) {
-        final Actor focusedActor = this.currentFocusedActor;
+    public void showDialog(String msg, Array<String> buttonTexts,
+                           boolean useVerticalButtonList,
+                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
+        showDialog(new Label(msg, skin), buttonTexts, useVerticalButtonList, scaleFactor, dialogResultListener, skin);
+    }
 
-        Dialog dialog = new Dialog("", skin) {
+    public void showDialog(Table contentTable, Array<String> buttonTexts,
+                           boolean useVerticalButtonList,
+                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
+        showDialog((Actor) contentTable, buttonTexts, useVerticalButtonList, scaleFactor, dialogResultListener, skin);
+    }
+
+    private void showDialog(Actor content, Array<String> buttonTexts,
+                            boolean useVerticalButtonList,
+                            float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
+        final Array<Actor> backupCurrentActorArray = new Array<Actor>(this.focusableActorArray);
+        final Actor backupFocusedActor = this.currentFocusedActor;
+
+        final Dialog previousDialog = dialog;
+
+        dialog = new Dialog("", skin) {
             @Override
             protected void result(Object object) {
-                dialogIsActive = false;
-                if (focusedActor != null) {
-                    focus(focusedActor);
+                focusableActorArray = backupCurrentActorArray;
+                if (backupFocusedActor != null) {
+                    focus(backupFocusedActor);
                 }
-                super.result(object);
+
+                if (dialogResultListener != null) {
+                    dialogResultListener.dialogResult((String) object);
+                }
+
+                dialog.hide(Actions.scaleTo(0, 0, .2f, Interpolation.fastSlow));
+                dialog = previousDialog;
             }
         };
-        dialog.text(msg).pad(25f * scaleFactor, 25f * scaleFactor, 20f * scaleFactor, 25f * scaleFactor);
-        dialog.getColor().a = 0;
-        dialog.getButtonTable().defaults().width(200f * scaleFactor);
-        Label label = (Label) dialog.getContentTable().getChild(0);
-        label.setAlignment(Align.center);
-        dialog.button("OK");
-        dialog.show(this);
 
-        this.dialogIsActive = true;
-        focus(dialog.getButtonTable().getChild(0));
+        dialog.getContentTable().add(content).pad(20f);
+        dialog.getButtonTable().defaults().width(200f * scaleFactor);
+        dialog.getButtonTable().padBottom(10f).padLeft(10f).padRight(10f);
+        dialog.setScale(0);
+        // TODO: Focus props on content table
+
+        if (content instanceof Label) {
+            Label label = (Label) content;
+            label.setAlignment(Align.center);
+        }
+
+        this.focusableActorArray.clear();
+        for (int i = 0; i < buttonTexts.size; i++) {
+            TextButton textButton = new TextButton(buttonTexts.get(i), skin);
+            dialog.button(textButton, textButton.getText().toString());
+            this.focusableActorArray.add(textButton);
+            if (useVerticalButtonList) {
+                dialog.getButtonTable().row();
+                this.focusableActorArray.add(null);
+            }
+        }
+
+        dialog.show(this, Actions.scaleTo(1f, 1f, .2f, Interpolation.fastSlow));
+        dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
+        dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
+        focus(this.focusableActorArray.get(0));
+    }
+
+    public void resize(int width, int height) {
+        getViewport().update(width, height, true);
+        if (dialog != null) {
+            dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
+        }
     }
 
     /**
@@ -216,9 +269,7 @@ public class FocusableStage extends Stage {
      * @return The next Actor
      */
     private Actor getNextActor() {
-        if (dialogIsActive) {
-            return null;
-        } else if (currentFocusedActor == null) {
+        if (currentFocusedActor == null) {
             return getFirstActor();
         }
 
@@ -241,9 +292,7 @@ public class FocusableStage extends Stage {
      * @return The Actor behind
      */
     private Actor getPreviousActor() {
-        if (dialogIsActive) {
-            return null;
-        } else if (currentFocusedActor == null) {
+        if (currentFocusedActor == null) {
             return getLastActor();
         }
 
@@ -266,9 +315,7 @@ public class FocusableStage extends Stage {
      * @return The Actor below
      */
     private Actor getBelowActor() {
-        if (dialogIsActive) {
-            return null;
-        } else if (currentFocusedActor == null) {
+        if (currentFocusedActor == null) {
             return getFirstActor();
         }
 
@@ -301,9 +348,7 @@ public class FocusableStage extends Stage {
      * @return The Actor above
      */
     private Actor getAboveActor() {
-        if (dialogIsActive) {
-            return null;
-        } else if (currentFocusedActor == null) {
+        if (currentFocusedActor == null) {
             return getLastActor();
         }
 
@@ -336,10 +381,6 @@ public class FocusableStage extends Stage {
      * @return The first Actor
      */
     private Actor getFirstActor() {
-        if (dialogIsActive) {
-            return null;
-        }
-
         for (Actor actor : focusableActorArray) {
             if (actor != null) {
                 return actor;
@@ -355,10 +396,6 @@ public class FocusableStage extends Stage {
      * @return The last Actor
      */
     private Actor getLastActor() {
-        if (dialogIsActive) {
-            return null;
-        }
-
         for (int i = focusableActorArray.size - 1; i >= 0; i--) {
             Actor actor = focusableActorArray.get(i);
             if (actor != null) {
@@ -433,6 +470,14 @@ public class FocusableStage extends Stage {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Clears the set up focusable array
+     */
+    public void clearFocusableArray() {
+        defocus(currentFocusedActor);
+        focusableActorArray.clear();
     }
 
     /**
@@ -543,5 +588,9 @@ public class FocusableStage extends Stage {
         }
 
         super.addTouchFocus(listener, listenerActor, target, pointer, button);
+    }
+
+    public interface DialogResultListener {
+        void dialogResult(String buttonText);
     }
 }

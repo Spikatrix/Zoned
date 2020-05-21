@@ -6,10 +6,13 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.actions.ParallelAction;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Zoned;
 
 public class AnimationManager {
@@ -25,22 +28,23 @@ public class AnimationManager {
         this.masterInputMultiplexer.addProcessor(inputProcessor);
     }
 
-    public void startMainMenuAnimation(final Stage stage, final TextButton[] mainMenuButtons) {
+    public void startMainMenuAnimation(final Stage stage, final Array<Actor> mainMenuUIButtons) {
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
         stage.getRoot().getColor().a = 1;
         stage.getRoot().setPosition(0, stage.getHeight());
-        for (TextButton mainMenuButton : mainMenuButtons) {
-            mainMenuButton.getColor().a = 0;
+        for (Actor mainMenuUIButton : mainMenuUIButtons) {
+            mainMenuUIButton.getColor().a = 0;
         }
 
         SequenceAction fallFromAboveAnimation = new SequenceAction();
-        fallFromAboveAnimation.addAction(Actions.moveTo(0f, 0f, .6f, Interpolation.swingOut));
+        fallFromAboveAnimation.addAction(Actions.moveTo(0f, 0f, .7f, Interpolation.swingOut));
         fallFromAboveAnimation.addAction(Actions.run(new Runnable() {
             @Override
             public void run() {
-                for (int i = 0; i < mainMenuButtons.length; i++) {
-                    mainMenuButtons[i].addAction(Actions.delay(.3f * i, Actions.fadeIn(0.3f, Interpolation.smooth)));
+                for (int i = 0; i < mainMenuUIButtons.size; i++) {
+                    mainMenuUIButtons.get(i).addAction(
+                            Actions.delay(((i > 0) ? (.3f) : (0)), Actions.fadeIn(0.3f, Interpolation.smooth)));
                 }
             }
         }));
@@ -57,6 +61,34 @@ public class AnimationManager {
         }));
 
         stage.addAction(fallFromAboveAnimation);
+    }
+
+    public void startPlayModeAnimation(Stage mainStage, Stage playModeStage, Actor playButton) {
+        masterInputMultiplexer.removeProcessor(mainStage);
+        masterInputMultiplexer.addProcessor(playModeStage);
+        Gdx.input.setInputProcessor(masterInputMultiplexer);
+
+        mainStage.addAction(Actions.fadeOut(.25f, Interpolation.fastSlow));
+        float initScale = playButton.getScaleX();
+        playButton.setOrigin(playButton.getWidth() / 2, playButton.getHeight() / 2);
+        playButton.addAction(Actions.sequence(
+                Actions.scaleTo(2.5f, 2.5f, .2f),
+                Actions.scaleTo(initScale, initScale)
+        ));
+
+        playModeStage.getRoot().setPosition(0, -playModeStage.getHeight());
+        playModeStage.addAction(Actions.fadeIn(.25f, Interpolation.fastSlow));
+        playModeStage.addAction(Actions.moveTo(0, 0, .25f, Interpolation.fastSlow));
+    }
+
+    public void endPlayModeAnimation(Stage mainStage, Stage playModeStage) {
+        masterInputMultiplexer.removeProcessor(playModeStage);
+        masterInputMultiplexer.addProcessor(mainStage);
+        Gdx.input.setInputProcessor(masterInputMultiplexer);
+
+        playModeStage.addAction(Actions.fadeOut(.25f, Interpolation.fastSlow));
+        playModeStage.addAction(Actions.moveTo(0, -playModeStage.getHeight(), .25f, Interpolation.fastSlow));
+        mainStage.addAction(Actions.fadeIn(.25f, Interpolation.fastSlow));
     }
 
     public void startGameOverAnimation(final Stage stage, final ParticleEffect trailEffect) {
@@ -118,7 +150,7 @@ public class AnimationManager {
         stage.addAction(fadeInAnimation);
     }
 
-    public void fadeOutStage(final Stage stage, final Screen toScreen) {
+    public void fadeOutStage(final Stage stage, final Screen fromScreen, final Screen toScreen) {
         masterInputMultiplexer.removeProcessor(stage);
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
@@ -128,7 +160,7 @@ public class AnimationManager {
             @Override
             public void run() {
                 Gdx.input.setInputProcessor(null);
-
+                fromScreen.dispose();
                 game.setScreen(toScreen);
                 if (animationListener != null) {
                     animationListener.animationEnd(stage);
@@ -137,6 +169,36 @@ public class AnimationManager {
         }));
 
         stage.addAction(fadeOutAnimation);
+    }
+
+    public void startVictoryAnimation(final Stage stage, Table[] tableRows) {
+        for (int i = 0; i < tableRows.length; i++) {
+            tableRows[i].setTransform(true);
+            tableRows[i].setOrigin(tableRows[i].getPrefWidth() / 2, tableRows[i].getPrefHeight() / 2);
+            tableRows[i].setScale(0f);
+            tableRows[i].getColor().a = 0f;
+
+            ParallelAction fadeZoomOutAnimation = new ParallelAction();
+            fadeZoomOutAnimation.addAction(Actions.fadeIn((i + 1) * .2f, Interpolation.smooth));
+            fadeZoomOutAnimation.addAction(Actions.scaleTo(1f, 1f, (i + 1) * .2f, Interpolation.smooth));
+
+            if (i == tableRows.length - 1) {
+                SequenceAction finalFadeZoomOutAnimation = new SequenceAction();
+                finalFadeZoomOutAnimation.addAction(fadeZoomOutAnimation);
+                finalFadeZoomOutAnimation.addAction(Actions.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (animationListener != null) {
+                            animationListener.animationEnd(stage);
+                        }
+                    }
+                }));
+
+                tableRows[i].addAction(finalFadeZoomOutAnimation);
+            } else {
+                tableRows[i].addAction(fadeZoomOutAnimation);
+            }
+        }
     }
 
     public void setAnimationListener(AnimationListener animationListener) {

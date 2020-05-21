@@ -5,4 +5,5 @@ public class BufferPlayerData {
     public String[] whoStrings;
     public String[] readyStrings;
     public String[] colorStrings;
+    public String[] startPosStrings;
 }

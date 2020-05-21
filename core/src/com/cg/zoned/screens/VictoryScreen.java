@@ -9,23 +9,22 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.TeamData;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.PlayerManager;
@@ -35,6 +34,8 @@ import java.text.DecimalFormat;
 
 public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
+
+    private Array<Texture> usedTextures;
 
     private FocusableStage stage;
     private Viewport viewport;
@@ -47,15 +48,19 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private Array<TeamData> teamData;
     private String[] victoryStrings;
 
-    public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols) {
+    private Table[] tableRows;
+
+    public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols, int wallCount) {
         this.game = game;
+
+        this.usedTextures = new Array<>();
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        getVictoryStrings(playerManager, rows, cols);
+        getVictoryStrings(playerManager, rows, cols, wallCount);
     }
 
     @Override
@@ -75,7 +80,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
                 setUpVictoryUI();
                 stage.getRoot().setPosition(0, 0);
                 animationManager.setAnimationListener(null);
-                animationManager.fadeInStage(stage);
+                animationManager.startVictoryAnimation(stage, tableRows);
             }
         });
     }
@@ -93,10 +98,16 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpVictoryUI() {
-        Table table = new Table();
+        Table masterTable = new Table();
         //table.setDebug(true);
-        table.setFillParent(true);
+        masterTable.setFillParent(true);
+        masterTable.center();
+
+        Table table = new Table();
         table.center();
+        table.pad(20f);
+        ScrollPane screenScrollPane = new ScrollPane(table);
+        screenScrollPane.setOverscroll(false, true);
 
         StringBuilder victoryString = new StringBuilder();
         for (String victoryStr : victoryStrings) {
@@ -114,9 +125,15 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
                 "icons/rank_icons/ic_no2.png",
                 "icons/rank_icons/ic_no3.png",
         };
+        Texture[] rankImageTextures = new Texture[rankImageLocations.length];
+        for (int i = 0; i < rankImageTextures.length; i++) {
+            rankImageTextures[i] = new Texture(Gdx.files.internal(rankImageLocations[i]));
+            usedTextures.add(rankImageTextures[i]);
+        }
         Image[] rankImages = new Image[victoryStrings.length];
         Label[] victoryLabels = new Label[victoryStrings.length];
         Label[] rankLabels = new Label[victoryStrings.length];
+        float rankLabelMaxWidth = 0;
         int rankIndex = 0;
         for (int i = 0; i < victoryStrings.length; i++, rankIndex++) {
             if (i > 0 && teamData.get(i - 1).score == teamData.get(i).score) {
@@ -125,22 +142,29 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
             victoryLabels[i] = new Label(victoryStrings[i], game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
             if (rankIndex < rankImageLocations.length) {
-                rankImages[i] = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal(rankImageLocations[rankIndex])))));
+                rankImages[i] = new Image(rankImageTextures[rankIndex]);
             } else {
                 rankImages[i] = null;
             }
+
+            if (rankLabels[i].getPrefWidth() > rankLabelMaxWidth) {
+                rankLabelMaxWidth = rankLabels[i].getPrefWidth();
+            }
         }
 
+        tableRows = new Table[victoryStrings.length];
         for (int i = 0; i < victoryStrings.length; i++) {
-            table.add(rankLabels[i]).padRight(20f).left().padTop(10f).padBottom(10f);
-            if (rankImages[i] != null) {
-                table.add(rankImages[i]).height(victoryLabels[0].getPrefHeight()).width(victoryLabels[0].getPrefHeight()).padRight(10f).padTop(10f).padBottom(10f);
-                table.add(victoryLabels[i]).right().padLeft(20f).padTop(10f).padBottom(10f);
-            } else {
-                table.add(victoryLabels[i]).padLeft(victoryLabels[0].getPrefHeight() + 30f).right().colspan(2).padTop(10f).padBottom(10f);
-            }
-            // TODO: Improve this, add animations
+            tableRows[i] = new Table();
 
+            tableRows[i].add(rankLabels[i]).space(20f).left().width(rankLabelMaxWidth);
+            if (rankImages[i] != null) {
+                tableRows[i].add(rankImages[i]).height(victoryLabels[0].getPrefHeight() * 1.5f).width(victoryLabels[0].getPrefHeight() * 1.5f).space(20f);
+                tableRows[i].add(victoryLabels[i]).right().space(20f).expandX();
+            } else {
+                tableRows[i].add(victoryLabels[i]).padLeft(victoryLabels[0].getPrefHeight() + 30f).right().space(20f).expandX();
+            }
+
+            table.add(tableRows[i]).space(20f).padLeft(20f).padRight(20f).uniform().grow();
             table.row();
         }
 
@@ -148,23 +172,26 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         returnToMainMenuButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+                animationManager.fadeOutStage(stage, VictoryScreen.this, new MainMenuScreen(game));
             }
         });
-        table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor()).colspan(3);
+        table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor());
 
-        stage.addActor(table);
+        masterTable.add(screenScrollPane);
+
         stage.addFocusableActor(returnToMainMenuButton);
-        stage.setFocusedActor(returnToMainMenuButton);
+        stage.setScrollFocus(screenScrollPane);
+
+        stage.addActor(masterTable);
     }
 
-    private void getVictoryStrings(PlayerManager playerManager, int rows, int cols) {
+    private void getVictoryStrings(PlayerManager playerManager, int rows, int cols, int wallCount) {
         teamData = playerManager.getTeamData();
         this.victoryStrings = new String[teamData.size];
 
         DecimalFormat df = new DecimalFormat("#.##");
         for (int i = 0; i < teamData.size; i++) {
-            double capturePercentage = 100 * (teamData.get(i).score / ((double) rows * cols));
+            double capturePercentage = 100 * (teamData.get(i).score / (((double) rows * cols) - wallCount));
             capturePercentage = Double.parseDouble(df.format(capturePercentage));
 
             this.victoryStrings[i] = PlayerColorHelper.getStringFromColor(teamData.get(i).color)
@@ -174,7 +201,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        stage.resize(width, height);
         trailEffect.setPosition(0, height / 2f);
     }
 
@@ -190,7 +217,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         stage.getBatch().end();
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();
@@ -201,12 +228,19 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     public void dispose() {
         stage.dispose();
         trailEffect.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
+    }
+
+    public void onBackPressed() {
+        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
     }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 
@@ -226,7 +260,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+            onBackPressed();
             return true;
         }
 

@@ -1,8 +1,10 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Sort;
 import com.cg.zoned.Constants.Direction;
@@ -20,15 +22,15 @@ public class PlayerManager extends InputMultiplexer {
 
     private Array<TeamData> teamData;
 
-    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controls) {
+    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controls, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
         this.gameManager = gameManager;
 
         this.players = players;
 
-        this.teamData = new Array<TeamData>();
+        this.teamData = new Array<>();
         initTeamColors();
 
-        if (gameManager.connectionManager.isActive) { // Not split screen; only add first player's inputs
+        if (gameManager.gameConnectionManager.isActive) { // Not split screen; only add first player's inputs
             this.addProcessor(players[0]);
         } else {
             for (Player player : players) {
@@ -36,7 +38,8 @@ public class PlayerManager extends InputMultiplexer {
             }
         }
 
-        controlManager = new ControlManager(players, !gameManager.connectionManager.isActive, stage, controls);
+        controlManager = new ControlManager(players, stage);
+        controlManager.setUpOverlay(!gameManager.gameConnectionManager.isActive, controls, skin, scaleFactor, usedTextures);
         this.addProcessor(controlManager.getControls());
     }
 
@@ -62,9 +65,13 @@ public class PlayerManager extends InputMultiplexer {
         }
     }
 
-    public void stopPlayers() {
+    public void stopPlayers(boolean freeze) {
         for (Player player : players) {
             player.updatedDirection = null;
+
+            if (freeze) { // Freezing a player might result in the player stopping in between cells
+                player.direction = null;
+            }
         }
     }
 
@@ -102,10 +109,6 @@ public class PlayerManager extends InputMultiplexer {
     public Array<TeamData> getTeamData() {
         new Sort().sort(teamData, new TeamDataComparator());
         return teamData;
-    }
-
-    public void resize() {
-        controlManager.resize();
     }
 
     public void renderPlayerControlPrompt(ShapeRenderer renderer, float delta) {

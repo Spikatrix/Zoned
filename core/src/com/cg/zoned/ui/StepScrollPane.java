@@ -14,12 +14,15 @@ import static java.lang.Math.abs;
 public class StepScrollPane extends ScrollPane {
     private Table content;
 
+    private boolean isVerticalScrollPane;
+
     private boolean wasPanDragFling = false;
     private float destinationPosition = 0f;
-    private float stepHeight = 0;
+    private float stepSize = 0;
 
-    public StepScrollPane(Skin skin) {
+    public StepScrollPane(Skin skin, boolean isVerticalScrollPane) {
         super(null, skin);
+        this.isVerticalScrollPane = isVerticalScrollPane;
         disableScrollBars();
         setUpContentTable();
 
@@ -52,10 +55,11 @@ public class StepScrollPane extends ScrollPane {
     }
 
     private void disableScrollBars() {
-        this.setScrollbarsVisible(false);
         this.setScrollBarTouch(false);
         this.setScrollbarsOnTop(false);
-        this.setScrollingDisabled(true, false);
+        this.setScrollbarsVisible(false);
+        this.setScrollingDisabled(isVerticalScrollPane, !isVerticalScrollPane);
+        this.setupFadeScrollBars(0f, 0f);
     }
 
     private void setUpContentTable() {
@@ -64,7 +68,7 @@ public class StepScrollPane extends ScrollPane {
     }
 
     public void add(Actor actor) {
-        content.add(actor);
+        content.add(actor).width(getWidth());
     }
 
     @Override
@@ -82,37 +86,71 @@ public class StepScrollPane extends ScrollPane {
     }
 
     public void snapToStep(int stepOffset) {
-        if (stepHeight == 0) {
+        if (isVerticalScrollPane) {
+            snapToStepY(stepOffset);
+        } else {
+            snapToStepX(-stepOffset); // Have to invert, otherwise the direction is opposite
+        }
+    }
+
+    private void snapToStepY(int stepOffset) {
+        if (stepSize == 0) {
             // Use the scrollpane's height as the stepHeight if it was not set
-            setStepHeight(this.getHeight());
+            setStepSize(this.getHeight());
         }
 
         float scrollYPos;
         if (stepOffset == 0) {
             scrollYPos = this.getScrollY();
         } else {
-            scrollYPos = this.getScrollY() + stepHeight * stepOffset;
+            scrollYPos = this.getScrollY() + stepSize * stepOffset;
         }
 
-        float offset = scrollYPos % stepHeight;
-        if (offset > stepHeight - offset) {
-            offset = stepHeight - offset;
+        float offset = scrollYPos % stepSize;
+        if (offset > stepSize - offset) {
+            offset = stepSize - offset;
         } else {
             offset = -offset;
         }
 
-        float centerOffset = abs(this.getHeight() - stepHeight) / 2;
+        float centerOffset = abs(this.getHeight() - stepSize) / 2;
 
         destinationPosition = MathUtils.clamp(scrollYPos + offset + centerOffset, 0, getMaxY());
         setScrollY(destinationPosition);
     }
 
-    public void setStepHeight(float stepHeight) {
-        this.stepHeight = stepHeight;
+    private void snapToStepX(int stepOffset) {
+        if (stepSize == 0) {
+            // Use the scrollpane's width as the stepSize if it was not set
+            setStepSize(this.getWidth());
+        }
+
+        float scrollXPos;
+        if (stepOffset == 0) {
+            scrollXPos = this.getScrollX();
+        } else {
+            scrollXPos = this.getScrollX() + stepSize * stepOffset;
+        }
+
+        float offset = scrollXPos % stepSize;
+        if (offset > stepSize - offset) {
+            offset = stepSize - offset;
+        } else {
+            offset = -offset;
+        }
+
+        float centerOffset = abs(this.getWidth() - stepSize) / 2;
+
+        destinationPosition = MathUtils.clamp(scrollXPos + offset + centerOffset, 0, getMaxX());
+        setScrollX(destinationPosition);
     }
 
-    public float getStepHeight() {
-        return stepHeight;
+    public float getStepSize() {
+        return stepSize;
+    }
+
+    public void setStepSize(float stepSize) {
+        this.stepSize = stepSize;
     }
 
     public float getDestinationPosition() {

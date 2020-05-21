@@ -3,9 +3,12 @@ package com.cg.zoned;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.managers.PlayerManager;
@@ -13,42 +16,28 @@ import com.cg.zoned.managers.PlayerManager;
 public class Map {
 
     private Cell[][] mapGrid;
-    public int rows;
-    public int cols;
-    public int coloredCells;
     public int wallCount;
 
-    public Map(int rows, int cols) {
-        this.rows = rows;
-        this.cols = cols;
-        this.coloredCells = this.wallCount = 0;
+    public int rows;
+    public int cols;
+    private int coloredCells = 0;
 
-        this.mapGrid = new Cell[this.rows][this.cols];
-        for (int i = 0; i < this.rows; i++) {
-            for (int j = 0; j < this.cols; j++) {
-                mapGrid[i][j] = new Cell();
-
-                if (!mapGrid[i][j].isMovable) {
-                    wallCount++;
-                }
-            }
-        }
-    }
-
-    public static Vector2[] getStartPositions(int rows, int cols) {
-        return new Vector2[]{
-                new Vector2(0, rows - 1),
-                new Vector2(cols - 1, 0),
-                new Vector2(0, 0),
-                new Vector2(cols - 1, rows - 1),
-        };
+    public Map(Cell[][] mapGrid, int wallCount) {
+        this.rows = mapGrid.length;
+        this.cols = mapGrid[0].length;
+        this.mapGrid = mapGrid;
+        this.wallCount = wallCount;
     }
 
     public void update(PlayerManager playerManager, float delta) {
+        update(playerManager, playerManager.getPlayers(), delta);
+    }
+
+    public void update(PlayerManager playerManager, Player[] players, float delta) {
         boolean waitForMovementCompletion = false; // Used to synchronize movement of all players
         // so that every one of them moves together
 
-        for (Player player : playerManager.getPlayers()) {
+        for (Player player : players) {
             if (player.direction != null) {
                 if (waitForMovementCompletion && player.targetPosition == null) {
                     continue;
@@ -78,8 +67,8 @@ public class Map {
         }
 
         if (!waitForMovementCompletion) { // If movement(s) have completed
-            setMapWeights(playerManager.getPlayers());
-            setMapColors(playerManager);
+            setMapWeights(players);
+            setMapColors(playerManager, players);
         }
     }
 
@@ -101,24 +90,23 @@ public class Map {
 
     }
 
-    private void setMapColors(PlayerManager playerManager) {
-        Player[] players = playerManager.getPlayers();
-        for (int i = 0; i < players.length; i++) {
-            int posX = Math.round(players[i].position.x);
-            int posY = Math.round(players[i].position.y);
+    private void setMapColors(PlayerManager playerManager, Player[] players) {
+        for (Player player : players) {
+            int posX = Math.round(player.position.x);
+            int posY = Math.round(player.position.y);
             if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].playerCount == 1) {
-                mapGrid[posY][posX].cellColor = new Color(players[i].color.r, players[i].color.g, players[i].color.b, 0.1f);
-                playerManager.incrementScore(players[i]);
+                mapGrid[posY][posX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
+                if (playerManager != null) {
+                    playerManager.incrementScore(player);
+                }
                 coloredCells++;
             }
         }
 
-        fillSurroundedCells(playerManager);
+        fillSurroundedCells(playerManager, players);
     }
 
-    private void fillSurroundedCells(PlayerManager playerManager) {
-        Player[] players = playerManager.getPlayers();
-
+    private void fillSurroundedCells(PlayerManager playerManager, Player[] players) {
         FloodFillGridState[][] gridState = new FloodFillGridState[rows][cols];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -146,7 +134,7 @@ public class Map {
             }
         }
 
-        Array<GridPoint2> fillPositions = new Array<GridPoint2>();
+        Array<GridPoint2> fillPositions = new Array<>();
         Color fillColor;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -166,7 +154,9 @@ public class Map {
                             GridPoint2 pos = fillPositions.pop();
 
                             mapGrid[pos.x][pos.y].cellColor = new Color(fillColor.r, fillColor.g, fillColor.b, 0.1f);
-                            playerManager.incrementScore(players[index]);
+                            if (playerManager != null) {
+                                playerManager.incrementScore(players[index]);
+                            }
                             coloredCells++;
                         }
                     } else {
@@ -248,6 +238,54 @@ public class Map {
         }
     }
 
+    public void renderPlayerLabelBg(Player[] players, ShapeRenderer renderer, BitmapFont font) {
+        for (Player player : players) {
+            player.color.a = .4f;
+            renderer.setColor(player.color);
+            roundedRect(renderer,
+                    (player.position.x * Constants.CELL_SIZE) - Constants.CELL_SIZE,
+                    (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE,
+                    Constants.CELL_SIZE * 3f,
+                    font.getLineHeight(),
+                    font.getLineHeight() / 2);
+            player.color.a = 1.0f;
+        }
+    }
+
+    public void drawPlayerLabels(Player[] players, Batch batch, BitmapFont font) {
+        float yOffset = (Constants.CELL_SIZE * 1.7f); // Not really sure how 1.7f fixes it lol
+        // TODO: Get it to work with all fonts as well and fix blurry text
+        //       Also, make this and its bg work regardless of camera zoom value
+        for (Player player : players) {
+            font.setColor(player.color);
+            font.draw(batch, player.name,
+                    (player.position.x * Constants.CELL_SIZE) - (3 * Constants.CELL_SIZE / 4),
+                    (player.position.y * Constants.CELL_SIZE) + yOffset,
+                    0, player.name.length(),
+                    Constants.CELL_SIZE * 3f - (Constants.CELL_SIZE / 2), Align.center, false, "...");
+        }
+    }
+
+    /**
+     * Draws a rectangle with rounded corners of the given radius.
+     */
+    private void roundedRect(ShapeRenderer renderer, float x, float y, float width, float height, float radius) {
+        // Central rectangle
+        renderer.rect(x + radius, y + radius, width - 2 * radius, height - 2 * radius);
+
+        // Four side rectangles, in clockwise order
+        renderer.rect(x + radius, y, width - 2 * radius, radius);
+        renderer.rect(x + width - radius, y + radius, radius, height - 2 * radius);
+        renderer.rect(x + radius, y + height - radius, width - 2 * radius, radius);
+        renderer.rect(x, y + radius, radius, height - 2 * radius);
+
+        // Four arches, clockwise too
+        renderer.arc(x + radius, y + radius, radius, 180f, 90f);
+        renderer.arc(x + width - radius, y + radius, radius, 270f, 90f);
+        renderer.arc(x + width - radius, y + height - radius, radius, 0f, 90f);
+        renderer.arc(x + radius, y + height - radius, radius, 90f, 90f);
+    }
+
     /**
      * Flood fill the unvisited cells
      *
@@ -258,7 +296,7 @@ public class Map {
      * If 'null' or 'Color.BLACK', multiple or no colors were present along the edges, or a wall was in between
      */
     private Color floodFill(FloodFillGridState[][] gridState, GridPoint2 startPos, Array<GridPoint2> fillPosStack) {
-        Array<GridPoint2> stack = new Array<GridPoint2>();
+        Array<GridPoint2> stack = new Array<>();
         Color fillColor = null;
 
         gridState[startPos.x][startPos.y].state = FloodFillGridState.State.VISITED;
@@ -329,7 +367,7 @@ public class Map {
         if (players.length == 2) {
             for (Player player : players) {
                 // For two player games, end the game when a player has captured more than 50% of the cells
-                if (100 * (player.score / (((double) this.rows * this.cols)) - this.wallCount) > 50.0) {
+                if (100 * (player.score / (((double) this.rows * this.cols) - this.wallCount)) > 50.0) {
                     return true;
                 }
             }
@@ -354,7 +392,7 @@ public class Map {
 
         private State state;
 
-        public FloodFillGridState() {
+        FloodFillGridState() {
             state = State.UNVISITED;
         }
     }

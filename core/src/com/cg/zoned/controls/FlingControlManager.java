@@ -5,7 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -21,13 +20,20 @@ public class FlingControlManager extends InputAdapter {
     private Player[] players;
     private boolean isSplitScreenMultiplayer;
 
+    private float scaleFactor;
+    private Texture arrowTexture;
+
     private Array<GameTouchPoint> clickPoints;
 
-    public FlingControlManager(Player[] players, boolean isSplitScreen, Stage stage) {
-        this.clickPoints = new Array<GameTouchPoint>();
+    public FlingControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
+        this.clickPoints = new Array<>();
         this.players = players;
         this.isSplitScreenMultiplayer = isSplitScreen;
         this.stage = stage;
+        this.scaleFactor = scaleFactor;
+
+        arrowTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"));
+        usedTextures.add(arrowTexture);
     }
 
     @Override
@@ -44,10 +50,10 @@ public class FlingControlManager extends InputAdapter {
                 }
             }
 
-            Image clickImage = new Image(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_arrow.png"))));
+            Image clickImage = new Image(arrowTexture);
             if (Gdx.app.getType() == Application.ApplicationType.Android) {
                 // Scale both X and Y at the same rate or we'll have problems since the code below uses getScaleX only
-                clickImage.setScale(Constants.ANDROID_DIRECTION_ARROW_SCALE_FACTOR, Constants.ANDROID_DIRECTION_ARROW_SCALE_FACTOR);
+                clickImage.setScale(scaleFactor, scaleFactor);
             }
             clickImage.setColor(players[playerIndex].color);
             clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);

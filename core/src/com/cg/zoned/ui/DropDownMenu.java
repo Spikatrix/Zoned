@@ -4,6 +4,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeOut;
@@ -22,11 +23,17 @@ public class DropDownMenu extends SelectBox<String> {
         this.setAlignment(Align.center);
     }
 
+    public void append(String s) {
+        Array<String> itemList = getItems();
+        itemList.add(s);
+        setItems(itemList);
+    }
+
     public boolean isExpanded() {
         return this.getList().isTouchable();
     }
 
-    // Decreased fadeIn and fadeOut duration so that the cut-off part is less noticable
+    // Decreased fadeIn and fadeOut duration
     @Override
     protected void onShow(Actor selectBoxList, boolean below) {
         selectBoxList.getColor().a = 0;

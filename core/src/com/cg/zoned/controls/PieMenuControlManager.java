@@ -15,6 +15,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
 import com.payne.games.piemenu.PieMenu;
@@ -26,32 +28,38 @@ public class PieMenuControlManager extends InputAdapter {
     private Player[] players;
     private boolean isSplitScreenMultiplayer;
 
+    private int piemenuRadius = 80;
+    private float scaleFactor;
     private PieMenu[] menus;
     private int[] pointers;
     private Vector2[] coords;
 
-    public PieMenuControlManager(Player[] players, boolean isSplitScreen, Stage stage) {
+    public PieMenuControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
         this.players = players;
         this.isSplitScreenMultiplayer = isSplitScreen;
         this.stage = stage;
         this.menus = new PieMenu[players.length];
         this.pointers = new int[players.length];
         this.coords = new Vector2[players.length];
+        this.scaleFactor = scaleFactor;
         Arrays.fill(pointers, -1);
         Arrays.fill(coords, new Vector2());
 
-        setUpPieMenus();
+        setUpPieMenus(usedTextures);
     }
 
-    private void setUpPieMenus() {
+    private void setUpPieMenus(Array<Texture> usedTextures) {
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(1, 1, 1, 1);
         pixmap.fill();
         Texture tmpTex = new Texture(pixmap);
+        usedTextures.add(tmpTex);
         pixmap.dispose();
         TextureRegion whitePixel = new TextureRegion(tmpTex);
 
-        final Drawable arrow = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_arrow.png"))));
+        Texture arrowTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"));
+        usedTextures.add(arrowTexture);
+        final Drawable arrow = new TextureRegionDrawable(arrowTexture);
 
         for (int i = 0; i < menus.length; i++) {
             final PieMenu.PieMenuStyle style = new PieMenu.PieMenuStyle();
@@ -60,7 +68,8 @@ public class PieMenuControlManager extends InputAdapter {
             style.separatorColor = Color.BLACK;
             style.downColor = Color.WHITE;
             style.sliceColor = players[i].color;
-            menus[i] = new PieMenu(whitePixel, style, 80);
+            // Multiply by scaleFactor? Size kinda gets messed up when doing it
+            menus[i] = new PieMenu(whitePixel, style, piemenuRadius);
 
             final Image[] arrowImages = new Image[]{
                     new Image(arrow),
@@ -70,6 +79,7 @@ public class PieMenuControlManager extends InputAdapter {
             };
             for (int j = 0; j < arrowImages.length; j++) {
                 arrowImages[j].setOrigin(arrowImages[j].getWidth() / 2, arrowImages[j].getHeight() / 2);
+                arrowImages[j].setScaling(Scaling.fit);
                 arrowImages[j].setColor(Color.WHITE);
                 if (j == 0) {
                     arrowImages[j].setRotation(-45f);
@@ -135,6 +145,7 @@ public class PieMenuControlManager extends InputAdapter {
                 stage.addActor(menus[playerIndex]);
                 menus[playerIndex].setPosition(screenX, stage.getHeight() - screenY, Align.center);
                 menus[playerIndex].setVisible(true);
+                menus[playerIndex].setHighlightedIndex(-1); // Last arrow is still black; Not a bug but a feature lol ;-)
                 coords[playerIndex].x = screenX;
                 coords[playerIndex].y = screenY;
                 pointers[playerIndex] = pointer;
@@ -173,7 +184,6 @@ public class PieMenuControlManager extends InputAdapter {
                 } else {
                     menus[i].setVisible(false);
                     menus[i].remove();
-
                 }
                 pointers[i] = -1;
 

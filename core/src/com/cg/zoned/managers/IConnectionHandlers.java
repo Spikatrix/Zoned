@@ -4,8 +4,11 @@ import com.cg.zoned.buffers.BufferDirections;
 import com.esotericsoftware.kryonet.Connection;
 
 public interface IConnectionHandlers {
-    void serverUpdateDirections (BufferDirections bd);
-    void clientUpdateDirections (BufferDirections bd);
+    void serverUpdateDirections(BufferDirections bd, int returnTripTime);
 
-    void disconnect (Connection connection);
+    void clientUpdateDirections(BufferDirections bd, int returnTripTime);
+
+    void serverDisconnect(Connection connection);
+
+    void clientDisconnect(Connection connection);
 }

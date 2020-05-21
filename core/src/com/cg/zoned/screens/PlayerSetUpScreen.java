@@ -1,6 +1,5 @@
 package com.cg.zoned.screens;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -9,28 +8,30 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
-import com.cg.zoned.Map;
+import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.MapManager;
+import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.ui.CustomButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
@@ -38,11 +39,19 @@ import com.cg.zoned.ui.Spinner;
 public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
+    private Array<Texture> usedTextures = new Array<>();
+
     private FocusableStage stage;
     private Viewport viewport;
     private AnimationManager animationManager;
     private boolean showFPSCounter;
     private BitmapFont font;
+
+    private ShapeRenderer renderer;
+    private float bgAlpha = .25f;
+    private float bgAnimSpeed = 1.8f;
+    private Color[] currentBgColors;
+    private Color[] targetBgColors;
 
     private int playerCount;
     private Table playerList;
@@ -55,49 +64,78 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.playerCount = Constants.NO_OF_PLAYERS;
+        this.renderer = new ShapeRenderer();
+
+        this.playerCount = game.preferences.getInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         this.playerList = new Table();
+
+        this.currentBgColors = new Color[this.playerCount];
+        this.targetBgColors = new Color[this.playerCount];
+        for (int i = 0; i < this.playerCount; i++) {
+            this.currentBgColors[i] = new Color(0, 0, 0, bgAlpha);
+            this.targetBgColors[i] = new Color(0, 0, 0, bgAlpha);
+        }
     }
 
     @Override
     public void show() {
         setUpStage();
-        setUpBackButton();
+        setUpUIButtons();
         showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+
+        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
+            @Override
+            public void animationEnd(Stage stage) {
+                boolean showTutorialDialogPrompt = game.preferences.getBoolean(Constants.SHOW_TUTORIAL_PREFERENCE, true);
+                if (showTutorialDialogPrompt) {
+                    showTutorialDialog();
+
+                    game.preferences.putBoolean(Constants.SHOW_TUTORIAL_PREFERENCE, false);
+                    game.preferences.flush();
+                }
+            }
+        });
         animationManager.fadeInStage(stage);
     }
 
-    private void setUpBackButton() {
-        Table table = new Table();
-        table.setFillParent(true);
-        table.left().top();
-        Drawable backImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_back.png"))));
-        final HoverImageButton backButton = new HoverImageButton(backImage);
-        backButton.setNormalAlpha(1f);
-        backButton.setHoverAlpha(.75f);
-        backButton.setClickAlpha(.5f);
+    private void setUpUIButtons() {
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 onBackPressed();
             }
         });
-        table.add(backButton).padLeft(20f).padTop(35f);
-        stage.addActor(table);
+        HoverImageButton tutorialButton = uiButtonManager.addTutorialButtonToStage();
+        tutorialButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showTutorialDialog();
+            }
+        });
     }
 
     private void setUpStage() {
         final int NO_OF_COLORS = Constants.PLAYER_COLORS.size();
-        final float COLOR_BUTTON_DIMENSIONS = 60f;
+        final float COLOR_BUTTON_DIMENSIONS = 60f * game.getScaleFactor();
+
+        Table masterTable = new Table();
+        masterTable.setFillParent(true);
+        //masterTable.setDebug(true);
+        masterTable.center();
 
         Table table = new Table();
-        table.setFillParent(true);
-        //table.setDebug(true);
         table.center();
+        table.pad(20f);
+        ScrollPane screenScrollPane = new ScrollPane(table);
+        screenScrollPane.setOverscroll(false, true);
+        // Have to set overscrollX to false since on Android, it seems to overscroll even when there is space
+        // But on Desktop it works perfectly well.
 
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
-        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount]; // TODO: Modify to list to get rid of warning?
+        final CustomButtonGroup[] colorButtonGroups = new CustomButtonGroup[playerCount];
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
             playerItem.center();
@@ -105,7 +143,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             playerItem.add(promptLabels[i]);
 
             colorButtons[i] = new Button[NO_OF_COLORS];
-            colorButtonGroups[i] = new ButtonGroup<Button>();
+            colorButtonGroups[i] = new CustomButtonGroup();
             colorButtonGroups[i].setMinCheckCount(1);
             colorButtonGroups[i].setMaxCheckCount(1);
 
@@ -114,100 +152,110 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
                 colorButtons[i][j].setColor(PlayerColorHelper.getColorFromIndex(j));
                 colorButtonGroups[i].add(colorButtons[i][j]);
 
-                playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS * game.getScaleFactor()).height(COLOR_BUTTON_DIMENSIONS * game.getScaleFactor());
+                playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS).height(COLOR_BUTTON_DIMENSIONS);
 
                 stage.addFocusableActor(colorButtons[i][j]);
             }
 
+            final int finalI = i;
+            colorButtonGroups[i].setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
+                @Override
+                public void buttonPressed(Button button) {
+                    targetBgColors[finalI].set(button.getColor());
+                    targetBgColors[finalI].a = bgAlpha;
+                }
+            });
+
+            colorButtonGroups[i].uncheckAll();
             colorButtons[i][i % NO_OF_COLORS].setChecked(true);
             stage.row();
             playerList.add(playerItem).right();
             playerList.row();
         }
-        table.add(playerList).colspan(NO_OF_COLORS + 1);
+        table.add(playerList).colspan(NO_OF_COLORS + 1).expandX();
         table.row();
 
-        Table innerTable = new Table();
-        Label gridSizeLabel = new Label("Grid size: ", game.skin, "themed");
-        Label x = new Label("  x  ", game.skin);
-        final int LOW_LIMIT = 3, HIGH_LIMIT = 100;
-        int snapValue = 10;
-        final Spinner rowSpinner = new Spinner(game.skin);
-        final Spinner colSpinner = new Spinner(game.skin);
-        rowSpinner.generateValueLabel(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        colSpinner.generateValueLabel(LOW_LIMIT, HIGH_LIMIT, game.skin);
-        rowSpinner.getStepScrollPane().snapToStep(snapValue - LOW_LIMIT);
-        colSpinner.getStepScrollPane().snapToStep(snapValue - LOW_LIMIT);
-
-        innerTable.add(gridSizeLabel);
-        innerTable.add(rowSpinner).width(rowSpinner.getPrefWidth() * game.getScaleFactor());
-        innerTable.add(x);
-        innerTable.add(colSpinner).width(colSpinner.getPrefWidth() * game.getScaleFactor());
-        table.add(innerTable).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor());
-
+        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.skin);
+        mapSelector.setUsedTextureArray(usedTextures);
+        Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
+        mapSelector.loadExternalMaps();
+        table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
 
-        stage.addFocusableActor(rowSpinner.getPlusButton());
-        stage.addFocusableActor(rowSpinner.getMinusButton());
-        stage.addFocusableActor(colSpinner.getPlusButton(), 2);
-        stage.addFocusableActor(colSpinner.getMinusButton());
+        stage.addFocusableActor(mapSelector.getLeftButton(), 1);
+        stage.addFocusableActor(mapSelector.getRightButton(), NO_OF_COLORS - 1);
         stage.row();
 
-        Table infoTable = new Table();
-        infoTable.center();
-        Image infoImage = new Image(new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_info.png")))));
-        Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
-        infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
-        infoTable.add(infoLabel);
-        table.add(infoTable).colspan(NO_OF_COLORS + 1).padBottom(20f * game.getScaleFactor());
-        table.row();
+        if (playerCount <= 2) {
+            Table infoTable = new Table();
+            infoTable.center();
+            Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
+            usedTextures.add(infoIconTexture);
+            Image infoImage = new Image(infoIconTexture);
+            Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
+            infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
+            infoTable.add(infoLabel);
+            table.add(infoTable).colspan(NO_OF_COLORS + 1).padBottom(20f * game.getScaleFactor()).expandX();
+            table.row();
+        }
 
-        TextButton startButton = new TextButton("Start game", game.skin);
+        TextButton startButton = new TextButton("Next", game.skin);
         startButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                int rows = Math.round(rowSpinner.getScrollYPos() / rowSpinner.getScrollPaneHeight()) + LOW_LIMIT;
-                int cols = Math.round(colSpinner.getScrollYPos() / colSpinner.getScrollPaneHeight()) + LOW_LIMIT;
-
-                if (Gdx.app.getType() == Application.ApplicationType.Android) { // Swap because splitscreen; phone will be rotated (hopefully xD)
-                    int temp = rows;
-                    rows = cols;
-                    cols = temp;
-                }
-
-                Array<Color> playerColors = new Array<Color>();
+                Array<Color> playerColors = new Array<>();
                 for (ButtonGroup buttonGroup : colorButtonGroups) {
                     playerColors.add(buttonGroup.getChecked().getColor());
                 }
 
-                startGame(playerColors, rows, cols);
+                if (mapSelector.loadSelectedMap()) {
+                    startGame(playerColors, mapSelector.getMapManager());
+                }
             }
 
         });
-        table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1);
+        table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1).expandX();
         stage.addFocusableActor(startButton, NO_OF_COLORS);
-        stage.addActor(table);
+        masterTable.add(screenScrollPane).grow();
+        stage.setScrollFocus(screenScrollPane);
+        stage.addActor(masterTable);
     }
 
-    private void startGame(Array<Color> playerColors, final int rows, final int cols) {
+    private void startGame(Array<Color> playerColors, MapManager mapManager) {
         final Player[] players = new Player[playerColors.size];
         for (int i = 0; i < players.length; i++) {
             players[i] = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
         }
 
-        Vector2[] playerStartPositions = Map.getStartPositions(rows, cols);
-
         for (int i = 0; i < players.length; i++) {
-            players[i].setStartPos(playerStartPositions[i % playerStartPositions.length]);
-            players[i].setControlsIndex(i % Constants.PLAYER_CONTROLS.length);
+            players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 
-        animationManager.fadeOutStage(stage, new GameScreen(game, rows, cols, players, null, null));
+        int startPosSplitScreenCount = game.preferences.getInteger(Constants.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
+        animationManager.fadeOutStage(stage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount, false));
+    }
+
+    private void showTutorialDialog() {
+        Array<String> buttonTexts = new Array<>();
+        buttonTexts.add("Cancel");
+        buttonTexts.add("Yes");
+
+        stage.showDialog("Start the tutorial?", buttonTexts,
+                false, game.getScaleFactor(),
+                new FocusableStage.DialogResultListener() {
+                    @Override
+                    public void dialogResult(String buttonText) {
+                        if (buttonText.equals("Yes")) {
+                            animationManager.fadeOutStage(stage, PlayerSetUpScreen.this, new TutorialScreen(game));
+                        }
+                    }
+                }, game.skin);
     }
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        stage.resize(width, height);
     }
 
     @Override
@@ -215,10 +263,27 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        for (int i = 0; i < currentBgColors.length; i++) {
+            currentBgColors[i].lerp(targetBgColors[i], bgAnimSpeed * delta);
+            currentBgColors[i].a = Math.min(targetBgColors[i].a, stage.getRoot().getColor().a / 2.5f);
+        }
+
         viewport.apply(true);
 
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        renderer.setProjectionMatrix(viewport.getCamera().combined);
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (int i = 0; i < currentBgColors.length; i++) {
+            renderer.setColor(currentBgColors[i]);
+            renderer.rect(i * stage.getWidth() / currentBgColors.length, 0,
+                    stage.getWidth() / currentBgColors.length, stage.getHeight());
+        }
+        renderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();
@@ -228,10 +293,14 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
+        renderer.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private void onBackPressed() {
-        animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
     }
 
     @Override

@@ -1,26 +1,37 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.buffers.BufferPlayerDisconnected;
+import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ClientGameListener;
 import com.cg.zoned.listeners.ServerGameListener;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
-public class ConnectionManager implements IConnectionHandlers {
-    public boolean isActive;     // ConnectionManager will be inactive when playing in splitscreen mode
+public class GameConnectionManager implements IConnectionHandlers {
+    public boolean isActive;     // GameConnectionManager will be inactive when playing in splitscreen mode
 
     private GameManager gameManager;
 
     private Server server;       // One of these two will be null (or both)
     private Client client;
 
+    private Listener connListener; // Kryonet to this manager
+
+    private Array<Connection> discardConnections; // Used to store client connections that came in when in-game
+
+    private int ping;
     private Boolean sentResponse;
 
-    public ConnectionManager(GameManager gameManager, Server server, Client client) {
+    // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
+
+    public GameConnectionManager(GameManager gameManager, Server server, Client client) {
         isActive = server != null || client != null;
         if (!isActive) {
             return;
@@ -32,29 +43,26 @@ public class ConnectionManager implements IConnectionHandlers {
         this.client = client;
         this.sentResponse = false;
 
+        this.discardConnections = new Array<>();
+
         if (server != null) {
-            server.addListener(new ServerGameListener(this));
-        } else { // else if Client is not null
-            client.addListener(new ClientGameListener(this));
+            connListener = new ServerGameListener(this);
+            server.addListener(connListener);
+        } else if (client != null) {
+            connListener = new ClientGameListener(this);
+            client.addListener(connListener);
         }
-    }
-
-    public void updateServer(Server server) {
-        this.server = server;
-    } // TODO: Might come in handy in the future for reconnecting and shit idk
-
-    public void updateClient(Client client) {
-        this.client = client;
     }
 
     /**
      * Called when the server receives direction information from a client
      * The server then updates its buffer after finding the proper index of the buffer
      *
-     * @param bd BufferDirection object containing client player's name and direction
+     * @param bd             BufferDirection object containing client player's name and direction
+     * @param returnTripTime The return trip time a.k.a ping of the packet received
      */
     @Override
-    public void serverUpdateDirections(final BufferDirections bd) {
+    public void serverUpdateDirections(final BufferDirections bd, final int returnTripTime) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
@@ -75,6 +83,8 @@ public class ConnectionManager implements IConnectionHandlers {
                     gameManager.directionBufferManager.clearBuffer();
                     sentResponse = false;
                 }
+
+                ping = returnTripTime;
             }
         });
     }
@@ -83,10 +93,11 @@ public class ConnectionManager implements IConnectionHandlers {
      * Called when the client receives direction information from a server
      * The client then updates its buffer after finding the proper index of the buffer
      *
-     * @param bd BufferDirection object containing each player's name and direction
+     * @param bd             BufferDirection object containing each player's name and direction
+     * @param returnTripTime The return trip time a.k.a ping of the packet received
      */
     @Override
-    public void clientUpdateDirections(final BufferDirections bd) {
+    public void clientUpdateDirections(final BufferDirections bd, final int returnTripTime) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
@@ -108,6 +119,8 @@ public class ConnectionManager implements IConnectionHandlers {
                     gameManager.directionBufferManager.clearBuffer();
                     sentResponse = false;
                 }
+
+                ping = returnTripTime;
             }
         });
     }
@@ -162,25 +175,94 @@ public class ConnectionManager implements IConnectionHandlers {
     }
 
     /**
-     * Called when the server/client disconnects
+     * Called in the server any of its clients disconnects
      */
-    public void disconnect(Connection connection) {
+    @Override
+    public void serverDisconnect(final Connection connection) {
+        if (discardConnections.indexOf(connection, true) != -1) {
+            discardConnections.removeValue(connection, true);
+            return;
+        }
+
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                gameManager.connectionManager.close();
-                gameManager.endGame();  // TODO: Handle disconnections in a better way
+                if (server != null) {
+                    gameManager.serverPlayerDisconnected(connection);
+                    sentResponse = false;
+                    Player player1 = gameManager.playerManager.getPlayers()[0];
+                    player1.updatedDirection = player1.direction = null;
+                } else {
+                    endGame();
+                }
             }
         });
     }
 
+    /**
+     * Called in the client when the client disconnects
+     */
+    @Override
+    public void clientDisconnect(final Connection connection) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                endGame();
+            }
+        });
+    }
+
+    private void endGame() {
+        gameManager.gameConnectionManager.close();
+        gameManager.endGame();
+    }
+
+    /**
+     * Called in the server when a new client connects when in the GameScreen
+     * Server rejects incoming connections when a match is already underway
+     *
+     * @param connection The client's connection
+     */
+    public void rejectNewConnection(Connection connection) {
+        discardConnections.add(connection);
+
+        BufferServerRejectedConnection bsrc = new BufferServerRejectedConnection();
+        bsrc.errorMsg = "Server is busy playing a match.\nPlease try again later";
+        connection.sendTCP(bsrc);
+    }
+
+    public void sendPlayerDisconnectedBroadcast(String playerName) {
+        BufferPlayerDisconnected bpd = new BufferPlayerDisconnected();
+        bpd.playerName = playerName;
+        server.sendToAllTCP(bpd);
+    }
+
+    public void clientPlayerDisconnected(String playerName) {
+        gameManager.clientPlayerDisconnected(playerName);
+        sentResponse = false;
+        Player player1 = gameManager.playerManager.getPlayers()[0];
+        player1.updatedDirection = player1.direction = null;
+    }
+
+    public int getPing() {
+        return ping;
+    }
+
     public void close() {
         if (server != null) {
+            server.removeListener(connListener);
             server.close();
+            connListener = null;
             server = null;
+
+            endGame();
         } else if (client != null) {
+            client.removeListener(connListener);
             client.close();
+            connListener = null;
             client = null;
+
+            endGame();
         }
     }
 }

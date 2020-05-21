@@ -7,28 +7,32 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
-import com.cg.zoned.FPSDisplayer;
+import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverCheckBox;
 import com.cg.zoned.ui.HoverImageButton;
 
 public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
+
+    private Array<Texture> usedTextures = new Array<>();
 
     private FocusableStage stage;
     private Viewport viewport;
@@ -54,16 +58,30 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpStage() {
+        Table masterTable = new Table();
+        //masterTable.setDebug(true);
+        masterTable.setFillParent(true);
+        masterTable.center();
+
         Table table = new Table();
-        //table.setDebug(true);
-        table.setFillParent(true);
         table.center();
+        table.pad(20f);
+        ScrollPane screenScrollPane = new ScrollPane(table);
+        screenScrollPane.setOverscroll(false, true);
 
         Label controlLabel = new Label("Control scheme", game.skin, "themed");
-        Drawable controlFlingOff = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_control_fling_off.png"))));
-        Drawable controlFlingOn = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_control_fling_on.png"))));
-        Drawable controlPiemenuOn = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_control_piemenu_on.png"))));
-        Drawable controlPiemenuOff = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_control_piemenu_off.png"))));
+        Texture controlFlingOffTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_off.png"));
+        Texture controlFlingOnTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_on.png"));
+        Texture controlPiemenuOffTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_piemenu_off.png"));
+        Texture controlPiemenuOnTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_piemenu_on.png"));
+        usedTextures.add(controlFlingOffTexture);
+        usedTextures.add(controlFlingOnTexture);
+        usedTextures.add(controlPiemenuOffTexture);
+        usedTextures.add(controlPiemenuOnTexture);
+        Drawable controlFlingOff = new TextureRegionDrawable(controlFlingOffTexture);
+        Drawable controlFlingOn = new TextureRegionDrawable(controlFlingOnTexture);
+        Drawable controlPiemenuOff = new TextureRegionDrawable(controlPiemenuOffTexture);
+        Drawable controlPiemenuOn = new TextureRegionDrawable(controlPiemenuOnTexture);
         final HoverImageButton flingControl = new HoverImageButton(controlFlingOff, controlFlingOn);
         final HoverImageButton piemenuControl = new HoverImageButton(controlPiemenuOff, controlPiemenuOn);
         final Label flingControlLabel = new Label("Fling", game.skin);
@@ -128,35 +146,29 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
 
         table.add(showFPS).colspan(2).padTop(30f);
 
-        stage.addActor(table);
+        masterTable.add(screenScrollPane);
+        stage.addActor(masterTable);
         stage.addFocusableActor(piemenuControl);
         stage.addFocusableActor(flingControl);
         stage.row();
         stage.addFocusableActor(showFPS, 2);
+        stage.setScrollFocus(screenScrollPane);
     }
 
     private void setUpBackButton() {
-        Table table = new Table();
-        table.setFillParent(true);
-        table.left().top();
-        Drawable backImage = new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("icons/ic_back.png"))));
-        final HoverImageButton backButton = new HoverImageButton(backImage);
-        backButton.setNormalAlpha(1f);
-        backButton.setHoverAlpha(.75f);
-        backButton.setClickAlpha(.5f);
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 onBackPressed();
             }
         });
-        table.add(backButton).padLeft(20f).padTop(35f);
-        stage.addActor(table);
     }
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        stage.resize(width, height);
     }
 
     @Override
@@ -167,7 +179,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         viewport.apply(true);
 
         if (showFPSCounter) {
-            FPSDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
         }
 
         stage.draw();
@@ -177,10 +189,13 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
+        for (Texture texture : usedTextures) {
+            texture.dispose();
+        }
     }
 
     private void onBackPressed() {
-        animationManager.fadeOutStage(stage, new MainMenuScreen(game));
+        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
     }
 
     @Override

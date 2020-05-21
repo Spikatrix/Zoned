@@ -5,12 +5,17 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.screens.LoadingScreen;
 
 public class Zoned extends Game {
     public Skin skin;
     public Preferences preferences;
+
+    private AssetManager assetManager;
 
     private static float SCALE_FACTOR = 1.0f;
 
@@ -50,13 +55,34 @@ public class Zoned extends Game {
         return SCALE_FACTOR;
     }
 
+    public Texture getPlayButtonTexture() {
+        // This is here because it's loaded by the assetManager
+        return assetManager.get("icons/ui_icons/ic_play_sheet.png", Texture.class);
+    }
+
     @Override
     public void render() {
         super.render();
     }
 
+    public void setAssetManager(AssetManager assetManager) {
+        this.assetManager = assetManager;
+    }
+
     @Override
     public void dispose() {
-        skin.dispose();
+        try {
+            assetManager.dispose();
+        } catch (GdxRuntimeException ignored) {
+            // "Pixmap already disposed!" error
+            // idk why this happens but ok ¯\_(ツ)_/¯
+        }
+
+        try {
+            skin.dispose();
+        } catch (GdxRuntimeException ignored) {
+            // "Pixmap already disposed!" error
+            // idk why this happens but ok ¯\_(ツ)_/¯
+        }
     }
 }
