@@ -21,9 +21,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 29
         versionCode 1
-        versionName "1.0"
-
-        // Remember to update the GAME_VERSION in Constants.java too!
+        versionName "0.0.1-beta" // Remember to update the GAME_VERSION in Constants.java too !!
     }
     buildTypes {
         release {

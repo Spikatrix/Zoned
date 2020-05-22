@@ -256,6 +256,7 @@ public class Map {
         float yOffset = (Constants.CELL_SIZE * 1.7f); // Not really sure how 1.7f fixes it lol
         // TODO: Get it to work with all fonts as well and fix blurry text
         //       Also, make this and its bg work regardless of camera zoom value
+        //       Furthermore, the grid's white walls block the batch's current blending func
         for (Player player : players) {
             font.setColor(player.color);
             font.draw(batch, player.name,

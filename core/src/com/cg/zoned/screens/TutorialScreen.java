@@ -32,6 +32,7 @@ import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.TutorialItem;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -143,44 +144,54 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         innerTable.add(subLabel).grow();
         innerTable.row();
 
-        final boolean[] playerInteractable = new boolean[]{
-                false,
-                true,
-                false,
-                true,
-                false,
-                false,
-                false,
-                true,
-                true,
-        };
+        final int[] tutorialPromptIndex = {0};
+        final Array<TutorialItem> tutorialPrompts = new Array<>();
+        tutorialPrompts.add(new TutorialItem(
+                "Every game is played in a grid based map",
+                "Each player is represented by a circle",
+                false));
 
-        final int[] textIndex = {0};
-        final Array<String> mainTexts = new Array<>();
-        mainTexts.add("Every game is played in a grid based map");
-        mainTexts.add("Try moving around the grid (Tap here when done)");
-        mainTexts.add("The main objective is to capture as many cells as you can");
-        mainTexts.add("Try capturing a group of cells at once (Tap here when done)");
-        mainTexts.add("Surrounded cells are captured based on certain rules");
-        mainTexts.add("Surrounded cells are captured based on certain rules");
-        mainTexts.add("Walls may be present on certain maps and they block players");
-        mainTexts.add("That's basically it!");
-        mainTexts.add("Thank you for playing the tutorial!");
+        tutorialPrompts.add(new TutorialItem(
+                "Try moving around the grid (Tap here when done)",
+                ((Gdx.app.getType() == Application.ApplicationType.Android) ?
+                        ("You can move by using the touchscreen") :
+                        ("You can move by using the mouse or the keyboard (WASD)")),
+                true));
 
-        final Array<String> subTexts = new Array<>();
-        subTexts.add("Each player is represented by a circle");
-        if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            subTexts.add("You can move by using the touchscreen");
-        } else {
-            subTexts.add("You can move by using the mouse or the keyboard (WASD)");
-        }
-        subTexts.add("You can capture cells by moving onto black (uncaptured) cells");
-        subTexts.add("You can do that by surrounding a group of cells");
-        subTexts.add("1. Every color in the border of the surrounded region is the player's color");
-        subTexts.add("2. Every cell interior to the surrounded region is either empty (black) or the player's color");
-        subTexts.add("Walls are white in color");
-        subTexts.add("Now go have fun competing with friends and assert your dominance!");
-        subTexts.add("Tap here to finish");
+        tutorialPrompts.add(new TutorialItem(
+                "The main objective is to capture as many cells as you can",
+                "You can capture cells by moving onto black (uncaptured) cells",
+                false));
+
+        tutorialPrompts.add(new TutorialItem(
+                "Try capturing a group of cells at once (Tap here when done)",
+                "You can do that by surrounding a group of cells",
+                true));
+
+        tutorialPrompts.add(new TutorialItem(
+                "Surrounded cells are captured based on certain rules",
+                "1. Every color in the border of the surrounded region is the player's color",
+                false));
+
+        tutorialPrompts.add(new TutorialItem(
+                "Surrounded cells are captured based on certain rules",
+                "2. Every cell interior to the region is either empty (black) or the player's color",
+                false));
+
+        tutorialPrompts.add(new TutorialItem(
+                "Walls may be present on certain maps and they block players",
+                "Walls are white in color",
+                false));
+
+        tutorialPrompts.add(new TutorialItem(
+                "That's basically it!",
+                "Now go have fun competing with friends and assert your dominance!",
+                true));
+
+        tutorialPrompts.add(new TutorialItem(
+                "Thank you for playing the tutorial!",
+                "Tap here to finish",
+                true));
 
         tutorialTable.setTouchable(Touchable.enabled);
         tutorialTable.addListener(new ClickListener() {
@@ -192,7 +203,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
                 players[0].position.x = Math.round(players[0].position.x);
                 players[0].position.y = Math.round(players[0].position.y);
 
-                if (textIndex[0] == mainTexts.size || textIndex[0] == subTexts.size) {
+                if (tutorialPromptIndex[0] == tutorialPrompts.size) {
                     togglePlayerInterable(false);
                     animationManager.fadeOutStage(stage, TutorialScreen.this, new MainMenuScreen(game));
                     return;
@@ -203,15 +214,15 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
                         Actions.run(new Runnable() {
                             @Override
                             public void run() {
-                                String mainText = mainTexts.get(textIndex[0]);
+                                String mainText = tutorialPrompts.get(tutorialPromptIndex[0]).mainItem;
                                 if (mainText.contains("Walls")) {
                                     generateRandomWalls();
                                 }
 
-                                displayNextTutorialText(mainLabel, subLabel, mainText, subTexts.get(textIndex[0]));
-                                togglePlayerInterable(playerInteractable[textIndex[0]]);
+                                displayNextTutorialText(mainLabel, subLabel, mainText, tutorialPrompts.get(tutorialPromptIndex[0]).subItem);
+                                togglePlayerInterable(tutorialPrompts.get(tutorialPromptIndex[0]).enablePlayerInteraction);
 
-                                textIndex[0]++;
+                                tutorialPromptIndex[0]++;
                             }
                         }),
                         Actions.fadeIn(.2f, Interpolation.fastSlow)

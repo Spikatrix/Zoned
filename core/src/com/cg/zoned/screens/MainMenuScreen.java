@@ -226,7 +226,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeTable.center();
 
         Label chooseMode = new Label("Choose the game mode", game.skin, "themed");
-        playModeTable.add(chooseMode).expandX().pad(10f).colspan(2);
+        playModeTable.add(chooseMode).expandX().pad(20f).colspan(2);
         playModeTable.row();
 
         final int gameModeCount = 2;

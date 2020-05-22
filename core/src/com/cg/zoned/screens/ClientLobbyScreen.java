@@ -71,6 +71,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private Player[] players;
 
     private Table playerList;
+    private TextButton readyButton;
 
     private Label mapLabel;
     private Array<String> startLocations;
@@ -114,7 +115,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         clientLobbyTable.center();
 
         Label onlinePlayersTitle = new Label("Connected Players", game.skin, "themed");
-        clientLobbyTable.add(onlinePlayersTitle).pad(10 * game.getScaleFactor());
+        clientLobbyTable.add(onlinePlayersTitle).pad(20);
 
         clientLobbyTable.row();
 
@@ -131,7 +132,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         clientLobbyTable.add(mapLabel).pad(10f * game.getScaleFactor());
         clientLobbyTable.row();
 
-        final TextButton readyButton = new TextButton("Ready up", game.skin);
+        readyButton = new TextButton("Ready up", game.skin);
         readyButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -188,6 +189,21 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
                 onBackPressed();
             }
         });
+    }
+
+    @Override
+    public void pause() {
+        if (readyButton.getText().toString().equals("Unready")) {
+            // Game was minimized in the mobile; so make the player unready
+
+            InputEvent touchDownEvent = new InputEvent();
+            touchDownEvent.setType(InputEvent.Type.touchDown);
+            readyButton.fire(touchDownEvent);
+
+            InputEvent touchUpEvent = new InputEvent();
+            touchUpEvent.setType(InputEvent.Type.touchUp);
+            readyButton.fire(touchUpEvent);
+        }
     }
 
     private void addPlayer(String name, String who, String ready, String color, String startPos) {

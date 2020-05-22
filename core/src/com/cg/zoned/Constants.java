@@ -57,8 +57,6 @@ public final class Constants {
     /**
      * Controls for players playing in splitscreen mode. Player one has the first control scheme, two has the second etc
      * In case of server-client multiplayer mode, the player will have the first control scheme.
-     * <p>
-     * Note that you may face issues when playing with the number of players greater than the number of control schemes specified
      */
     public static final int[][] PLAYER_CONTROLS = new int[][]{
             {Input.Keys.W,  Input.Keys.A,    Input.Keys.S,    Input.Keys.D},
@@ -97,14 +95,13 @@ public final class Constants {
     public static final int PIE_MENU_CONTROL = 0;
     public static final int FLING_CONTROL = 1;
 
-
     public enum Direction {UP, LEFT, DOWN, RIGHT}
+
     public enum FONT_MANAGER {
         LARGE("large-font", 80),
         REGULAR("regular-font", 36),
         SMALL("small-font", 18),
         PLAYER_LABEL("player-label-font-noscale", 20);
-
 
         private String name;
         private int size;

@@ -152,7 +152,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         masterTable.setFillParent(true);
 
         Label title = new Label("Choose start positions", game.skin, "themed");
-        masterTable.add(title).colspan(splitScreenCount).expandX().pad(20f * game.getScaleFactor());
+        masterTable.add(title).colspan(splitScreenCount).expandX().pad(20f);
         masterTable.row();
 
         playerLabels = new Label[splitScreenCount];

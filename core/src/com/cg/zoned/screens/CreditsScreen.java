@@ -39,6 +39,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     private ScreenViewport viewport;
     private FocusableStage stage;
     private AnimationManager animationManager;
+    private boolean showFPSCounter;
     private BitmapFont font;
 
     private Color linkColor = new Color(.4f, .4f, 1f, 1f);
@@ -56,6 +57,8 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     public void show() {
         setUpStage();
         setUpBackButton();
+
+        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
 
         animationManager.fadeInStage(stage);
     }
@@ -246,6 +249,8 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void toggleDevMode() {
+        // owo what's this
+
         boolean devModeUnlocked = game.preferences.getBoolean(Constants.DEV_MODE_PREFERENCE, false);
         devModeUnlocked = !devModeUnlocked;
         game.preferences.putBoolean(Constants.DEV_MODE_PREFERENCE, devModeUnlocked);
@@ -281,7 +286,9 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         this.viewport.apply(true);
 
-        UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+        if (showFPSCounter) {
+            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+        }
 
         stage.act(delta);
         stage.draw();

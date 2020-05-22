@@ -104,7 +104,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         //serverLobbyTable.setDebug(true);
 
         Label onlinePlayersTitle = new Label("Connected Players", game.skin, "themed");
-        serverLobbyTable.add(onlinePlayersTitle).pad(10 * game.getScaleFactor());
+        serverLobbyTable.add(onlinePlayersTitle).pad(20f);
         serverLobbyTable.row();
 
         Table scrollTable = new Table();
