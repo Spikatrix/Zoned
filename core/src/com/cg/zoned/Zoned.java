@@ -83,6 +83,8 @@ public class Zoned extends Game {
         } catch (GdxRuntimeException ignored) {
             // "Pixmap already disposed!" error
             // idk why this happens but ok ¯\_(ツ)_/¯
+        } catch (NullPointerException ignored) {
+            // Application was closed before the skin was loaded
         }
     }
 }

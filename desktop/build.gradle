@@ -5,6 +5,10 @@ sourceSets.main.java.srcDirs = [ "src/" ]
 
 project.ext.mainClassName = "com.cg.zoned.desktop.DesktopLauncher"
 project.ext.assetsDir = new File("../android/assets")
+project.setVersion("0.0.1-beta")
+// Remember to update the GAME_VERSION in Constants.java
+// And versionName in Android's build.gradle
+// Or for Linux users, use the versionUpdate.sh script
 
 task run(dependsOn: classes, type: JavaExec) {
     main = project.mainClassName
@@ -12,6 +16,7 @@ task run(dependsOn: classes, type: JavaExec) {
     standardInput = System.in
     workingDir = project.assetsDir
     ignoreExitValue = true
+    args project.getVersion()
 }
 
 task debug(dependsOn: classes, type: JavaExec) {
@@ -21,6 +26,7 @@ task debug(dependsOn: classes, type: JavaExec) {
     workingDir = project.assetsDir
     ignoreExitValue = true
     debug = true
+    args project.getVersion()
 }
 
 task dist(type: Jar) {
@@ -30,9 +36,10 @@ task dist(type: Jar) {
     from {configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }}
     from {configurations.compile.collect {zipTree(it)}}
     from files(project.assetsDir)
- 
+
     manifest {
         attributes 'Main-Class': project.mainClassName
+        attributes 'Game-Version': project.getVersion()
     }
 }
 

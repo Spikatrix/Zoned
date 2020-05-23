@@ -8,6 +8,9 @@ import java.util.Map;
 
 public final class Constants {
     public static final String GAME_VERSION = "0.0.1-beta";
+    // Remember to update the versionName in Android's build.gradle
+    // And project.setVersion in Desktop's build.gradle
+    // Or for Linux users, use the versionUpdate.sh script
 
     public static final float WORLD_SIZE = 480.0f;
 
