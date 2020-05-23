@@ -29,6 +29,7 @@ www-test/
 *.iws
 *.iml
 /android/out/
+/android/release/
 com_crashlytics_export_strings.xml
 
 ## Eclipse
@@ -101,13 +102,6 @@ nb-configuration.xml
 /local.properties
 .gradle/
 gradle-app.setting
-/build/
-/android/build/
-/core/build/
-/desktop/build/
-/html/build/
-/ios/build/
-/ios-moe/build/
 
 ## OS Specific
 .DS_Store
