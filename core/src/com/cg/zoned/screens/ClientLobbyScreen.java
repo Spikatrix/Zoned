@@ -125,7 +125,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
         playerList = new Table();
         scrollTable.add(playerList).expand();
-        clientLobbyTable.add(playerListScrollPane).expand();
+        clientLobbyTable.add(playerListScrollPane).grow();
         clientLobbyTable.row();
 
         mapLabel = new Label("", game.skin);
@@ -162,7 +162,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         });
         clientLobbyTable.add(readyButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
-        stage.addFocusableActor(readyButton);
+        stage.addFocusableActor(readyButton, 2);
         stage.row();
 
         stage.addActor(clientLobbyTable);

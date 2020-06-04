@@ -114,7 +114,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         playerList = new Table();
         //playerList.setDebug(true);
         scrollTable.add(playerList).expand();
-        serverLobbyTable.add(playerListScrollPane).expand();
+        serverLobbyTable.add(playerListScrollPane).grow();
         serverLobbyTable.row();
 
         mapSelector = new MapSelector(stage, game.getScaleFactor(), game.skin);
@@ -184,8 +184,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         serverLobbyTable.add(startButton).width(250 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
         stage.addActor(serverLobbyTable);
-        stage.addFocusableActor(mapSelector.getLeftButton());
-        stage.addFocusableActor(mapSelector.getRightButton());
+        stage.addFocusableActor(mapButton, 2);
         stage.row();
         stage.addFocusableActor(startButton, 2);
         stage.row();

@@ -97,11 +97,19 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         innerTable.add(splitscreenPlayerCountSpinner);
         innerTable.row();
 
+        stage.addFocusableActor(splitscreenPlayerCountSpinner.getLeftButton());
+        stage.addFocusableActor(splitscreenPlayerCountSpinner.getRightButton());
+        stage.row();
+
         innerTable.add(mapStartPosSplitscreenCountLabel).padTop(20f);
         innerTable.row();
         innerTable.add(mapStartPosSplitscreenCountSpinner);
 
-        table.add(screenScrollPane).expand();
+        stage.addFocusableActor(mapStartPosSplitscreenCountSpinner.getLeftButton());
+        stage.addFocusableActor(mapStartPosSplitscreenCountSpinner.getRightButton());
+        stage.row();
+
+        table.add(screenScrollPane).grow();
 
         stage.addActor(table);
         stage.setScrollFocus(screenScrollPane);

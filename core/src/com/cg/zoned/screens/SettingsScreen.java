@@ -146,7 +146,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
 
         table.add(showFPS).colspan(2).padTop(30f);
 
-        masterTable.add(screenScrollPane);
+        masterTable.add(screenScrollPane).grow();
         stage.addActor(masterTable);
         stage.addFocusableActor(piemenuControl);
         stage.addFocusableActor(flingControl);

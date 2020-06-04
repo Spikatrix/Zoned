@@ -208,7 +208,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     }
                 }
 
-                table.add(startPosScrollPane);
+                table.add(startPosScrollPane).grow();
 
                 final int finalI = i;
                 customButtonGroup[i].setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
