@@ -187,7 +187,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         stage.addFocusableActor(mapSelector.getRightButton(), NO_OF_COLORS - 1);
         stage.row();
 
-        if (playerCount <= 2) {
+        if (playerCount == 2) {
             Table infoTable = new Table();
             infoTable.center();
             Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
