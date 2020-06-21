@@ -103,7 +103,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         addCreditItem(table,
                 "Feedback",
                 Gdx.files.internal("icons/ic_gmail.png"), "cg.devworks@gmail.com",
-                "mailto:cg.devworks@gmail.com");
+                "mailto:cg.devworks@gmail.com?subject=Zoned+Feedback");
 
         addCreditItem(table,
                 "Hang out with me",
