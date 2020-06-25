@@ -145,7 +145,7 @@ public class PieMenuControlManager extends InputAdapter {
                 stage.addActor(menus[playerIndex]);
                 menus[playerIndex].setPosition(screenX, stage.getHeight() - screenY, Align.center);
                 menus[playerIndex].setVisible(true);
-                menus[playerIndex].setHighlightedIndex(-1); // Last arrow is still black; Not a bug but a feature lol ;-)
+                menus[playerIndex].setHighlightedIndex(-1); // FIXME: Last arrow is still black
                 coords[playerIndex].x = screenX;
                 coords[playerIndex].y = screenY;
                 pointers[playerIndex] = pointer;
