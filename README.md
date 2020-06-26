@@ -17,7 +17,7 @@ It is available to download on the [Google Play Store][play_store_page] (Android
 
 ## About
 
-Zoned is multiplayer strategy game. Every game is played on a grid based map where the objective is to capture as many cells in the grid as possible. Currently, it supports splitscreen multiplayer as well as cross-platform local network multiplayer. The best part is that Zoned is free of ads and will never have ads!
+Zoned is multiplayer strategy game. Every game is played on a grid based map where the objective is to capture as many cells in the grid as possible. Currently, it supports splitscreen multiplayer as well as cross-platform local network multiplayer. In addition to the default internal maps, Zoned also supports [custom external maps][custom_external_map_wiki] which you can play on if you get bored of the default ones. The best part is that Zoned is free of ads and will never have ads!
 
 The game is currently in beta. I've made a [list of work][beta_work] to be done before v1.0.0 stable is released. There may be additional changes as well.
 
@@ -49,5 +49,6 @@ This project is licensed under the [GNU GPLv3 License][project_license]
 [beta_work]: https://github.com/Spikatrix/Zoned/projects/1
 [issue_tracker]: https://github.com/Spikatrix/Zoned/issues
 [email_feedback]: mailto:cg.devworks@gmail.com?subject=Zoned+Feedback&body=Your+feedback+here
+[custom_external_map_wiki]: https://github.com/Spikatrix/Zoned/wiki/Custom-External-Maps
 [discord_invite]: https://discord.gg/MFBkvqw
 [project_license]: https://github.com/Spikatrix/Zoned/blob/master/LICENSE
