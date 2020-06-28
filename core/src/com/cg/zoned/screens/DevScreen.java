@@ -41,6 +41,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
 
     public DevScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Exploring secrets");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);

@@ -78,6 +78,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     public ClientLobbyScreen(final Zoned game, Client client, String name) {
         this.game = game;
+        game.discordRPCManager.updateRPC("In the Client lobby");
 
         viewport = new ScreenViewport();
         stage = new FocusableStage(viewport);

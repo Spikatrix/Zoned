@@ -8,6 +8,7 @@ import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import com.cg.zoned.managers.DiscordRPCManager;
 import com.cg.zoned.screens.LoadingScreen;
 
 public class Zoned extends Game {
@@ -15,6 +16,7 @@ public class Zoned extends Game {
     public Preferences preferences;
 
     public Assets assets;
+    public DiscordRPCManager discordRPCManager;
 
     private static float SCALE_FACTOR = 1.0f;
 
@@ -23,6 +25,7 @@ public class Zoned extends Game {
         Gdx.app.setLogLevel(Gdx.app.LOG_DEBUG);
         Gdx.input.setCatchKey(Input.Keys.BACK, true);
 
+        setUpDiscordRPC();
         setScaleFactor();
         assets = new Assets();
 
@@ -64,8 +67,15 @@ public class Zoned extends Game {
         assets.setAssetManager(assetManager);
     }
 
+    private void setUpDiscordRPC() {
+        discordRPCManager = new DiscordRPCManager();
+        discordRPCManager.initRPC();
+    }
+
     @Override
     public void dispose() {
+        discordRPCManager.shutdownRPC();
+
         try {
             assets.dispose();
         } catch (GdxRuntimeException ignored) {

@@ -52,6 +52,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
     public HostJoinScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Setting up local multiplayer");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);

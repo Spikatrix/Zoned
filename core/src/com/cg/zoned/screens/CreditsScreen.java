@@ -46,6 +46,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
     public CreditsScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Viewing credits");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);

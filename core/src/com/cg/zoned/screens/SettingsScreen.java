@@ -43,6 +43,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
 
     public SettingsScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Configuring Settings");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);

@@ -76,6 +76,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     public MapStartPosScreen(final Zoned game, MapManager mapManager,
                              Player[] players, int splitScreenCount, boolean firstPlayerOnly) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Choosing start positions");
 
         this.mapManager = mapManager;
         this.mapGrid = mapManager.getPreparedMapGrid();

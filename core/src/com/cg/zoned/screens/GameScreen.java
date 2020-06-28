@@ -82,6 +82,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Playing a match", mapManager.getPreparedMap().getName(), players.length - 1);
 
         this.fullScreenStage = new FocusableStage(new ScreenViewport());
 

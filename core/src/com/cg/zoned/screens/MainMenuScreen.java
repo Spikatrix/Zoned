@@ -56,6 +56,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
     public MainMenuScreen(final Zoned game) {
         this.game = game;
+        this.game.discordRPCManager.updateRPC("Main Menu");
 
         viewport = new ScreenViewport();
         mainStage = new FocusableStage(viewport);

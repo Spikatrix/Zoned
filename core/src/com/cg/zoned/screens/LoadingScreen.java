@@ -44,6 +44,7 @@ public class LoadingScreen extends ScreenAdapter {
 
     public LoadingScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Loading game");
     }
 
     @Override

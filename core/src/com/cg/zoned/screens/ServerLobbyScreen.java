@@ -73,6 +73,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     public ServerLobbyScreen(final Zoned game, Server server, String name) {
         this.game = game;
+        game.discordRPCManager.updateRPC("In the Server Lobby");
 
         viewport = new ScreenViewport();
         stage = new FocusableStage(viewport);

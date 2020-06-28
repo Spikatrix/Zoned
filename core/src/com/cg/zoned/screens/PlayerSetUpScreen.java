@@ -58,6 +58,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     public PlayerSetUpScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Setting up splitscreen multiplayer");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);

@@ -95,6 +95,8 @@ project(":core") {
 
         api "com.esotericsoftware:kryonet:2.22.0-RC1"
         api "com.github.payne911:PieMenu:$pieMenuVersion"
+
+        implementation files("libs/discord-rpc.jar")
     }
 }
 

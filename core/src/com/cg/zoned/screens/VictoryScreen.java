@@ -52,6 +52,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
     public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols, int wallCount) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Post match");
 
         this.usedTextures = new Array<>();
 

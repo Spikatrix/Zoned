@@ -71,6 +71,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
     public TutorialScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Playing the Tutorial");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
