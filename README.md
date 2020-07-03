@@ -28,6 +28,21 @@ The game is currently in beta. I've made a [list of work][beta_work] to be done 
 
 More screenshots are available in the [Google Play Store page][play_store_page]
 
+## Build from source
+
+If you wish to build from source, clone the repo and run gradle's `android:assembleDebug` and `desktop:dist` tasks for building the Android and Desktop binaries respectively:
+
+    $ git clone https://github.com/Spikatrix/Zoned
+    $ cd Zoned
+    $ ./gradlew android:assembleDebug // Android
+    $ ./gradlew desktop:dist          // Desktop
+
+(Use `gradlew.bat` if you're on Windows)
+
+You can then find the generated binaries at
+ - Desktop: `Zoned/desktop/build/libs/*.jar`
+ - Android: `Zoned/android/build/outputs/apk/debug/*.apk`
+
 ## Contributing
 
 Zoned is a FOSS game developed by [me](https://github.com/Spikatrix). I'm available on [Discord][discord_invite] if you want to have a chat with me.
@@ -36,7 +51,7 @@ Contributions are always welcome.
 
 Here are a few ways you can help:
  * Report bugs via the [Issue Tracker][issue_tracker] and suggestions via [email][email_feedback]
- * Implement new features, cleanup, optimize, refactor and all that good stuff
+ * Send in pull requests improving the code quality and fixing bugs among others
 
 ## License
 
