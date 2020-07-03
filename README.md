@@ -37,6 +37,8 @@ If you wish to build from source, clone the repo and run gradle's `android:assem
     $ ./gradlew android:assembleDebug // Android
     $ ./gradlew desktop:dist          // Desktop
 
+(Use `gradlew.bat` if you're on Windows)
+
 You can then find the generated binaries at
  - Desktop: `Zoned/desktop/build/libs/*.jar`
  - Android: `Zoned/android/build/outputs/apk/debug/*.apk`
