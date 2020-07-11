@@ -102,7 +102,7 @@ public final class Constants {
 
     public enum FONT_MANAGER {
         LARGE("large-font", 80),
-        REGULAR("regular-font", 36),
+        REGULAR("regular-font", 32),
         SMALL("small-font", 18),
         PLAYER_LABEL("player-label-font-noscale", 20);
 

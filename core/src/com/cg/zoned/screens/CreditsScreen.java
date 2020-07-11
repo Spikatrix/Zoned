@@ -235,7 +235,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         float lastItemExtraPaddingOffset =
                 ((title.contains("Thank You")) ? (5 / 2f) : (1));
         float lastPadding = ((lastItemExtraPaddingOffset == 1) ? (0) : (titleLabel.getPrefHeight() - (titleLabel.getPrefHeight() / 10)));
-        // "/ 10" so that the tail of the Discord logo above is not visible
+        // TODO: Fix tail of the Discord logo being seen
 
         table.add(titleLabel).growX()
                 .padTop(stage.getHeight() / 5)
