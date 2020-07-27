@@ -53,6 +53,10 @@ public class ScoreBar {
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
+        float shadowHeight = Math.min(scoreBarHeight, 10f);
+        renderer.rect(0, totalHeight, totalWidth, -(shadowHeight + scoreBarHeight),
+                Color.BLACK, Color.BLACK, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR);
+
         for (int i = 0; i < players.length; i++) {
             float barWidth = ((players[i].score / totalScore) * totalWidth);
             float drawWidth = currentPos[i] + (barWidth - currentPos[i]) * lerpVal * delta;
@@ -79,10 +83,6 @@ public class ScoreBar {
             currentPos[i] = drawWidth;
             currentWidthPos += drawWidth;
         }
-
-        // TODO: Should we fix the line being annoyingly seen even when the scorebar has not been drawn yet?
-        float shadowHeight = Math.min(scoreBarHeight, 10f);
-        renderer.rect(0, offsetY - shadowHeight, totalWidth, shadowHeight, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.BLACK, Color.BLACK);
 
         renderer.end();
 
