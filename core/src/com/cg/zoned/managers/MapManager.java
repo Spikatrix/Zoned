@@ -76,11 +76,16 @@ public class MapManager {
 
         // Scan for the map preview in the external directory
         try {
-            return new Texture(Gdx.files.external(externalMapDir + "/" + mapName + ".png"));
+            FileHandle fileHandle = Gdx.files.external(externalMapDir + "/" + mapName + ".png");
+            if (fileHandle.exists()) {
+                return new Texture(fileHandle);
+            }
         } catch (GdxRuntimeException | NullPointerException e) {
             Gdx.app.log(Constants.LOG_TAG, "Failed to load map preview image for '" + mapName + "' (" + e.getMessage() + ")");
             return null;
         }
+
+        return null;
     }
 
     public Array<MapEntity> getMapList() {

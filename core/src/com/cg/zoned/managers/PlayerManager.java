@@ -8,11 +8,10 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Sort;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TeamData;
 
 import java.util.Comparator;
-
-import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public class PlayerManager extends InputMultiplexer {
     private final GameManager gameManager;

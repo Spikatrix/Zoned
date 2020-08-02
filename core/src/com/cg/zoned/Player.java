@@ -85,21 +85,6 @@ public class Player extends InputAdapter {
         }
     }
 
-    @Override
-    public boolean keyDown(int keycode) {
-        if (keycode == controls[Direction.UP.ordinal()]) {
-            updatedDirection = Direction.UP;
-        } else if (keycode == controls[Direction.RIGHT.ordinal()]) {
-            updatedDirection = Direction.RIGHT;
-        } else if (keycode == controls[Direction.DOWN.ordinal()]) {
-            updatedDirection = Direction.DOWN;
-        } else if (keycode == controls[Direction.LEFT.ordinal()]) {
-            updatedDirection = Direction.LEFT;
-        }
-
-        return false;
-    }
-
     public void render(OrthographicCamera camera, ShapeDrawer shapeDrawer) {
         float x = camera.position.x;
         float y = camera.position.y;
@@ -118,5 +103,20 @@ public class Player extends InputAdapter {
                     Constants.CELL_SIZE / 3);
             shapeDrawer.setDefaultLineWidth(currWidth);
         }
+    }
+
+    @Override
+    public boolean keyDown(int keycode) {
+        if (keycode == controls[Direction.UP.ordinal()]) {
+            updatedDirection = Direction.UP;
+        } else if (keycode == controls[Direction.RIGHT.ordinal()]) {
+            updatedDirection = Direction.RIGHT;
+        } else if (keycode == controls[Direction.DOWN.ordinal()]) {
+            updatedDirection = Direction.DOWN;
+        } else if (keycode == controls[Direction.LEFT.ordinal()]) {
+            updatedDirection = Direction.LEFT;
+        }
+
+        return false;
     }
 }

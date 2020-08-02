@@ -62,10 +62,10 @@ public class LoadingScreen extends ScreenAdapter {
         assetManager.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(resolver));
         assetManager.setLoader(BitmapFont.class, ".otf", new FreetypeFontLoader(resolver));
 
-        generateCustomFont("fonts/austere.otf", Constants.FONT_MANAGER.LARGE, 0);
-        generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.REGULAR, 0);
-        generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.SMALL, 0);
-        generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.PLAYER_LABEL, 1.5f);
+        generateCustomFont("fonts/austere.otf", Constants.FONT_MANAGER.LARGE);
+        generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.REGULAR);
+        generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.SMALL);
+        generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.PLAYER_LABEL);
 
         game.preferences = Gdx.app.getPreferences(Constants.ZONED_PREFERENCES);
     }
@@ -93,7 +93,7 @@ public class LoadingScreen extends ScreenAdapter {
         stage.addActor(table);
     }
 
-    private void generateCustomFont(String fontName, Constants.FONT_MANAGER fontManager, float borderWidth) {
+    private void generateCustomFont(String fontName, Constants.FONT_MANAGER fontManager) {
         FreetypeFontLoader.FreeTypeFontLoaderParameter parameter = new FreetypeFontLoader.FreeTypeFontLoaderParameter();
 
         parameter.fontFileName = fontName;
@@ -103,9 +103,6 @@ public class LoadingScreen extends ScreenAdapter {
             parameter.fontParameters.size = (int) (fontManager.getSize() * game.getScaleFactor());
         }
         //Gdx.app.log(Constants.LOG_TAG, "Screen density: " + Gdx.graphics.getDensity());
-
-        /*parameter.fontParameters.borderColor = Color.BLACK;
-        parameter.fontParameters.borderWidth = borderWidth;*/
 
         String fontId = fontManager.getName() + ".otf";
 

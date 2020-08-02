@@ -17,10 +17,9 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.controls.FlingControlManager;
 import com.cg.zoned.controls.PieMenuControlManager;
-
-import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public class ControlManager {
     private FlingControlManager flingControlManager = null;
@@ -112,7 +111,6 @@ public class ControlManager {
     }
 
     public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
-        //shapeDrawer.getBatch().begin();
         float splitScreenWidth = stage.getWidth() / overlayColors.length;
 
         for (int i = 0; i < overlayColors.length; i++) {
@@ -131,8 +129,6 @@ public class ControlManager {
 
             controlTables[i].getColor().a = overlayColors[i].a;
         }
-
-        //shapeDrawer.getBatch().end();
     }
 
     public InputAdapter getControls() {

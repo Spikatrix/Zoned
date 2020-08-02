@@ -6,8 +6,6 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
-import space.earlygrey.shapedrawer.ShapeDrawer;
-
 public class ScoreBar {
     public float scoreBarHeight;
 
@@ -66,10 +64,10 @@ public class ScoreBar {
                 shapeDrawer.filledRectangle(totalWidth - drawWidth, offsetY, drawWidth, scoreBarHeight);   // Can draw upto drawWidth or totalWidth. Should be the same
                 scoreBarStartX[i] = totalWidth - drawWidth;
             } else {                                                                      // Mid bar(s)
-                //shapeDrawer.rect(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, (drawWidth / 2), BAR_HEIGHT);
+                //shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, (drawWidth / 2), BAR_HEIGHT);
                 shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2), offsetY, -drawWidth / 2, scoreBarHeight);
                 shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2), offsetY, drawWidth / 2, scoreBarHeight);
-                //shapeDrawer.rect(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, drawWidth, BAR_HEIGHT);
+                //shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, drawWidth, BAR_HEIGHT);
                 //TODO: Need to polish this
                 //TODO: Scorebar for teams
                 scoreBarStartX[i] = currentWidthPos;
