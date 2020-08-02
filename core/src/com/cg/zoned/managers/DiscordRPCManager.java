@@ -16,7 +16,7 @@ public class DiscordRPCManager {
     }
 
     public void initRPC() {
-        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop && Constants.ENABLE_DISCORD_RPC) {
             if (richPresence == null) {
                 DiscordRPC.discordInitialize(applicationID, null, false);
                 richPresence = new DiscordRichPresence.Builder("")

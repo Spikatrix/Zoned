@@ -12,9 +12,16 @@ public final class Constants {
     // And project.setVersion in Desktop's build.gradle
     // Or for Linux users, use the versionUpdate.sh script
 
+    /**
+     * Enables Discord Rich Presence functionality on Windows and Linux
+     * <p>
+     * Note: When this is enabled, running multiple instances of the game will crash with a SIGSEGV
+     */
+    public static final boolean ENABLE_DISCORD_RPC = true;
+
     public static final float WORLD_SIZE = 480.0f;
 
-    public static final int SERVER_PORT = 22355; // Random port I chose *shrug*
+    public static final int SERVER_PORT = 22355; // Random port I chose ¯\_(ツ)_/¯
 
     public static final float CELL_SIZE = 25.0f;
     public static final Color MAP_GRID_COLOR = Color.WHITE;
@@ -86,6 +93,7 @@ public final class Constants {
     public static final float ANDROID_XXXHDPI_FONT_SCALE_FACTOR = 4.0f;
 
     public static final String LOG_TAG = "ZONED";
+
     public static final String ZONED_PREFERENCES = "Zoned_Preferences";
     public static final String FPS_PREFERENCE = "FPS_Preference";
     public static final String CONTROL_PREFERENCE = "Control_Preference";

@@ -11,7 +11,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -33,6 +33,7 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -54,7 +55,8 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private AnimationManager animationManager;
     private ScreenViewport viewport;
     private FocusableStage stage;
-    private ShapeRenderer renderer;
+    private ShapeDrawer shapeDrawer;
+    private PolygonSpriteBatch batch;
     private BitmapFont font;
     private boolean showFPSCounter;
 
@@ -94,8 +96,8 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
 
-        this.renderer = new ShapeRenderer();
-        this.renderer.setAutoShapeType(true);
+        this.batch = new PolygonSpriteBatch();
+        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
     }
@@ -392,11 +394,11 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         focusCameraOnPlayer(viewport, player, vel, delta);
         viewport.apply();
 
-        renderer.setProjectionMatrix(viewport.getCamera().combined);
+        batch.setProjectionMatrix(viewport.getCamera().combined);
 
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        map.render(players, renderer, (OrthographicCamera) viewport.getCamera(), delta);
-        renderer.end();
+        batch.begin();
+        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        batch.end();
     }
 
     private void focusCameraOnPlayer(Viewport viewport, Player player, Vector2 vel, float delta) {
@@ -433,33 +435,33 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void drawViewportDividers() {
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        batch.begin();
         int lineCount = splitScreenCount - 1;
 
         float height = stage.getViewport().getWorldHeight();
         for (int i = 0; i < lineCount; i++) {
             float startX = (stage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
-            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+            shapeDrawer.filledRectangle(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
-                    dividerLeftColor[i], dividerRightColor[i], dividerRightColor[i], dividerLeftColor[i]);
-            renderer.rect(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+                    dividerRightColor[i], dividerLeftColor[i], dividerLeftColor[i], dividerRightColor[i]);
+            shapeDrawer.filledRectangle(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i]);
-            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
+                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i], dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
+            shapeDrawer.filledRectangle(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
                     -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i]);
+                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i], dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
         }
-        renderer.end();
+        batch.end();
     }
 
     private void drawDarkOverlay() {
         float height = stage.getViewport().getWorldHeight();
         float width = stage.getViewport().getWorldWidth();
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        renderer.setColor(mapDarkOverlayColor);
-        renderer.rect(0, 0, width, height);
-        renderer.end();
+        shapeDrawer.setColor(mapDarkOverlayColor);
+        batch.begin();
+        shapeDrawer.filledRectangle(0, 0, width, height);
+        batch.end();
     }
 
     @Override
@@ -467,8 +469,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         for (int i = 0; i < mapViewports.length; i++) {
             if (playerIndex + i < players.length) {
                 focusAndRenderViewport(mapViewports[i], players[playerIndex + i], dragOffset[i], delta);
@@ -476,13 +476,12 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         }
 
         this.viewport.apply(true);
-        renderer.setProjectionMatrix(this.viewport.getCamera().combined);
+        batch.setProjectionMatrix(this.viewport.getCamera().combined);
 
         if (splitScreenCount > 1) {
             drawViewportDividers();
         }
         drawDarkOverlay();
-        Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
@@ -495,7 +494,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
-        renderer.dispose();
+        batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

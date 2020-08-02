@@ -10,7 +10,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -30,6 +30,7 @@ import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -62,7 +63,9 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private boolean showFPSCounter;
     private BitmapFont font;
 
-    private ShapeRenderer renderer;
+    private ShapeDrawer shapeDrawer;
+    private PolygonSpriteBatch batch;
+
     private com.cg.zoned.Map map;
     private MapManager mapManager;
     private Cell[][] mapGrid;
@@ -172,8 +175,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     private void setUpMap() {
         this.mapManager = new MapManager();
-        this.renderer = new ShapeRenderer();
-        this.renderer.setAutoShapeType(true);
+        this.batch = new PolygonSpriteBatch();
+        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
         this.players = new Player[0];
@@ -572,17 +575,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         if (map != null) {
-            focusAndRenderViewport(mapViewport, players[0], delta);
+            renderMap(delta);
         }
 
         this.viewport.apply(true);
-        renderer.setProjectionMatrix(this.viewport.getCamera().combined);
+        batch.setProjectionMatrix(this.viewport.getCamera().combined);
 
         drawDarkOverlay();
-        Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
@@ -592,15 +592,17 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         stage.act(delta);
     }
 
-    private void focusAndRenderViewport(Viewport viewport, Player player, float delta) {
+    private void renderMap(float delta) {
+        Viewport viewport = mapViewport;
+        Player player = players[0];
+
         focusCameraOnPlayer(viewport, player, delta);
         viewport.apply();
 
-        renderer.setProjectionMatrix(viewport.getCamera().combined);
-
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        map.render(players, renderer, (OrthographicCamera) viewport.getCamera(), delta);
-        renderer.end();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        batch.begin();
+        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        batch.end();
     }
 
     private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
@@ -634,16 +636,16 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private void drawDarkOverlay() {
         float height = stage.getViewport().getWorldHeight();
         float width = stage.getViewport().getWorldWidth();
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        renderer.setColor(mapDarkOverlayColor);
-        renderer.rect(0, 0, width, height);
-        renderer.end();
+        shapeDrawer.setColor(mapDarkOverlayColor);
+        batch.begin();
+        shapeDrawer.filledRectangle(0, 0, width, height);
+        batch.end();
     }
 
     @Override
     public void dispose() {
         stage.dispose();
-        renderer.dispose();
+        batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

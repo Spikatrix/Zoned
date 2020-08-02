@@ -2,11 +2,15 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.GridPoint2;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
@@ -22,11 +26,63 @@ public class Map {
     public int cols;
     private int coloredCells = 0;
 
+    private TextureRegion[] playerLabels = null;
+
     public Map(Cell[][] mapGrid, int wallCount) {
         this.rows = mapGrid.length;
         this.cols = mapGrid[0].length;
         this.mapGrid = mapGrid;
         this.wallCount = wallCount;
+    }
+
+    public FrameBuffer createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
+        playerLabels = new TextureRegion[players.length];
+
+        int totalHeight = ((int) playerLabelFont.getLineHeight()) * players.length;
+        int height = totalHeight / players.length;
+        int width = (int) (Constants.CELL_SIZE * 3f);
+        float radius = height / 2f;
+
+        Batch batch = shapeDrawer.getBatch();
+        batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, width, totalHeight));
+
+        FrameBuffer fbo = new FrameBuffer(Pixmap.Format.RGB565, width, totalHeight, false);
+        fbo.begin();
+        batch.begin();
+
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        for (int i = 0; i < playerLabels.length; i++) {
+            int yOffset = i * height;
+            players[i].color.a = .7f;
+
+            shapeDrawer.setColor(players[i].color);
+            shapeDrawer.filledRectangle(radius, yOffset, width - (2 * radius), height);
+            shapeDrawer.sector(radius, yOffset + height - radius, radius,
+                    (float) Math.toRadians(90f), (float) Math.toRadians(180f));
+            shapeDrawer.sector(width - radius, yOffset + height - radius, radius,
+                    (float) Math.toRadians(270f), (float) Math.toRadians(180));
+
+            playerLabelFont.setColor(Color.WHITE);
+            playerLabelFont.draw(batch, players[i].name,
+                    0.75f * radius, yOffset + (height / 2f) + (playerLabelFont.getLineHeight() / 4f),
+                    0, players[i].name.length(),
+                    width - (1.5f * radius), Align.center, false, "...");
+
+            players[i].color.a = 1f;
+        }
+        batch.end();
+        fbo.end();
+
+        TextureRegion textureRegion = new TextureRegion(fbo.getColorBufferTexture(), width, totalHeight);
+        for (int i = 0; i < playerLabels.length; i++) {
+            int yOffset = i * height;
+            playerLabels[i] = new TextureRegion(textureRegion, 0, yOffset, width, height);
+            playerLabels[i].flip(false, true);
+        }
+
+        return fbo;
     }
 
     public void update(PlayerManager playerManager, float delta) {
@@ -52,14 +108,26 @@ public class Map {
                 }
 
                 Direction direction = player.direction;
-                if (direction == Direction.UP && player.position.y < rows - 1 && mapGrid[Math.round(player.position.y) + 1][Math.round(player.position.x)].isMovable) {
+                if (direction == Direction.UP && player.position.y < rows - 1 &&
+                        mapGrid[Math.round(player.position.y) + 1][Math.round(player.position.x)].isMovable) {
+
                     player.moveTo(new Vector2(player.position.x, player.position.y + 1), delta);
-                } else if (direction == Direction.RIGHT && player.position.x < cols - 1 && mapGrid[Math.round(player.position.y)][Math.round(player.position.x) + 1].isMovable) {
+
+                } else if (direction == Direction.RIGHT && player.position.x < cols - 1 &&
+                        mapGrid[Math.round(player.position.y)][Math.round(player.position.x) + 1].isMovable) {
+
                     player.moveTo(new Vector2(player.position.x + 1, player.position.y), delta);
-                } else if (direction == Direction.DOWN && player.position.y > 0 && mapGrid[Math.round(player.position.y) - 1][Math.round(player.position.x)].isMovable) {
+
+                } else if (direction == Direction.DOWN && player.position.y > 0 &&
+                        mapGrid[Math.round(player.position.y) - 1][Math.round(player.position.x)].isMovable) {
+
                     player.moveTo(new Vector2(player.position.x, player.position.y - 1), delta);
-                } else if (direction == Direction.LEFT && player.position.x > 0 && mapGrid[Math.round(player.position.y)][Math.round(player.position.x) - 1].isMovable) {
+
+                } else if (direction == Direction.LEFT && player.position.x > 0 &&
+                        mapGrid[Math.round(player.position.y)][Math.round(player.position.x) - 1].isMovable) {
+
                     player.moveTo(new Vector2(player.position.x - 1, player.position.y), delta);
+
                 } else {
                     player.dummyMoveTo(new Vector2(1, 0), delta);
                 }
@@ -167,22 +235,20 @@ public class Map {
         }
     }
 
-    public void render(Player[] players, ShapeRenderer renderer, OrthographicCamera camera, float delta) {
-        drawColors(renderer, camera, delta);
-        drawPlayers(players, camera, renderer);
-        drawGrid(camera, renderer);
+    public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
+        drawColors(shapeDrawer, camera, delta);
+        drawPlayers(players, camera, shapeDrawer);
+        drawGrid(camera, shapeDrawer);
     }
 
-    private void drawPlayers(Player[] players, OrthographicCamera camera, ShapeRenderer renderer) {
+    private void drawPlayers(Player[] players, OrthographicCamera camera, ShapeDrawer shapeDrawer) {
         Gdx.gl.glLineWidth(Constants.PLAYER_CIRCLE_WIDTH);
-        renderer.set(ShapeRenderer.ShapeType.Line);
         for (Player player : players) {
-            player.render(camera, renderer);
+            player.render(camera, shapeDrawer);
         }
-        renderer.set(ShapeRenderer.ShapeType.Filled);
     }
 
-    private void drawColors(ShapeRenderer renderer, OrthographicCamera camera, float delta) {
+    private void drawColors(ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         float x = camera.position.x;
         float y = camera.position.y;
         float width = camera.viewportWidth * camera.zoom;
@@ -196,8 +262,8 @@ public class Map {
                 if ((startX >= x - width) && (startX + Constants.CELL_SIZE <= x + width) &&
                         (startY >= y - height) && (startY + Constants.CELL_SIZE <= y + height)) {
                     if (mapGrid[i][j].cellColor != null) {
-                        renderer.setColor(mapGrid[i][j].cellColor);
-                        renderer.rect(startX, startY,
+                        shapeDrawer.setColor(mapGrid[i][j].cellColor);
+                        shapeDrawer.filledRectangle(startX, startY,
                                 Constants.CELL_SIZE, Constants.CELL_SIZE);
 
                         mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
@@ -208,8 +274,8 @@ public class Map {
                             mapGrid[i][j].cellColor = constColor;
                         }
                     } else if (!mapGrid[i][j].isMovable) {
-                        renderer.setColor(Constants.MAP_GRID_COLOR);
-                        renderer.rect(startX, startY,
+                        shapeDrawer.setColor(Constants.MAP_GRID_COLOR);
+                        shapeDrawer.filledRectangle(startX, startY,
                                 Constants.CELL_SIZE, Constants.CELL_SIZE);
                     }
                 }
@@ -217,74 +283,36 @@ public class Map {
         }
     }
 
-    private void drawGrid(OrthographicCamera camera, ShapeRenderer renderer) {
+    private void drawGrid(OrthographicCamera camera, ShapeDrawer shapeDrawer) {
         float x = camera.position.x;
         float y = camera.position.y;
         float width = camera.viewportWidth * camera.zoom;
         float height = camera.viewportHeight * camera.zoom;
 
-        renderer.setColor(Constants.MAP_GRID_COLOR);
+        shapeDrawer.setColor(Constants.MAP_GRID_COLOR);
         for (int i = 0; i < this.rows + 1; i++) {
             if (i * Constants.CELL_SIZE >= y - height && i * Constants.CELL_SIZE <= y + height) {
-                renderer.rectLine(Math.max(0, x - width), i * Constants.CELL_SIZE,
+                shapeDrawer.line(Math.max(0, x - width), i * Constants.CELL_SIZE,
                         Math.min(this.cols * Constants.CELL_SIZE, x + width), i * Constants.CELL_SIZE, Constants.MAP_GRID_LINE_WIDTH);
             }
         }
         for (int i = 0; i < this.cols + 1; i++) {
             if (i * Constants.CELL_SIZE >= x - width && i * Constants.CELL_SIZE <= x + width) {
-                renderer.rectLine(i * Constants.CELL_SIZE, Math.max(0, y - height),
+                shapeDrawer.line(i * Constants.CELL_SIZE, Math.max(0, y - height),
                         i * Constants.CELL_SIZE, Math.min(this.rows * Constants.CELL_SIZE, y + height), Constants.MAP_GRID_LINE_WIDTH);
             }
         }
     }
 
-    public void renderPlayerLabelBg(Player[] players, ShapeRenderer renderer, BitmapFont font) {
-        for (Player player : players) {
-            player.color.a = .4f;
-            renderer.setColor(player.color);
-            roundedRect(renderer,
-                    (player.position.x * Constants.CELL_SIZE) - Constants.CELL_SIZE,
-                    (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE,
-                    Constants.CELL_SIZE * 3f,
-                    font.getLineHeight(),
-                    font.getLineHeight() / 2);
-            player.color.a = 1.0f;
+    public void renderPlayerLabels(Player[] players, ShapeDrawer shapeDrawer) {
+        Batch batch = shapeDrawer.getBatch();
+
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+        for (int i = 0; i < players.length; i++) {
+            batch.draw(playerLabels[i], (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / 2f) + (Constants.CELL_SIZE / 2),
+                    (players[i].position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2));
         }
-    }
-
-    public void drawPlayerLabels(Player[] players, Batch batch, BitmapFont font) {
-        float yOffset = (Constants.CELL_SIZE * 1.7f); // Not really sure how 1.7f fixes it lol
-        // TODO: Get it to work with all fonts as well and fix blurry text
-        //       Also, make this and its bg work regardless of camera zoom value
-        //       Furthermore, the grid's white walls block the batch's current blending func
-        for (Player player : players) {
-            font.setColor(player.color);
-            font.draw(batch, player.name,
-                    (player.position.x * Constants.CELL_SIZE) - (3 * Constants.CELL_SIZE / 4),
-                    (player.position.y * Constants.CELL_SIZE) + yOffset,
-                    0, player.name.length(),
-                    Constants.CELL_SIZE * 3f - (Constants.CELL_SIZE / 2), Align.center, false, "...");
-        }
-    }
-
-    /**
-     * Draws a rectangle with rounded corners of the given radius.
-     */
-    private void roundedRect(ShapeRenderer renderer, float x, float y, float width, float height, float radius) {
-        // Central rectangle
-        renderer.rect(x + radius, y + radius, width - 2 * radius, height - 2 * radius);
-
-        // Four side rectangles, in clockwise order
-        renderer.rect(x + radius, y, width - 2 * radius, radius);
-        renderer.rect(x + width - radius, y + radius, radius, height - 2 * radius);
-        renderer.rect(x + radius, y + height - radius, width - 2 * radius, radius);
-        renderer.rect(x, y + radius, radius, height - 2 * radius);
-
-        // Four arches, clockwise too
-        renderer.arc(x + radius, y + radius, radius, 180f, 90f);
-        renderer.arc(x + width - radius, y + radius, radius, 270f, 90f);
-        renderer.arc(x + width - radius, y + height - radius, radius, 0f, 90f);
-        renderer.arc(x + radius, y + height - radius, radius, 90f, 90f);
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     /**

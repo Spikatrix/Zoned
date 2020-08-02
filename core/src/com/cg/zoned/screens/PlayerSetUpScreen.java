@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
@@ -26,6 +26,7 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -47,7 +48,9 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private BitmapFont font;
 
-    private ShapeRenderer renderer;
+    private ShapeDrawer shapeDrawer;
+    private PolygonSpriteBatch batch;
+
     private float bgAlpha = .25f;
     private float bgAnimSpeed = 1.8f;
     private Color[] currentBgColors;
@@ -65,7 +68,8 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.renderer = new ShapeRenderer();
+        this.batch = new PolygonSpriteBatch();
+        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
         this.playerCount = game.preferences.getInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         this.playerList = new Table();
@@ -271,17 +275,14 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         viewport.apply(true);
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        renderer.setProjectionMatrix(viewport.getCamera().combined);
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        batch.begin();
         for (int i = 0; i < currentBgColors.length; i++) {
-            renderer.setColor(currentBgColors[i]);
-            renderer.rect(i * stage.getWidth() / currentBgColors.length, 0,
+            shapeDrawer.setColor(currentBgColors[i]);
+            shapeDrawer.filledRectangle(i * stage.getWidth() / currentBgColors.length, 0,
                     stage.getWidth() / currentBgColors.length, stage.getHeight());
         }
-        renderer.end();
-        Gdx.gl.glDisable(GL20.GL_BLEND);
+        batch.end();
 
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
@@ -294,7 +295,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
-        renderer.dispose();
+        batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

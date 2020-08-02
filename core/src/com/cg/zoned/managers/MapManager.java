@@ -67,7 +67,10 @@ public class MapManager {
     public Texture getMapPreview(String mapName) {
         // Scan for the map preview in the internal directory
         try {
-            return new Texture(Gdx.files.internal("icons/map_icons/" + mapName + ".png"));
+            FileHandle fileHandle = Gdx.files.internal("icons/map_icons/" + mapName + ".png");
+            if (fileHandle.exists()) {
+                return new Texture(fileHandle);
+            }
         } catch (GdxRuntimeException ignored) {
         }
 

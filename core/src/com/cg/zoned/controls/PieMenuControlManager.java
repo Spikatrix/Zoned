@@ -4,9 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -19,6 +17,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.payne.games.piemenu.PieMenu;
 
 import java.util.Arrays;
@@ -49,14 +48,6 @@ public class PieMenuControlManager extends InputAdapter {
     }
 
     private void setUpPieMenus(Array<Texture> usedTextures) {
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(1, 1, 1, 1);
-        pixmap.fill();
-        Texture tmpTex = new Texture(pixmap);
-        usedTextures.add(tmpTex);
-        pixmap.dispose();
-        TextureRegion whitePixel = new TextureRegion(tmpTex);
-
         Texture arrowTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"));
         usedTextures.add(arrowTexture);
         final Drawable arrow = new TextureRegionDrawable(arrowTexture);
@@ -69,7 +60,7 @@ public class PieMenuControlManager extends InputAdapter {
             style.downColor = Color.WHITE;
             style.sliceColor = players[i].color;
             // Multiply by scaleFactor? Size kinda gets messed up when doing it
-            menus[i] = new PieMenu(whitePixel, style, piemenuRadius);
+            menus[i] = new PieMenu(ShapeDrawer.get1x1TextureRegion(usedTextures), style, piemenuRadius);
 
             final Image[] arrowImages = new Image[]{
                     new Image(arrow),

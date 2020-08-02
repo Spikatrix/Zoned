@@ -2,7 +2,6 @@ package com.cg.zoned.managers;
 
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
@@ -12,6 +11,8 @@ import com.cg.zoned.Player;
 import com.cg.zoned.TeamData;
 
 import java.util.Comparator;
+
+import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public class PlayerManager extends InputMultiplexer {
     private final GameManager gameManager;
@@ -111,8 +112,8 @@ public class PlayerManager extends InputMultiplexer {
         return teamData;
     }
 
-    public void renderPlayerControlPrompt(ShapeRenderer renderer, float delta) {
-        controlManager.renderPlayerControlPrompt(renderer, delta);
+    public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
+        controlManager.renderPlayerControlPrompt(shapeDrawer, delta);
     }
 
     private static class TeamDataComparator implements Comparator<TeamData> {
