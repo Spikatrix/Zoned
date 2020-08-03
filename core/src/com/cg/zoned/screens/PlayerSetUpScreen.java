@@ -105,14 +105,14 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpUIButtons() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 onBackPressed();
             }
         });
-        HoverImageButton tutorialButton = uiButtonManager.addTutorialButtonToStage();
+        HoverImageButton tutorialButton = uiButtonManager.addTutorialButtonToStage(game.assets.getTutorialButtonTexture());
         tutorialButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -180,7 +180,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         table.add(playerList).colspan(NO_OF_COLORS + 1).expandX();
         table.row();
 
-        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.skin);
+        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);

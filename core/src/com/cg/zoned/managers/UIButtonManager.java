@@ -41,61 +41,69 @@ public class UIButtonManager {
         }
     }
 
-    public HoverImageButton addBackButtonToStage() {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_LEFT, Gdx.files.internal("icons/ui_icons/ic_back.png"), null);
+    public HoverImageButton addBackButtonToStage(Texture backTexture) {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+                Position.TOP_LEFT, backTexture, null);
     }
 
-    public HoverImageButton addHideButtonToStage() {
-        return addButtonToStage(1f, .65f, .5f, 24f, 90f, Position.TOP_LEFT, Gdx.files.internal("icons/ui_icons/ic_back.png"), null);
+    public HoverImageButton addHideButtonToStage(Texture backTexture) {
+        return addButtonToStage(1f, .65f, .5f, 24f, 90f,
+                Position.TOP_LEFT, backTexture, null);
     }
 
-    public HoverImageButton addSettingsButtonToStage() {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_settings.png"), null);
+    public HoverImageButton addSettingsButtonToStage(Texture settingsTexture) {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+                Position.TOP_RIGHT, settingsTexture, null);
     }
 
     public HoverImageButton addPauseButtonToStage() {
-        return addButtonToStage(.8f, .65f, .5f, 20f, 0, Position.TOP_CENTER, Gdx.files.internal("icons/ui_icons/ic_pause.png"), null);
+        return addButtonToStage(.8f, .65f, .5f, 20f, 0,
+                Position.TOP_CENTER, getTexture(Gdx.files.internal("icons/ui_icons/ic_pause.png")), null);
     }
 
     public HoverImageButton addZoomButtonToStage() {
-        return addButtonToStage(.8f, .65f, .5f, 20f, 0, Position.TOP_CENTER, Gdx.files.internal("icons/ui_icons/ic_zoom_out.png"), Gdx.files.internal("icons/ui_icons/ic_zoom_in.png"));
+        return addButtonToStage(.8f, .65f, .5f, 20f, 0,
+                Position.TOP_CENTER, getTexture(Gdx.files.internal("icons/ui_icons/ic_zoom_out.png")), getTexture(Gdx.files.internal("icons/ui_icons/ic_zoom_in.png")));
     }
 
-    public HoverImageButton addTutorialButtonToStage() {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_tutorial.png"), null);
+    public HoverImageButton addTutorialButtonToStage(Texture tutorialTexture) {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+                Position.TOP_RIGHT, tutorialTexture, null);
     }
 
-    public HoverImageButton addDevButtonToStage() {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_dev.png"), null);
+    public HoverImageButton addDevButtonToStage(Texture devTexture) {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+                Position.TOP_RIGHT, devTexture, null);
     }
 
-    public HoverImageButton addCreditsButtonToStage() {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_RIGHT, Gdx.files.internal("icons/ui_icons/ic_credits.png"), null);
+    public HoverImageButton addCreditsButtonToStage(Texture creditsTexture) {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+                Position.TOP_RIGHT, creditsTexture, null);
     }
 
-    public HoverImageButton addExitButtonToStage() {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0, Position.TOP_LEFT, Gdx.files.internal("icons/ui_icons/ic_cross.png"), null);
+    public HoverImageButton addExitButtonToStage(Texture crossTexture) {
+        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+                Position.TOP_LEFT, crossTexture, null);
+    }
+
+    private Texture getTexture(FileHandle fileHandle) {
+        Texture texture = new Texture(fileHandle);
+        usedTextures.add(texture);
+        return texture;
     }
 
     private HoverImageButton addButtonToStage(float normalAlpha, float hoverAlpha, float clickAlpha,
                                               float paddingTop,
                                               float rotateDegrees, Position position,
-                                              FileHandle buttonImageLocation1,
-                                              FileHandle buttonImageLocation2) {
+                                              Texture texture1,
+                                              Texture texture2) {
         Table table = buttonPositionTables.get(position.ordinal());
 
         HoverImageButton button;
-        if (buttonImageLocation2 == null) {
-            Texture buttonImageTexture = new Texture(buttonImageLocation1);
-            usedTextures.add(buttonImageTexture);
-            button = new HoverImageButton(new TextureRegionDrawable(buttonImageTexture));
+        if (texture2 == null) {
+            button = new HoverImageButton(new TextureRegionDrawable(texture1));
         } else {
-            Texture buttonImageTexture1 = new Texture(buttonImageLocation1);
-            Texture buttonImageTexture2 = new Texture(buttonImageLocation2);
-            usedTextures.add(buttonImageTexture1);
-            usedTextures.add(buttonImageTexture2);
-            button = new HoverImageButton(new TextureRegionDrawable(buttonImageTexture1),
-                    new TextureRegionDrawable(buttonImageTexture2));
+            button = new HoverImageButton(new TextureRegionDrawable(texture1), new TextureRegionDrawable(texture2));
         }
 
         float buttonWidth = 64f;

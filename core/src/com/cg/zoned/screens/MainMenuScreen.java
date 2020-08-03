@@ -116,11 +116,11 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.row();
 
         UIButtonManager uiButtonManager = new UIButtonManager(mainStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage();
-        HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage();
+        HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage(game.assets.getSettingsButtonTexture());
+        HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage(game.assets.getCreditsButtonTexture());
         HoverImageButton devButton = null;
         if (game.preferences.getBoolean(Constants.DEV_MODE_PREFERENCE, false)) {
-            devButton = uiButtonManager.addDevButtonToStage();
+            devButton = uiButtonManager.addDevButtonToStage(game.assets.getDevButtonTexture());
             devButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
@@ -151,7 +151,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.addFocusableActor(creditsButton);
         mainStage.addFocusableActor(devButton);
 
-        HoverImageButton exitButton = uiButtonManager.addExitButtonToStage();
+        HoverImageButton exitButton = uiButtonManager.addExitButtonToStage(game.assets.getCrossButtonTexture());
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -326,7 +326,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         }
 
         UIButtonManager uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton exitButton = uiButtonManager.addHideButtonToStage();
+        HoverImageButton exitButton = uiButtonManager.addHideButtonToStage(game.assets.getBackButtonTexture());
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

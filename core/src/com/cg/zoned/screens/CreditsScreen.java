@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -30,6 +31,7 @@ import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
+import com.cg.zoned.ui.ParticleEffectActor;
 
 public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
@@ -43,6 +45,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     private BitmapFont font;
 
     private Color linkColor = new Color(.4f, .4f, 1f, 1f);
+    private ParticleEffect clickParticleEffect = null;
 
     public CreditsScreen(final Zoned game) {
         this.game = game;
@@ -125,6 +128,10 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         Texture gameLogo = new Texture(imageLocation);
         usedTextures.add(gameLogo);
 
+        clickParticleEffect = new ParticleEffect();
+        clickParticleEffect.load(Gdx.files.internal("particles/radial_particle_emitter.p"), Gdx.files.internal("particles"));
+        final ParticleEffectActor particleEffectActor = new ParticleEffectActor(clickParticleEffect);
+
         final Image gameLogoImage = new Image(gameLogo);
         gameLogoImage.setScaling(Scaling.fit);
         gameLogoImage.getColor().a = .3f;
@@ -133,6 +140,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         titleLabel.setAlignment(Align.center);
 
         Stack stack = new Stack();
+        stack.add(particleEffectActor);
         stack.add(gameLogoImage);
         stack.add(titleLabel);
 
@@ -151,6 +159,8 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
                     innerTable.clearActions();
                     innerTable.setScale(1.2f);
                     innerTable.addAction(Actions.scaleTo(1.0f, 1.0f, .3f, Interpolation.smooth));
+
+                    particleEffectActor.start();
 
                     clickCount[0]++;
                     if (clickCount[0] >= 5) {
@@ -266,7 +276,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpBackButton() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -300,6 +310,10 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         stage.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
+        }
+        if (clickParticleEffect != null) {
+            clickParticleEffect.dispose();
+            clickParticleEffect = null;
         }
     }
 

@@ -82,7 +82,6 @@ public class MapManager {
             }
         } catch (GdxRuntimeException | NullPointerException e) {
             Gdx.app.log(Constants.LOG_TAG, "Failed to load map preview image for '" + mapName + "' (" + e.getMessage() + ")");
-            return null;
         }
 
         return null;
