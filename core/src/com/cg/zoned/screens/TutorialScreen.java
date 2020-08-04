@@ -136,7 +136,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         tutorialTable.left().bottom().pad(10f);
 
         Table innerTable = new Table();
-        ScrollPane scrollPane = new ScrollPane(innerTable);
+        final ScrollPane scrollPane = new ScrollPane(innerTable);
         scrollPane.setOverscroll(false, false);
 
         final Label mainLabel = new Label("Welcome to the tutorial!", game.skin, "themed");
@@ -210,6 +210,14 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
                     togglePlayerInterable(false);
                     animationManager.fadeOutStage(stage, TutorialScreen.this, new MainMenuScreen(game));
                     return;
+                }
+
+                if (!scrollPane.isRightEdge()) {
+                    scrollPane.scrollTo(scrollPane.getScrollX() + scrollPane.getWidth(), 0,
+                            scrollPane.getWidth(), scrollPane.getHeight());
+                    return;
+                } else {
+                    scrollPane.scrollTo(0, 0, scrollPane.getWidth(), scrollPane.getHeight());
                 }
 
                 tutorialTable.addAction(Actions.sequence(
