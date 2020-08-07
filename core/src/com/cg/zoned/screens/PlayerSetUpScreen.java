@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
@@ -49,7 +49,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     private BitmapFont font;
 
     private ShapeDrawer shapeDrawer;
-    private PolygonSpriteBatch batch;
+    private SpriteBatch batch;
 
     private float bgAlpha = .25f;
     private float bgAnimSpeed = 1.8f;
@@ -68,7 +68,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.batch = new PolygonSpriteBatch();
+        this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
         this.playerCount = game.preferences.getInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);

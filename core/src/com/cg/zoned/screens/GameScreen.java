@@ -11,8 +11,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
-import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -51,7 +50,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private ExtendViewport[] playerViewports; // Two viewports in split-screen mode; else one
 
     private ShapeDrawer shapeDrawer;
-    private PolygonSpriteBatch batch;
+    private SpriteBatch batch;
     private Color[] dividerLeftColor, dividerRightColor;
 
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
@@ -62,8 +61,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private ScoreBar scoreBars;
     private boolean gamePaused = false;
-
-    private FrameBuffer fbo;
 
     private Color currentBgColor, targetBgColor;
     private float bgAnimSpeed = 1.8f;
@@ -95,9 +92,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL),
                 game.skin, game.getScaleFactor(), usedTextures);
 
-        this.batch = new PolygonSpriteBatch();
+        this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
         this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount());
+        this.map.createPlayerTexture(shapeDrawer);
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
@@ -105,7 +103,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         BitmapFont playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
         initViewports(players);
 
-        this.fbo = map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
+        map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
 
         this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length, game.getScaleFactor());
     }
@@ -324,7 +322,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
         map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
-        map.renderPlayerLabels(players, shapeDrawer);
         batch.end();
     }
 
@@ -457,7 +454,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
-        fbo.dispose();
+        map.dispose();
     }
 
     @Override

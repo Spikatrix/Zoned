@@ -10,7 +10,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -62,7 +62,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     private BitmapFont font;
 
     private ShapeDrawer shapeDrawer;
-    private PolygonSpriteBatch batch;
+    private SpriteBatch batch;
 
     private com.cg.zoned.Map map;
     private Cell[][] mapGrid;
@@ -112,7 +112,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         serverLobbyTable.row();
 
         Table scrollTable = new Table();
-        ScrollPane playerListScrollPane = new ScrollPane(scrollTable);
+        ScrollPane playerListScrollPane = new ScrollPane(scrollTable, game.skin);
         playerListScrollPane.setOverscroll(false, true);
 
         playerList = new Table();
@@ -147,6 +147,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                                     mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
                                     mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
                                     map = new com.cg.zoned.Map(mapGrid, 0);
+                                    map.createPlayerTexture(shapeDrawer);
 
                                     repopulateMapStartPosLocations();
                                     updateMapColor(players[0], players[0].color, 0);
@@ -197,12 +198,13 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     private void setUpMap() {
         mapSelector.loadSelectedMap();
-        this.batch = new PolygonSpriteBatch();
+        this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
         this.mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
         this.map = new com.cg.zoned.Map(this.mapGrid, 0);
+        this.map.createPlayerTexture(shapeDrawer);
         this.players = new Player[0];
         // This array size is increased in playerConnected
         // I know I should use Arrays (libGDX's ArrayLists) instead but Map works with regular 'ol arrays for now
@@ -567,6 +569,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
+        map.dispose();
     }
 
     private void onBackPressed() {

@@ -11,7 +11,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -56,7 +56,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private ScreenViewport viewport;
     private FocusableStage stage;
     private ShapeDrawer shapeDrawer;
-    private PolygonSpriteBatch batch;
+    private SpriteBatch batch;
     private BitmapFont font;
     private boolean showFPSCounter;
 
@@ -96,7 +96,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
 
-        this.batch = new PolygonSpriteBatch();
+        this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
@@ -113,6 +113,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpMap() {
         map = new Map(mapGrid, 0); // Wall count is unnecessary in this case so 0
+        map.createPlayerTexture(shapeDrawer);
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {
@@ -498,6 +499,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
+        map.dispose();
     }
 
     private void onBackPressed() {

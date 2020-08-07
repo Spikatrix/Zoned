@@ -10,7 +10,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -64,7 +64,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private BitmapFont font;
 
     private ShapeDrawer shapeDrawer;
-    private PolygonSpriteBatch batch;
+    private SpriteBatch batch;
 
     private com.cg.zoned.Map map;
     private MapManager mapManager;
@@ -124,7 +124,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         clientLobbyTable.row();
 
         Table scrollTable = new Table();
-        ScrollPane playerListScrollPane = new ScrollPane(scrollTable);
+        ScrollPane playerListScrollPane = new ScrollPane(scrollTable, game.skin);
         playerListScrollPane.setOverscroll(false, true);
 
         playerList = new Table();
@@ -175,7 +175,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     private void setUpMap() {
         this.mapManager = new MapManager();
-        this.batch = new PolygonSpriteBatch();
+        this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
@@ -351,6 +351,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
         this.mapGrid = mapManager.getPreparedMapGrid();
         this.map = new com.cg.zoned.Map(this.mapGrid, 0);
+        this.map.createPlayerTexture(shapeDrawer);
         Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
         Array<String> startPosNames = mapManager.getPreparedStartPosNames();
         for (int j = 0; j < startPositions.size; j++) {
@@ -649,6 +650,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
+        map.dispose();
     }
 
     private void onBackPressed() {

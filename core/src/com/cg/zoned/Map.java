@@ -17,8 +17,9 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.managers.PlayerManager;
 
-public class Map {
+import space.earlygrey.shapedrawer.JoinType;
 
+public class Map {
     private Cell[][] mapGrid;
     public int wallCount;
 
@@ -26,7 +27,11 @@ public class Map {
     public int cols;
     private int coloredCells = 0;
 
+    private FrameBuffer playerLabelFbo = null;
     private TextureRegion[] playerLabels = null;
+
+    private FrameBuffer playerFbo = null;
+    private TextureRegion playerTextureRegion = null;
 
     public Map(Cell[][] mapGrid, int wallCount) {
         this.rows = mapGrid.length;
@@ -35,7 +40,7 @@ public class Map {
         this.wallCount = wallCount;
     }
 
-    public FrameBuffer createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
+    public void createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
         playerLabels = new TextureRegion[players.length];
 
         int totalHeight = ((int) playerLabelFont.getLineHeight()) * players.length;
@@ -46,8 +51,12 @@ public class Map {
         Batch batch = shapeDrawer.getBatch();
         batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, width, totalHeight));
 
-        FrameBuffer fbo = new FrameBuffer(Pixmap.Format.RGB565, width, totalHeight, false);
-        fbo.begin();
+        if (playerLabelFbo != null) {
+            playerLabelFbo.dispose();
+        }
+
+        playerLabelFbo = new FrameBuffer(Pixmap.Format.RGB565, width, totalHeight, false);
+        playerLabelFbo.begin();
         batch.begin();
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -73,16 +82,41 @@ public class Map {
             players[i].color.a = 1f;
         }
         batch.end();
-        fbo.end();
+        playerLabelFbo.end();
 
-        TextureRegion textureRegion = new TextureRegion(fbo.getColorBufferTexture(), width, totalHeight);
+        TextureRegion textureRegion = new TextureRegion(playerLabelFbo.getColorBufferTexture(), width, totalHeight);
         for (int i = 0; i < playerLabels.length; i++) {
             int yOffset = i * height;
             playerLabels[i] = new TextureRegion(textureRegion, 0, yOffset, width, height);
             playerLabels[i].flip(false, true);
         }
+    }
 
-        return fbo;
+    public void createPlayerTexture(ShapeDrawer shapeDrawer) {
+        int size = (int) Constants.CELL_SIZE;
+
+        Batch batch = shapeDrawer.getBatch();
+        batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, size, size));
+
+        if (playerFbo != null) {
+            playerFbo.dispose();
+        }
+
+        playerFbo = new FrameBuffer(Pixmap.Format.RGB565, size, size, false);
+        playerFbo.begin();
+        batch.begin();
+
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        shapeDrawer.setColor(Constants.PLAYER_CIRCLE_COLOR);
+        shapeDrawer.circle(size / 2f, size / 2f, size / 3f, Constants.PLAYER_CIRCLE_WIDTH, JoinType.SMOOTH);
+
+        batch.end();
+        playerFbo.end();
+
+        playerTextureRegion = new TextureRegion(playerFbo.getColorBufferTexture(), size, size);
+        playerTextureRegion.flip(false, true);
     }
 
     public void update(PlayerManager playerManager, float delta) {
@@ -237,14 +271,20 @@ public class Map {
 
     public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         drawColors(shapeDrawer, camera, delta);
-        drawPlayers(players, camera, shapeDrawer);
         drawGrid(camera, shapeDrawer);
+
+        Batch batch = shapeDrawer.getBatch();
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+
+        drawPlayers(players, camera, shapeDrawer);
+        renderPlayerLabels(players, batch);
+
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     private void drawPlayers(Player[] players, OrthographicCamera camera, ShapeDrawer shapeDrawer) {
-        Gdx.gl.glLineWidth(Constants.PLAYER_CIRCLE_WIDTH);
         for (Player player : players) {
-            player.render(camera, shapeDrawer);
+            player.render(camera, shapeDrawer, playerTextureRegion);
         }
     }
 
@@ -304,15 +344,13 @@ public class Map {
         }
     }
 
-    public void renderPlayerLabels(Player[] players, ShapeDrawer shapeDrawer) {
-        Batch batch = shapeDrawer.getBatch();
-
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
-        for (int i = 0; i < players.length; i++) {
-            batch.draw(playerLabels[i], (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / 2f) + (Constants.CELL_SIZE / 2),
-                    (players[i].position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2));
+    public void renderPlayerLabels(Player[] players, Batch batch) {
+        if (playerLabels != null) {
+            for (int i = 0; i < players.length; i++) {
+                batch.draw(playerLabels[i], (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / 2f) + (Constants.CELL_SIZE / 2),
+                        (players[i].position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2));
+            }
         }
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     /**
@@ -402,6 +440,17 @@ public class Map {
             }
         }
         return ((this.rows * this.cols) - this.wallCount) == this.coloredCells;
+    }
+
+    public void dispose() {
+        if (playerLabelFbo != null) {
+            playerLabelFbo.dispose();
+            playerLabelFbo = null;
+        }
+        if (playerFbo != null) {
+            playerFbo.dispose();
+            playerFbo = null;
+        }
     }
 
     /**

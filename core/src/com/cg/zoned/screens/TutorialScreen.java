@@ -12,8 +12,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
-import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -58,7 +57,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     private Label dummyLabel;
 
     private ShapeDrawer shapeDrawer;
-    private PolygonSpriteBatch batch;
+    private SpriteBatch batch;
     private Map map;
     private Cell[][] mapGrid;
     private ExtendViewport mapViewport;
@@ -68,7 +67,6 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     private boolean drawOverlay;
     private Player[] players;
     private BitmapFont playerLabelFont;
-    private FrameBuffer fbo;
     private ControlManager controlManager;
 
     public TutorialScreen(final Zoned game) {
@@ -80,7 +78,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.batch = new PolygonSpriteBatch();
+        this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
         this.dummyLabel = new Label("DUMMY", game.skin); // Used to set the height of the tutorial table
@@ -91,6 +89,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     private void initMap() {
         populateMapGrid();
         this.map = new Map(mapGrid, 0);
+        this.map.createPlayerTexture(shapeDrawer);
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapOverlayColor = new Color(0, 0, 0, .8f);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
@@ -101,7 +100,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
         this.players[0].setControlIndex(0);
         this.playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
-        this.fbo = this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
+        this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
         this.controlManager = new ControlManager(players, stage);
         this.controlManager.setUpControls(game.preferences.getInteger(Constants.CONTROL_PREFERENCE),
                 false, game.getScaleFactor(), usedTextures);
@@ -348,7 +347,6 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
         map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
-        map.renderPlayerLabels(players, shapeDrawer);
         batch.end();
     }
 
@@ -387,7 +385,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
-        fbo.dispose();
+        map.dispose();
     }
 
     private void onBackPressed() {
