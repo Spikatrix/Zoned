@@ -430,11 +430,11 @@ public class Map {
         return fillColor;
     }
 
-    public boolean gameComplete(Player[] players) {
-        if (players.length == 2) {
-            for (Player player : players) {
-                // For two player games, end the game when a player has captured more than 50% of the cells
-                if (100 * (player.score / (((double) this.rows * this.cols) - this.wallCount)) > 50.0) {
+    public boolean gameComplete(Array<TeamData> teamData) {
+        if (teamData.size == 2) {
+            for (TeamData td : teamData) {
+                // For two team games, end the game when a team has captured more than 50% of the cells
+                if (100 * (td.score / (((double) this.rows * this.cols) - this.wallCount)) > 50.0) {
                     return true;
                 }
             }

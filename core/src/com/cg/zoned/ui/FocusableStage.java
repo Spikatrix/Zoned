@@ -47,7 +47,7 @@ public class FocusableStage extends Stage {
      * The same Actor object is stored colspan times so as to satisfy the grid arrangement properly
      * A null value in the array indicates a row in the actor arrangement
      */
-    private Array<Actor> focusableActorArray = new Array<Actor>();
+    private Array<Actor> focusableActorArray = new Array<>();
 
     /**
      * Holds the currently focused actor
@@ -206,7 +206,7 @@ public class FocusableStage extends Stage {
     private void showDialog(Actor content, Array<String> buttonTexts,
                             boolean useVerticalButtonList,
                             float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
-        final Array<Actor> backupCurrentActorArray = new Array<Actor>(this.focusableActorArray);
+        final Array<Actor> backupCurrentActorArray = new Array<>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
 
         final Dialog previousDialog = dialog;

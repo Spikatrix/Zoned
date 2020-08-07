@@ -105,7 +105,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
 
-        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length, game.getScaleFactor());
+        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
     }
 
     private void initViewports(Player[] players) {
@@ -241,9 +241,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
         }
 
-        scoreBars.render(shapeDrawer, font, gameManager.playerManager.getPlayers(), delta);
+        scoreBars.render(shapeDrawer, font, gameManager.playerManager.getTeamData(), delta);
 
-        if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getPlayers())) {
+        if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getTeamData())) {
             gameManager.directionBufferManager.clearBuffer();
             gameManager.playerManager.stopPlayers(true);
             gameManager.gameOver = true;
