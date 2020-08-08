@@ -27,7 +27,7 @@ public class PlayerManager extends InputMultiplexer {
 
         this.players = players;
 
-        this.teamData = new Array<>();
+        this.teamData = new Array<>(); // TODO: Fix scorebar order issue
         initTeamColors();
 
         if (gameManager.gameConnectionManager.isActive) { // Not split screen; only add first player's inputs

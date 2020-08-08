@@ -438,19 +438,20 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private void drawViewportDividers() {
         batch.begin();
         int lineCount = splitScreenCount - 1;
-
+        float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (mapViewports.length - 1), 3f);
+        float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (mapViewports.length - 1), 1f);
         float height = stage.getViewport().getWorldHeight();
         for (int i = 0; i < lineCount; i++) {
             float startX = (stage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
-            shapeDrawer.filledRectangle(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
+            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
+                    dividerSolidWidth * 2, height,
                     dividerRightColor[i], dividerLeftColor[i], dividerLeftColor[i], dividerRightColor[i]);
-            shapeDrawer.filledRectangle(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
+            shapeDrawer.filledRectangle(startX + dividerSolidWidth, 0,
+                    dividerFadeWidth, height,
                     Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i], dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
-            shapeDrawer.filledRectangle(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
+            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
+                    -dividerFadeWidth, height,
                     Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i], dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
         }
         batch.end();
@@ -479,7 +480,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.viewport.apply(true);
         batch.setProjectionMatrix(this.viewport.getCamera().combined);
 
-        if (splitScreenCount > 1) {
+        if (splitScreenCount > 1 && mapViewports.length >= 2) {
             drawViewportDividers();
         }
         drawDarkOverlay();

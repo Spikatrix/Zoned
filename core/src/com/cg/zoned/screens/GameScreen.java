@@ -233,7 +233,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         batch.setProjectionMatrix(fullScreenStage.getCamera().combined);
         batch.begin();
 
-        if (isSplitscreenMultiplayer()) { // Draw the viewport divider only when playing on the same device
+        if (isSplitscreenMultiplayer() && playerViewports.length >= 2) {
+            // Draw the viewport divider only when playing on the same device with at least 2 splitscreens
             drawViewportDividers();
         }
 
@@ -296,19 +297,20 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private void drawViewportDividers() {
         int lineCount = gameManager.playerManager.getPlayers().length - 1;
         float height = fullScreenStage.getViewport().getWorldHeight();
+        float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (playerViewports.length - 1), 3f);
+        float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (playerViewports.length - 1), 1f);
         for (int i = 0; i < lineCount; i++) {
             float startX = (fullScreenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
-            shapeDrawer.filledRectangle(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
+            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
+                    dividerSolidWidth * 2, height,
                     dividerRightColor[i], dividerLeftColor[i], dividerLeftColor[i], dividerRightColor[i]);
-            shapeDrawer.filledRectangle(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
+            shapeDrawer.filledRectangle(startX + dividerSolidWidth, 0,
+                    dividerFadeWidth, height,
                     Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i], dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
-            shapeDrawer.filledRectangle(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
+            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
+                    -dividerFadeWidth, height,
                     Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i], dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
-            // TODO: Divider width based on player viewport width
         }
     }
 
@@ -322,6 +324,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
         map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        // TODO: Fix inbound non-render issue
         batch.end();
     }
 
