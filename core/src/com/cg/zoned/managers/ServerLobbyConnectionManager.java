@@ -294,14 +294,17 @@ public class ServerLobbyConnectionManager {
     private void emptyBuffers() {
         playerConnections.clear();
 
-        server.removeListener(serverLobbyListener);
+        try {
+            server.removeListener(serverLobbyListener);
+        } catch (IllegalArgumentException ignored) {
+            // Probably clicked the back button more than once; ignore exception
+        }
         serverLobbyListener = null;
         serverPlayerListener = null;
     }
 
     public void closeConnection() {
         emptyBuffers();
-
         server.close();
     }
 

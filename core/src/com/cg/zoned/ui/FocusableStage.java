@@ -2,6 +2,9 @@ package com.cg.zoned.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.EventListener;
@@ -14,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -65,6 +69,11 @@ public class FocusableStage extends Stage {
     private Dialog dialog;
 
     /**
+     * The Texture used in the background of a dialog when it is active
+     */
+    private Texture dialogBackgroundTexture = null;
+
+    /**
      * Master switch for enabling keyboard based focus management
      * When this is false, it will behave like a regular Stage
      */
@@ -77,6 +86,23 @@ public class FocusableStage extends Stage {
      */
     public FocusableStage(Viewport viewport) {
         super(viewport);
+
+        createDialogBGTexture();
+    }
+
+    /**
+     * Creates the dialog background texture
+     */
+    private void createDialogBGTexture() {
+        if (dialogBackgroundTexture != null) {
+            dialogBackgroundTexture.dispose();
+        }
+
+        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA4444);
+        pixmap.setColor(new Color(0, 0, 0, .8f));
+        pixmap.drawPixel(0, 0);
+        dialogBackgroundTexture = new Texture(pixmap);
+        pixmap.dispose();
     }
 
     /**
@@ -184,12 +210,12 @@ public class FocusableStage extends Stage {
     /**
      * Shows an dialog with focus properties on its buttons
      *
-     * @param msg The message to display
-     * @param buttonTexts Texts for each button in the dialog
+     * @param msg                   The message to display
+     * @param buttonTexts           Texts for each button in the dialog
      * @param useVerticalButtonList Determines whether the dialog buttons are arranged horizontally or vertically
-     * @param scaleFactor The game's scaleFactor to scale up/down dialog button width
-     * @param dialogResultListener Interface for beaming back the selected dialog option
-     * @param skin The skin to use for the dialog
+     * @param scaleFactor           The game's scaleFactor to scale up/down dialog button width
+     * @param dialogResultListener  Interface for beaming back the selected dialog option
+     * @param skin                  The skin to use for the dialog
      */
     public void showDialog(String msg, Array<String> buttonTexts,
                            boolean useVerticalButtonList,
@@ -250,6 +276,7 @@ public class FocusableStage extends Stage {
             }
         }
 
+        dialog.getStyle().stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
         dialog.show(this, Actions.scaleTo(1f, 1f, .2f, Interpolation.fastSlow));
         dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
         dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
@@ -588,6 +615,12 @@ public class FocusableStage extends Stage {
         }
 
         super.addTouchFocus(listener, listenerActor, target, pointer, button);
+    }
+
+    @Override
+    public void dispose() {
+        dialogBackgroundTexture.dispose();
+        super.dispose();
     }
 
     public interface DialogResultListener {

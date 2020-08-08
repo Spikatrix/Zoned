@@ -116,7 +116,11 @@ public class ClientLobbyConnectionManager {
     private void emptyBuffers() {
         playerNames.clear();
 
-        client.removeListener(clientLobbyListener);
+        try {
+            client.removeListener(clientLobbyListener);
+        } catch (IllegalArgumentException ignored) {
+            // Probably clicked the back button more than once; ignore exception
+        }
         clientLobbyListener = null;
         clientPlayerListener = null;
     }
