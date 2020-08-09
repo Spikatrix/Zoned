@@ -1,4 +1,4 @@
-# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.1-beta](https://img.shields.io/badge/version-0.0.1--beta-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.1-beta) [![Discord](https://img.shields.io/discord/712603681949745213)](https://discord.gg/MFBkvqw)
+# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.1-beta](https://img.shields.io/badge/version-0.0.1--beta-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.1-beta)
 
 <img src="https://i.stack.imgur.com/cunrq.png" alt="Zoned Icon" align="left" style="margin: 10px 20px 10px 10px; border-radius: 20%; box-shadow: 0 6px 20px 2px black" height="162px">
 
@@ -45,8 +45,6 @@ You can then find the generated binaries at
 
 ## Contributing
 
-Zoned is a FOSS game developed by [me](https://github.com/Spikatrix). I'm available on [Discord][discord_invite] if you want to have a chat with me.
-
 Contributions are always welcome.
 
 Here are a few ways you can help:
@@ -65,5 +63,4 @@ This project is licensed under the [GNU GPLv3 License][project_license]
 [issue_tracker]: https://github.com/Spikatrix/Zoned/issues
 [email_feedback]: mailto:cg.devworks@gmail.com?subject=Zoned+Feedback&body=Your+feedback+here
 [custom_external_map_wiki]: https://github.com/Spikatrix/Zoned/wiki/Custom-External-Maps
-[discord_invite]: https://discord.gg/MFBkvqw
 [project_license]: https://github.com/Spikatrix/Zoned/blob/master/LICENSE

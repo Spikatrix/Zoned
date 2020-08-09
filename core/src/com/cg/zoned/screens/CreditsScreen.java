@@ -110,11 +110,6 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
                 "mailto:cg.devworks@gmail.com?subject=Zoned+Feedback");
 
         addCreditItem(table,
-                "Hang out with me",
-                Gdx.files.internal("icons/ic_discord.png"), "Discord",
-                "https://discord.gg/MFBkvqw");
-
-        addCreditItem(table,
                 "Thank You", "for playing");
 
         masterTable.add(screenScrollPane).grow();
@@ -242,20 +237,28 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         titleLabel.setAlignment(Align.center);
         contentLabel.setAlignment(Align.center);
 
-        float lastItemExtraPaddingOffset =
-                ((title.contains("Thank You")) ? (5 / 2f) : (1));
-        float lastPadding = ((lastItemExtraPaddingOffset == 1) ? (0) : (titleLabel.getPrefHeight() - (titleLabel.getPrefHeight() / 10)));
-        // TODO: Fix tail of the Discord logo being seen
-
-        table.add(titleLabel).growX()
-                .padTop(stage.getHeight() / 5)
-                .padLeft(10f)
-                .padRight(10f);
-        table.row();
-        table.add(contentLabel).growX()
-                .padBottom((lastItemExtraPaddingOffset * stage.getHeight() / 5) - lastPadding)
-                .padLeft(10f)
-                .padRight(10f);
+        if (title.contains("Thank You")) { // Last item in the credits screen
+            table.add(titleLabel).growX()
+                    .padTop(stage.getHeight() / 2)
+                    .padLeft(10f)
+                    .padRight(10f);
+            table.row();
+            table.add(contentLabel).growX()
+                    .padBottom((stage.getHeight() / 2) - titleLabel.getHeight())
+                    .padLeft(10f)
+                    .padRight(10f);
+            // Hacky line above, but this whole thing is kinda hacky and doesn't work on resize anyway
+        } else {
+            table.add(titleLabel).growX()
+                    .padTop(stage.getHeight() / 5)
+                    .padLeft(10f)
+                    .padRight(10f);
+            table.row();
+            table.add(contentLabel).growX()
+                    .padBottom(stage.getHeight() / 5)
+                    .padLeft(10f)
+                    .padRight(10f);
+        }
         table.row();
     }
 

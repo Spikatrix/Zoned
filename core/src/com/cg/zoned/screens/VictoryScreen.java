@@ -18,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Sort;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -31,6 +32,7 @@ import com.cg.zoned.managers.PlayerManager;
 import com.cg.zoned.ui.FocusableStage;
 
 import java.text.DecimalFormat;
+import java.util.Comparator;
 
 public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
@@ -188,6 +190,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
     private void getVictoryStrings(PlayerManager playerManager, int rows, int cols, int wallCount) {
         teamData = playerManager.getTeamData();
+        new Sort().sort(teamData, new TeamDataComparator());
         this.victoryStrings = new String[teamData.size];
 
         DecimalFormat df = new DecimalFormat("#.##");
@@ -236,6 +239,13 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
     public void onBackPressed() {
         animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+    }
+
+    private static class TeamDataComparator implements Comparator<TeamData> {
+        @Override
+        public int compare(TeamData t1, TeamData t2) {
+            return t2.score - t1.score;
+        }
     }
 
     @Override
