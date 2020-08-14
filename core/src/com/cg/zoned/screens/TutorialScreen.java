@@ -88,8 +88,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
     private void initMap() {
         populateMapGrid();
-        this.map = new Map(mapGrid, 0);
-        this.map.createPlayerTexture(shapeDrawer);
+        this.map = new Map(mapGrid, 0, shapeDrawer);
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapOverlayColor = new Color(0, 0, 0, .8f);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);

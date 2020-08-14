@@ -28,17 +28,90 @@ public class Map {
     public int cols;
     private int coloredCells = 0;
 
+    private Rectangle userViewRect = null;
+
     private FrameBuffer playerLabelFbo = null;
     private TextureRegion[] playerLabels = null;
 
     private FrameBuffer playerFbo = null;
     private TextureRegion playerTextureRegion = null;
 
-    public Map(Cell[][] mapGrid, int wallCount) {
+    private FrameBuffer mapFbo = null;
+    private TextureRegion mapTextureRegion = null;
+
+    /**
+     * Creates the map object with features like processing each turn and managing score, rendering
+     * the grid and more
+     *
+     * @param mapGrid     Array of {@link Cell}s of the map grid
+     * @param wallCount   Amount of walls in the grid; used for determining winner early in 2 player games
+     * @param shapeDrawer Used to prepare grid and player textures for rendering
+     */
+    public Map(Cell[][] mapGrid, int wallCount, ShapeDrawer shapeDrawer) {
         this.rows = mapGrid.length;
         this.cols = mapGrid[0].length;
         this.mapGrid = mapGrid;
         this.wallCount = wallCount;
+
+        userViewRect = new Rectangle();
+
+        createPlayerTexture(shapeDrawer);
+        createMapTexture(shapeDrawer);
+    }
+
+    private void createPlayerTexture(ShapeDrawer shapeDrawer) {
+        int size = (int) Constants.CELL_SIZE;
+
+        Batch batch = shapeDrawer.getBatch();
+        batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, size, size));
+
+        if (playerFbo != null) {
+            playerFbo.dispose();
+        }
+
+        playerFbo = new FrameBuffer(Pixmap.Format.RGB565, size, size, false);
+        playerFbo.begin();
+        batch.begin();
+
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        shapeDrawer.setColor(Constants.PLAYER_CIRCLE_COLOR);
+        shapeDrawer.circle(size / 2f, size / 2f, size / 3f, Constants.PLAYER_CIRCLE_WIDTH, JoinType.SMOOTH);
+
+        batch.end();
+        playerFbo.end();
+
+        playerTextureRegion = new TextureRegion(playerFbo.getColorBufferTexture(), size, size);
+        playerTextureRegion.flip(false, true);
+    }
+
+    private void createMapTexture(ShapeDrawer shapeDrawer) {
+        int width = (int) ((cols * Constants.CELL_SIZE) + Constants.MAP_GRID_LINE_WIDTH);
+        int height = (int) ((rows * Constants.CELL_SIZE) + Constants.MAP_GRID_LINE_WIDTH);
+
+        Batch batch = shapeDrawer.getBatch();
+        batch.setProjectionMatrix(new Matrix4().setToOrtho2D(
+                -Constants.MAP_GRID_LINE_WIDTH / 2, -Constants.MAP_GRID_LINE_WIDTH / 2, width, height));
+
+        if (mapFbo != null) {
+            mapFbo.dispose();
+        }
+
+        mapFbo = new FrameBuffer(Pixmap.Format.RGB565, width, height, false);
+        mapFbo.begin();
+        batch.begin();
+
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        drawGrid(shapeDrawer);
+
+        batch.end();
+        mapFbo.end();
+
+        mapTextureRegion = new TextureRegion(mapFbo.getColorBufferTexture(), width, height);
+        mapTextureRegion.flip(false, true);
     }
 
     public void createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
@@ -93,31 +166,30 @@ public class Map {
         }
     }
 
-    public void createPlayerTexture(ShapeDrawer shapeDrawer) {
-        int size = (int) Constants.CELL_SIZE;
+    private void drawGrid(ShapeDrawer shapeDrawer) {
+        shapeDrawer.setColor(Constants.MAP_GRID_COLOR);
 
-        Batch batch = shapeDrawer.getBatch();
-        batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, size, size));
-
-        if (playerFbo != null) {
-            playerFbo.dispose();
+        for (int i = 0; i < rows + 1; i++) {
+            float rowLineY = (i * Constants.CELL_SIZE);
+            shapeDrawer.line(-Constants.MAP_GRID_LINE_WIDTH / 2, rowLineY,
+                    (cols * Constants.CELL_SIZE) + Constants.MAP_GRID_LINE_WIDTH, rowLineY, Constants.MAP_GRID_LINE_WIDTH);
+        }
+        for (int i = 0; i < cols + 1; i++) {
+            float colLineX = (i * Constants.CELL_SIZE);
+            shapeDrawer.line(colLineX, -Constants.MAP_GRID_LINE_WIDTH / 2,
+                    colLineX, (rows * Constants.CELL_SIZE) + Constants.MAP_GRID_LINE_WIDTH, Constants.MAP_GRID_LINE_WIDTH);
         }
 
-        playerFbo = new FrameBuffer(Pixmap.Format.RGB565, size, size, false);
-        playerFbo.begin();
-        batch.begin();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                float startX = j * Constants.CELL_SIZE;
+                float startY = i * Constants.CELL_SIZE;
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        shapeDrawer.setColor(Constants.PLAYER_CIRCLE_COLOR);
-        shapeDrawer.circle(size / 2f, size / 2f, size / 3f, Constants.PLAYER_CIRCLE_WIDTH, JoinType.SMOOTH);
-
-        batch.end();
-        playerFbo.end();
-
-        playerTextureRegion = new TextureRegion(playerFbo.getColorBufferTexture(), size, size);
-        playerTextureRegion.flip(false, true);
+                if (!mapGrid[i][j].isMovable) {
+                    shapeDrawer.filledRectangle(startX, startY, Constants.CELL_SIZE, Constants.CELL_SIZE);
+                }
+            }
+        }
     }
 
     public void update(PlayerManager playerManager, float delta) {
@@ -276,28 +348,30 @@ public class Map {
         float width = camera.viewportWidth * camera.zoom;
         float height = camera.viewportHeight * camera.zoom;
 
-        return new Rectangle(x - (width / 2) - Constants.CELL_SIZE, y - (height / 2) - Constants.CELL_SIZE,
+        userViewRect.set(x - (width / 2) - Constants.CELL_SIZE, y - (height / 2) - Constants.CELL_SIZE,
                 width + Constants.CELL_SIZE, height + Constants.CELL_SIZE);
+
+        return userViewRect;
     }
 
     public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         Rectangle userViewRect = calcUserViewRect(camera);
 
         drawColors(shapeDrawer, userViewRect, delta);
-        drawGrid(userViewRect, shapeDrawer);
 
         Batch batch = shapeDrawer.getBatch();
         batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
-        drawPlayers(players, userViewRect, shapeDrawer);
+        drawGrid(userViewRect, batch);
+        drawPlayers(players, userViewRect, batch);
         renderPlayerLabels(players, userViewRect, batch);
 
         batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    private void drawPlayers(Player[] players, Rectangle userViewRect, ShapeDrawer shapeDrawer) {
+    private void drawPlayers(Player[] players, Rectangle userViewRect, Batch batch) {
         for (Player player : players) {
-            player.render(userViewRect, shapeDrawer, playerTextureRegion);
+            player.render(userViewRect, batch, playerTextureRegion);
         }
     }
 
@@ -307,45 +381,26 @@ public class Map {
                 float startX = j * Constants.CELL_SIZE;
                 float startY = i * Constants.CELL_SIZE;
 
-                if (userViewRect.contains(startX, startY)) {
-                    if (mapGrid[i][j].cellColor != null) {
-                        shapeDrawer.setColor(mapGrid[i][j].cellColor);
-                        shapeDrawer.filledRectangle(startX, startY,
-                                Constants.CELL_SIZE, Constants.CELL_SIZE);
+                if (mapGrid[i][j].cellColor != null && userViewRect.contains(startX, startY)) {
+                    shapeDrawer.setColor(mapGrid[i][j].cellColor);
+                    shapeDrawer.filledRectangle(startX, startY,
+                            Constants.CELL_SIZE, Constants.CELL_SIZE);
 
-                        mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
+                    mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
 
-                        // Use the constant color object to avoid too many redundant color objects
-                        Color constColor = PlayerColorHelper.getConstantColor(mapGrid[i][j].cellColor);
-                        if (constColor != null) {
-                            mapGrid[i][j].cellColor = constColor;
-                        }
-                    } else if (!mapGrid[i][j].isMovable) {
-                        shapeDrawer.setColor(Constants.MAP_GRID_COLOR);
-                        shapeDrawer.filledRectangle(startX, startY,
-                                Constants.CELL_SIZE, Constants.CELL_SIZE);
+                    // Use the constant color object to avoid too many redundant color objects
+                    Color constColor = PlayerColorHelper.getConstantColor(mapGrid[i][j].cellColor);
+                    if (constColor != null) {
+                        mapGrid[i][j].cellColor = constColor;
                     }
                 }
             }
         }
     }
 
-    private void drawGrid(Rectangle userViewRect, ShapeDrawer shapeDrawer) {
-        shapeDrawer.setColor(Constants.MAP_GRID_COLOR);
-        for (int i = 0; i < this.rows + 1; i++) {
-            float rowLineY = i * Constants.CELL_SIZE;
-            if (userViewRect.contains(userViewRect.getX(), rowLineY)) {
-                shapeDrawer.line(Math.max(0, userViewRect.getX()), rowLineY,
-                        Math.min(this.cols * Constants.CELL_SIZE, userViewRect.getX() + userViewRect.getWidth()), rowLineY, Constants.MAP_GRID_LINE_WIDTH);
-            }
-        }
-        for (int i = 0; i < this.cols + 1; i++) {
-            float colLineX = i * Constants.CELL_SIZE;
-            if (userViewRect.contains(colLineX, userViewRect.getY())) {
-                shapeDrawer.line(colLineX, Math.max(0, userViewRect.getY()),
-                        colLineX, Math.min(this.rows * Constants.CELL_SIZE, userViewRect.getY() + userViewRect.getHeight()), Constants.MAP_GRID_LINE_WIDTH);
-            }
-        }
+    private void drawGrid(Rectangle userViewRect, Batch batch) {
+        // TODO: Optimization: Draw only the region that is in view
+        batch.draw(mapTextureRegion, -Constants.MAP_GRID_LINE_WIDTH / 2, -Constants.MAP_GRID_LINE_WIDTH / 2);
     }
 
     public void renderPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
@@ -458,6 +513,10 @@ public class Map {
         if (playerFbo != null) {
             playerFbo.dispose();
             playerFbo = null;
+        }
+        if (mapFbo != null) {
+            mapFbo.dispose();
+            mapFbo = null;
         }
     }
 

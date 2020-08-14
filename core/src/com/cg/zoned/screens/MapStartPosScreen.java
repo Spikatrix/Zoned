@@ -112,8 +112,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpMap() {
-        map = new Map(mapGrid, 0); // Wall count is unnecessary in this case so 0
-        map.createPlayerTexture(shapeDrawer);
+        map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {

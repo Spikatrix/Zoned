@@ -2,6 +2,7 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Rectangle;
@@ -86,20 +87,12 @@ public class Player extends InputAdapter {
         }
     }
 
-    public void render(Rectangle userViewRect, ShapeDrawer shapeDrawer, TextureRegion playerTexture) {
+    public void render(Rectangle userViewRect, Batch batch, TextureRegion playerTexture) {
         float startX = (this.position.x * Constants.CELL_SIZE);
         float startY = (this.position.y * Constants.CELL_SIZE);
 
         if (userViewRect.contains(startX, startY)) {
-            if (playerTexture == null) {
-                shapeDrawer.setColor(Constants.PLAYER_CIRCLE_COLOR);
-                shapeDrawer.circle(startX + (Constants.CELL_SIZE / 2),
-                        startY + (Constants.CELL_SIZE / 2),
-                        Constants.CELL_SIZE / 3,
-                        Constants.PLAYER_CIRCLE_WIDTH);
-            } else {
-                shapeDrawer.getBatch().draw(playerTexture, startX, startY);
-            }
+            batch.draw(playerTexture, startX, startY);
         }
     }
 

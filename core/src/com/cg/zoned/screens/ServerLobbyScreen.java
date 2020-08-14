@@ -146,8 +146,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                                     mapSelector.loadSelectedMap();
                                     mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
                                     mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
-                                    map = new com.cg.zoned.Map(mapGrid, 0);
-                                    map.createPlayerTexture(shapeDrawer);
+                                    map = new com.cg.zoned.Map(mapGrid, 0, shapeDrawer);
 
                                     repopulateMapStartPosLocations();
                                     updateMapColor(players[0], players[0].color, 0);
@@ -203,8 +202,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
         this.mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
-        this.map = new com.cg.zoned.Map(this.mapGrid, 0);
-        this.map.createPlayerTexture(shapeDrawer);
+        this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
         this.players = new Player[0];
         // This array size is increased in playerConnected
         // I know I should use Arrays (libGDX's ArrayLists) instead but Map works with regular 'ol arrays for now

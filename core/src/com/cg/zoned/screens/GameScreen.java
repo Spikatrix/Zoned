@@ -94,8 +94,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
-        this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount());
-        this.map.createPlayerTexture(shapeDrawer);
+        this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount(), this.shapeDrawer);
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
@@ -207,6 +206,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         }
         currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
         currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
+
+        //TODO: Investigate why FPS increases by almost 50% once the game starts (All players start moving)
 
         if (!gameManager.gameOver) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)

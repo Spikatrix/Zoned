@@ -350,8 +350,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         }
 
         this.mapGrid = mapManager.getPreparedMapGrid();
-        this.map = new com.cg.zoned.Map(this.mapGrid, 0);
-        this.map.createPlayerTexture(shapeDrawer);
+        this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
         Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
         Array<String> startPosNames = mapManager.getPreparedStartPosNames();
         for (int j = 0; j < startPositions.size; j++) {
