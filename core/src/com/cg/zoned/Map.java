@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
@@ -269,38 +270,44 @@ public class Map {
         }
     }
 
-    public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
-        drawColors(shapeDrawer, camera, delta);
-        drawGrid(camera, shapeDrawer);
-
-        Batch batch = shapeDrawer.getBatch();
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
-
-        drawPlayers(players, camera, shapeDrawer);
-        renderPlayerLabels(players, batch);
-
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    private void drawPlayers(Player[] players, OrthographicCamera camera, ShapeDrawer shapeDrawer) {
-        for (Player player : players) {
-            player.render(camera, shapeDrawer, playerTextureRegion);
-        }
-    }
-
-    private void drawColors(ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
+    private Rectangle calcUserViewRect(OrthographicCamera camera) {
         float x = camera.position.x;
         float y = camera.position.y;
         float width = camera.viewportWidth * camera.zoom;
         float height = camera.viewportHeight * camera.zoom;
 
+        return new Rectangle(x - (width / 2) - Constants.CELL_SIZE, y - (height / 2) - Constants.CELL_SIZE,
+                width + Constants.CELL_SIZE, height + Constants.CELL_SIZE);
+    }
+
+    public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
+        Rectangle userViewRect = calcUserViewRect(camera);
+
+        drawColors(shapeDrawer, userViewRect, delta);
+        drawGrid(userViewRect, shapeDrawer);
+
+        Batch batch = shapeDrawer.getBatch();
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+
+        drawPlayers(players, userViewRect, shapeDrawer);
+        renderPlayerLabels(players, userViewRect, batch);
+
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    private void drawPlayers(Player[] players, Rectangle userViewRect, ShapeDrawer shapeDrawer) {
+        for (Player player : players) {
+            player.render(userViewRect, shapeDrawer, playerTextureRegion);
+        }
+    }
+
+    private void drawColors(ShapeDrawer shapeDrawer, Rectangle userViewRect, float delta) {
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
                 float startX = j * Constants.CELL_SIZE;
                 float startY = i * Constants.CELL_SIZE;
 
-                if ((startX >= x - width) && (startX + Constants.CELL_SIZE <= x + width) &&
-                        (startY >= y - height) && (startY + Constants.CELL_SIZE <= y + height)) {
+                if (userViewRect.contains(startX, startY)) {
                     if (mapGrid[i][j].cellColor != null) {
                         shapeDrawer.setColor(mapGrid[i][j].cellColor);
                         shapeDrawer.filledRectangle(startX, startY,
@@ -323,32 +330,33 @@ public class Map {
         }
     }
 
-    private void drawGrid(OrthographicCamera camera, ShapeDrawer shapeDrawer) {
-        float x = camera.position.x;
-        float y = camera.position.y;
-        float width = camera.viewportWidth * camera.zoom;
-        float height = camera.viewportHeight * camera.zoom;
-
+    private void drawGrid(Rectangle userViewRect, ShapeDrawer shapeDrawer) {
         shapeDrawer.setColor(Constants.MAP_GRID_COLOR);
         for (int i = 0; i < this.rows + 1; i++) {
-            if (i * Constants.CELL_SIZE >= y - height && i * Constants.CELL_SIZE <= y + height) {
-                shapeDrawer.line(Math.max(0, x - width), i * Constants.CELL_SIZE,
-                        Math.min(this.cols * Constants.CELL_SIZE, x + width), i * Constants.CELL_SIZE, Constants.MAP_GRID_LINE_WIDTH);
+            float rowLineY = i * Constants.CELL_SIZE;
+            if (userViewRect.contains(userViewRect.getX(), rowLineY)) {
+                shapeDrawer.line(Math.max(0, userViewRect.getX()), rowLineY,
+                        Math.min(this.cols * Constants.CELL_SIZE, userViewRect.getX() + userViewRect.getWidth()), rowLineY, Constants.MAP_GRID_LINE_WIDTH);
             }
         }
         for (int i = 0; i < this.cols + 1; i++) {
-            if (i * Constants.CELL_SIZE >= x - width && i * Constants.CELL_SIZE <= x + width) {
-                shapeDrawer.line(i * Constants.CELL_SIZE, Math.max(0, y - height),
-                        i * Constants.CELL_SIZE, Math.min(this.rows * Constants.CELL_SIZE, y + height), Constants.MAP_GRID_LINE_WIDTH);
+            float colLineX = i * Constants.CELL_SIZE;
+            if (userViewRect.contains(colLineX, userViewRect.getY())) {
+                shapeDrawer.line(colLineX, Math.max(0, userViewRect.getY()),
+                        colLineX, Math.min(this.rows * Constants.CELL_SIZE, userViewRect.getY() + userViewRect.getHeight()), Constants.MAP_GRID_LINE_WIDTH);
             }
         }
     }
 
-    public void renderPlayerLabels(Player[] players, Batch batch) {
+    public void renderPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
         if (playerLabels != null) {
             for (int i = 0; i < players.length; i++) {
-                batch.draw(playerLabels[i], (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / 2f) + (Constants.CELL_SIZE / 2),
-                        (players[i].position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2));
+                float posX = (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / 2f) + (Constants.CELL_SIZE / 2);
+                float posY = (players[i].position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
+                if (userViewRect.contains(posX + playerLabels[i].getRegionWidth(), posY - (Constants.CELL_SIZE / 2)) ||
+                        userViewRect.contains(posX, posY - (Constants.CELL_SIZE / 2))) {
+                    batch.draw(playerLabels[i], posX, posY);
+                }
             }
         }
     }
