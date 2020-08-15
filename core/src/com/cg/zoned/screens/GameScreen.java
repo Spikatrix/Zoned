@@ -207,8 +207,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
         currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
 
-        //TODO: Investigate why FPS increases by almost 50% once the game starts (All players start moving)
-
         if (!gameManager.gameOver) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
                 gameManager.gameConnectionManager.serverClientCommunicate();
@@ -325,7 +323,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
         map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
-        // TODO: Fix inbound non-render issue
         batch.end();
     }
 

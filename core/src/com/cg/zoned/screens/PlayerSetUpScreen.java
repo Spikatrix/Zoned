@@ -12,7 +12,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -32,7 +31,7 @@ import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.CustomButtonGroup;
+import com.cg.zoned.ui.ButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
@@ -140,7 +139,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
-        final CustomButtonGroup[] colorButtonGroups = new CustomButtonGroup[playerCount];
+        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
             playerItem.center();
@@ -148,7 +147,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             playerItem.add(promptLabels[i]);
 
             colorButtons[i] = new Button[NO_OF_COLORS];
-            colorButtonGroups[i] = new CustomButtonGroup();
+            colorButtonGroups[i] = new ButtonGroup();
             colorButtonGroups[i].setMinCheckCount(1);
             colorButtonGroups[i].setMaxCheckCount(1);
 
@@ -163,7 +162,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             }
 
             final int finalI = i;
-            colorButtonGroups[i].setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
+            colorButtonGroups[i].setOnCheckChangeListener(new ButtonGroup.OnCheckChangeListener() {
                 @Override
                 public void buttonPressed(Button button) {
                     targetBgColors[finalI].set(button.getColor());

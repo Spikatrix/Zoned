@@ -1,9 +1,8 @@
 package com.cg.zoned.ui;
 
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 
-public class CustomButtonGroup extends ButtonGroup {
+public class ButtonGroup extends com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup {
     private OnCheckChangeListener onCheckChangeListener = null;
 
     @Override

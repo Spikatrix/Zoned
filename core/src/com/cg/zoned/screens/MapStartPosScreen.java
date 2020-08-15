@@ -17,7 +17,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -39,7 +38,8 @@ import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.CustomButtonGroup;
+import com.cg.zoned.ui.ButtonGroup;
+import com.cg.zoned.ui.CheckBox;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
@@ -71,7 +71,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private boolean firstPlayerOnly;
     private Player[] players;
     private CheckBox[][] radioButtons;
-    private CustomButtonGroup[] customButtonGroup;
+    private ButtonGroup[] buttonGroup;
     private Label[] playerLabels;
     private int playerIndex;
 
@@ -160,9 +160,10 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
         playerLabels = new Label[splitScreenCount];
         radioButtons = new CheckBox[splitScreenCount][];
-        customButtonGroup = new CustomButtonGroup[splitScreenCount];
+        buttonGroup = new ButtonGroup[splitScreenCount];
         for (int i = 0; i < splitScreenCount; i++) {
             Table table = new Table();
+            ScrollPane startPosScrollPane = null;
 
             final boolean alignLeft = (i < (splitScreenCount / 2));
             if (i < players.length) {
@@ -178,13 +179,13 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                 table.row();
 
                 Table scrollTable = new Table();
-                ScrollPane startPosScrollPane = new ScrollPane(scrollTable);
+                startPosScrollPane = new ScrollPane(scrollTable);
                 startPosScrollPane.setOverscroll(false, true);
 
                 radioButtons[i] = new CheckBox[startPositions.size];
-                customButtonGroup[i] = new CustomButtonGroup();
-                customButtonGroup[i].setMinCheckCount(1);
-                customButtonGroup[i].setMaxCheckCount(1);
+                buttonGroup[i] = new ButtonGroup();
+                buttonGroup[i].setMinCheckCount(1);
+                buttonGroup[i].setMaxCheckCount(1);
                 for (int j = 0; j < startPositions.size; j++) {
                     String startPosName;
                     try {
@@ -194,7 +195,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     }
                     startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
 
-                    radioButtons[i][j] = new CheckBox(startPosName, game.skin, "radio");
+                    radioButtons[i][j] = new CheckBox(startPosName, game.skin, "radio", !alignLeft);
                     radioButtons[i][j].getImageCell().width(radioButtons[i][j].getLabel().getPrefHeight()).height(radioButtons[i][j].getLabel().getPrefHeight());
                     radioButtons[i][j].getImage().setScaling(Scaling.fill);
                     if (alignLeft) {
@@ -204,7 +205,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     }
                     scrollTable.row();
 
-                    customButtonGroup[i].add(radioButtons[i][j]);
+                    buttonGroup[i].add(radioButtons[i][j]);
 
                     if (j == i % startPositions.size) {
                         radioButtons[i][j].setChecked(true);
@@ -214,10 +215,10 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                 table.add(startPosScrollPane).grow();
 
                 final int finalI = i;
-                customButtonGroup[i].setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
+                buttonGroup[i].setOnCheckChangeListener(new ButtonGroup.OnCheckChangeListener() {
                     @Override
                     public void buttonPressed(Button button) {
-                        int startPosIndex = customButtonGroup[finalI].getCheckedIndex();
+                        int startPosIndex = buttonGroup[finalI].getCheckedIndex();
 
                         int index = finalI + playerIndex;
                         if (index >= players.length) {
@@ -244,9 +245,17 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             }
 
             if (alignLeft) {
-                masterTable.add(table).expand().uniformX().left().padLeft(20f * game.getScaleFactor());
+                masterTable.add(table).expand().uniformX().left()
+                        .padLeft(20f * game.getScaleFactor()).padRight(10f * game.getScaleFactor());
             } else {
-                masterTable.add(table).expand().uniformX().right().padRight(20f * game.getScaleFactor());
+                masterTable.add(table).expand().uniformX().right()
+                        .padRight(20f * game.getScaleFactor()).padLeft(10f * game.getScaleFactor());
+
+                if (startPosScrollPane != null) {
+                    startPosScrollPane.layout();
+                    startPosScrollPane.setScrollPercentX(1f); // I think this doesn't have width info by now which is why it's kinda buggy?
+                    startPosScrollPane.updateVisualScroll();
+                }
             }
         }
         masterTable.row();
@@ -308,7 +317,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             public void clicked(InputEvent event, float x, float y) {
                 for (int i = 0; i < splitScreenCount; i++) {
                     if (i + playerIndex < players.length) {
-                        players[i + playerIndex].setStartPos(startPositions.get(customButtonGroup[i].getCheckedIndex()));
+                        players[i + playerIndex].setStartPos(startPositions.get(buttonGroup[i].getCheckedIndex()));
                         if (firstPlayerOnly) {
                             break;
                         }

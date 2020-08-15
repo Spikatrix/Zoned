@@ -28,6 +28,8 @@ public class Map {
     public int cols;
     private int coloredCells = 0;
 
+    private boolean mapColorUpdated = false;
+
     private Rectangle userViewRect = null;
 
     private FrameBuffer playerLabelFbo = null;
@@ -214,6 +216,8 @@ public class Map {
                     continue;
                 }
 
+                mapColorUpdated = false; // Might need a bit more testing
+
                 Direction direction = player.direction;
                 if (direction == Direction.UP && player.position.y < rows - 1 &&
                         mapGrid[Math.round(player.position.y) + 1][Math.round(player.position.x)].isMovable) {
@@ -241,9 +245,13 @@ public class Map {
             }
         }
 
-        if (!waitForMovementCompletion) { // If movement(s) have completed
-            setMapWeights(players);
-            setMapColors(playerManager, players);
+        if (!waitForMovementCompletion) { // If movement(s) are completed
+            if (!mapColorUpdated) {
+                mapColorUpdated = true;
+
+                setMapWeights(players);
+                setMapColors(playerManager, players);
+            }
         }
     }
 
