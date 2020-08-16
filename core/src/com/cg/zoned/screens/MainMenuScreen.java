@@ -240,7 +240,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         };
         String[] modeLabelStrings = new String[]{
                 "Splitscreen\nMultiplayer",
-                "Local\nMultiplayer\n(WiFi)",
+                "Local\nNetwork\nMultiplayer",
         };
         final Class[] screenClasses = new Class[]{
                 PlayerSetUpScreen.class,

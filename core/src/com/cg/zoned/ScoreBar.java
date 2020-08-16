@@ -70,7 +70,6 @@ public class ScoreBar {
                 shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2), offsetY, drawWidth / 2, scoreBarHeight);
                 //shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, drawWidth, BAR_HEIGHT);
                 //TODO: Need to polish this
-                //TODO: Scorebar for teams
                 scoreBarStartX[i] = currentWidthPos;
             }
             scoreBarWidths[i] = drawWidth;
