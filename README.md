@@ -2,7 +2,7 @@
 
 <img src="https://i.stack.imgur.com/cunrq.png" alt="Zoned Icon" align="left" style="margin: 10px 20px 10px 10px; border-radius: 20%; box-shadow: 0 6px 20px 2px black" height="162px">
 
-Zoned is a cross-platform grid based multiplayer strategy game powered by [libGDX][libGDX]. The game is prima`rily targeted for Android, but it will work just fine on Windows and Linux as well.
+Zoned is a cross-platform grid based multiplayer strategy game powered by [libGDX][libGDX]. The game is primarily targeted for Android, but it will work just fine on Windows and Linux as well.
 
 It is available to download on the [Google Play Store][play_store_page] (Android) as well as on [GitHub][github_release_page] (Windows, Linux and Android)
 
