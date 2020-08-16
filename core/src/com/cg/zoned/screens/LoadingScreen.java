@@ -44,6 +44,7 @@ public class LoadingScreen extends ScreenAdapter {
 
     public LoadingScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Loading game");
     }
 
     @Override
@@ -114,14 +115,21 @@ public class LoadingScreen extends ScreenAdapter {
             finishedLoading = true;
 
             if (!loadedFonts) {
-                ObjectMap<String, Object> fontMap = new ObjectMap<String, Object>();
+                ObjectMap<String, Object> fontMap = new ObjectMap<>();
                 for (Constants.FONT_MANAGER font : Constants.FONT_MANAGER.values()) {
                     fontMap.put(font.getName(), assetManager.get(font.getName() + ".otf", BitmapFont.class));
                 }
 
                 SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
                 assetManager.load("neon-skin/neon-ui.json", Skin.class, parameter);
-                assetManager.load("icons/ui_icons/ic_play_sheet.png", Texture.class); // Big image; noticeable lag on my mobile. So load via assetManager
+
+                assetManager.load("icons/ui_icons/ic_play_sheet.png", Texture.class); // Big image, loading directly will lag on less powerful hardware
+                assetManager.load("icons/ui_icons/ic_back.png", Texture.class);
+                assetManager.load("icons/ui_icons/ic_credits.png", Texture.class);
+                assetManager.load("icons/ui_icons/ic_cross.png", Texture.class);
+                assetManager.load("icons/ui_icons/ic_dev.png", Texture.class);
+                assetManager.load("icons/ui_icons/ic_settings.png", Texture.class);
+                assetManager.load("icons/ui_icons/ic_tutorial.png", Texture.class);
 
                 loadedFonts = true;
                 finishedLoading = false;

@@ -27,7 +27,7 @@ public class GameConnectionManager implements IConnectionHandlers {
     private Array<Connection> discardConnections; // Used to store client connections that came in when in-game
 
     private int ping;
-    private Boolean sentResponse;
+    private boolean sentResponse;
 
     // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
 

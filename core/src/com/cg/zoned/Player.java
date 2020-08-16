@@ -2,9 +2,10 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.GridPoint2;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.cg.zoned.Constants.Direction;
 
@@ -86,20 +87,12 @@ public class Player extends InputAdapter {
         }
     }
 
-    public void render(OrthographicCamera camera, ShapeRenderer renderer) {
-        float x = camera.position.x;
-        float y = camera.position.y;
-        float width = camera.viewportWidth * camera.zoom;
-        float height = camera.viewportHeight * camera.zoom;
+    public void render(Rectangle userViewRect, Batch batch, TextureRegion playerTexture) {
+        float startX = (this.position.x * Constants.CELL_SIZE);
+        float startY = (this.position.y * Constants.CELL_SIZE);
 
-        float startX = (this.position.x * Constants.CELL_SIZE) + (Constants.CELL_SIZE / 2);
-        float startY = (this.position.y * Constants.CELL_SIZE) + (Constants.CELL_SIZE / 2);
-        if ((startX >= x - width) && (startX + Constants.CELL_SIZE <= x + width) &&
-                (startY >= y - height) && (startY + Constants.CELL_SIZE <= y + height)) {
-            renderer.setColor(Constants.PLAYER_CIRCLE_COLOR);
-            renderer.circle(startX,
-                    startY,
-                    Constants.CELL_SIZE / 3);
+        if (userViewRect.contains(startX, startY)) {
+            batch.draw(playerTexture, startX, startY);
         }
     }
 

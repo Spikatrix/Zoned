@@ -11,13 +11,12 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -33,12 +32,14 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.CustomButtonGroup;
+import com.cg.zoned.ui.ButtonGroup;
+import com.cg.zoned.ui.CheckBox;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
@@ -54,7 +55,8 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private AnimationManager animationManager;
     private ScreenViewport viewport;
     private FocusableStage stage;
-    private ShapeRenderer renderer;
+    private ShapeDrawer shapeDrawer;
+    private SpriteBatch batch;
     private BitmapFont font;
     private boolean showFPSCounter;
 
@@ -69,13 +71,14 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     private boolean firstPlayerOnly;
     private Player[] players;
     private CheckBox[][] radioButtons;
-    private CustomButtonGroup[] customButtonGroup;
+    private ButtonGroup[] buttonGroup;
     private Label[] playerLabels;
     private int playerIndex;
 
     public MapStartPosScreen(final Zoned game, MapManager mapManager,
                              Player[] players, int splitScreenCount, boolean firstPlayerOnly) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Choosing start positions");
 
         this.mapManager = mapManager;
         this.mapGrid = mapManager.getPreparedMapGrid();
@@ -93,8 +96,8 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
 
-        this.renderer = new ShapeRenderer();
-        this.renderer.setAutoShapeType(true);
+        this.batch = new SpriteBatch();
+        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
     }
@@ -109,7 +112,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpMap() {
-        map = new Map(mapGrid, 0); // Wall count is unnecessary in this case so 0
+        map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {
@@ -157,9 +160,10 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
         playerLabels = new Label[splitScreenCount];
         radioButtons = new CheckBox[splitScreenCount][];
-        customButtonGroup = new CustomButtonGroup[splitScreenCount];
+        buttonGroup = new ButtonGroup[splitScreenCount];
         for (int i = 0; i < splitScreenCount; i++) {
             Table table = new Table();
+            ScrollPane startPosScrollPane = null;
 
             final boolean alignLeft = (i < (splitScreenCount / 2));
             if (i < players.length) {
@@ -175,13 +179,13 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                 table.row();
 
                 Table scrollTable = new Table();
-                ScrollPane startPosScrollPane = new ScrollPane(scrollTable);
+                startPosScrollPane = new ScrollPane(scrollTable);
                 startPosScrollPane.setOverscroll(false, true);
 
                 radioButtons[i] = new CheckBox[startPositions.size];
-                customButtonGroup[i] = new CustomButtonGroup();
-                customButtonGroup[i].setMinCheckCount(1);
-                customButtonGroup[i].setMaxCheckCount(1);
+                buttonGroup[i] = new ButtonGroup();
+                buttonGroup[i].setMinCheckCount(1);
+                buttonGroup[i].setMaxCheckCount(1);
                 for (int j = 0; j < startPositions.size; j++) {
                     String startPosName;
                     try {
@@ -191,7 +195,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     }
                     startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
 
-                    radioButtons[i][j] = new CheckBox(startPosName, game.skin, "radio");
+                    radioButtons[i][j] = new CheckBox(startPosName, game.skin, "radio", !alignLeft);
                     radioButtons[i][j].getImageCell().width(radioButtons[i][j].getLabel().getPrefHeight()).height(radioButtons[i][j].getLabel().getPrefHeight());
                     radioButtons[i][j].getImage().setScaling(Scaling.fill);
                     if (alignLeft) {
@@ -201,20 +205,20 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     }
                     scrollTable.row();
 
-                    customButtonGroup[i].add(radioButtons[i][j]);
+                    buttonGroup[i].add(radioButtons[i][j]);
 
                     if (j == i % startPositions.size) {
                         radioButtons[i][j].setChecked(true);
                     }
                 }
 
-                table.add(startPosScrollPane);
+                table.add(startPosScrollPane).grow();
 
                 final int finalI = i;
-                customButtonGroup[i].setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
+                buttonGroup[i].setOnCheckChangeListener(new ButtonGroup.OnCheckChangeListener() {
                     @Override
                     public void buttonPressed(Button button) {
-                        int startPosIndex = customButtonGroup[finalI].getCheckedIndex();
+                        int startPosIndex = buttonGroup[finalI].getCheckedIndex();
 
                         int index = finalI + playerIndex;
                         if (index >= players.length) {
@@ -241,9 +245,17 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             }
 
             if (alignLeft) {
-                masterTable.add(table).expand().uniformX().left().padLeft(20f * game.getScaleFactor());
+                masterTable.add(table).expand().uniformX().left()
+                        .padLeft(20f * game.getScaleFactor()).padRight(10f * game.getScaleFactor());
             } else {
-                masterTable.add(table).expand().uniformX().right().padRight(20f * game.getScaleFactor());
+                masterTable.add(table).expand().uniformX().right()
+                        .padRight(20f * game.getScaleFactor()).padLeft(10f * game.getScaleFactor());
+
+                if (startPosScrollPane != null) {
+                    startPosScrollPane.layout();
+                    startPosScrollPane.setScrollPercentX(1f); // I think this doesn't have width info by now which is why it's kinda buggy?
+                    startPosScrollPane.updateVisualScroll();
+                }
             }
         }
         masterTable.row();
@@ -305,7 +317,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             public void clicked(InputEvent event, float x, float y) {
                 for (int i = 0; i < splitScreenCount; i++) {
                     if (i + playerIndex < players.length) {
-                        players[i + playerIndex].setStartPos(startPositions.get(customButtonGroup[i].getCheckedIndex()));
+                        players[i + playerIndex].setStartPos(startPositions.get(buttonGroup[i].getCheckedIndex()));
                         if (firstPlayerOnly) {
                             break;
                         }
@@ -378,7 +390,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpBackButton() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -391,11 +403,11 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         focusCameraOnPlayer(viewport, player, vel, delta);
         viewport.apply();
 
-        renderer.setProjectionMatrix(viewport.getCamera().combined);
+        batch.setProjectionMatrix(viewport.getCamera().combined);
 
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        map.render(players, renderer, (OrthographicCamera) viewport.getCamera(), delta);
-        renderer.end();
+        batch.begin();
+        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        batch.end();
     }
 
     private void focusCameraOnPlayer(Viewport viewport, Player player, Vector2 vel, float delta) {
@@ -432,33 +444,34 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void drawViewportDividers() {
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        batch.begin();
         int lineCount = splitScreenCount - 1;
-
+        float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (mapViewports.length - 1), 3f);
+        float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (mapViewports.length - 1), 1f);
         float height = stage.getViewport().getWorldHeight();
         for (int i = 0; i < lineCount; i++) {
             float startX = (stage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
-            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
-                    dividerLeftColor[i], dividerRightColor[i], dividerRightColor[i], dividerLeftColor[i]);
-            renderer.rect(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i]);
-            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i]);
+            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
+                    dividerSolidWidth * 2, height,
+                    dividerRightColor[i], dividerLeftColor[i], dividerLeftColor[i], dividerRightColor[i]);
+            shapeDrawer.filledRectangle(startX + dividerSolidWidth, 0,
+                    dividerFadeWidth, height,
+                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i], dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
+            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
+                    -dividerFadeWidth, height,
+                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i], dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
         }
-        renderer.end();
+        batch.end();
     }
 
     private void drawDarkOverlay() {
         float height = stage.getViewport().getWorldHeight();
         float width = stage.getViewport().getWorldWidth();
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        renderer.setColor(mapDarkOverlayColor);
-        renderer.rect(0, 0, width, height);
-        renderer.end();
+        shapeDrawer.setColor(mapDarkOverlayColor);
+        batch.begin();
+        shapeDrawer.filledRectangle(0, 0, width, height);
+        batch.end();
     }
 
     @Override
@@ -466,8 +479,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         for (int i = 0; i < mapViewports.length; i++) {
             if (playerIndex + i < players.length) {
                 focusAndRenderViewport(mapViewports[i], players[playerIndex + i], dragOffset[i], delta);
@@ -475,13 +486,12 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         }
 
         this.viewport.apply(true);
-        renderer.setProjectionMatrix(this.viewport.getCamera().combined);
+        batch.setProjectionMatrix(this.viewport.getCamera().combined);
 
-        if (splitScreenCount > 1) {
+        if (splitScreenCount > 1 && mapViewports.length >= 2) {
             drawViewportDividers();
         }
         drawDarkOverlay();
-        Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
@@ -494,10 +504,11 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
-        renderer.dispose();
+        batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
+        map.dispose();
     }
 
     private void onBackPressed() {

@@ -13,7 +13,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -32,6 +31,7 @@ import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TutorialItem;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -56,7 +56,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private Label dummyLabel;
 
-    private ShapeRenderer renderer;
+    private ShapeDrawer shapeDrawer;
     private SpriteBatch batch;
     private Map map;
     private Cell[][] mapGrid;
@@ -71,15 +71,15 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
     public TutorialScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Playing the Tutorial");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.renderer = new ShapeRenderer();
-        this.renderer.setAutoShapeType(true);
         this.batch = new SpriteBatch();
+        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
         this.dummyLabel = new Label("DUMMY", game.skin); // Used to set the height of the tutorial table
 
@@ -88,7 +88,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
     private void initMap() {
         populateMapGrid();
-        this.map = new Map(mapGrid, 0);
+        this.map = new Map(mapGrid, 0, shapeDrawer);
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapOverlayColor = new Color(0, 0, 0, .8f);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
@@ -99,6 +99,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
         this.players[0].setControlIndex(0);
         this.playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
+        this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
         this.controlManager = new ControlManager(players, stage);
         this.controlManager.setUpControls(game.preferences.getInteger(Constants.CONTROL_PREFERENCE),
                 false, game.getScaleFactor(), usedTextures);
@@ -133,7 +134,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         tutorialTable.left().bottom().pad(10f);
 
         Table innerTable = new Table();
-        ScrollPane scrollPane = new ScrollPane(innerTable);
+        final ScrollPane scrollPane = new ScrollPane(innerTable);
         scrollPane.setOverscroll(false, false);
 
         final Label mainLabel = new Label("Welcome to the tutorial!", game.skin, "themed");
@@ -209,6 +210,14 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
                     return;
                 }
 
+                if (!scrollPane.isRightEdge()) {
+                    scrollPane.scrollTo(scrollPane.getScrollX() + scrollPane.getWidth(), 0,
+                            scrollPane.getWidth(), scrollPane.getHeight());
+                    return;
+                } else {
+                    scrollPane.scrollTo(0, 0, scrollPane.getWidth(), scrollPane.getHeight());
+                }
+
                 tutorialTable.addAction(Actions.sequence(
                         Actions.fadeOut(.2f, Interpolation.fastSlow),
                         Actions.run(new Runnable() {
@@ -274,7 +283,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpBackButton() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -307,36 +316,17 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         players[0].direction = players[0].updatedDirection;
         map.update(null, players, delta);
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        focusAndRenderViewport(mapViewport, players[0], delta);
-
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        map.renderPlayerLabelBg(players, renderer, playerLabelFont);
-        renderer.end();
-
-        Gdx.gl.glDisable(GL20.GL_BLEND);
-
-        batch.setProjectionMatrix(mapViewport.getCamera().combined);
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
-        batch.begin();
-        map.drawPlayerLabels(players, batch, playerLabelFont);
-        batch.end();
-
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        renderMap(delta);
 
         this.viewport.apply(true);
-        renderer.setProjectionMatrix(this.viewport.getCamera().combined);
+        batch.setProjectionMatrix(this.viewport.getCamera().combined);
 
         drawDarkOverlay(delta);
 
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        renderer.rect(0, (dummyLabel.getPrefHeight() * 2) + 20f, stage.getWidth(), 8f,
-                Color.WHITE, Color.WHITE,
-                Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR);
-        renderer.end();
-        Gdx.gl.glDisable(GL20.GL_BLEND);
+        batch.begin();
+        shapeDrawer.filledRectangle(0, (dummyLabel.getPrefHeight() * 2) + 20f, stage.getWidth(), 8f,
+                Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.WHITE, Color.WHITE);
+        batch.end();
 
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
@@ -346,15 +336,17 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         stage.draw();
     }
 
-    private void focusAndRenderViewport(Viewport viewport, Player player, float delta) {
+    private void renderMap(float delta) {
+        Viewport viewport = mapViewport;
+        Player player = players[0];
+
         focusCameraOnPlayer(viewport, player, delta);
         viewport.apply();
 
-        renderer.setProjectionMatrix(viewport.getCamera().combined);
-
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        map.render(players, renderer, (OrthographicCamera) viewport.getCamera(), delta);
-        renderer.end();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        batch.begin();
+        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        batch.end();
     }
 
     private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
@@ -379,20 +371,20 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
         float height = stage.getViewport().getWorldHeight();
         float width = stage.getViewport().getWorldWidth();
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        renderer.setColor(mapOverlayColor);
-        renderer.rect(0, 0, width, height);
-        renderer.end();
+        batch.begin();
+        shapeDrawer.setColor(mapOverlayColor);
+        shapeDrawer.filledRectangle(0, 0, width, height);
+        batch.end();
     }
 
     @Override
     public void dispose() {
         stage.dispose();
         batch.dispose();
-        renderer.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
+        map.dispose();
     }
 
     private void onBackPressed() {

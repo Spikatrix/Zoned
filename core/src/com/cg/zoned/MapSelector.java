@@ -33,12 +33,14 @@ public class MapSelector {
     private FocusableStage stage;
     private Spinner mapSpinner;
 
+    private Assets assets;
     private Array<Texture> usedTextures;
 
-    public MapSelector(FocusableStage stage, float scaleFactor, Skin skin) {
+    public MapSelector(FocusableStage stage, float scaleFactor, Assets assets, Skin skin) {
         this.mapManager = new MapManager();
         this.stage = stage;
         this.skin = skin;
+        this.assets = assets;
         this.scaleFactor = scaleFactor;
     }
 
@@ -80,10 +82,7 @@ public class MapSelector {
             innerTable.setFillParent(true);
             innerTable.top().right();
 
-            Texture texture = new Texture(Gdx.files.internal("icons/ui_icons/ic_settings.png"));
-            if (usedTextures != null) {
-                usedTextures.add(texture);
-            }
+            Texture texture = assets.getSettingsButtonTexture();
 
             HoverImageButton hoverImageButton = new HoverImageButton(new TextureRegionDrawable(texture));
             hoverImageButton.getImage().setScaling(Scaling.fit);

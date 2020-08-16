@@ -8,11 +8,10 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -26,12 +25,13 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.CustomButtonGroup;
+import com.cg.zoned.ui.ButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
@@ -47,7 +47,9 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private BitmapFont font;
 
-    private ShapeRenderer renderer;
+    private ShapeDrawer shapeDrawer;
+    private SpriteBatch batch;
+
     private float bgAlpha = .25f;
     private float bgAnimSpeed = 1.8f;
     private Color[] currentBgColors;
@@ -58,13 +60,15 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     public PlayerSetUpScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Setting up splitscreen multiplayer");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
 
-        this.renderer = new ShapeRenderer();
+        this.batch = new SpriteBatch();
+        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
         this.playerCount = game.preferences.getInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         this.playerList = new Table();
@@ -100,14 +104,14 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpUIButtons() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 onBackPressed();
             }
         });
-        HoverImageButton tutorialButton = uiButtonManager.addTutorialButtonToStage();
+        HoverImageButton tutorialButton = uiButtonManager.addTutorialButtonToStage(game.assets.getTutorialButtonTexture());
         tutorialButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -135,7 +139,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
-        final CustomButtonGroup[] colorButtonGroups = new CustomButtonGroup[playerCount];
+        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
             playerItem.center();
@@ -143,7 +147,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             playerItem.add(promptLabels[i]);
 
             colorButtons[i] = new Button[NO_OF_COLORS];
-            colorButtonGroups[i] = new CustomButtonGroup();
+            colorButtonGroups[i] = new ButtonGroup();
             colorButtonGroups[i].setMinCheckCount(1);
             colorButtonGroups[i].setMaxCheckCount(1);
 
@@ -158,7 +162,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             }
 
             final int finalI = i;
-            colorButtonGroups[i].setOnCheckChangeListener(new CustomButtonGroup.OnCheckChangeListener() {
+            colorButtonGroups[i].setOnCheckChangeListener(new ButtonGroup.OnCheckChangeListener() {
                 @Override
                 public void buttonPressed(Button button) {
                     targetBgColors[finalI].set(button.getColor());
@@ -175,7 +179,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         table.add(playerList).colspan(NO_OF_COLORS + 1).expandX();
         table.row();
 
-        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.skin);
+        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
@@ -187,7 +191,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         stage.addFocusableActor(mapSelector.getRightButton(), NO_OF_COLORS - 1);
         stage.row();
 
-        if (playerCount <= 2) {
+        if (playerCount == 2) {
             Table infoTable = new Table();
             infoTable.center();
             Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
@@ -270,17 +274,14 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         viewport.apply(true);
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        renderer.setProjectionMatrix(viewport.getCamera().combined);
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        batch.begin();
         for (int i = 0; i < currentBgColors.length; i++) {
-            renderer.setColor(currentBgColors[i]);
-            renderer.rect(i * stage.getWidth() / currentBgColors.length, 0,
+            shapeDrawer.setColor(currentBgColors[i]);
+            shapeDrawer.filledRectangle(i * stage.getWidth() / currentBgColors.length, 0,
                     stage.getWidth() / currentBgColors.length, stage.getHeight());
         }
-        renderer.end();
-        Gdx.gl.glDisable(GL20.GL_BLEND);
+        batch.end();
 
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
@@ -293,7 +294,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         stage.dispose();
-        renderer.dispose();
+        batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }

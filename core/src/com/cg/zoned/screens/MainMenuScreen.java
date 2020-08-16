@@ -56,6 +56,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
     public MainMenuScreen(final Zoned game) {
         this.game = game;
+        this.game.discordRPCManager.updateRPC("Main Menu");
 
         viewport = new ScreenViewport();
         mainStage = new FocusableStage(viewport);
@@ -115,11 +116,11 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.row();
 
         UIButtonManager uiButtonManager = new UIButtonManager(mainStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage();
-        HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage();
+        HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage(game.assets.getSettingsButtonTexture());
+        HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage(game.assets.getCreditsButtonTexture());
         HoverImageButton devButton = null;
         if (game.preferences.getBoolean(Constants.DEV_MODE_PREFERENCE, false)) {
-            devButton = uiButtonManager.addDevButtonToStage();
+            devButton = uiButtonManager.addDevButtonToStage(game.assets.getDevButtonTexture());
             devButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
@@ -150,7 +151,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.addFocusableActor(creditsButton);
         mainStage.addFocusableActor(devButton);
 
-        HoverImageButton exitButton = uiButtonManager.addExitButtonToStage();
+        HoverImageButton exitButton = uiButtonManager.addExitButtonToStage(game.assets.getCrossButtonTexture());
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -172,7 +173,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private HoverImageButton setUpAnimatedPlayButton(Table mainTable) {
-        Texture playSheet = game.getPlayButtonTexture(); // Loaded via the assetManager since it causes a noticeable lag on my phone otherwise
+        Texture playSheet = game.assets.getPlayButtonTexture(); // Loaded via the assetManager since it causes a noticeable lag on my phone otherwise
         //usedTextures.add(playSheet); Texture is loaded via the assetManager so that will take care of its disposal
         int rowCount = 6, colCount = 5;
 
@@ -239,7 +240,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         };
         String[] modeLabelStrings = new String[]{
                 "Splitscreen\nMultiplayer",
-                "Local\nMultiplayer\n(WiFi)",
+                "Local\nNetwork\nMultiplayer",
         };
         final Class[] screenClasses = new Class[]{
                 PlayerSetUpScreen.class,
@@ -325,7 +326,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         }
 
         UIButtonManager uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton exitButton = uiButtonManager.addHideButtonToStage();
+        HoverImageButton exitButton = uiButtonManager.addHideButtonToStage(game.assets.getBackButtonTexture());
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

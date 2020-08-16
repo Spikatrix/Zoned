@@ -2,16 +2,16 @@ RadialEmitter
 - Delay -
 active: false
 - Duration - 
-lowMin: 1000.0
-lowMax: 1000.0
+lowMin: 100.0
+lowMax: 100.0
 - Count - 
 min: 0
-max: 380
+max: 50
 - Emission - 
-lowMin: 250.0
-lowMax: 250.0
-highMin: 250.0
-highMax: 250.0
+lowMin: 150.0
+lowMax: 150.0
+highMin: 150.0
+highMax: 150.0
 relative: false
 scalingCount: 1
 scaling0: 1.0
@@ -20,8 +20,8 @@ timeline0: 0.0
 - Life - 
 lowMin: 0.0
 lowMax: 0.0
-highMin: 1500.0
-highMax: 1500.0
+highMin: 500.0
+highMax: 500.0
 relative: false
 scalingCount: 1
 scaling0: 1.0
@@ -120,22 +120,22 @@ highMin: 1.0
 highMax: 1.0
 relative: false
 scalingCount: 6
-scaling0: 0.46067417
-scaling1: 0.25842696
-scaling2: 0.252809
-scaling3: 0.17977528
-scaling4: 0.09550562
+scaling0: 0.20224719
+scaling1: 0.15730338
+scaling2: 0.12280702
+scaling3: 0.07017544
+scaling4: 0.028089888
 scaling5: 0.0
 timelineCount: 6
 timeline0: 0.0
-timeline1: 0.25699747
-timeline2: 0.53435117
-timeline3: 0.77099234
-timeline4: 0.89694655
+timeline1: 0.21198668
+timeline2: 0.5068493
+timeline3: 0.7671233
+timeline4: 0.8945616
 timeline5: 1.0
 - Options - 
 attached: false
-continuous: true
+continuous: false
 aligned: false
 additive: false
 behind: false

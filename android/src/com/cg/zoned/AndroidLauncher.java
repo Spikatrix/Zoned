@@ -15,6 +15,7 @@ public class AndroidLauncher extends AndroidApplication {
         super.onCreate(savedInstanceState);
 
         if (!BuildConfig.VERSION_NAME.equals(Constants.GAME_VERSION)) {
+            // Used as a precaution
             Toast.makeText(getApplicationContext(),
                     "GAME VERSION MISMATCH (" + BuildConfig.VERSION_NAME + " and " + Constants.GAME_VERSION + ")",
                     Toast.LENGTH_LONG).show();

@@ -41,6 +41,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
 
     public DevScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Exploring secrets");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
@@ -97,11 +98,19 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         innerTable.add(splitscreenPlayerCountSpinner);
         innerTable.row();
 
+        stage.addFocusableActor(splitscreenPlayerCountSpinner.getLeftButton());
+        stage.addFocusableActor(splitscreenPlayerCountSpinner.getRightButton());
+        stage.row();
+
         innerTable.add(mapStartPosSplitscreenCountLabel).padTop(20f);
         innerTable.row();
         innerTable.add(mapStartPosSplitscreenCountSpinner);
 
-        table.add(screenScrollPane).expand();
+        stage.addFocusableActor(mapStartPosSplitscreenCountSpinner.getLeftButton());
+        stage.addFocusableActor(mapStartPosSplitscreenCountSpinner.getRightButton());
+        stage.row();
+
+        table.add(screenScrollPane).grow();
 
         stage.addActor(table);
         stage.setScrollFocus(screenScrollPane);
@@ -109,7 +118,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpBackButton() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

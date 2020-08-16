@@ -7,7 +7,6 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -18,6 +17,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.controls.FlingControlManager;
 import com.cg.zoned.controls.PieMenuControlManager;
 
@@ -110,14 +110,13 @@ public class ControlManager {
         stage.addActor(masterTable);
     }
 
-    public void renderPlayerControlPrompt(ShapeRenderer renderer, float delta) {
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
+    public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
         float splitScreenWidth = stage.getWidth() / overlayColors.length;
 
         for (int i = 0; i < overlayColors.length; i++) {
             if (overlayColors[i].a > 0) {
-                renderer.setColor(overlayColors[i]);
-                renderer.rect(i * splitScreenWidth, 0, splitScreenWidth, stage.getHeight());
+                shapeDrawer.setColor(overlayColors[i]);
+                shapeDrawer.filledRectangle(i * splitScreenWidth, 0, splitScreenWidth, stage.getHeight());
             }
 
             if (players[i].updatedDirection == null) {
@@ -130,8 +129,6 @@ public class ControlManager {
 
             controlTables[i].getColor().a = overlayColors[i].a;
         }
-
-        renderer.end();
     }
 
     public InputAdapter getControls() {

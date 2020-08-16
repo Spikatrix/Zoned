@@ -196,7 +196,7 @@ scroll-horizontal
   index: -1
 scroll-vertical
   rotate: false
-  xy: 393, 39
+  xy: 193, 39
   size: 27, 44
   split: 11, 11, 11, 11
   pad: 0, 0, 0, 0

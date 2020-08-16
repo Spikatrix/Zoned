@@ -52,6 +52,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
     public HostJoinScreen(final Zoned game) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Setting up local multiplayer");
 
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
@@ -168,7 +169,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpBackButton() {
         UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage();
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

@@ -4,9 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -19,6 +17,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.payne.games.piemenu.PieMenu;
 
 import java.util.Arrays;
@@ -33,6 +32,7 @@ public class PieMenuControlManager extends InputAdapter {
     private PieMenu[] menus;
     private int[] pointers;
     private Vector2[] coords;
+    private Image[][] arrowImages;
 
     public PieMenuControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
         this.players = players;
@@ -49,17 +49,10 @@ public class PieMenuControlManager extends InputAdapter {
     }
 
     private void setUpPieMenus(Array<Texture> usedTextures) {
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(1, 1, 1, 1);
-        pixmap.fill();
-        Texture tmpTex = new Texture(pixmap);
-        usedTextures.add(tmpTex);
-        pixmap.dispose();
-        TextureRegion whitePixel = new TextureRegion(tmpTex);
-
         Texture arrowTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"));
         usedTextures.add(arrowTexture);
         final Drawable arrow = new TextureRegionDrawable(arrowTexture);
+        this.arrowImages = new Image[menus.length][];
 
         for (int i = 0; i < menus.length; i++) {
             final PieMenu.PieMenuStyle style = new PieMenu.PieMenuStyle();
@@ -69,28 +62,28 @@ public class PieMenuControlManager extends InputAdapter {
             style.downColor = Color.WHITE;
             style.sliceColor = players[i].color;
             // Multiply by scaleFactor? Size kinda gets messed up when doing it
-            menus[i] = new PieMenu(whitePixel, style, piemenuRadius);
+            menus[i] = new PieMenu(ShapeDrawer.get1x1TextureRegion(usedTextures), style, piemenuRadius);
 
-            final Image[] arrowImages = new Image[]{
+            arrowImages[i] = new Image[]{
                     new Image(arrow),
                     new Image(arrow),
                     new Image(arrow),
                     new Image(arrow),
             };
-            for (int j = 0; j < arrowImages.length; j++) {
-                arrowImages[j].setOrigin(arrowImages[j].getWidth() / 2, arrowImages[j].getHeight() / 2);
-                arrowImages[j].setScaling(Scaling.fit);
-                arrowImages[j].setColor(Color.WHITE);
+            for (int j = 0; j < arrowImages[i].length; j++) {
+                arrowImages[i][j].setOrigin(arrowImages[i][j].getWidth() / 2, arrowImages[i][j].getHeight() / 2);
+                arrowImages[i][j].setScaling(Scaling.fit);
+                arrowImages[i][j].setColor(Color.WHITE);
                 if (j == 0) {
-                    arrowImages[j].setRotation(-45f);
+                    arrowImages[i][j].setRotation(-45f);
                 } else if (j == 1) {
-                    arrowImages[j].setRotation(45f);
+                    arrowImages[i][j].setRotation(45f);
                 } else if (j == 2) {
-                    arrowImages[j].setRotation(135f);
+                    arrowImages[i][j].setRotation(135f);
                 } else if (j == 3) {
-                    arrowImages[j].setRotation(-135f);
+                    arrowImages[i][j].setRotation(-135f);
                 }
-                menus[i].addActor(arrowImages[j]);
+                menus[i].addActor(arrowImages[i][j]);
             }
 
             menus[i].setRotation(45f);
@@ -100,10 +93,8 @@ public class PieMenuControlManager extends InputAdapter {
             menus[i].addListener(new PieMenu.PieMenuCallbacks() {
                 @Override
                 public void onHighlightChange(int highlightedIndex) {
-                    for (Image arrowImage : arrowImages) {
-                        arrowImage.setColor(Color.WHITE);
-                    }
-                    arrowImages[highlightedIndex].setColor(Color.BLACK);
+                    resetArrowColors(arrowImages[finalI]);
+                    arrowImages[finalI][highlightedIndex].setColor(Color.BLACK);
                     if (highlightedIndex == 0) {
                         players[finalI].updatedDirection = Constants.Direction.UP;
                     } else if (highlightedIndex == 1) {
@@ -127,6 +118,12 @@ public class PieMenuControlManager extends InputAdapter {
         }
     }
 
+    private void resetArrowColors(Image[] arrowImages) {
+        for (Image arrowImage : arrowImages) {
+            arrowImage.setColor(Color.WHITE);
+        }
+    }
+
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
@@ -145,7 +142,8 @@ public class PieMenuControlManager extends InputAdapter {
                 stage.addActor(menus[playerIndex]);
                 menus[playerIndex].setPosition(screenX, stage.getHeight() - screenY, Align.center);
                 menus[playerIndex].setVisible(true);
-                menus[playerIndex].setHighlightedIndex(-1); // Last arrow is still black; Not a bug but a feature lol ;-)
+                menus[playerIndex].setHighlightedIndex(-1);
+                resetArrowColors(arrowImages[playerIndex]);
                 coords[playerIndex].x = screenX;
                 coords[playerIndex].y = screenY;
                 pointers[playerIndex] = pointer;

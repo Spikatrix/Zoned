@@ -6,7 +6,7 @@ import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
 
 public class RectangleMap implements MapEntity {
-    private String mapGridString = "" + // Stupid auto-code formatter messes up the arrangement, so added this line
+    private String mapGridString = "" + // Added this line as the auto-code formatter messes up the arrangement
             "A........C\n" +
             "..........\n" +
             "..........\n" +

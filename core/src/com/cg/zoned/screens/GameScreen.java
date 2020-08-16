@@ -12,7 +12,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -24,6 +23,7 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.ScoreBar;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TeamData;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -48,7 +48,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private Map map;
 
     private ExtendViewport[] playerViewports; // Two viewports in split-screen mode; else one
-    private ShapeRenderer renderer;
+
+    private ShapeDrawer shapeDrawer;
     private SpriteBatch batch;
     private Color[] dividerLeftColor, dividerRightColor;
 
@@ -60,7 +61,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private ScoreBar scoreBars;
     private boolean gamePaused = false;
-    private BitmapFont playerLabelFont;
 
     private Color currentBgColor, targetBgColor;
     private float bgAnimSpeed = 1.8f;
@@ -82,6 +82,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
         this.game = game;
+        game.discordRPCManager.updateRPC("Playing a match", mapManager.getPreparedMap().getName(), players.length - 1);
 
         this.fullScreenStage = new FocusableStage(new ScreenViewport());
 
@@ -91,18 +92,19 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL),
                 game.skin, game.getScaleFactor(), usedTextures);
 
-        this.renderer = new ShapeRenderer();
-        this.renderer.setAutoShapeType(true);
         this.batch = new SpriteBatch();
-        this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount());
+        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
+        this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount(), this.shapeDrawer);
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
 
-        this.playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
+        BitmapFont playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
         initViewports(players);
 
-        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), players.length, game.getScaleFactor());
+        map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
+
+        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
     }
 
     private void initViewports(Player[] players) {
@@ -215,44 +217,41 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         map.update(gameManager.playerManager, delta);
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-
-        renderer.setProjectionMatrix(fullScreenStage.getViewport().getCamera().combined);
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        renderer.setColor(currentBgColor);
-        renderer.rect(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
-        renderer.end();
+        batch.setProjectionMatrix(fullScreenStage.getCamera().combined);
+        batch.begin();
+        shapeDrawer.setColor(currentBgColor);
+        shapeDrawer.filledRectangle(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
+        batch.end();
 
         for (int i = 0; i < this.playerViewports.length; i++) {
-            focusAndRenderViewport(playerViewports[i], gameManager.playerManager.getPlayer(i), delta);
+            // Render everything in the i-th player viewport
+            renderMap(i, delta);
         }
 
         fullScreenStage.getViewport().apply(true);
-        renderer.setProjectionMatrix(fullScreenStage.getCamera().combined);
         batch.setProjectionMatrix(fullScreenStage.getCamera().combined);
+        batch.begin();
 
-        if (isSplitscreenMultiplayer()) { // Draw the viewport divider only when playing on the same device
+        if (isSplitscreenMultiplayer() && playerViewports.length >= 2) {
+            // Draw the viewport divider only when playing on the same device with at least 2 splitscreens
             drawViewportDividers();
         }
 
         if (!gameManager.gameOver) {
-            gameManager.playerManager.renderPlayerControlPrompt(renderer, delta);
+            gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
         }
 
-        scoreBars.render(renderer, batch, font, gameManager.playerManager.getPlayers(), delta);
+        scoreBars.render(shapeDrawer, font, gameManager.playerManager.getTeamData(), delta);
 
-        if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getPlayers())) {
+        if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getTeamData())) {
             gameManager.directionBufferManager.clearBuffer();
             gameManager.playerManager.stopPlayers(true);
             gameManager.gameOver = true;
         }
-
+        batch.end();
         if (gameManager.gameOver) {
             fadeOutScreen(delta);
         }
-
-        Gdx.gl.glDisable(GL20.GL_BLEND);
 
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
@@ -273,10 +272,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         fadeOutOverlay.a += delta * 2f * (2f - fadeOutOverlay.a);
         fadeOutOverlay.a = Math.min(fadeOutOverlay.a, 1f);
 
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        renderer.setColor(fadeOutOverlay);
-        renderer.rect(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
-        renderer.end();
+        batch.begin();
+        shapeDrawer.setColor(fadeOutOverlay);
+        shapeDrawer.filledRectangle(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
+        batch.end();
 
         if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
             gameCompleteFadeOutDone = true;
@@ -287,7 +286,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             Gdx.app.postRunnable(new Runnable() { // Hopefully fixes the occasional SIGSEGVs around 1 second after transitioning to VictoryScreen
                 @Override
                 public void run() {
-                    Gdx.gl.glDisable(GL20.GL_BLEND);
                     dispose();
                     game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
                 }
@@ -296,46 +294,36 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void drawViewportDividers() {
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
         int lineCount = gameManager.playerManager.getPlayers().length - 1;
         float height = fullScreenStage.getViewport().getWorldHeight();
+        float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (playerViewports.length - 1), 3f);
+        float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (playerViewports.length - 1), 1f);
         for (int i = 0; i < lineCount; i++) {
             float startX = (fullScreenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
-            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    Constants.VIEWPORT_DIVIDER_SOLID_WIDTH * 2, height,
-                    dividerLeftColor[i], dividerRightColor[i], dividerRightColor[i], dividerLeftColor[i]);
-            renderer.rect(startX + Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i]);
-            renderer.rect(startX - Constants.VIEWPORT_DIVIDER_SOLID_WIDTH, 0,
-                    -Constants.VIEWPORT_DIVIDER_FADE_WIDTH, height,
-                    dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i]);
+            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
+                    dividerSolidWidth * 2, height,
+                    dividerRightColor[i], dividerLeftColor[i], dividerLeftColor[i], dividerRightColor[i]);
+            shapeDrawer.filledRectangle(startX + dividerSolidWidth, 0,
+                    dividerFadeWidth, height,
+                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i], dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
+            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
+                    -dividerFadeWidth, height,
+                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i], dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
         }
-        renderer.end();
     }
 
-    private void focusAndRenderViewport(Viewport viewport, Player player, float delta) {
-        focusCameraOnPlayer(viewport, player, delta);
+    private void renderMap(int index, float delta) {
+        Viewport viewport = playerViewports[index];
+        Player[] players = gameManager.playerManager.getPlayers();
+
+        focusCameraOnPlayer(viewport, players[index], delta);
         viewport.apply();
 
-        renderer.setProjectionMatrix(viewport.getCamera().combined);
         batch.setProjectionMatrix(viewport.getCamera().combined);
-
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-        map.render(gameManager.playerManager.getPlayers(), renderer, (OrthographicCamera) viewport.getCamera(), delta);
-        map.renderPlayerLabelBg(gameManager.playerManager.getPlayers(), renderer, playerLabelFont);
-        renderer.end();
-
-        Gdx.gl.glDisable(GL20.GL_BLEND);
-
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
         batch.begin();
-        map.drawPlayerLabels(gameManager.playerManager.getPlayers(), batch, playerLabelFont);
+        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
         batch.end();
-
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
@@ -463,11 +451,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void dispose() {
         fullScreenStage.dispose();
-        renderer.dispose();
         batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
+        map.dispose();
     }
 
     @Override

@@ -19,6 +19,13 @@ if [ "$proceed" == "Y" ]; then
 	do
 		sed -i -e "s/$oldVersionName/$newVersionName/g" "$filename"
 	done
+
+	echo "Warning: Versions in the README file aren't updated. Do it manually"
+
+	grep -l "ENABLE_DISCORD_RPC = false" core/src/com/cg/zoned/Constants.java | while read filename
+	do
+		sed -i -e "s/ENABLE_DISCORD_RPC = false/ENABLE_DISCORD_RPC = true/g" "$filename"
+	done
 else
 	echo "Alright, aborted"
 fi

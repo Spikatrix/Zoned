@@ -2,16 +2,13 @@ package com.cg.zoned.managers;
 
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Sort;
 import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TeamData;
-
-import java.util.Comparator;
 
 public class PlayerManager extends InputMultiplexer {
     private final GameManager gameManager;
@@ -26,9 +23,7 @@ public class PlayerManager extends InputMultiplexer {
         this.gameManager = gameManager;
 
         this.players = players;
-
-        this.teamData = new Array<>();
-        initTeamColors();
+        initTeamData();
 
         if (gameManager.gameConnectionManager.isActive) { // Not split screen; only add first player's inputs
             this.addProcessor(players[0]);
@@ -43,7 +38,9 @@ public class PlayerManager extends InputMultiplexer {
         this.addProcessor(controlManager.getControls());
     }
 
-    private void initTeamColors() {
+    private void initTeamData() {
+        this.teamData = new Array<>();
+
         for (Player player : players) {
             boolean alreadyExists = false;
             for (TeamData teamData : this.teamData) {
@@ -107,18 +104,10 @@ public class PlayerManager extends InputMultiplexer {
     }
 
     public Array<TeamData> getTeamData() {
-        new Sort().sort(teamData, new TeamDataComparator());
         return teamData;
     }
 
-    public void renderPlayerControlPrompt(ShapeRenderer renderer, float delta) {
-        controlManager.renderPlayerControlPrompt(renderer, delta);
-    }
-
-    private static class TeamDataComparator implements Comparator<TeamData> {
-        @Override
-        public int compare(TeamData t1, TeamData t2) {
-            return t2.score - t1.score;
-        }
+    public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
+        controlManager.renderPlayerControlPrompt(shapeDrawer, delta);
     }
 }

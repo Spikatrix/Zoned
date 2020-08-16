@@ -7,14 +7,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class Constants {
-    public static final String GAME_VERSION = "0.0.1-beta";
+    public static final String GAME_VERSION = "0.0.2-beta";
     // Remember to update the versionName in Android's build.gradle
     // And project.setVersion in Desktop's build.gradle
+    // And the version in the badge in the README file
     // Or for Linux users, use the versionUpdate.sh script
+
+    /**
+     * Enables Discord Rich Presence functionality on Windows and Linux
+     * <p>
+     * Note: When this is enabled, running multiple instances of the game will crash with a SIGSEGV
+     */
+    public static final boolean ENABLE_DISCORD_RPC = true;
 
     public static final float WORLD_SIZE = 480.0f;
 
-    public static final int SERVER_PORT = 22355; // Random port I chose *shrug*
+    public static final int SERVER_PORT = 22355; // Random port I chose ¯\_(ツ)_/¯
 
     public static final float CELL_SIZE = 25.0f;
     public static final Color MAP_GRID_COLOR = Color.WHITE;
@@ -86,6 +94,7 @@ public final class Constants {
     public static final float ANDROID_XXXHDPI_FONT_SCALE_FACTOR = 4.0f;
 
     public static final String LOG_TAG = "ZONED";
+
     public static final String ZONED_PREFERENCES = "Zoned_Preferences";
     public static final String FPS_PREFERENCE = "FPS_Preference";
     public static final String CONTROL_PREFERENCE = "Control_Preference";
@@ -102,7 +111,7 @@ public final class Constants {
 
     public enum FONT_MANAGER {
         LARGE("large-font", 80),
-        REGULAR("regular-font", 36),
+        REGULAR("regular-font", 32),
         SMALL("small-font", 18),
         PLAYER_LABEL("player-label-font-noscale", 20);
 

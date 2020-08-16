@@ -67,17 +67,24 @@ public class MapManager {
     public Texture getMapPreview(String mapName) {
         // Scan for the map preview in the internal directory
         try {
-            return new Texture(Gdx.files.internal("icons/map_icons/" + mapName + ".png"));
+            FileHandle fileHandle = Gdx.files.internal("icons/map_icons/" + mapName + ".png");
+            if (fileHandle.exists()) {
+                return new Texture(fileHandle);
+            }
         } catch (GdxRuntimeException ignored) {
         }
 
         // Scan for the map preview in the external directory
         try {
-            return new Texture(Gdx.files.external(externalMapDir + "/" + mapName + ".png"));
+            FileHandle fileHandle = Gdx.files.external(externalMapDir + "/" + mapName + ".png");
+            if (fileHandle.exists()) {
+                return new Texture(fileHandle);
+            }
         } catch (GdxRuntimeException | NullPointerException e) {
             Gdx.app.log(Constants.LOG_TAG, "Failed to load map preview image for '" + mapName + "' (" + e.getMessage() + ")");
-            return null;
         }
+
+        return null;
     }
 
     public Array<MapEntity> getMapList() {

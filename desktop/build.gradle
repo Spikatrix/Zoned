@@ -5,9 +5,11 @@ sourceSets.main.java.srcDirs = [ "src/" ]
 
 project.ext.mainClassName = "com.cg.zoned.desktop.DesktopLauncher"
 project.ext.assetsDir = new File("../android/assets")
-project.setVersion("0.0.1-beta")
+project.setProperty("archivesBaseName", appName)
+project.setVersion("0.0.2-beta")
 // Remember to update the GAME_VERSION in Constants.java
 // And versionName in Android's build.gradle
+// And the version in the badge in the README file
 // Or for Linux users, use the versionUpdate.sh script
 
 task run(dependsOn: classes, type: JavaExec) {
