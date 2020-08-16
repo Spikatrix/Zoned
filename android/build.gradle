@@ -28,9 +28,19 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false // Don't set this to true because it'll result in a lot of classes missing causing Runtime crashes
+            minifyEnabled false // Don't set this to true because it'll result in a lot of classes missing causing Runtime crashes (Unless you `-keep` them all)
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            if (variant.name == "debug") {
+                outputFileName = "${appName}-${versionName}-${variant.name}.apk"
+            } else {
+                outputFileName = "${appName}-${versionName}.apk"
+            }
         }
     }
 }

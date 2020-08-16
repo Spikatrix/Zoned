@@ -199,7 +199,8 @@ public class Map {
     }
 
     public void update(PlayerManager playerManager, Player[] players, float delta) {
-        boolean waitForMovementCompletion = false; // Used to synchronize movement of all players
+        boolean waitForMovementCompletion = false;
+        // Used to synchronize movement of all players
         // so that every one of them moves together
 
         for (Player player : players) {
