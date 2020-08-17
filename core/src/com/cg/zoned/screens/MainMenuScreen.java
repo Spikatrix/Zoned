@@ -1,5 +1,6 @@
 package com.cg.zoned.screens;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -168,7 +169,9 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         }
         mainMenuUIButtons.add(exitButton);
 
-        mainStage.setFocusedActor(playButton);
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+            mainStage.setFocusedActor(playButton);
+        }
         mainStage.addActor(mainTable);
     }
 

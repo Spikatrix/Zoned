@@ -1,5 +1,6 @@
 package com.cg.zoned.ui;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
@@ -217,20 +218,22 @@ public class FocusableStage extends Stage {
      * @param dialogResultListener  Interface for beaming back the selected dialog option
      * @param skin                  The skin to use for the dialog
      */
-    public void showDialog(String msg, Array<String> buttonTexts,
-                           boolean useVerticalButtonList,
+    public void showDialog(String msg,
+                           Array<String> buttonTexts, boolean useVerticalButtonList,
                            float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog(new Label(msg, skin), buttonTexts, useVerticalButtonList, scaleFactor, dialogResultListener, skin);
+        showDialog(new Label(msg, skin), null, buttonTexts, useVerticalButtonList,
+                scaleFactor, dialogResultListener, skin);
     }
 
-    public void showDialog(Table contentTable, Array<String> buttonTexts,
-                           boolean useVerticalButtonList,
+    public void showDialog(Table contentTable, Array<Actor> dialogFocusableActorArray,
+                           Array<String> buttonTexts, boolean useVerticalButtonList,
                            float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog((Actor) contentTable, buttonTexts, useVerticalButtonList, scaleFactor, dialogResultListener, skin);
+        showDialog((Actor) contentTable, dialogFocusableActorArray, buttonTexts, useVerticalButtonList,
+                scaleFactor, dialogResultListener, skin);
     }
 
-    private void showDialog(Actor content, Array<String> buttonTexts,
-                            boolean useVerticalButtonList,
+    private void showDialog(Actor content, Array<Actor> dialogFocusableActorArray,
+                            Array<String> buttonTexts, boolean useVerticalButtonList,
                             float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
         final Array<Actor> backupCurrentActorArray = new Array<>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
@@ -258,7 +261,6 @@ public class FocusableStage extends Stage {
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
         dialog.getButtonTable().padBottom(10f).padLeft(10f).padRight(10f);
         dialog.setScale(0);
-        // TODO: Focus props on content table
 
         if (content instanceof Label) {
             Label label = (Label) content;
@@ -266,6 +268,11 @@ public class FocusableStage extends Stage {
         }
 
         this.focusableActorArray.clear();
+        if (dialogFocusableActorArray != null) {
+            this.focusableActorArray.addAll(dialogFocusableActorArray);
+            this.focusableActorArray.add(null);
+        }
+
         for (int i = 0; i < buttonTexts.size; i++) {
             TextButton textButton = new TextButton(buttonTexts.get(i), skin);
             dialog.button(textButton, textButton.getText().toString());
@@ -276,11 +283,19 @@ public class FocusableStage extends Stage {
             }
         }
 
+        if (Gdx.app.getType() == Application.ApplicationType.Android) {
+            // Unlikely people are going to use keyboards with playing on Android
+            // Looks a bit weird with the focus in those cases. So just defocus
+            defocus(backupFocusedActor);
+        } else {
+            // Focus the first button in the Dialog when on Desktop
+            focus(this.focusableActorArray.get(0));
+        }
+
         dialog.getStyle().stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
         dialog.show(this, Actions.scaleTo(1f, 1f, .2f, Interpolation.fastSlow));
         dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
         dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
-        focus(this.focusableActorArray.get(0));
     }
 
     public void resize(int width, int height) {

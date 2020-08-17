@@ -1,5 +1,6 @@
 package com.cg.zoned.screens;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -279,7 +280,9 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             stage.addFocusableActor(colorSelector);
             stage.addFocusableActor(startPosSelector);
             stage.row();
-            stage.setFocusedActor(colorSelector);
+            if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+                stage.setFocusedActor(colorSelector);
+            }
         } else {
             Label colorLabel = new Label(color, game.skin);
             colorLabel.setName("color-label");

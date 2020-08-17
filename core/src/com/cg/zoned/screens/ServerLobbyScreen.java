@@ -1,5 +1,6 @@
 package com.cg.zoned.screens;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -129,15 +130,21 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         mapSelectorTable.add(mapSpinner).pad(10f);
 
         final TextButton mapButton = new TextButton(mapSelector.getMapManager().getMapList().get(mapSpinner.getPositionIndex()).getName(), game.skin);
+
+        final Array<String> buttonTexts = new Array<>();
+        buttonTexts.add("Cancel");
+        buttonTexts.add("Set Map");
+
+        final Array<Actor> focusableDialogButtons = new Array<>();
+        focusableDialogButtons.add(mapSpinner.getLeftButton());
+        focusableDialogButtons.add(mapSpinner.getRightButton());
+
         mapButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 final int prevIndex = mapSpinner.getPositionIndex();
-                Array<String> buttonTexts = new Array<>();
-                buttonTexts.add("Cancel");
-                buttonTexts.add("Set Map");
 
-                stage.showDialog(mapSelectorTable, buttonTexts,
+                stage.showDialog(mapSelectorTable, focusableDialogButtons, buttonTexts,
                         false, game.getScaleFactor(),
                         new FocusableStage.DialogResultListener() {
                             @Override
@@ -283,7 +290,9 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             stage.addFocusableActor(colorSelector);
             stage.addFocusableActor(startPosSelector);
             stage.row();
-            stage.setFocusedActor(colorSelector);
+            if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+                stage.setFocusedActor(colorSelector);
+            }
         } else {
             Label colorLabel = new Label(Constants.PLAYER_COLORS.keySet().iterator().next(), game.skin);
             colorLabel.setName("color-label");
