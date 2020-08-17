@@ -20,7 +20,19 @@ if [ "$proceed" == "Y" ]; then
 		sed -i -e "s/$oldVersionName/$newVersionName/g" "$filename"
 	done
 
-	echo "Warning: Versions in the README file aren't updated. Do it manually"
+	hyphenPos=`echo "$oldVersionName" | grep '-' -oba --color=never | cut -c1`
+	oldHyphenDoubled=`echo "${oldVersionName:0:$hyphenPos}-${oldVersionName:$hyphenPos}"`
+	newHyphenDoubled=`echo "${newVersionName:0:$hyphenPos}-${newVersionName:$hyphenPos}"`
+
+	grep -l "$oldHyphenDoubled" README.md | while read filename
+	do
+		sed -i -e "s/$oldHyphenDoubled/$newHyphenDoubled/g" "$filename"
+	done
+
+	grep -l "$oldVersionName" README.md | while read filename
+	do
+		sed -i -e "s/$oldVersionName/$newVersionName/g" "$filename"
+	done
 
 	grep -l "ENABLE_DISCORD_RPC = false" core/src/com/cg/zoned/Constants.java | while read filename
 	do
