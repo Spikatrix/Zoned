@@ -88,7 +88,7 @@ public class Map {
         playerTextureRegion.flip(false, true);
     }
 
-    private void createMapTexture(ShapeDrawer shapeDrawer) {
+    public void createMapTexture(ShapeDrawer shapeDrawer) {
         int width = (int) ((cols * Constants.CELL_SIZE) + Constants.MAP_GRID_LINE_WIDTH);
         int height = (int) ((rows * Constants.CELL_SIZE) + Constants.MAP_GRID_LINE_WIDTH);
 
@@ -217,7 +217,7 @@ public class Map {
                     continue;
                 }
 
-                mapColorUpdated = false; // Might need a bit more testing
+                mapColorUpdated = false;
 
                 Direction direction = player.direction;
                 if (direction == Direction.UP && player.position.y < rows - 1 &&

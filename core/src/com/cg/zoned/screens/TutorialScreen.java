@@ -204,6 +204,11 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
                 players[0].position.x = Math.round(players[0].position.x);
                 players[0].position.y = Math.round(players[0].position.y);
 
+                if (mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor == null) {
+                    mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor =
+                            new Color(players[0].color.r, players[0].color.g, players[0].color.b, 0.1f);
+                }
+
                 if (tutorialPromptIndex[0] == tutorialPrompts.size) {
                     togglePlayerInterable(false);
                     animationManager.fadeOutStage(stage, TutorialScreen.this, new MainMenuScreen(game));
@@ -226,6 +231,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
                                 String mainText = tutorialPrompts.get(tutorialPromptIndex[0]).mainItem;
                                 if (mainText.contains("Walls")) {
                                     generateRandomWalls();
+                                    map.createMapTexture(shapeDrawer);
                                 }
 
                                 displayNextTutorialText(mainLabel, subLabel, mainText, tutorialPrompts.get(tutorialPromptIndex[0]).subItem);
