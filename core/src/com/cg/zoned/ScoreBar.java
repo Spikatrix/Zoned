@@ -8,18 +8,16 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class ScoreBar {
+    private static final float SCOREBAR_LERP_VALUE = 3.0f;
+
     public float scoreBarHeight;
 
     private float totalWidth;
     private float totalHeight;
 
-    private float[] currentPos;
-    private float[] scoreBarStartX;
     private float[] scoreBarWidths;
 
     public ScoreBar(Viewport viewport, int size, float scaleFactor) {
-        currentPos = new float[size];
-        scoreBarStartX = new float[size];
         scoreBarWidths = new float[size];
 
         totalWidth = viewport.getWorldWidth();
@@ -34,8 +32,6 @@ public class ScoreBar {
     }
 
     public void render(ShapeDrawer shapeDrawer, BitmapFont font, Array<TeamData> teamData, float delta) {
-        float lerpVal = 3.0f;
-
         float currentWidthPos = 0;
         float offsetY = totalHeight - scoreBarHeight;
 
@@ -54,35 +50,31 @@ public class ScoreBar {
 
         for (int i = 0; i < teamData.size; i++) {
             float barWidth = ((teamData.get(i).score / totalScore) * totalWidth);
-            float drawWidth = currentPos[i] + (barWidth - currentPos[i]) * lerpVal * delta;
+            float drawWidth = scoreBarWidths[i] + (barWidth - scoreBarWidths[i]) * SCOREBAR_LERP_VALUE * delta;
 
             shapeDrawer.setColor(teamData.get(i).color);
+            font.setColor(getGoodTextColor(teamData.get(i).color));
 
-            if (i == 0) {                                                                 // First bar
-                shapeDrawer.filledRectangle(currentWidthPos, offsetY, drawWidth, scoreBarHeight);
-                scoreBarStartX[i] = currentWidthPos;
-            } else if (i == teamData.size - 1) {                                         // Last bar
-                shapeDrawer.filledRectangle(totalWidth - drawWidth, offsetY, drawWidth, scoreBarHeight);   // Can draw upto drawWidth or totalWidth. Should be the same
-                scoreBarStartX[i] = totalWidth - drawWidth;
-            } else {                                                                      // Mid bar(s)
-                //shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, (drawWidth / 2), BAR_HEIGHT);
-                shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2), offsetY, -drawWidth / 2, scoreBarHeight);
-                shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2), offsetY, drawWidth / 2, scoreBarHeight);
-                //shapeDrawer.filledRectangle(currentWidthPos + (barWidth / 2) - (drawWidth / 2), offsetY, drawWidth, BAR_HEIGHT);
+            float barStartX;
+            if (i == 0) {                                                         // First bar
+                barStartX = currentWidthPos;
+                shapeDrawer.filledRectangle(barStartX, offsetY, drawWidth, scoreBarHeight);
+            } else if (i == teamData.size - 1) {                                  // Last bar
+                barStartX = totalWidth - drawWidth;
+                shapeDrawer.filledRectangle(barStartX, offsetY, drawWidth, scoreBarHeight);   // Can draw upto drawWidth or totalWidth. Should be the same
+            } else {                                                              // Mid bar(s)
+                barStartX = currentWidthPos;
+                shapeDrawer.filledRectangle(barStartX + (barWidth / 2), offsetY, -drawWidth / 2, scoreBarHeight);
+                shapeDrawer.filledRectangle(barStartX + (barWidth / 2), offsetY, drawWidth / 2, scoreBarHeight);
                 //TODO: Need to polish this
-                scoreBarStartX[i] = currentWidthPos;
             }
             scoreBarWidths[i] = drawWidth;
 
-            currentPos[i] = drawWidth;
-            currentWidthPos += drawWidth;
-        }
-
-        for (int i = 0; i < scoreBarWidths.length; i++) {
-            font.setColor(getGoodTextColor(teamData.get(i).color));
             font.draw(shapeDrawer.getBatch(), String.valueOf(teamData.get(i).score),
-                    scoreBarStartX[i], totalHeight - (scoreBarHeight / 2) + (font.getLineHeight() / 4),
+                    barStartX, totalHeight - (scoreBarHeight / 2) + (font.getLineHeight() / 4),
                     scoreBarWidths[i], Align.center, false);
+
+            currentWidthPos += drawWidth;
         }
     }
 
