@@ -15,15 +15,36 @@ public class ScoreBar {
     private float totalWidth;
     private float totalHeight;
 
-    private float[] scoreBarWidths;
+    private float[] scoreBarCurrentWidth;
+    private float[] scoreBarTargetWidth;
+    private float[] scoreBarDrawStartPos;
 
     public ScoreBar(Viewport viewport, int size, float scaleFactor) {
-        scoreBarWidths = new float[size];
+        scoreBarCurrentWidth = new float[size];
+        scoreBarTargetWidth = new float[size];
+        scoreBarDrawStartPos = new float[size];
 
         totalWidth = viewport.getWorldWidth();
         totalHeight = viewport.getWorldHeight();
 
+        computeDrawStartPos();
+
         scoreBarHeight = 16f * scaleFactor;
+    }
+
+    private void computeDrawStartPos() {
+        int size = scoreBarDrawStartPos.length;
+
+        float splitScreenWidth = totalWidth / size;
+        for (int i = 1; i < size - 1; i++) {
+            scoreBarDrawStartPos[i] = splitScreenWidth * i;
+            scoreBarDrawStartPos[i] += (splitScreenWidth / 2);
+        }
+        if (size != 1) {
+            scoreBarDrawStartPos[size - 1] = totalWidth;
+        } else {
+            scoreBarDrawStartPos[size - 1] = totalWidth / 2;
+        }
     }
 
     public void resize(int width, int height) {
@@ -32,7 +53,6 @@ public class ScoreBar {
     }
 
     public void render(ShapeDrawer shapeDrawer, BitmapFont font, Array<TeamData> teamData, float delta) {
-        float currentWidthPos = 0;
         float offsetY = totalHeight - scoreBarHeight;
 
         float totalScore = 0;
@@ -50,31 +70,45 @@ public class ScoreBar {
 
         for (int i = 0; i < teamData.size; i++) {
             float barWidth = ((teamData.get(i).score / totalScore) * totalWidth);
-            float drawWidth = scoreBarWidths[i] + (barWidth - scoreBarWidths[i]) * SCOREBAR_LERP_VALUE * delta;
+            scoreBarTargetWidth[i] = barWidth;
+
+            float drawWidth = scoreBarCurrentWidth[i] + ((scoreBarTargetWidth[i] - scoreBarCurrentWidth[i]) * SCOREBAR_LERP_VALUE * delta);
+            scoreBarCurrentWidth[i] = drawWidth;
 
             shapeDrawer.setColor(teamData.get(i).color);
             font.setColor(getGoodTextColor(teamData.get(i).color));
 
-            float barStartX;
-            if (i == 0) {                                                         // First bar
-                barStartX = currentWidthPos;
-                shapeDrawer.filledRectangle(barStartX, offsetY, drawWidth, scoreBarHeight);
-            } else if (i == teamData.size - 1) {                                  // Last bar
-                barStartX = totalWidth - drawWidth;
-                shapeDrawer.filledRectangle(barStartX, offsetY, drawWidth, scoreBarHeight);   // Can draw upto drawWidth or totalWidth. Should be the same
-            } else {                                                              // Mid bar(s)
-                barStartX = currentWidthPos;
-                shapeDrawer.filledRectangle(barStartX + (barWidth / 2), offsetY, -drawWidth / 2, scoreBarHeight);
-                shapeDrawer.filledRectangle(barStartX + (barWidth / 2), offsetY, drawWidth / 2, scoreBarHeight);
-                //TODO: Need to polish this
+            float barStartX = 0;
+            for (int j = 0; j < i; j++) {
+                barStartX += scoreBarTargetWidth[j];
             }
-            scoreBarWidths[i] = drawWidth;
 
-            font.draw(shapeDrawer.getBatch(), String.valueOf(teamData.get(i).score),
-                    barStartX, totalHeight - (scoreBarHeight / 2) + (font.getLineHeight() / 4),
-                    scoreBarWidths[i], Align.center, false);
+            if (i == 0) {
+                /* ScoreBar at the left */
+                scoreBarDrawStartPos[i] = scoreBarDrawStartPos[i] + ((barStartX - scoreBarDrawStartPos[i]) * SCOREBAR_LERP_VALUE * delta);
 
-            currentWidthPos += drawWidth;
+                shapeDrawer.filledRectangle(scoreBarDrawStartPos[i], offsetY, drawWidth, scoreBarHeight);
+                font.draw(shapeDrawer.getBatch(), String.valueOf(teamData.get(i).score),
+                        scoreBarDrawStartPos[i], totalHeight - (scoreBarHeight / 2) + (font.getLineHeight() / 4),
+                        drawWidth, Align.center, false);
+            } else if (i == teamData.size - 1) {
+                /* ScoreBar at the right */
+                scoreBarDrawStartPos[i] = scoreBarDrawStartPos[i] + ((barStartX + scoreBarTargetWidth[i] - scoreBarDrawStartPos[i]) * SCOREBAR_LERP_VALUE * delta);
+
+                shapeDrawer.filledRectangle(scoreBarDrawStartPos[i], offsetY, -drawWidth, scoreBarHeight);
+                font.draw(shapeDrawer.getBatch(), String.valueOf(teamData.get(i).score),
+                        scoreBarDrawStartPos[i] - drawWidth, totalHeight - (scoreBarHeight / 2) + (font.getLineHeight() / 4),
+                        drawWidth, Align.center, false);
+            } else {
+                /* ScoreBars at the middle */
+                scoreBarDrawStartPos[i] = scoreBarDrawStartPos[i] + ((barStartX + (scoreBarTargetWidth[i] / 2) - scoreBarDrawStartPos[i]) * SCOREBAR_LERP_VALUE * delta);
+
+                shapeDrawer.filledRectangle(scoreBarDrawStartPos[i], offsetY, drawWidth / 2, scoreBarHeight);
+                shapeDrawer.filledRectangle(scoreBarDrawStartPos[i], offsetY, -drawWidth / 2, scoreBarHeight);
+                font.draw(shapeDrawer.getBatch(), String.valueOf(teamData.get(i).score),
+                        scoreBarDrawStartPos[i] - (drawWidth / 2), totalHeight - (scoreBarHeight / 2) + (font.getLineHeight() / 4),
+                        drawWidth, Align.center, false);
+            }
         }
     }
 
