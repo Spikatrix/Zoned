@@ -40,6 +40,7 @@ public class Map {
 
     private FrameBuffer mapFbo = null;
     private TextureRegion mapTextureRegion = null;
+    private TextureRegion mapSubTextureRegion = null;
 
     /**
      * Creates the map object with features like processing each turn and managing score, rendering
@@ -114,6 +115,8 @@ public class Map {
 
         mapTextureRegion = new TextureRegion(mapFbo.getColorBufferTexture(), width, height);
         mapTextureRegion.flip(false, true);
+
+        mapSubTextureRegion = new TextureRegion(mapTextureRegion);
     }
 
     public void createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
@@ -279,6 +282,7 @@ public class Map {
             int posX = Math.round(player.position.x);
             int posY = Math.round(player.position.y);
             if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].playerCount == 1) {
+                // Should we allow multiple players of the same team in the same location capture the cell?
                 mapGrid[posY][posX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
                 if (playerManager != null) {
                     playerManager.incrementScore(player);
@@ -408,8 +412,20 @@ public class Map {
     }
 
     private void drawGrid(Rectangle userViewRect, Batch batch) {
-        // TODO: Optimization: Draw only the region that is in view
-        batch.draw(mapTextureRegion, -Constants.MAP_GRID_LINE_WIDTH / 2, -Constants.MAP_GRID_LINE_WIDTH / 2);
+        int x = (int) Math.max(0, userViewRect.getX());
+        int y = (int) Math.max(0, userViewRect.getY());
+        int width = (int) Math.max(0,
+                Math.min(mapTextureRegion.getRegionWidth() - x,
+                        (userViewRect.getX() + userViewRect.getWidth() + Constants.MAP_GRID_LINE_WIDTH)));
+        int height = (int) Math.max(0, Math.min(mapTextureRegion.getRegionHeight() - y,
+                (userViewRect.getY() + userViewRect.getHeight() + Constants.MAP_GRID_LINE_WIDTH)));
+
+        mapSubTextureRegion.setRegion(x, y, width, height);
+        mapSubTextureRegion.flip(false, true);
+
+        batch.draw(mapSubTextureRegion,
+                -Constants.MAP_GRID_LINE_WIDTH / 2 + mapSubTextureRegion.getRegionX(),
+                -Constants.MAP_GRID_LINE_WIDTH / 2 + mapSubTextureRegion.getRegionY() - mapSubTextureRegion.getRegionHeight());
     }
 
     public void renderPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
