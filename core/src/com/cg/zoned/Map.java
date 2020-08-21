@@ -40,7 +40,6 @@ public class Map {
 
     private FrameBuffer mapFbo = null;
     private TextureRegion mapTextureRegion = null;
-    private TextureRegion mapSubTextureRegion = null;
 
     /**
      * Creates the map object with features like processing each turn and managing score, rendering
@@ -115,8 +114,6 @@ public class Map {
 
         mapTextureRegion = new TextureRegion(mapFbo.getColorBufferTexture(), width, height);
         mapTextureRegion.flip(false, true);
-
-        mapSubTextureRegion = new TextureRegion(mapTextureRegion);
     }
 
     public void createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
@@ -375,7 +372,7 @@ public class Map {
         Batch batch = shapeDrawer.getBatch();
         batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
-        drawGrid(userViewRect, batch);
+        drawGrid(batch);
         drawPlayers(players, userViewRect, batch);
         renderPlayerLabels(players, userViewRect, batch);
 
@@ -411,21 +408,8 @@ public class Map {
         }
     }
 
-    private void drawGrid(Rectangle userViewRect, Batch batch) {
-        int x = (int) Math.max(0, userViewRect.getX());
-        int y = (int) Math.max(0, userViewRect.getY());
-        int width = (int) Math.max(0,
-                Math.min(mapTextureRegion.getRegionWidth() - x,
-                        (userViewRect.getX() + userViewRect.getWidth() + Constants.MAP_GRID_LINE_WIDTH)));
-        int height = (int) Math.max(0, Math.min(mapTextureRegion.getRegionHeight() - y,
-                (userViewRect.getY() + userViewRect.getHeight() + Constants.MAP_GRID_LINE_WIDTH)));
-
-        mapSubTextureRegion.setRegion(x, y, width, height);
-        mapSubTextureRegion.flip(false, true);
-
-        batch.draw(mapSubTextureRegion,
-                -Constants.MAP_GRID_LINE_WIDTH / 2 + mapSubTextureRegion.getRegionX(),
-                -Constants.MAP_GRID_LINE_WIDTH / 2 + mapSubTextureRegion.getRegionY() - mapSubTextureRegion.getRegionHeight());
+    private void drawGrid(Batch batch) {
+        batch.draw(mapTextureRegion, -Constants.MAP_GRID_LINE_WIDTH / 2, -Constants.MAP_GRID_LINE_WIDTH / 2);
     }
 
     public void renderPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
