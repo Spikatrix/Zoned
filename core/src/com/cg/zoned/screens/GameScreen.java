@@ -47,7 +47,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private Map map;
 
-    private ExtendViewport[] playerViewports; // Two viewports in split-screen mode; else one
+    private ExtendViewport[] playerViewports;
 
     private ShapeDrawer shapeDrawer;
     private SpriteBatch batch;

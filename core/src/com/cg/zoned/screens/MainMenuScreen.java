@@ -95,6 +95,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                     public void run() {
                         roundedCornerBgColorTexture = new Texture(pixmap);
                         usedTextures.add(roundedCornerBgColorTexture);
+                        // TODO: Try to Ninepatchify this
                         pixmap.dispose();
                     }
                 });

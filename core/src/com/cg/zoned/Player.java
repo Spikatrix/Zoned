@@ -14,17 +14,17 @@ public class Player extends InputAdapter {
     public String name;
     public int score;
 
-    public Vector2 position;
     public int[] controls;
     public Direction direction;
     public Direction updatedDirection;
 
+    public Vector2 position;
     public Vector2 prevPosition;
+    public Vector2 targetPosition;
 
     public boolean dummyMoving;
     private Vector2 dummyPosition;
 
-    public Vector2 targetPosition;
     private float timeElapsed;
 
     public Player(Color color, String name) {
@@ -69,7 +69,7 @@ public class Player extends InputAdapter {
         }
     }
 
-    public void dummyMoveTo(Vector2 targetPosition, float delta) { // Simulate a fake movement for proper timing for server-client synchronization
+    public void dummyMoveTo(Vector2 targetPosition, float delta) { // Simulate a fake movement for timed movement from all players
         if (this.targetPosition == null) {
             this.targetPosition = targetPosition;
             this.dummyMoving = true;
@@ -87,12 +87,14 @@ public class Player extends InputAdapter {
         }
     }
 
-    public void render(Rectangle userViewRect, Batch batch, TextureRegion playerTexture) {
+    public void render(Rectangle userViewRect, Batch batch, TextureRegion playerTexture, float playerTextureRegionScale) {
         float startX = (this.position.x * Constants.CELL_SIZE);
         float startY = (this.position.y * Constants.CELL_SIZE);
 
         if (userViewRect.contains(startX, startY)) {
-            batch.draw(playerTexture, startX, startY);
+            batch.draw(playerTexture, startX, startY,
+                    playerTexture.getRegionWidth() / playerTextureRegionScale,
+                    playerTexture.getRegionHeight() / playerTextureRegionScale);
         }
     }
 

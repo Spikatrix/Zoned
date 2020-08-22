@@ -36,6 +36,7 @@ public class Map {
     private TextureRegion[] playerLabels = null;
 
     private FrameBuffer playerFbo = null;
+    private float playerTextureRegionScale = 2f;
     private TextureRegion playerTextureRegion = null;
 
     private FrameBuffer mapFbo = null;
@@ -62,7 +63,7 @@ public class Map {
     }
 
     private void createPlayerTexture(ShapeDrawer shapeDrawer) {
-        int size = (int) Constants.CELL_SIZE;
+        int size = (int) (((int) Constants.CELL_SIZE) * playerTextureRegionScale);
 
         Batch batch = shapeDrawer.getBatch();
         batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, size, size));
@@ -71,15 +72,16 @@ public class Map {
             playerFbo.dispose();
         }
 
-        playerFbo = new FrameBuffer(Pixmap.Format.RGB565, size, size, false);
+        playerFbo = new FrameBuffer(Pixmap.Format.RGBA4444, size, size, false);
         playerFbo.begin();
         batch.begin();
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         shapeDrawer.setColor(Constants.PLAYER_CIRCLE_COLOR);
-        shapeDrawer.circle(size / 2f, size / 2f, size / 3f, Constants.PLAYER_CIRCLE_WIDTH, JoinType.SMOOTH);
+        shapeDrawer.circle(size / 2f, size / 2f, size / 3f,
+                Constants.PLAYER_CIRCLE_WIDTH * playerTextureRegionScale, JoinType.SMOOTH);
 
         batch.end();
         playerFbo.end();
@@ -100,11 +102,11 @@ public class Map {
             mapFbo.dispose();
         }
 
-        mapFbo = new FrameBuffer(Pixmap.Format.RGB565, width, height, false);
+        mapFbo = new FrameBuffer(Pixmap.Format.RGBA4444, width, height, false);
         mapFbo.begin();
         batch.begin();
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         drawGrid(shapeDrawer);
@@ -119,7 +121,7 @@ public class Map {
     public void createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
         playerLabels = new TextureRegion[players.length];
 
-        int totalHeight = ((int) playerLabelFont.getLineHeight()) * players.length;
+        int totalHeight = (((int) (playerLabelFont.getLineHeight() - (Constants.MAP_GRID_LINE_WIDTH / 2))) * players.length);
         int height = totalHeight / players.length;
         int width = (int) (Constants.CELL_SIZE * 3f);
         float radius = height / 2f;
@@ -131,11 +133,11 @@ public class Map {
             playerLabelFbo.dispose();
         }
 
-        playerLabelFbo = new FrameBuffer(Pixmap.Format.RGB565, width, totalHeight, false);
+        playerLabelFbo = new FrameBuffer(Pixmap.Format.RGBA4444, width, totalHeight, false);
         playerLabelFbo.begin();
         batch.begin();
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         for (int i = 0; i < playerLabels.length; i++) {
@@ -279,7 +281,7 @@ public class Map {
             int posX = Math.round(player.position.x);
             int posY = Math.round(player.position.y);
             if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].playerCount == 1) {
-                // Should we allow multiple players of the same team in the same location capture the cell?
+                // TODO: Should we allow multiple players of the same team in the same location capture the cell?
                 mapGrid[posY][posX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
                 if (playerManager != null) {
                     playerManager.incrementScore(player);
@@ -370,18 +372,15 @@ public class Map {
         drawColors(shapeDrawer, userViewRect, delta);
 
         Batch batch = shapeDrawer.getBatch();
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
         drawGrid(batch);
         drawPlayers(players, userViewRect, batch);
         renderPlayerLabels(players, userViewRect, batch);
-
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     private void drawPlayers(Player[] players, Rectangle userViewRect, Batch batch) {
         for (Player player : players) {
-            player.render(userViewRect, batch, playerTextureRegion);
+            player.render(userViewRect, batch, playerTextureRegion, playerTextureRegionScale);
         }
     }
 
