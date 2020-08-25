@@ -10,6 +10,7 @@ public class DesktopLauncher {
     public static void main(String[] args) {
         if (args.length > 0 && !args[0].equals(Constants.GAME_VERSION)) {
             // Used as a precaution
+            // TODO: Too annoying. Remove?
             System.err.println("GAME VERSION MISMATCH (" + args[0] + " and " + Constants.GAME_VERSION + ")");
             return;
         }

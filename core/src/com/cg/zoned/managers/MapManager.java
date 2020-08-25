@@ -30,27 +30,36 @@ public class MapManager {
     private Array<GridPoint2> preparedStartPositions = null;
     private Array<String> preparedStartPosNames = null;
     private int wallCount = 0;
+    private int internalMapCount = 0;
 
+    private ExternalMapReader externalMapReader;
     private FileHandle externalMapDir = null;
 
     public MapManager() {
         this.mapList = new Array<>();
 
         loadDefaultMaps();
+
+        this.externalMapReader = new ExternalMapReader();
+        externalMapDir = externalMapReader.getExternalMapDir();
     }
 
     private void loadDefaultMaps() {
         mapList.add(new RectangleMap());
         mapList.add(new HoloMap());
         mapList.add(new XMap());
+
+        internalMapCount = mapList.size;
     }
 
     public void loadExternalMaps(final OnExternalMapLoadListener mapLoadListener) {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                ExternalMapReader externalMapReader = new ExternalMapReader();
-                externalMapDir = externalMapReader.getExternalMapDir();
+                if (mapList.size != internalMapCount) {
+                    mapList.removeRange(internalMapCount, mapList.size - 1);
+                }
+
                 externalMapReader.scanAndParseExternalMaps();
                 Array<ExternalMapTemplate> externalLoadedMaps = externalMapReader.getLoadedMaps();
 
@@ -62,6 +71,25 @@ public class MapManager {
                 mapLoadListener.onExternalMapLoaded(getMapList(), externalMapStartIndex);
             }
         }).start();
+    }
+
+    public void loadExternalMap(String mapName) {
+        // Loading on the main thread itself because it's just one map
+        // (And because new threads messes up stuff in client lobby where this is called xD)
+
+        for (MapEntity map : mapList) {
+            if (map.getName().equals(mapName)) { // Map already loaded
+                return;
+            }
+        }
+
+        int sizeBefore = externalMapReader.getLoadedMaps().size;
+        externalMapReader.parseExternalMap(mapName);
+        Array<ExternalMapTemplate> externalMapList = externalMapReader.getLoadedMaps();
+
+        if (externalMapList.size > sizeBefore) {
+            mapList.add(externalMapList.get(sizeBefore));
+        }
     }
 
     public Texture getMapPreview(String mapName) {
@@ -189,6 +217,10 @@ public class MapManager {
 
     public int getWallCount() {
         return wallCount;
+    }
+
+    public FileHandle getExternalMapDir() {
+        return externalMapDir;
     }
 
     public interface OnExternalMapLoadListener {

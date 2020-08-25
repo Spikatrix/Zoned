@@ -40,6 +40,9 @@ import java.net.InetAddress;
 public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
 
+    // Bigger buffer as map preview images, which is bigger than text data, are sent
+    private static final int CONNECTION_BUFFER_SIZE = 131072; // 2^17
+
     private Array<Texture> usedTextures = new Array<>();
 
     private FocusableStage stage;
@@ -179,7 +182,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void startServerLobby(final String playerName) {
-        final Server server = new Server();
+        final Server server = new Server(CONNECTION_BUFFER_SIZE, 2048);
 
         Kryo kryo = server.getKryo();
         KryoHelper.registerClasses(kryo);
@@ -199,7 +202,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void startClientLobby(final String playerName, final Label searchingLabel) {
-        final Client client = new Client();
+        final Client client = new Client(8192, CONNECTION_BUFFER_SIZE);
 
         Kryo kryo = client.getKryo();
         KryoHelper.registerClasses(kryo);

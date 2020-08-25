@@ -369,13 +369,12 @@ public class Map {
     public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         Rectangle userViewRect = calcUserViewRect(camera);
 
-        drawColors(shapeDrawer, userViewRect, delta);
-
         Batch batch = shapeDrawer.getBatch();
 
+        drawColors(shapeDrawer, userViewRect, delta);
         drawGrid(batch);
         drawPlayers(players, userViewRect, batch);
-        renderPlayerLabels(players, userViewRect, batch);
+        drawPlayerLabels(players, userViewRect, batch);
     }
 
     private void drawPlayers(Player[] players, Rectangle userViewRect, Batch batch) {
@@ -411,7 +410,7 @@ public class Map {
         batch.draw(mapTextureRegion, -Constants.MAP_GRID_LINE_WIDTH / 2, -Constants.MAP_GRID_LINE_WIDTH / 2);
     }
 
-    public void renderPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
+    public void drawPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
         if (playerLabels != null) {
             for (int i = 0; i < players.length; i++) {
                 float posX = (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / 2f) + (Constants.CELL_SIZE / 2);

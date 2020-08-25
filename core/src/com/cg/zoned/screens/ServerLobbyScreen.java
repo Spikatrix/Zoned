@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -39,6 +40,7 @@ import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -83,6 +85,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         stage = new FocusableStage(viewport);
         animationManager = new AnimationManager(this.game, this);
         font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+
+        // TODO: Fix bogus client ip being sent to some clients when a map is changed while a new client was joining
 
         startLocations = new Array<>();
         this.serverName = name;
@@ -165,7 +169,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                         }, game.skin);
             }
         });
-        // mapSelector.loadExternalMaps(); Not yet
+        mapSelector.loadExternalMaps();
 
         serverLobbyTable.add(mapButton).width(200f * game.getScaleFactor());
         serverLobbyTable.row();
@@ -336,7 +340,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         Label nameLabel = playerItem.findActor("name-label");
         nameLabel.setText(clientName);
 
-        connectionManager.acceptPlayer(playerIndex, mapSelector.getMapManager());
+        connectionManager.acceptPlayer(playerIndex);
+        connectionManager.sendMapDetails(playerIndex, mapSelector.getMapManager());
         connectionManager.broadcastPlayerInfo(playerList.getChildren(), -1); // Send info about the new player to other clients and vice-versa
     }
 
@@ -398,6 +403,16 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         }
 
         connectionManager.sendMapDetails(-1, mapSelector.getMapManager());
+    }
+
+    @Override
+    public FileHandle getExternalMapDir() {
+        return this.mapSelector.getMapManager().getExternalMapDir();
+    }
+
+    @Override
+    public MapEntity fetchMap(String mapName) {
+        return this.mapSelector.getMapManager().getMap(mapName);
     }
 
     private void startGame(MapManager mapManager) {
@@ -576,7 +591,10 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
-        map.dispose();
+        if (map != null) {
+            map.dispose();
+            map = null;
+        }
     }
 
     private void onBackPressed() {

@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -106,7 +107,12 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
-                connectionManager.sendClientNameToServer(clientName);
+                mapManager.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+                    @Override
+                    public void onExternalMapLoaded(Array<MapEntity> mapList, int externalMapStartIndex) {
+                        connectionManager.sendClientNameToServer(clientName);
+                    }
+                });
                 animationManager.setAnimationListener(null);
             }
         });
@@ -138,9 +144,9 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         clientLobbyTable.row();
 
         readyButton = new TextButton("Ready up", game.skin);
-        readyButton.addListener(new ClickListener() {
+        readyButton.addListener(new ChangeListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void changed(ChangeEvent event, Actor actor) {
                 Table playerItem = (Table) playerList.getChild(0);
                 Label readyLabel = playerItem.findActor("ready-label");
                 DropDownMenu colorSelector = playerItem.findActor("color-selector");
@@ -153,6 +159,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
                     //colorSelector.setDisabled(true); Why is there literally no visual indication for being disabled :/
                     //startPosSelector.setDisabled(true);
+                    // TODO: Disable options once user is ready
                 } else {
                     readyLabel.setColor(Color.RED);
                     readyLabel.setText("Not ready");
@@ -196,18 +203,21 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         });
     }
 
+    public void performClick(Actor actor) {
+        InputEvent touchDownEvent = new InputEvent();
+        touchDownEvent.setType(InputEvent.Type.touchDown);
+        actor.fire(touchDownEvent);
+
+        InputEvent touchUpEvent = new InputEvent();
+        touchUpEvent.setType(InputEvent.Type.touchUp);
+        actor.fire(touchUpEvent);
+    }
+
     @Override
     public void pause() {
         if (readyButton.getText().toString().equals("Unready")) {
             // Game was minimized in the mobile; so make the player unready
-
-            InputEvent touchDownEvent = new InputEvent();
-            touchDownEvent.setType(InputEvent.Type.touchDown);
-            readyButton.fire(touchDownEvent);
-
-            InputEvent touchUpEvent = new InputEvent();
-            touchUpEvent.setType(InputEvent.Type.touchUp);
-            readyButton.fire(touchUpEvent);
+            performClick(readyButton);
         }
     }
 
@@ -344,11 +354,31 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     }
 
     @Override
-    public void mapChanged(String mapName, int[] mapExtraParams) {
+    public FileHandle getExternalMapDir() {
+        return this.mapManager.getExternalMapDir();
+    }
+
+    @Override
+    public void mapChanged(final String mapName, final int[] mapExtraParams, final int mapHash, boolean isNewMap) {
+        if (readyButton.getText().toString().equals("Unready")) {
+            performClick(readyButton);
+        }
+
+        if (isNewMap) {
+            // If true, a new external map was just downloaded from the server
+
+            this.mapManager.loadExternalMap(mapName);
+            this.mapLabel.setText("");
+        }
+
+        setMap(mapName, mapExtraParams, mapHash);
+    }
+
+    private void setMap(String mapName, int[] mapExtraParams, int mapHash) {
         startLocations.clear();
 
         MapManager mapManager = this.mapManager;
-        if (!loadNewMap(mapManager, mapName, mapExtraParams)) {
+        if (!loadNewMap(mapManager, mapName, mapExtraParams, mapHash)) {
             return;
         }
 
@@ -374,6 +404,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
         resetStartPosLabels(startLocations);
         this.mapLabel.setText(mapManager.getPreparedMap().getName());
+        readyButton.setDisabled(false);
     }
 
     private void resetStartPosLabels(Array<String> startLocations) {
@@ -390,17 +421,28 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         }
     }
 
-    private boolean loadNewMap(MapManager mapManager, String mapName, int[] mapExtraParams) {
+    private boolean loadNewMap(MapManager mapManager, String mapName, int[] mapExtraParams, int serverMapHash) {
         MapEntity map = mapManager.getMap(mapName);
         if (map == null) {
-            // Should never happen cause server loads a valid internal map before sending it to all the clients
-            displayServerError("Unknown map received: '" + mapName + "'");
+            // Server probably selected an external map which is unavailable in the client
+            this.mapLabel.setText("Downloading map '" + mapName + "'");
+            connectionManager.requestMap(mapName);
+            readyButton.setDisabled(true);
             return false;
         }
 
         if (mapExtraParams != null) {
             map.getExtraParams().extraParams = mapExtraParams;
             map.applyExtraParams();
+        }
+
+        int clientMapHash = map.getMapData().hashCode();
+        if (clientMapHash != serverMapHash) {
+            // Map in the server and client have the same name, but different contents
+            displayServerError("Server client map content mismatch!\n" +
+                    "Looks like the map content for the map '" + mapName + "'\n is different for you and the server\n" +
+                    "(Server: " + serverMapHash + ", Client: " + clientMapHash + ")");
+            return false;
         }
 
         try {
@@ -652,7 +694,10 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
-        map.dispose();
+        if (map != null) {
+            map.dispose();
+            map = null;
+        }
     }
 
     private void onBackPressed() {

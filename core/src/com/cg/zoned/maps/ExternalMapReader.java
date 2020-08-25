@@ -39,7 +39,9 @@ public class ExternalMapReader {
         //  - On Desktop (Linux): /home/<username>/
         //  - On Desktop (Windows): C:\Users\<username>\
 
+        externalMapDir = null;
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
+            // Android
             externalMapDir = Gdx.files.external("Android/data/com.cg.zoned/files/" + mapDirName);
         } else if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             if (Gdx.files.getExternalStoragePath().startsWith("/home")) {
@@ -64,6 +66,15 @@ public class ExternalMapReader {
         if (mapFiles.notEmpty()) {
             parseScannedMaps(mapFiles);
         }
+    }
+
+    public void parseExternalMap(String mapName) {
+        FileHandle mapFile = externalMapDir.child(mapName + ".map");
+        if (!mapFile.exists() || mapFile.isDirectory()) {
+            return;
+        }
+
+        parseMap(mapFile);
     }
 
     private Array<FileHandle> scanExternalMaps() {
@@ -92,56 +103,60 @@ public class ExternalMapReader {
     private void parseScannedMaps(Array<FileHandle> mapFiles) {
         Gdx.app.log(Constants.LOG_TAG, "Preparing to parse the scanned maps");
         for (FileHandle mapFile : mapFiles) {
-            String fileContents = mapFile.readString();
-
-            String mapGrid = null, mapName = mapFile.nameWithoutExtension();
-            Array<String> startPosNames = new Array<>();
-            int rowCount = 0, colCount = 0;
-
-            StringBuilder mapGridBuilder = new StringBuilder();
-
-            String rowCountPrompt = "Row count:";
-            String colCountPrompt = "Col count:";
-
-            Pattern startPosPattern = Pattern.compile(
-                    "(^[" + MapManager.VALID_START_POSITIONS.charAt(0) + "-" + MapManager.VALID_START_POSITIONS.charAt(MapManager.VALID_START_POSITIONS.length() - 1) + "])" +
-                            ":(.*)",
-                    Pattern.MULTILINE);
-
-            String[] fileLines = fileContents.split("\r?\n");
-            for (String fileLine : fileLines) {
-                if (fileLine.startsWith(rowCountPrompt)) {
-                    rowCount = Integer.parseInt(fileLine.substring(rowCountPrompt.length()).trim());
-                } else if (fileLine.startsWith(colCountPrompt)) {
-                    colCount = Integer.parseInt(fileLine.substring(colCountPrompt.length()).trim());
-                } else {
-                    Matcher matcher = startPosPattern.matcher(fileLine);
-                    if (matcher.matches()) {
-                        char startPosChar = matcher.group(1).trim().charAt(0);
-                        String startPosName = matcher.group(2).trim();
-
-                        int index = startPosChar - MapManager.VALID_START_POSITIONS.charAt(0);
-                        for (int j = startPosNames.size; j <= index; j++) {
-                            startPosNames.add(null);
-                        }
-
-                        startPosNames.set(index, startPosName);
-                    } else {
-                        mapGridBuilder.append(fileLine).append('\n');
-                    }
-                }
-            }
-
-            mapGrid = mapGridBuilder.toString();
-
-            if (!mapGrid.isEmpty() && mapName != null && rowCount > 0 && colCount > 0) {
-                loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPosNames, rowCount, colCount));
-                Gdx.app.log(Constants.LOG_TAG, "Successfully parsed " + mapFile.name());
-            } else {
-                Gdx.app.log(Constants.LOG_TAG, "Failed to parse " + mapFile.name());
-            }
+            parseMap(mapFile);
         }
         Gdx.app.log(Constants.LOG_TAG, "Map parsing completed");
+    }
+
+    private void parseMap(FileHandle mapFile) {
+        String fileContents = mapFile.readString();
+
+        String mapGrid = null, mapName = mapFile.nameWithoutExtension();
+        Array<String> startPosNames = new Array<>();
+        int rowCount = 0, colCount = 0;
+
+        StringBuilder mapGridBuilder = new StringBuilder();
+
+        String rowCountPrompt = "Row count:";
+        String colCountPrompt = "Col count:";
+
+        Pattern startPosPattern = Pattern.compile(
+                "(^[" + MapManager.VALID_START_POSITIONS.charAt(0) + "-" + MapManager.VALID_START_POSITIONS.charAt(MapManager.VALID_START_POSITIONS.length() - 1) + "])" +
+                        ":(.*)",
+                Pattern.MULTILINE);
+
+        String[] fileLines = fileContents.split("\r?\n");
+        for (String fileLine : fileLines) {
+            if (fileLine.startsWith(rowCountPrompt)) {
+                rowCount = Integer.parseInt(fileLine.substring(rowCountPrompt.length()).trim());
+            } else if (fileLine.startsWith(colCountPrompt)) {
+                colCount = Integer.parseInt(fileLine.substring(colCountPrompt.length()).trim());
+            } else {
+                Matcher matcher = startPosPattern.matcher(fileLine);
+                if (matcher.matches()) {
+                    char startPosChar = matcher.group(1).trim().charAt(0);
+                    String startPosName = matcher.group(2).trim();
+
+                    int index = startPosChar - MapManager.VALID_START_POSITIONS.charAt(0);
+                    for (int j = startPosNames.size; j <= index; j++) {
+                        startPosNames.add(null);
+                    }
+
+                    startPosNames.set(index, startPosName);
+                } else {
+                    mapGridBuilder.append(fileLine).append('\n');
+                }
+            }
+        }
+
+        mapGrid = mapGridBuilder.toString();
+
+        if (!mapGrid.isEmpty() && mapName != null && rowCount > 0 && colCount > 0) {
+            loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPosNames, rowCount, colCount));
+            Gdx.app.log(Constants.LOG_TAG, "Successfully parsed " + mapFile.name());
+        } else {
+            Gdx.app.log(Constants.LOG_TAG, "Failed to parse " + mapFile.name());
+        }
     }
 
     public Array<ExternalMapTemplate> getLoadedMaps() {

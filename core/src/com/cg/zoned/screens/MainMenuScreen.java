@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -23,7 +24,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
@@ -51,7 +51,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private AnimationManager animationManager;
     private boolean showFPSCounter;
     private BitmapFont font;
-    private Texture roundedCornerBgColorTexture;
+    private NinePatch roundedCornerNP;
 
     private ParticleEffect emitterLeft, emitterRight;
 
@@ -88,14 +88,16 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, 480, 640, 50);
-                // I suspect pixmap generation caused a noticeable lag so run in a new thread
+                final int radius = 40;
+                final int width = 10 + (radius * 2);
+                final int height = 10 + (radius * 2);
+                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, width, height, radius);
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
-                        roundedCornerBgColorTexture = new Texture(pixmap);
+                        Texture roundedCornerBgColorTexture = new Texture(pixmap);
                         usedTextures.add(roundedCornerBgColorTexture);
-                        // TODO: Try to Ninepatchify this
+                        roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
                         pixmap.dispose();
                     }
                 });
@@ -116,6 +118,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         HoverImageButton playButton = setUpAnimatedPlayButton(mainTable);
         mainStage.addFocusableActor(playButton);
         mainStage.row();
+
+        // TODO: Button ClickListener -> ChangeListener? Research.
 
         UIButtonManager uiButtonManager = new UIButtonManager(mainStage, game.getScaleFactor(), usedTextures);
         HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage(game.assets.getSettingsButtonTexture());
@@ -205,7 +209,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                if (roundedCornerBgColorTexture == null) {
+                if (roundedCornerNP == null) {
                     // Thread didn't finish loading the pixmap
                     // Should almost never happen cause processors are hella fast, even mobile ones
                     return;
@@ -236,8 +240,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         final int gameModeCount = 2;
 
-        TextureRegionDrawable whiteBG = new TextureRegionDrawable(roundedCornerBgColorTexture);
-
         String[] backgroundImageLocations = new String[]{
                 "icons/multiplayer_icons/ic_splitscreen_multiplayer.png",
                 "icons/multiplayer_icons/ic_local_multiplayer.png",
@@ -250,6 +252,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 PlayerSetUpScreen.class,
                 HostJoinScreen.class,
         };
+
+        // TODO: Clean up this mess using an object
 
         if (screenClasses.length != gameModeCount ||
                 modeLabelStrings.length != gameModeCount ||
@@ -264,7 +268,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             Table table = new Table();
             table.center();
 
-            final Image backgroundColorImage = new Image(whiteBG);
+            final Image backgroundColorImage = new Image(roundedCornerNP);
             backgroundColorImage.getColor().a = normalAlpha;
             backgroundColorImage.setScaling(Scaling.stretch);
 
@@ -323,9 +327,16 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
             Stack stack = new Stack(backgroundColorImage, backgroundImage, modeLabel);
 
-            table.add(stack).expand().pad(40f);
+            float optionPadding = 50f;
+            if (i == 0) {
+                table.add(stack).grow().padLeft(optionPadding).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
+            } else if (i == gameModeCount - 1) {
+                table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding);
+            } else {
+                table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
+            }
 
-            playModeTable.add(table).expand().uniform();
+            playModeTable.add(table).grow().uniform();
             playModeStage.addFocusableActor(table);
         }
 

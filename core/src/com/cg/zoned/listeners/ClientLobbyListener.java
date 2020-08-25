@@ -1,6 +1,7 @@
 package com.cg.zoned.listeners;
 
 import com.cg.zoned.buffers.BufferGameStart;
+import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
@@ -25,7 +26,10 @@ public class ClientLobbyListener extends Listener {
             clientLobbyConnectionManager.connectionRejected(bsrc.errorMsg);
         } else if (object instanceof BufferNewMap) {
             BufferNewMap bnm = (BufferNewMap) object;
-            clientLobbyConnectionManager.newMapSet(bnm.mapName, bnm.mapExtraParams);
+            clientLobbyConnectionManager.newMapSet(bnm.mapName, bnm.mapExtraParams, bnm.mapHash);
+        } else if (object instanceof BufferMapData) {
+            BufferMapData bmd = (BufferMapData) object;
+            clientLobbyConnectionManager.downloadMap(bmd.mapName, bmd.mapData, bmd.mapHash, bmd.mapPreviewData);
         } else if (object instanceof BufferGameStart) {
             clientLobbyConnectionManager.startGame();
         }
