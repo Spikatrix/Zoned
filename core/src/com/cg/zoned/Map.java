@@ -389,17 +389,18 @@ public class Map {
                 float startX = j * Constants.CELL_SIZE;
                 float startY = i * Constants.CELL_SIZE;
 
-                if (mapGrid[i][j].cellColor != null && userViewRect.contains(startX, startY)) {
-                    shapeDrawer.setColor(mapGrid[i][j].cellColor);
-                    shapeDrawer.filledRectangle(startX, startY,
-                            Constants.CELL_SIZE, Constants.CELL_SIZE);
-
-                    mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
+                if (mapGrid[i][j].cellColor != null) {
+                    if (userViewRect.contains(startX, startY)) {
+                        shapeDrawer.setColor(mapGrid[i][j].cellColor);
+                        shapeDrawer.filledRectangle(startX, startY, Constants.CELL_SIZE, Constants.CELL_SIZE);
+                    }
 
                     // Use the constant color object to avoid too many redundant color objects
                     Color constColor = PlayerColorHelper.getConstantColor(mapGrid[i][j].cellColor);
                     if (constColor != null) {
                         mapGrid[i][j].cellColor = constColor;
+                    } else {
+                        mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
                     }
                 }
             }
