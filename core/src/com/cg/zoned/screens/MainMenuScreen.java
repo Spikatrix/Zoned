@@ -30,6 +30,7 @@ import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
+import com.cg.zoned.GameMode;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -238,33 +239,15 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeTable.add(chooseMode).expandX().pad(20f).colspan(2);
         playModeTable.row();
 
-        final int gameModeCount = 2;
-
-        String[] backgroundImageLocations = new String[]{
-                "icons/multiplayer_icons/ic_splitscreen_multiplayer.png",
-                "icons/multiplayer_icons/ic_local_multiplayer.png",
+        final GameMode[] gameModes = new GameMode[]{
+                new GameMode("Splitscreen\nMultiplayer", "icons/multiplayer_icons/ic_splitscreen_multiplayer.png", PlayerSetUpScreen.class),
+                new GameMode("Local\nNetwork\nMultiplayer", "icons/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
         };
-        String[] modeLabelStrings = new String[]{
-                "Splitscreen\nMultiplayer",
-                "Local\nNetwork\nMultiplayer",
-        };
-        final Class[] screenClasses = new Class[]{
-                PlayerSetUpScreen.class,
-                HostJoinScreen.class,
-        };
-
-        // TODO: Clean up this mess using an object
-
-        if (screenClasses.length != gameModeCount ||
-                modeLabelStrings.length != gameModeCount ||
-                backgroundImageLocations.length != gameModeCount) {
-            throw new IndexOutOfBoundsException("Game mode count does not match asset the count");
-        }
 
         final float normalAlpha = .15f;
         final float hoverAlpha = .3f;
         final float clickAlpha = .7f;
-        for (int i = 0; i < gameModeCount; i++) {
+        for (int i = 0; i < gameModes.length; i++) {
             Table table = new Table();
             table.center();
 
@@ -272,13 +255,16 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             backgroundColorImage.getColor().a = normalAlpha;
             backgroundColorImage.setScaling(Scaling.stretch);
 
-            Texture backgroundImageTexture = new Texture(Gdx.files.internal(backgroundImageLocations[i]));
-            usedTextures.add(backgroundImageTexture);
-            Image backgroundImage = new Image(backgroundImageTexture);
-            backgroundImage.setScaling(Scaling.fit);
-            backgroundImage.getColor().a = .3f;
+            Image backgroundImage = null;
+            if (gameModes[i].previewLocation != null) {
+                Texture backgroundImageTexture = new Texture(Gdx.files.internal(gameModes[i].previewLocation));
+                usedTextures.add(backgroundImageTexture);
+                backgroundImage = new Image(backgroundImageTexture);
+                backgroundImage.setScaling(Scaling.fit);
+                backgroundImage.getColor().a = .3f;
+            }
 
-            Label modeLabel = new Label(modeLabelStrings[i], game.skin);
+            Label modeLabel = new Label(gameModes[i].name, game.skin);
             modeLabel.setAlignment(Align.center);
 
             final int finalI = i;
@@ -318,19 +304,24 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                     emitterLeft.allowCompletion();
                     emitterRight.allowCompletion();
                     try {
-                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) screenClasses[finalI].getConstructors()[0].newInstance(game));
+                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) gameModes[finalI].targetClass.getConstructors()[0].newInstance(game));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             });
 
-            Stack stack = new Stack(backgroundColorImage, backgroundImage, modeLabel);
+            Stack stack;
+            if (backgroundImage != null) {
+                stack = new Stack(backgroundColorImage, backgroundImage, modeLabel);
+            } else {
+                stack = new Stack(backgroundColorImage, modeLabel);
+            }
 
             float optionPadding = 50f;
             if (i == 0) {
                 table.add(stack).grow().padLeft(optionPadding).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
-            } else if (i == gameModeCount - 1) {
+            } else if (i == gameModes.length - 1) {
                 table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding);
             } else {
                 table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
