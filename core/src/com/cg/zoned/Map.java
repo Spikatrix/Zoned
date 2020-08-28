@@ -33,10 +33,11 @@ public class Map {
     private Rectangle userViewRect = null;
 
     private FrameBuffer playerLabelFbo = null;
+    public static float playerLabelRegionScale = 2f; // Rendered at higher (2x rn) res, downscaled to required size
     private TextureRegion[] playerLabels = null;
 
     private FrameBuffer playerFbo = null;
-    private float playerTextureRegionScale = 2f;
+    public static float playerTextureRegionScale = 2f; // Rendered at higher (2x rn) res, downscaled to required size
     private TextureRegion playerTextureRegion = null;
 
     private FrameBuffer mapFbo = null;
@@ -123,7 +124,7 @@ public class Map {
 
         int totalHeight = (((int) (playerLabelFont.getLineHeight() - (Constants.MAP_GRID_LINE_WIDTH / 2))) * players.length);
         int height = totalHeight / players.length;
-        int width = (int) (Constants.CELL_SIZE * 3f);
+        int width = (int) (((int) (Constants.CELL_SIZE * 3f)) * playerLabelRegionScale);
         float radius = height / 2f;
 
         Batch batch = shapeDrawer.getBatch();
@@ -414,11 +415,12 @@ public class Map {
     public void drawPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
         if (playerLabels != null) {
             for (int i = 0; i < players.length; i++) {
-                float posX = (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / 2f) + (Constants.CELL_SIZE / 2);
+                float posX = (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / (playerLabelRegionScale * 2f)) + (Constants.CELL_SIZE / 2);
                 float posY = (players[i].position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
                 if (userViewRect.contains(posX + playerLabels[i].getRegionWidth(), posY - (Constants.CELL_SIZE / 2)) ||
                         userViewRect.contains(posX, posY - (Constants.CELL_SIZE / 2))) {
-                    batch.draw(playerLabels[i], posX, posY);
+                    batch.draw(playerLabels[i], posX, posY,
+                            playerLabels[i].getRegionWidth() / playerLabelRegionScale, playerLabels[i].getRegionHeight() / playerLabelRegionScale);
                 }
             }
         }
