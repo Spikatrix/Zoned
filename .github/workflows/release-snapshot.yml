@@ -50,6 +50,7 @@ jobs:
         tag: v-dev
         overwrite: true
         prerelease: true
+        release_name: "Zoned Developer Build"
         body: "Latest bleeding edge version of Zoned. Might be buggy"
         
     - name: Upload apk release
