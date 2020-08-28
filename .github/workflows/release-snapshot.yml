@@ -27,7 +27,18 @@ jobs:
     - name: Build jar
       run: ./gradlew desktop:dist
         
-    - name: Upload jar as a release
+    - name: Build apk
+      run: ./gradlew android:assembleDebug
+        
+    - name: Cleanup previous tags and releases
+      uses: dev-drprasad/delete-tag-and-release@v0.1.2
+      with:
+        delete_release: true
+        tag_name: v-dev
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Upload jar release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -37,3 +48,14 @@ jobs:
         overwrite: true
         prerelease: true
         body: "Latest bleeding edge version of Zoned. Might be buggy"
+        
+    - name: Upload apk release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: android/build/outputs/apk/debug/*.apk
+        file_glob: true
+        tag: v-dev
+        overwrite: true
+        prerelease: true
+
