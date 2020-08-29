@@ -368,6 +368,10 @@ public class Map {
     }
 
     public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
+        render(players, 0, shapeDrawer, camera, delta);
+    }
+
+    public void render(Player[] players, int playerIndex, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         Rectangle userViewRect = calcUserViewRect(camera);
 
         Batch batch = shapeDrawer.getBatch();
@@ -375,7 +379,7 @@ public class Map {
         drawColors(shapeDrawer, userViewRect, delta);
         drawGrid(batch);
         drawPlayers(players, userViewRect, batch);
-        drawPlayerLabels(players, userViewRect, batch);
+        drawPlayerLabels(players, playerIndex, userViewRect, batch);
     }
 
     private void drawPlayers(Player[] players, Rectangle userViewRect, Batch batch) {
@@ -391,6 +395,8 @@ public class Map {
                 float startY = i * Constants.CELL_SIZE;
 
                 if (mapGrid[i][j].cellColor != null) {
+                    // TODO: Performance wise taxing part?
+
                     if (userViewRect.contains(startX, startY)) {
                         shapeDrawer.setColor(mapGrid[i][j].cellColor);
                         shapeDrawer.filledRectangle(startX, startY, Constants.CELL_SIZE, Constants.CELL_SIZE);
@@ -412,17 +418,27 @@ public class Map {
         batch.draw(mapTextureRegion, -Constants.MAP_GRID_LINE_WIDTH / 2, -Constants.MAP_GRID_LINE_WIDTH / 2);
     }
 
-    public void drawPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
+    public void drawPlayerLabels(Player[] players, int playerIndex, Rectangle userViewRect, Batch batch) {
         if (playerLabels != null) {
             for (int i = 0; i < players.length; i++) {
-                float posX = (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / (playerLabelRegionScale * 2f)) + (Constants.CELL_SIZE / 2);
-                float posY = (players[i].position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
-                if (userViewRect.contains(posX + playerLabels[i].getRegionWidth(), posY - (Constants.CELL_SIZE / 2)) ||
-                        userViewRect.contains(posX, posY - (Constants.CELL_SIZE / 2))) {
-                    batch.draw(playerLabels[i], posX, posY,
-                            playerLabels[i].getRegionWidth() / playerLabelRegionScale, playerLabels[i].getRegionHeight() / playerLabelRegionScale);
+                if (i == playerIndex) {
+                    continue;
                 }
+                renderPlayerLabel(players[i], playerLabels[i], userViewRect, batch);
             }
+
+            // Render the current player's label on top of other labels
+            renderPlayerLabel(players[playerIndex], playerLabels[playerIndex], userViewRect, batch);
+        }
+    }
+
+    private void renderPlayerLabel(Player player, TextureRegion playerLabel, Rectangle userViewRect, Batch batch) {
+        float posX = (player.position.x * Constants.CELL_SIZE) - (playerLabel.getRegionWidth() / (playerLabelRegionScale * 2f)) + (Constants.CELL_SIZE / 2);
+        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
+        if (userViewRect.contains(posX + playerLabel.getRegionWidth(), posY - (Constants.CELL_SIZE / 2)) ||
+                userViewRect.contains(posX, posY - (Constants.CELL_SIZE / 2))) {
+            batch.draw(playerLabel, posX, posY,
+                    playerLabel.getRegionWidth() / playerLabelRegionScale, playerLabel.getRegionHeight() / playerLabelRegionScale);
         }
     }
 

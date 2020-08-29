@@ -322,7 +322,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
-        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        map.render(players, index, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
         batch.end();
     }
 

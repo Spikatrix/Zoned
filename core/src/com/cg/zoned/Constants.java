@@ -114,7 +114,7 @@ public final class Constants {
         REGULAR("regular-font", 32),
         SMALL("small-font", 18),
         PLAYER_LABEL("player-label-font-noscale", // Height based on cell size minus a bit of line width as calculated below
-                (int) (com.cg.zoned.Map.playerLabelRegionScale * (Constants.CELL_SIZE - (3 * Constants.MAP_GRID_LINE_WIDTH / 2))));
+                (int) (com.cg.zoned.Map.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
 
         private String name;
         private int size;
