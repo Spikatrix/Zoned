@@ -113,6 +113,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpMap() {
         map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
+        map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName()));
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {
@@ -399,14 +400,16 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         });
     }
 
-    private void focusAndRenderViewport(Viewport viewport, Player player, Vector2 vel, float delta) {
-        focusCameraOnPlayer(viewport, player, vel, delta);
+    private void renderMap(int playerIndex, float delta) {
+        int mapViewportIndex = playerIndex - this.playerIndex;
+        Viewport viewport = mapViewports[mapViewportIndex];
+
+        focusCameraOnPlayer(viewport, players[playerIndex], dragOffset[mapViewportIndex], delta);
         viewport.apply();
 
         batch.setProjectionMatrix(viewport.getCamera().combined);
-
         batch.begin();
-        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        map.render(players, playerIndex, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
         batch.end();
     }
 
@@ -481,7 +484,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
         for (int i = 0; i < mapViewports.length; i++) {
             if (playerIndex + i < players.length) {
-                focusAndRenderViewport(mapViewports[i], players[playerIndex + i], dragOffset[i], delta);
+                renderMap(playerIndex + i, delta);
             }
         }
 
