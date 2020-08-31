@@ -376,7 +376,7 @@ public class Map {
 
         Batch batch = shapeDrawer.getBatch();
 
-        drawColors(shapeDrawer, userViewRect, delta);
+        drawColors(shapeDrawer, playerIndex, userViewRect, delta);
         drawGrid(batch);
         drawPlayers(players, userViewRect, batch);
         drawPlayerLabels(players, playerIndex, userViewRect, batch);
@@ -388,26 +388,20 @@ public class Map {
         }
     }
 
-    private void drawColors(ShapeDrawer shapeDrawer, Rectangle userViewRect, float delta) {
+    private void drawColors(ShapeDrawer shapeDrawer, int playerIndex, Rectangle userViewRect, float delta) {
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
                 float startX = j * Constants.CELL_SIZE;
                 float startY = i * Constants.CELL_SIZE;
 
                 if (mapGrid[i][j].cellColor != null) {
-                    // TODO: Performance wise taxing part?
+                    if (playerIndex == 0 && mapGrid[i][j].cellColor.a != 1f) {
+                        mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
+                    }
 
                     if (userViewRect.contains(startX, startY)) {
                         shapeDrawer.setColor(mapGrid[i][j].cellColor);
                         shapeDrawer.filledRectangle(startX, startY, Constants.CELL_SIZE, Constants.CELL_SIZE);
-                    }
-
-                    // Use the constant color object to avoid too many redundant color objects
-                    Color constColor = PlayerColorHelper.getConstantColor(mapGrid[i][j].cellColor);
-                    if (constColor != null) {
-                        mapGrid[i][j].cellColor = constColor;
-                    } else {
-                        mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
                     }
                 }
             }

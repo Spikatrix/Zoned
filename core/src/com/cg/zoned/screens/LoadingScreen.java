@@ -27,6 +27,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Constants;
+import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Zoned;
 
 public class LoadingScreen extends ScreenAdapter {
@@ -45,6 +46,7 @@ public class LoadingScreen extends ScreenAdapter {
     public LoadingScreen(final Zoned game) {
         this.game = game;
         game.discordRPCManager.updateRPC("Loading game");
+        PlayerColorHelper.resetPlayerColorAlpha();
     }
 
     @Override

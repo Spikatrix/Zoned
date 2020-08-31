@@ -90,7 +90,6 @@ public class ControlManager {
                         Input.Keys.toString(players[i].controls[3]);
                 controlLabels[i] = new Label(controlString, skin);
                 Color labelColor = new Color(players[i].color);
-                labelColor.mul(10);
                 controlLabels[i].setColor(labelColor);
                 controlLabels[i].setAlignment(Align.center);
             }

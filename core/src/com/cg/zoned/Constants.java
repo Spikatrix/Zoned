@@ -57,11 +57,11 @@ public final class Constants {
      */
     public static final Map<String, Color> PLAYER_COLORS = new LinkedHashMap<String, Color>() {
         {
-            put("GREEN",  new Color(0,    0.8f, 0,    1.0f));
-            put("RED",    new Color(0.8f, 0,    0,    1.0f));
-            put("BLUE",   new Color(0,    0,    0.8f, 1.0f));
-            put("YELLOW", new Color(0.8f, 0.8f, 0,    1.0f));
-            put("PINK",   new Color(0.8f, 0,    0.8f, 1.0f));
+            put("GREEN", new Color(0, 0.8f, 0, 1.0f)); // Alpha won't matter
+            put("RED", new Color(0.8f, 0, 0, 1.0f));
+            put("BLUE", new Color(0, 0, 0.8f, 1.0f));
+            put("YELLOW", new Color(0.8f, 0.8f, 0, 1.0f));
+            put("PINK", new Color(0.8f, 0, 0.8f, 1.0f));
         }
     };
 

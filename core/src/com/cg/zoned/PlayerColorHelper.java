@@ -1,11 +1,16 @@
 package com.cg.zoned;
 
 import com.badlogic.gdx.graphics.Color;
-import com.cg.zoned.Constants;
 
 import java.util.Map;
 
 public final class PlayerColorHelper {
+    public static void resetPlayerColorAlpha() {
+        for (Map.Entry<String, Color> entry : Constants.PLAYER_COLORS.entrySet()) {
+            entry.getValue().a = 1f;
+        }
+    }
+
     public static Color getColorFromString(String color) {
         return Constants.PLAYER_COLORS.get(color.toUpperCase());
     }

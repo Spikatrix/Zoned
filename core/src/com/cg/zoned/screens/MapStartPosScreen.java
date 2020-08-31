@@ -144,9 +144,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             } else {
                 dividerRightColor[i] = Color.BLACK;
             }
-
-            dividerLeftColor[i].mul(10);
-            dividerRightColor[i].mul(10);
         }
     }
 
@@ -170,7 +167,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             if (i < players.length) {
                 playerLabels[i] = new Label("Player " + (i + 1), game.skin);
                 Color labelColor = new Color(players[i].color);
-                labelColor.mul(10);
                 playerLabels[i].setColor(labelColor);
                 if (alignLeft) {
                     table.add(playerLabels[i]).padBottom(10f * game.getScaleFactor()).left().expandX();
@@ -349,7 +345,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
                         playerLabels[i].setText("Player " + (i + playerIndex + 1));
                         Color labelColor = new Color(players[i + playerIndex].color);
-                        labelColor.mul(10);
                         playerLabels[i].setColor(labelColor);
 
                         radioButtons[i][(i + playerIndex) % radioButtons[i].length].setChecked(true);

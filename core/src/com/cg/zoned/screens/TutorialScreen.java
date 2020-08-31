@@ -31,6 +31,7 @@ import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TutorialItem;
 import com.cg.zoned.UITextDisplayer;
@@ -95,7 +96,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         this.mapNoOverlayColor = new Color(0, 0, 0, 0f);
         this.drawOverlay = true;
         this.players = new Player[1];
-        this.players[0] = new Player(Constants.PLAYER_COLORS.get("GREEN"), "Player");
+        this.players[0] = new Player(PlayerColorHelper.getColorFromString("GREEN"), "Player");
         this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
         this.players[0].setControlIndex(0);
         this.playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
