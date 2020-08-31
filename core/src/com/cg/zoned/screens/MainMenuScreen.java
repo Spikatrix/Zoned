@@ -120,8 +120,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.addFocusableActor(playButton);
         mainStage.row();
 
-        // TODO: Button ClickListener -> ChangeListener? Research.
-
         UIButtonManager uiButtonManager = new UIButtonManager(mainStage, game.getScaleFactor(), usedTextures);
         HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage(game.assets.getSettingsButtonTexture());
         HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage(game.assets.getCreditsButtonTexture());

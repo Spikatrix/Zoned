@@ -157,16 +157,16 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
                     readyLabel.setText("Ready");
                     readyButton.setText("Unready");
 
-                    //colorSelector.setDisabled(true); Why is there literally no visual indication for being disabled :/
-                    //startPosSelector.setDisabled(true);
-                    // TODO: Disable options once user is ready
+                    colorSelector.setDisabled(true);
+                    startPosSelector.setDisabled(true);
+                    // TODO: Polish on this, perhaps?
                 } else {
                     readyLabel.setColor(Color.RED);
                     readyLabel.setText("Not ready");
                     readyButton.setText("Ready up");
 
-                    //colorSelector.setDisabled(false);
-                    //startPosSelector.setDisabled(false);
+                    colorSelector.setDisabled(false);
+                    startPosSelector.setDisabled(false);
                 }
 
                 connectionManager.broadcastClientInfo((Table) playerList.getChild(0));

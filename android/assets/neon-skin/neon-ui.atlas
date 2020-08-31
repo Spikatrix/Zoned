@@ -230,6 +230,15 @@ select-box-pressed
   orig: 52, 42
   offset: 0, 0
   index: -1
+select-box-disabled
+  rotate: false
+  xy: 263, 164
+  size: 52, 42
+  split: 18, 22, 14, 22
+  pad: 15, 23, 14, 14
+  orig: 52, 42
+  offset: 0, 0
+  index: -1
 slider
   rotate: false
   xy: 228, 341

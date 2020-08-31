@@ -136,6 +136,10 @@
 			"name": "select-box-pressed",
 			"color": "color"
 		},
+		"select-box-disabled-c": {
+			"name": "select-box-disabled",
+			"color": "color"
+		},
 		"slider-before-c": {
 			"name": "slider-before",
 			"color": "color"
@@ -347,7 +351,8 @@
 			"scrollStyle": "default",
 			"listStyle": "default",
 			"backgroundOver": "select-box-over-c",
-			"backgroundOpen": "select-box-pressed-c"
+			"backgroundOpen": "select-box-pressed-c",
+			"backgroundDisabled": "select-box-disabled-c"
 		}
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.Slider$SliderStyle": {
