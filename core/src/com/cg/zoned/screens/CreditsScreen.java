@@ -92,7 +92,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         addCreditItem(table,
                 "Powered By",
                 Gdx.files.internal("icons/ic_libgdx.png"), null,
-                "https://libgdx.badlogicgames.com");
+                "https://libgdx.com");
 
         addCreditItem(table,
                 "Inspired By",

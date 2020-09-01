@@ -11,6 +11,6 @@ public class DesktopLauncher {
         config.title = "Zoned";
         config.vSyncEnabled = true;
         config.addIcon("icons/ic_zoned_desktop_icon.png", Files.FileType.Internal);
-        new LwjglApplication(new Zoned(), config);
+        new LwjglApplication(new Zoned(new DiscordRPCManager()), config);
     }
 }
