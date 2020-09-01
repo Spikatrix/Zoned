@@ -57,7 +57,7 @@ public class ExternalMapReader {
             externalMapDir.mkdirs(); // Create them folders if they don't exist
         } catch (NullPointerException e) {
             e.printStackTrace();
-            Gdx.app.log(Constants.LOG_TAG, "Failed to create external map directory");
+            Gdx.app.error(Constants.LOG_TAG, "Failed to create external map directory");
         }
     }
 
@@ -94,7 +94,7 @@ public class ExternalMapReader {
             Gdx.app.log(Constants.LOG_TAG, "External map scan complete (" + mapFiles.size + " maps found)");
         } catch (NullPointerException e) {
             e.printStackTrace();
-            Gdx.app.log(Constants.LOG_TAG, "NPE during external map scan: " + e.getMessage());
+            Gdx.app.error(Constants.LOG_TAG, "NPE during external map scan: " + e.getMessage());
         }
 
         return mapFiles;

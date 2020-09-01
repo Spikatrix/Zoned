@@ -1,5 +1,6 @@
 package com.cg.zoned.screens;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -146,6 +147,32 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         });
 
         table.add(showFPS).colspan(2).padTop(30f);
+        table.row();
+
+        HoverCheckBox discordRPCSwitch = null;
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+            discordRPCSwitch = new HoverCheckBox("Enable Discord Rich Presence", game.skin);
+            discordRPCSwitch.getImageCell().width(discordRPCSwitch.getLabel().getPrefHeight()).height(discordRPCSwitch.getLabel().getPrefHeight());
+            discordRPCSwitch.getImage().setScaling(Scaling.fill);
+            discordRPCSwitch.setChecked(game.preferences.getBoolean(Constants.DISCORD_RPC_PREFERENCE, true));
+            discordRPCSwitch.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    HoverCheckBox discordRPCSwitch = (HoverCheckBox) actor;
+                    if (discordRPCSwitch.isChecked()) {
+                        game.discordRPCManager.initRPC();
+                        game.discordRPCManager.updateRPC("Configuring Settings");
+                    } else {
+                        game.discordRPCManager.shutdownRPC();
+                    }
+
+                    game.preferences.putBoolean(Constants.DISCORD_RPC_PREFERENCE, discordRPCSwitch.isChecked());
+                    game.preferences.flush();
+                }
+            });
+
+            table.add(discordRPCSwitch).colspan(2).padTop(30f);
+        }
 
         masterTable.add(screenScrollPane).grow();
         stage.addActor(masterTable);
@@ -153,6 +180,10 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         stage.addFocusableActor(flingControl);
         stage.row();
         stage.addFocusableActor(showFPS, 2);
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+            stage.row();
+            stage.addFocusableActor(discordRPCSwitch, 2);
+        }
         stage.setScrollFocus(screenScrollPane);
     }
 

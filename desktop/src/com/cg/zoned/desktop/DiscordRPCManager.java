@@ -13,7 +13,10 @@ public class DiscordRPCManager implements DiscordRPCBridge {
 
     private DiscordRichPresence richPresence = null;
 
+    private final long startTime;
+
     public DiscordRPCManager() {
+        startTime = System.currentTimeMillis();
     }
 
     public void initRPC() {
@@ -22,7 +25,7 @@ public class DiscordRPCManager implements DiscordRPCBridge {
                 DiscordRPC.discordInitialize(applicationID, null, false);
                 richPresence = new DiscordRichPresence.Builder("")
                         .setBigImage("zoned_logo", "v" + Constants.GAME_VERSION)
-                        .setStartTimestamps(System.currentTimeMillis())
+                        .setStartTimestamps(startTime)
                         .build();
             } else {
                 Gdx.app.error(Constants.LOG_TAG, "Ignoring RPC init request as the previous RPC hasn't been shutdown");

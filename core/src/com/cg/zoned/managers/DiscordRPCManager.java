@@ -1,11 +1,14 @@
 package com.cg.zoned.managers;
 
-public class DiscordRPCManager {
+public class DiscordRPCManager implements DiscordRPCBridge {
     private DiscordRPCBridge discordRPCBridge;
 
     public DiscordRPCManager(DiscordRPCBridge discordRPCBridge) {
         this.discordRPCBridge = discordRPCBridge;
+    }
 
+    @Override
+    public void initRPC() {
         if (this.discordRPCBridge != null) {
             this.discordRPCBridge.initRPC();
         }

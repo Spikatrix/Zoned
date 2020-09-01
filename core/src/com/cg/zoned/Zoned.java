@@ -21,9 +21,9 @@ public class Zoned extends Game {
 
     private static float SCALE_FACTOR = 1.0f;
 
-    public Zoned(DiscordRPCBridge discordRPCManager) {
+    public Zoned(DiscordRPCBridge discordRPCBridge) {
         super();
-        this.discordRPCManager = new DiscordRPCManager(discordRPCManager);
+        this.discordRPCManager = new DiscordRPCManager(discordRPCBridge);
     }
 
     @Override

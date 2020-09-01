@@ -46,6 +46,14 @@ public class LoadingScreen extends ScreenAdapter {
     public LoadingScreen(final Zoned game) {
         this.game = game;
         game.discordRPCManager.updateRPC("Loading game");
+        initSetup();
+    }
+
+    private void initSetup() {
+        game.preferences = Gdx.app.getPreferences(Constants.ZONED_PREFERENCES);
+        if (game.preferences.getBoolean(Constants.DISCORD_RPC_PREFERENCE, true)) {
+            game.discordRPCManager.initRPC();
+        }
         PlayerColorHelper.resetPlayerColorAlpha();
     }
 
@@ -68,8 +76,6 @@ public class LoadingScreen extends ScreenAdapter {
         generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.REGULAR);
         generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.SMALL);
         generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.PLAYER_LABEL);
-
-        game.preferences = Gdx.app.getPreferences(Constants.ZONED_PREFERENCES);
     }
 
     private void setUpLoadingUI() {
