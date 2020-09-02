@@ -44,14 +44,14 @@ public class PlayerManager extends InputMultiplexer {
         for (Player player : players) {
             boolean alreadyExists = false;
             for (TeamData teamData : this.teamData) {
-                if (player.color.equals(teamData.color)) {
+                if (player.color.equals(teamData.getColor())) {
                     alreadyExists = true;
                     break;
                 }
             }
 
             if (!alreadyExists) {
-                teamData.add(new TeamData(player.color, player.score));
+                teamData.add(new TeamData(player.color));
             }
         }
     }
@@ -86,13 +86,16 @@ public class PlayerManager extends InputMultiplexer {
     }
 
     public void incrementScore(Player player) {
-        player.score++;
         for (TeamData teamData : this.teamData) {
-            if (player.color.equals(teamData.color)) {
-                teamData.score++;
+            if (player.color.equals(teamData.getColor())) {
+                teamData.incrementScore();
                 return;
             }
         }
+    }
+
+    public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
+        controlManager.renderPlayerControlPrompt(shapeDrawer, delta);
     }
 
     public Player getPlayer(int index) {
@@ -105,9 +108,5 @@ public class PlayerManager extends InputMultiplexer {
 
     public Array<TeamData> getTeamData() {
         return teamData;
-    }
-
-    public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
-        controlManager.renderPlayerControlPrompt(shapeDrawer, delta);
     }
 }

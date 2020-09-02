@@ -12,7 +12,6 @@ import com.cg.zoned.Constants.Direction;
 public class Player extends InputAdapter {
     public Color color;
     public String name;
-    public int score;
 
     public int[] controls;
     public Direction direction;
@@ -30,7 +29,6 @@ public class Player extends InputAdapter {
     public Player(Color color, String name) {
         this.color = color;
         this.name = name;
-        this.score = 0;
 
         this.position = new Vector2();
         this.prevPosition = null;

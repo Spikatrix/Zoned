@@ -125,8 +125,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         //clientLobbyTable.setDebug(true);
         clientLobbyTable.center();
 
-        Label onlinePlayersTitle = new Label("Connected Players", game.skin, "themed");
-        clientLobbyTable.add(onlinePlayersTitle).pad(20);
+        Label lobbyTitle = new Label("Lobby", game.skin, "themed");
+        clientLobbyTable.add(lobbyTitle).pad(20);
 
         clientLobbyTable.row();
 

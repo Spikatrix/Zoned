@@ -196,11 +196,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         int highscore = 0;
         for (TeamData teamData : gameManager.playerManager.getTeamData()) {
-            if (teamData.score > highscore) {
-                highscore = teamData.score;
-                targetBgColor.set(teamData.color);
+            if (teamData.getScore() > highscore) {
+                highscore = teamData.getScore();
+                targetBgColor.set(teamData.getColor());
                 targetBgColor.a = bgAlpha;
-            } else if (teamData.score == highscore) {
+            } else if (teamData.getScore() == highscore) {
                 targetBgColor.set(0, 0, 0, bgAlpha);
             }
         }

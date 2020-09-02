@@ -117,11 +117,12 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             victoryString.append(victoryStr).append("\n");
         }
 
-        Color[] rankColors = new Color[4];
-        rankColors[0] = Color.GOLD;
-        rankColors[1] = Color.LIGHT_GRAY;
-        rankColors[2] = Color.BROWN;
-        rankColors[3] = Color.GRAY;
+        Color[] rankColors = new Color[]{
+                Color.GOLD,
+                Color.LIGHT_GRAY,
+                Color.BROWN,
+                Color.GRAY
+        };
 
         String[] rankImageLocations = new String[]{
                 "icons/rank_icons/ic_no1.png",
@@ -139,7 +140,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         float rankLabelMaxWidth = 0;
         int rankIndex = 0;
         for (int i = 0; i < victoryStrings.length; i++, rankIndex++) {
-            if (i > 0 && teamData.get(i - 1).score == teamData.get(i).score) {
+            if (i > 0 && teamData.get(i - 1).getScore() == teamData.get(i).getScore()) {
                 rankIndex--;
             }
             rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
@@ -195,11 +196,11 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
         DecimalFormat df = new DecimalFormat("#.##");
         for (int i = 0; i < teamData.size; i++) {
-            double capturePercentage = 100 * (teamData.get(i).score / (((double) rows * cols) - wallCount));
+            double capturePercentage = 100 * (teamData.get(i).getScore() / (((double) rows * cols) - wallCount));
             capturePercentage = Double.parseDouble(df.format(capturePercentage));
 
-            this.victoryStrings[i] = PlayerColorHelper.getStringFromColor(teamData.get(i).color)
-                    + " got a score of " + teamData.get(i).score + " (" + capturePercentage + "%)";
+            this.victoryStrings[i] = PlayerColorHelper.getStringFromColor(teamData.get(i).getColor())
+                    + " got a score of " + teamData.get(i).getScore() + " (" + capturePercentage + "%)";
         }
     }
 
@@ -244,7 +245,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private static class TeamDataComparator implements Comparator<TeamData> {
         @Override
         public int compare(TeamData t1, TeamData t2) {
-            return t2.score - t1.score;
+            return t2.getScore() - t1.getScore();
         }
     }
 

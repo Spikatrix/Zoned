@@ -517,7 +517,7 @@ public class Map {
         if (teamData.size == 2) {
             for (TeamData td : teamData) {
                 // For two team games, end the game when a team has captured more than 50% of the cells
-                if (100 * (td.score / (((double) this.rows * this.cols) - this.wallCount)) > 50.0) {
+                if (100 * (td.getScore() / (((double) this.rows * this.cols) - this.wallCount)) > 50.0) {
                     return true;
                 }
             }
