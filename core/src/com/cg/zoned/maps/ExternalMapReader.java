@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * <p>
  * Directory to save the .map and the .png preview files
  * - On Android: /storage/emulated/0/Android/data/com.cg.zoned/files/ZonedExternalMaps/
- * - On Linux: /home/username/Zoned/ZonedExternalMaps/
+ * - On Linux: /home/username/.zoned/ZonedExternalMaps/
  * - On Windows: C:\\Users\\username\\Documents\\Zoned\\ZonedExternalMaps\\
  */
 public class ExternalMapReader {
@@ -26,6 +26,7 @@ public class ExternalMapReader {
     private FileHandle externalMapDir;
 
     private Array<ExternalMapTemplate> loadedMaps;
+    private boolean enableExternalMapLogging = false;
 
     public ExternalMapReader() {
         this.loadedMaps = new Array<>();
@@ -46,7 +47,7 @@ public class ExternalMapReader {
         } else if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             if (Gdx.files.getExternalStoragePath().startsWith("/home")) {
                 // Linux
-                externalMapDir = Gdx.files.external("Zoned/" + mapDirName);
+                externalMapDir = Gdx.files.external(".zoned/" + mapDirName);
             } else {
                 // Windows
                 externalMapDir = Gdx.files.external("Documents/Zoned/" + mapDirName);
@@ -81,17 +82,22 @@ public class ExternalMapReader {
         Array<FileHandle> mapFiles = new Array<>();
 
         try {
-            Gdx.app.log(Constants.LOG_TAG, "Scanning for external maps on "
-                    + Gdx.files.getExternalStoragePath() + externalMapDir.path());
+            if (enableExternalMapLogging) {
+                Gdx.app.log(Constants.LOG_TAG, "Scanning for external maps on "
+                        + Gdx.files.getExternalStoragePath() + externalMapDir.path());
+            }
 
             for (FileHandle mapFile : externalMapDir.list(".map")) {
                 if (!mapFile.isDirectory()) {
-                    Gdx.app.log(Constants.LOG_TAG, "Map found: " + mapFile.name());
+                    if (enableExternalMapLogging) {
+                        Gdx.app.log(Constants.LOG_TAG, "Map found: " + mapFile.name());
+                    }
                     mapFiles.add(mapFile);
                 }
             }
-
-            Gdx.app.log(Constants.LOG_TAG, "External map scan complete (" + mapFiles.size + " maps found)");
+            if (enableExternalMapLogging) {
+                Gdx.app.log(Constants.LOG_TAG, "External map scan complete (" + mapFiles.size + " maps found)");
+            }
         } catch (NullPointerException e) {
             e.printStackTrace();
             Gdx.app.error(Constants.LOG_TAG, "NPE during external map scan: " + e.getMessage());
@@ -101,11 +107,15 @@ public class ExternalMapReader {
     }
 
     private void parseScannedMaps(Array<FileHandle> mapFiles) {
-        Gdx.app.log(Constants.LOG_TAG, "Preparing to parse the scanned maps");
+        if (enableExternalMapLogging) {
+            Gdx.app.log(Constants.LOG_TAG, "Preparing to parse the scanned maps");
+        }
         for (FileHandle mapFile : mapFiles) {
             parseMap(mapFile);
         }
-        Gdx.app.log(Constants.LOG_TAG, "Map parsing completed");
+        if (enableExternalMapLogging) {
+            Gdx.app.log(Constants.LOG_TAG, "Map parsing completed");
+        }
     }
 
     private void parseMap(FileHandle mapFile) {
@@ -153,10 +163,16 @@ public class ExternalMapReader {
 
         if (!mapGrid.isEmpty() && mapName != null && rowCount > 0 && colCount > 0) {
             loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPosNames, rowCount, colCount));
-            Gdx.app.log(Constants.LOG_TAG, "Successfully parsed " + mapFile.name());
-        } else {
-            Gdx.app.log(Constants.LOG_TAG, "Failed to parse " + mapFile.name());
+            if (enableExternalMapLogging) {
+                Gdx.app.log(Constants.LOG_TAG, "Successfully parsed " + mapFile.name());
+            }
+        } else if (enableExternalMapLogging) {
+            Gdx.app.error(Constants.LOG_TAG, "Failed to parse " + mapFile.name());
         }
+    }
+
+    public void enableExternalMapLogging(boolean enableExternalMapLogging) {
+        this.enableExternalMapLogging = enableExternalMapLogging;
     }
 
     public Array<ExternalMapTemplate> getLoadedMaps() {

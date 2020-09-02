@@ -33,7 +33,7 @@ public class MapManager {
     private int internalMapCount = 0;
 
     private ExternalMapReader externalMapReader;
-    private FileHandle externalMapDir = null;
+    private FileHandle externalMapDir;
 
     public MapManager() {
         this.mapList = new Array<>();
@@ -197,6 +197,10 @@ public class MapManager {
         this.preparedMapGrid = mapGrid;
         this.preparedStartPositions = startPositions;
         this.wallCount = wallCount;
+    }
+
+    public void enableExternalMapLogging(boolean enableExternalMapLogging) {
+        this.externalMapReader.enableExternalMapLogging(enableExternalMapLogging);
     }
 
     public MapEntity getPreparedMap() {
