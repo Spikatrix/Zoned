@@ -57,11 +57,11 @@ public final class Constants {
      */
     public static final Map<String, Color> PLAYER_COLORS = new LinkedHashMap<String, Color>() {
         {
-            put("GREEN", new Color(0, 0.8f, 0, 1.0f)); // Alpha won't matter
-            put("RED", new Color(0.8f, 0, 0, 1.0f));
-            put("BLUE", new Color(0, 0, 0.8f, 1.0f));
-            put("YELLOW", new Color(0.8f, 0.8f, 0, 1.0f));
-            put("PINK", new Color(0.8f, 0, 0.8f, 1.0f));
+            put("GREEN",  new Color(0,    0.8f, 0,    1.0f)); // Alpha won't matter
+            put("RED",    new Color(0.8f, 0,    0,    1.0f));
+            put("BLUE",   new Color(0,    0,    0.8f, 1.0f));
+            put("YELLOW", new Color(0.8f, 0.8f, 0,    1.0f));
+            put("PINK",   new Color(0.8f, 0,    0.8f, 1.0f));
         }
     };
 
@@ -86,11 +86,11 @@ public final class Constants {
 
     public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
     // Values from https://developer.android.com/training/multiscreen/screendensities
-    public static final float ANDROID_LDPI_FONT_SCALE_FACTOR = 0.75f;
-    public static final float ANDROID_MDPI_FONT_SCALE_FACTOR = 1.0f;
-    public static final float ANDROID_HDPI_FONT_SCALE_FACTOR = 1.5f;
-    public static final float ANDROID_XHDPI_FONT_SCALE_FACTOR = 2.0f;
-    public static final float ANDROID_XXHDPI_FONT_SCALE_FACTOR = 3.0f;
+    public static final float ANDROID_LDPI_FONT_SCALE_FACTOR    = 0.75f;
+    public static final float ANDROID_MDPI_FONT_SCALE_FACTOR    = 1.0f;
+    public static final float ANDROID_HDPI_FONT_SCALE_FACTOR    = 1.5f;
+    public static final float ANDROID_XHDPI_FONT_SCALE_FACTOR   = 2.0f;
+    public static final float ANDROID_XXHDPI_FONT_SCALE_FACTOR  = 3.0f;
     public static final float ANDROID_XXXHDPI_FONT_SCALE_FACTOR = 4.0f;
 
     public static final String LOG_TAG = "ZONED";
@@ -120,9 +120,9 @@ public final class Constants {
     public enum Direction {UP, LEFT, DOWN, RIGHT}
 
     public enum FONT_MANAGER {
-        LARGE("large-font", 80),
+        LARGE("large-font",     80),
         REGULAR("regular-font", 32),
-        SMALL("small-font", 18),
+        SMALL("small-font",     18),
         PLAYER_LABEL("player-label-font-noscale", // Height based on cell size minus a bit of line width as calculated below
                 (int) (com.cg.zoned.Map.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
 
