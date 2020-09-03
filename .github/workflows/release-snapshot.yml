@@ -42,7 +42,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Upload jar release
-      uses: svenstaro/upload-release-action@v2
+      uses: kittaakos/upload-release-action@GH-26
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: desktop/build/libs/*.jar
@@ -54,7 +54,7 @@ jobs:
         body: "Latest bleeding edge version of Zoned. Might be buggy"
         
     - name: Upload apk release
-      uses: svenstaro/upload-release-action@v2
+      uses: kittaakos/upload-release-action@GH-26
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: android/build/outputs/apk/debug/*.apk
@@ -62,5 +62,4 @@ jobs:
         tag: v-dev
         overwrite: true
         prerelease: true
-        release_name: "Zoned Developer Build"
 
