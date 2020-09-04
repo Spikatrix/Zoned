@@ -49,7 +49,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
     }
 
     @Override

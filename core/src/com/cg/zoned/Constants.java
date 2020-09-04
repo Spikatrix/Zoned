@@ -120,26 +120,33 @@ public final class Constants {
     public enum Direction {UP, LEFT, DOWN, RIGHT}
 
     public enum FONT_MANAGER {
-        LARGE("large-font",     80),
-        REGULAR("regular-font", 32),
-        SMALL("small-font",     18),
-        PLAYER_LABEL("player-label-font-noscale", // Height based on cell size minus a bit of line width as calculated below
+        LARGE       ("large-font",                "austere.otf",   80),
+        REGULAR     ("regular-font",              "glametrix.otf", 32),
+        SMALL       ("small-font",                "bebasneue.otf", 18),
+        PLAYER_LABEL("player-label-font-noscale", "bebasneue.otf",
                 (int) (com.cg.zoned.Map.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
+        // Player label font height is based on cell size minus a bit of line width as calculated above
 
-        private String name;
-        private int size;
+        private String fontName;
+        private String fontFileName;
+        private int fontSize;
 
-        FONT_MANAGER(String name, int size) {
-            this.name = name;
-            this.size = size;
+        FONT_MANAGER(String fontName, String fontFileName, int fontSize) {
+            this.fontName = fontName;
+            this.fontFileName = fontFileName;
+            this.fontSize = fontSize;
         }
 
-        public int getSize() {
-            return size;
+        public int getFontSize() {
+            return fontSize;
         }
 
-        public String getName() {
-            return name;
+        public String getFontName() {
+            return fontName;
+        }
+
+        public String getFontFileName() {
+            return fontFileName;
         }
     }
 }

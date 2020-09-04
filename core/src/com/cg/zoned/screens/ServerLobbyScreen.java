@@ -84,7 +84,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         viewport = new ScreenViewport();
         stage = new FocusableStage(viewport);
         animationManager = new AnimationManager(this.game, this);
-        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
 
         // TODO: Fix bogus client ip being sent to some clients when a map is changed while a new client was joining
 
@@ -129,7 +129,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         final Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getFontName()).getLineHeight() * 3);
         final Table mapSelectorTable = new Table();
         mapSelectorTable.add(mapSpinner).pad(10f);
 

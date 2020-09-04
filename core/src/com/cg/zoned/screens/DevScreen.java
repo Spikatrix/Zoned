@@ -46,7 +46,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
     }
 
     @Override
@@ -77,7 +77,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         int currentPlayerCount = game.preferences.getInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         Label splitscreenPlayerCountLabel = new Label("Splitscreen player count", game.skin);
         splitscreenPlayerCountSpinner = new Spinner(game.skin,
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getFontName()).getLineHeight(),
                 64f * game.getScaleFactor(),
                 true);
         splitscreenPlayerCountSpinner.generateValueRange(minPlayerCount, maxPlayerCount, game.skin);
@@ -87,7 +87,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         int currentSplitScreenCount = game.preferences.getInteger(Constants.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
         Label mapStartPosSplitscreenCountLabel = new Label("Map start position splitscreen count", game.skin);
         mapStartPosSplitscreenCountSpinner = new Spinner(game.skin,
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getFontName()).getLineHeight(),
                 64f * game.getScaleFactor(),
                 true);
         mapStartPosSplitscreenCountSpinner.generateValueRange(minSplitScreenCount, maxSplitScreenCount, game.skin);

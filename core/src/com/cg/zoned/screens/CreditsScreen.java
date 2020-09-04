@@ -54,7 +54,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
     }
 
     @Override
@@ -131,7 +131,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         gameLogoImage.setScaling(Scaling.fit);
         gameLogoImage.getColor().a = .3f;
 
-        final Label titleLabel = new Label(title, game.skin, Constants.FONT_MANAGER.LARGE.getName(), Color.GREEN);
+        final Label titleLabel = new Label(title, game.skin, Constants.FONT_MANAGER.LARGE.getFontName(), Color.GREEN);
         titleLabel.setAlignment(Align.center);
 
         Stack stack = new Stack();

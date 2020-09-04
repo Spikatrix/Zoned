@@ -67,7 +67,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         emitterLeft = new ParticleEffect();
         emitterRight = new ParticleEffect();
-        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
     }
 
     @Override
@@ -90,9 +90,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             @Override
             public void run() {
                 final int radius = 40;
-                final int width = 10 + (radius * 2);
-                final int height = 10 + (radius * 2);
-                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, width, height, radius);
+                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, radius);
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
@@ -112,7 +110,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         //mainTable.setDebug(true);
         mainTable.center();
 
-        Label gameTitle = new Label("ZONED", game.skin, Constants.FONT_MANAGER.LARGE.getName(), Color.GREEN);
+        Label gameTitle = new Label("ZONED", game.skin, Constants.FONT_MANAGER.LARGE.getFontName(), Color.GREEN);
         mainTable.add(gameTitle).pad(10f * game.getScaleFactor());
         mainTable.row();
 
@@ -373,7 +371,10 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         emitterRight.setPosition(viewport.getWorldWidth(), 0);
     }
 
-    private Pixmap getRoundedCornerPixmap(Color color, int width, int height, int radius) {
+    public Pixmap getRoundedCornerPixmap(Color color, int radius) {
+        final int width = 10 + (radius * 2);
+        final int height = 10 + (radius * 2);
+
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
         pixmap.setColor(color);
         pixmap.fillCircle(radius, radius, radius);

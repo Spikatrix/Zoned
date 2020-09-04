@@ -299,6 +299,7 @@ public class FocusableStage extends Stage {
     }
 
     public void resize(int width, int height) {
+        // TODO: In case of multiple dialogs shown simultaneously, the ones in the back do not reset position on resize
         getViewport().update(width, height, true);
         if (dialog != null) {
             dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));

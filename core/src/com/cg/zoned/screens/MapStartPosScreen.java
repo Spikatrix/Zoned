@@ -99,7 +99,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
     }
 
     @Override
@@ -113,7 +113,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpMap() {
         map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
-        map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName()));
+        map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getFontName()));
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {

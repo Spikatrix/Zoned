@@ -99,7 +99,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
 
-        BitmapFont playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
+        BitmapFont playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getFontName());
         initViewports(players);
 
         map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
@@ -123,7 +123,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
     }
 
     @Override

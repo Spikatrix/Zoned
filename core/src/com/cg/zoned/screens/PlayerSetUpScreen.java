@@ -65,7 +65,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
@@ -183,7 +183,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         mapSelector.setUsedTextureArray(usedTextures);
         mapSelector.getMapManager().enableExternalMapLogging(true);
         Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
+                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getFontName()).getLineHeight() * 3);
         mapSelector.loadExternalMaps();
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();

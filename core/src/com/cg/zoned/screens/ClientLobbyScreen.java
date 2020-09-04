@@ -88,7 +88,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         viewport = new ScreenViewport();
         stage = new FocusableStage(viewport);
         animationManager = new AnimationManager(this.game, this);
-        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
 
         startLocations = new Array<>();
         this.clientName = name;

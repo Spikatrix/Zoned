@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Cell;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -33,6 +34,8 @@ public class UIButtonManager {
                 table.center().top();
             } else if (position == Position.TOP_RIGHT) {
                 table.top().right();
+            } else if (position == Position.BOTTOM_RIGHT) {
+                table.bottom().right();
             } else {
                 throw new IllegalArgumentException("Unknown position table in UIButtonManager");
             }
@@ -44,6 +47,11 @@ public class UIButtonManager {
     public HoverImageButton addBackButtonToStage(Texture backTexture) {
         return addButtonToStage(1f, .65f, .5f, 24f, 0,
                 Position.TOP_LEFT, backTexture, null);
+    }
+
+    public HoverImageButton addNextButtonToStage(Texture backTexture) {
+        return addButtonToStage(1f, .65f, .5f, 24f, 180f,
+                Position.BOTTOM_RIGHT, backTexture, null);
     }
 
     public HoverImageButton addHideButtonToStage(Texture backTexture) {
@@ -116,11 +124,15 @@ public class UIButtonManager {
         button.setHoverAlpha(hoverAlpha);
         button.setClickAlpha(clickAlpha);
 
-        table.add(button)
+        Cell<HoverImageButton> cell = table.add(button)
                 .padLeft(24f).padRight(24f)
-                .padTop(paddingTop * scaleFactor)
                 .width(buttonWidth * scaleFactor)
                 .height(buttonHeight * scaleFactor);
+        if (position.name().startsWith("TOP")) {
+            cell.padTop(paddingTop * scaleFactor);
+        } else if (position.name().startsWith("BOTTOM")) {
+            cell.padBottom(paddingTop * scaleFactor);
+        }
         table.row();
 
         stage.addActor(table);
@@ -132,5 +144,6 @@ public class UIButtonManager {
         TOP_LEFT,
         TOP_CENTER,
         TOP_RIGHT,
+        BOTTOM_RIGHT,
     }
 }

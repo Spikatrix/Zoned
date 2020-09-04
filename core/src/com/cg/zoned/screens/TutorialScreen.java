@@ -77,7 +77,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
@@ -99,7 +99,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         this.players[0] = new Player(PlayerColorHelper.getColorFromString("GREEN"), "Player");
         this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
         this.players[0].setControlIndex(0);
-        this.playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
+        this.playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getFontName());
         this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
         this.controlManager = new ControlManager(players, stage);
         this.controlManager.setUpControls(game.preferences.getInteger(Constants.CONTROL_PREFERENCE),

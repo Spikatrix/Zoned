@@ -2,7 +2,6 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -21,12 +20,10 @@ public class UITextDisplayer {
             font.setColor(Color.RED);
         }
 
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
         batch.begin();
         font.draw(batch, "FPS: " + fps,
                 xOffset, viewport.getWorldHeight() - yOffset);
         batch.end();
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     public static void displayFPS(Viewport viewport, Batch batch, BitmapFont font) {
@@ -42,12 +39,10 @@ public class UITextDisplayer {
             font.setColor(Color.RED);
         }
 
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
         batch.begin();
         font.draw(batch, "Ping: " + ping + " ms",
                 xOffset, viewport.getWorldHeight() - font.getLineHeight() - yOffset);
         batch.end();
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     public static void displayPing(Viewport viewport, Batch batch, BitmapFont font, int ping) {

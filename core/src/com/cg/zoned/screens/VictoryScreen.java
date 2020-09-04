@@ -6,17 +6,20 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Sort;
 import com.badlogic.gdx.utils.StringBuilder;
@@ -29,7 +32,9 @@ import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.PlayerManager;
+import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
+import com.cg.zoned.ui.HoverImageButton;
 
 import java.text.DecimalFormat;
 import java.util.Comparator;
@@ -51,6 +56,9 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private String[] victoryStrings;
 
     private Table[] tableRows;
+    private Container<Label> scoreBoardTitleContainer;
+    private float rowHeightScale = 1.5f;
+    private float padding = 20f;
 
     public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols, int wallCount) {
         this.game = game;
@@ -61,7 +69,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
 
         getVictoryStrings(playerManager, rows, cols, wallCount);
     }
@@ -83,7 +91,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
                 setUpVictoryUI();
                 stage.getRoot().setPosition(0, 0);
                 animationManager.setAnimationListener(null);
-                animationManager.startVictoryAnimation(stage, tableRows);
+                animationManager.startScoreBoardAnimation(stage, scoreBoardTitleContainer, tableRows, rowHeightScale, padding);
             }
         });
     }
@@ -94,7 +102,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         table.setFillParent(true);
         table.center();
 
-        Label gameOver = new Label("GAME OVER", game.skin, Constants.FONT_MANAGER.LARGE.getName(), Color.GREEN);
+        Label gameOver = new Label("GAME OVER", game.skin, Constants.FONT_MANAGER.LARGE.getFontName(), Color.GREEN);
         table.add(gameOver);
 
         stage.addActor(table);
@@ -143,8 +151,8 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             if (i > 0 && teamData.get(i - 1).getScore() == teamData.get(i).getScore()) {
                 rankIndex--;
             }
-            rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
-            victoryLabels[i] = new Label(victoryStrings[i], game.skin, Constants.FONT_MANAGER.REGULAR.getName(), rankColors[Math.min(rankIndex, 3)]);
+            rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Constants.FONT_MANAGER.REGULAR.getFontName(), rankColors[Math.min(rankIndex, 3)]);
+            victoryLabels[i] = new Label(victoryStrings[i], game.skin, Constants.FONT_MANAGER.REGULAR.getFontName(), rankColors[Math.min(rankIndex, 3)]);
             if (rankIndex < rankImageLocations.length) {
                 rankImages[i] = new Image(rankImageTextures[rankIndex]);
             } else {
@@ -156,37 +164,47 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
+        Label scoreBoardTitle = new Label("SCOREBOARD", game.skin);
+        // Setting background drawable on a container since setting it directly to the label means
+        // I'll have to reset it otherwise other labels will have it as well since it's the same object
+        scoreBoardTitleContainer = new Container<>(scoreBoardTitle);
+        scoreBoardTitleContainer.setBackground(getGrayDrawable());
+        scoreBoardTitleContainer.getColor().a = 0;
+        table.add(scoreBoardTitleContainer).space(padding).padLeft(padding).padRight(padding).growX().uniformX()
+                .height(victoryLabels[0].getPrefHeight() * rowHeightScale);
+        table.row();
+
         tableRows = new Table[victoryStrings.length];
         for (int i = 0; i < victoryStrings.length; i++) {
             tableRows[i] = new Table();
 
-            tableRows[i].add(rankLabels[i]).space(20f).left().width(rankLabelMaxWidth);
-            if (rankImages[i] != null) {
-                tableRows[i].add(rankImages[i]).height(victoryLabels[0].getPrefHeight() * 1.5f).width(victoryLabels[0].getPrefHeight() * 1.5f).space(20f);
-                tableRows[i].add(victoryLabels[i]).right().space(20f).expandX();
-            } else {
-                tableRows[i].add(victoryLabels[i]).padLeft(victoryLabels[0].getPrefHeight() + 30f).right().space(20f).expandX();
-            }
+            tableRows[i].add(rankLabels[i]).space(padding).left().width(rankLabelMaxWidth);
+            tableRows[i].add(rankImages[i]).height(victoryLabels[0].getPrefHeight() * rowHeightScale).width(victoryLabels[0].getPrefHeight() * rowHeightScale).space(padding);
+            tableRows[i].add(victoryLabels[i]).right().space(padding).expandX();
 
-            table.add(tableRows[i]).space(20f).padLeft(20f).padRight(20f).uniform().grow();
+            table.add(tableRows[i]).space(padding).padLeft(padding).padRight(padding).uniform().grow();
             table.row();
         }
 
-        TextButton returnToMainMenuButton = new TextButton("Return to the main menu", game.skin);
-        returnToMainMenuButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                animationManager.fadeOutStage(stage, VictoryScreen.this, new MainMenuScreen(game));
-            }
-        });
-        table.add(returnToMainMenuButton).pad(10 * game.getScaleFactor()).width(350 * game.getScaleFactor());
-
         masterTable.add(screenScrollPane);
 
-        stage.addFocusableActor(returnToMainMenuButton);
         stage.setScrollFocus(screenScrollPane);
-
         stage.addActor(masterTable);
+
+        setUpNextButton();
+    }
+
+    private Drawable getGrayDrawable() {
+        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA4444);
+        pixmap.setColor(new Color(1, 1, 1, .2f));
+        pixmap.drawPixel(0, 0);
+
+        Texture bgTexture = new Texture(pixmap);
+        usedTextures.add(bgTexture);
+
+        pixmap.dispose();
+
+        return new TextureRegionDrawable(bgTexture);
     }
 
     private void getVictoryStrings(PlayerManager playerManager, int rows, int cols, int wallCount) {
@@ -202,6 +220,18 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             this.victoryStrings[i] = PlayerColorHelper.getStringFromColor(teamData.get(i).getColor())
                     + " got a score of " + teamData.get(i).getScore() + " (" + capturePercentage + "%)";
         }
+    }
+
+    private void setUpNextButton() {
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        HoverImageButton nextButton = uiButtonManager.addNextButtonToStage(game.assets.getBackButtonTexture());
+        nextButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                animationManager.fadeOutStage(stage, VictoryScreen.this, new MainMenuScreen(game));
+            }
+        });
+        stage.addFocusableActor(nextButton);
     }
 
     @Override

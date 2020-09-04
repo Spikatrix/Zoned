@@ -60,7 +60,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
 
         dialogButtonTexts.add("OK");
     }
@@ -87,8 +87,8 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         Image infoImage = new Image(infoIconTexture);
         Label infoLabel = new Label("Make sure that all players\nare on the same local network", game.skin);
         infoLabel.setAlignment(Align.center);
-        infoTable.add(infoImage).height(game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight())
-                .width(game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight()).padRight(20f);
+        infoTable.add(infoImage).height(game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getFontName()).getLineHeight())
+                .width(game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getFontName()).getLineHeight()).padRight(20f);
         infoTable.add(infoLabel).pad(10f);
         stage.addActor(infoTable);
 

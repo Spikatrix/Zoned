@@ -72,10 +72,9 @@ public class LoadingScreen extends ScreenAdapter {
         assetManager.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(resolver));
         assetManager.setLoader(BitmapFont.class, ".otf", new FreetypeFontLoader(resolver));
 
-        generateCustomFont("fonts/austere.otf", Constants.FONT_MANAGER.LARGE);
-        generateCustomFont("fonts/glametrix.otf", Constants.FONT_MANAGER.REGULAR);
-        generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.SMALL);
-        generateCustomFont("fonts/bebasneue.otf", Constants.FONT_MANAGER.PLAYER_LABEL);
+        for (Constants.FONT_MANAGER font : Constants.FONT_MANAGER.values()) {
+            generateCustomFont("fonts/" + font.getFontFileName(), font.getFontName(), font.getFontSize());
+        }
     }
 
     private void setUpLoadingUI() {
@@ -101,18 +100,18 @@ public class LoadingScreen extends ScreenAdapter {
         stage.addActor(table);
     }
 
-    private void generateCustomFont(String fontName, Constants.FONT_MANAGER fontManager) {
+    private void generateCustomFont(String fontFileName, String fontName, int fontSize) {
         FreetypeFontLoader.FreeTypeFontLoaderParameter parameter = new FreetypeFontLoader.FreeTypeFontLoaderParameter();
 
-        parameter.fontFileName = fontName;
-        if (fontManager.getName().endsWith("noscale")) {
-            parameter.fontParameters.size = fontManager.getSize();
+        parameter.fontFileName = fontFileName;
+        if (fontName.endsWith("noscale")) {
+            parameter.fontParameters.size = fontSize;
         } else {
-            parameter.fontParameters.size = (int) (fontManager.getSize() * game.getScaleFactor());
+            parameter.fontParameters.size = (int) (fontSize * game.getScaleFactor());
         }
         //Gdx.app.log(Constants.LOG_TAG, "Screen density: " + Gdx.graphics.getDensity());
 
-        String fontId = fontManager.getName() + ".otf";
+        String fontId = fontName + ".otf";
 
         assetManager.load(fontId, BitmapFont.class, parameter);
     }
@@ -125,7 +124,7 @@ public class LoadingScreen extends ScreenAdapter {
             if (!loadedFonts) {
                 ObjectMap<String, Object> fontMap = new ObjectMap<>();
                 for (Constants.FONT_MANAGER font : Constants.FONT_MANAGER.values()) {
-                    fontMap.put(font.getName(), assetManager.get(font.getName() + ".otf", BitmapFont.class));
+                    fontMap.put(font.getFontName(), assetManager.get(font.getFontName() + ".otf", BitmapFont.class));
                 }
 
                 SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
