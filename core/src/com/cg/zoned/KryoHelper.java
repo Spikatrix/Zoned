@@ -1,6 +1,6 @@
 package com.cg.zoned;
 
-import com.cg.zoned.Constants.Direction;
+import com.cg.zoned.Player.Direction;
 import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.buffers.BufferGameStart;
@@ -12,7 +12,6 @@ import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.esotericsoftware.kryo.Kryo;
 
 public class KryoHelper {
-
     public static void registerClasses(Kryo kryo) {
         kryo.register(BufferServerRejectedConnection.class);
         kryo.register(BufferPlayerDisconnected.class);

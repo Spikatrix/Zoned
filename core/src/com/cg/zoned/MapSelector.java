@@ -142,7 +142,7 @@ public class MapSelector {
                 int snapValue = prompts.spinnerVars.get(i - 1).snapValue;
 
                 label = new Label(prompts.spinnerVars.get(i - 1).prompt, skin);
-                spinners[i - 1] = new Spinner(skin, skin.getFont(Constants.FONT_MANAGER.REGULAR.getFontName()).getLineHeight(),
+                spinners[i - 1] = new Spinner(skin, skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
                         64f * scaleFactor, true);
                 spinners[i - 1].generateValueRange(lowValue, highValue, skin);
                 spinners[i - 1].snapToStep(snapValue - lowValue);

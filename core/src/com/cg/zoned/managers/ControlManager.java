@@ -15,15 +15,27 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
-import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
 import com.cg.zoned.ShapeDrawer;
+import com.cg.zoned.controls.ControlType;
+import com.cg.zoned.controls.ControlTypeEntity;
 import com.cg.zoned.controls.FlingControlManager;
 import com.cg.zoned.controls.PieMenuControlManager;
 
 public class ControlManager {
-    private FlingControlManager flingControlManager = null;
-    private PieMenuControlManager pieMenuControlManager = null;
+    // Specify at least one control mechanism. Otherwise, it will crash and burn.
+    public static final ControlType[] CONTROL_TYPES = {
+            new ControlType("Piemenu",
+                    "icons/control_icons/ic_control_piemenu_off.png",
+                    "icons/control_icons/ic_control_piemenu_on.png",
+                    new PieMenuControlManager()),
+            new ControlType("Fling",
+                    "icons/control_icons/ic_control_fling_off.png",
+                    "icons/control_icons/ic_control_fling_on.png",
+                    new FlingControlManager()),
+    };
+
+    private ControlTypeEntity currentControls = null;
 
     private Player[] players;
     private Stage stage;
@@ -35,23 +47,15 @@ public class ControlManager {
         this.players = players;
     }
 
-    public void setUpControls(int controls, boolean isSplitScreen, float scaleFactor, Array<Texture> usedTextures) {
-        if (controls == Constants.PIE_MENU_CONTROL) {
-            pieMenuControlManager = new PieMenuControlManager(players, isSplitScreen, stage, scaleFactor, usedTextures);
-        } else if (controls == Constants.FLING_CONTROL) {
-            flingControlManager = new FlingControlManager(players, isSplitScreen, stage, scaleFactor, usedTextures);
-        }
+    public void setUpControls(int controlIndex, boolean isSplitScreen, float scaleFactor, Array<Texture> usedTextures) {
+        currentControls = CONTROL_TYPES[controlIndex].controlTypeEntity;
+        currentControls.init(players, isSplitScreen, stage, scaleFactor, usedTextures);
     }
 
-    public void setUpOverlay(boolean isSplitScreen, int controls, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
-        setUpControls(controls, isSplitScreen, scaleFactor, usedTextures);
+    public void setUpOverlay(boolean isSplitScreen, int controlIndex, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
+        setUpControls(controlIndex, isSplitScreen, scaleFactor, usedTextures);
 
-        FileHandle controlImagePath = null;
-        if (controls == Constants.PIE_MENU_CONTROL) {
-            controlImagePath = Gdx.files.internal("icons/control_icons/ic_control_piemenu_off.png");
-        } else if (controls == Constants.FLING_CONTROL) {
-            controlImagePath = Gdx.files.internal("icons/control_icons/ic_control_fling_off.png");
-        }
+        FileHandle controlImagePath = Gdx.files.internal(CONTROL_TYPES[controlIndex].controlOffTexturePath);
 
         Table masterTable = new Table();
         masterTable.setFillParent(true);
@@ -131,12 +135,6 @@ public class ControlManager {
     }
 
     public InputAdapter getControls() {
-        if (pieMenuControlManager != null) {
-            return pieMenuControlManager;
-        } else if (flingControlManager != null) {
-            return flingControlManager;
-        } else {
-            return null;
-        }
+        return currentControls;
     }
 }

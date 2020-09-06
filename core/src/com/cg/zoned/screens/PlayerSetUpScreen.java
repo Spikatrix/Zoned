@@ -21,10 +21,12 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -65,12 +67,12 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
-        this.playerCount = game.preferences.getInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
+        this.playerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         this.playerList = new Table();
 
         this.currentBgColors = new Color[this.playerCount];
@@ -85,16 +87,16 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     public void show() {
         setUpStage();
         setUpUIButtons();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
-                boolean showTutorialDialogPrompt = game.preferences.getBoolean(Constants.SHOW_TUTORIAL_PREFERENCE, true);
+                boolean showTutorialDialogPrompt = game.preferences.getBoolean(Preferences.SHOW_TUTORIAL_PREFERENCE, true);
                 if (showTutorialDialogPrompt) {
                     showTutorialDialog();
 
-                    game.preferences.putBoolean(Constants.SHOW_TUTORIAL_PREFERENCE, false);
+                    game.preferences.putBoolean(Preferences.SHOW_TUTORIAL_PREFERENCE, false);
                     game.preferences.flush();
                 }
             }
@@ -183,7 +185,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         mapSelector.setUsedTextureArray(usedTextures);
         mapSelector.getMapManager().enableExternalMapLogging(true);
         Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getFontName()).getLineHeight() * 3);
+                game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
         mapSelector.loadExternalMaps();
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
@@ -237,7 +239,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 
-        int startPosSplitScreenCount = game.preferences.getInteger(Constants.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
+        int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
         animationManager.fadeOutStage(stage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount, false));
     }
 

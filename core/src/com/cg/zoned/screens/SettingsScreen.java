@@ -21,10 +21,13 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.cg.zoned.Constants;
+import com.cg.zoned.Assets;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.controls.ControlType;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.ControlManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverCheckBox;
@@ -49,7 +52,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
@@ -71,82 +74,79 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         ScrollPane screenScrollPane = new ScrollPane(table);
         screenScrollPane.setOverscroll(false, true);
 
-        Label controlLabel = new Label("Control scheme", game.skin, "themed");
-        Texture controlFlingOffTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_off.png"));
-        Texture controlFlingOnTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_fling_on.png"));
-        Texture controlPiemenuOffTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_piemenu_off.png"));
-        Texture controlPiemenuOnTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_control_piemenu_on.png"));
-        usedTextures.add(controlFlingOffTexture);
-        usedTextures.add(controlFlingOnTexture);
-        usedTextures.add(controlPiemenuOffTexture);
-        usedTextures.add(controlPiemenuOnTexture);
-        Drawable controlFlingOff = new TextureRegionDrawable(controlFlingOffTexture);
-        Drawable controlFlingOn = new TextureRegionDrawable(controlFlingOnTexture);
-        Drawable controlPiemenuOff = new TextureRegionDrawable(controlPiemenuOffTexture);
-        Drawable controlPiemenuOn = new TextureRegionDrawable(controlPiemenuOnTexture);
-        final HoverImageButton flingControl = new HoverImageButton(controlFlingOff, controlFlingOn);
-        final HoverImageButton piemenuControl = new HoverImageButton(controlPiemenuOff, controlPiemenuOn);
-        final Label flingControlLabel = new Label("Fling", game.skin);
-        Label piemenuControlLabel = new Label("Piemenu", game.skin);
-        flingControl.setHoverAlpha(.7f);
-        piemenuControl.setHoverAlpha(.7f);
-        flingControl.setClickAlpha(.4f);
-        piemenuControl.setClickAlpha(.4f);
-        int currentControl = game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL);
-        if (currentControl == Constants.PIE_MENU_CONTROL) {
-            piemenuControl.setChecked(true);
-        } else if (currentControl == Constants.FLING_CONTROL) {
-            flingControl.setChecked(true);
-        }
-        flingControl.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                if (piemenuControl.isChecked()) {
-                    game.preferences.putInteger(Constants.CONTROL_PREFERENCE, Constants.FLING_CONTROL);
-                    game.preferences.flush();
-                    piemenuControl.toggle();
-                } else {
-                    flingControl.toggle();
-                }
-            }
-        });
-        piemenuControl.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                if (flingControl.isChecked()) {
-                    game.preferences.putInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL);
-                    game.preferences.flush();
-                    flingControl.toggle();
-                } else {
-                    piemenuControl.toggle();
-                }
-            }
-        });
+        ControlType[] controlTypes = ControlManager.CONTROL_TYPES;
+        int currentControl = game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0);
 
-        table.add(controlLabel).colspan(2).padBottom(10f);
+        Label controlSchemeLabel = new Label("Control scheme", game.skin, "themed");
+        table.add(controlSchemeLabel).colspan(controlTypes.length).padBottom(10f);
         table.row();
-        table.add(piemenuControl).padLeft(5f);
-        table.add(flingControl).padRight(5f);
+
+        final HoverImageButton[] controlButtons = new HoverImageButton[controlTypes.length];
+        final Label[] controlLabels = new Label[controlTypes.length];
+        for (int i = 0; i < controlTypes.length; i++) {
+            ControlType controlType = controlTypes[i];
+
+            Texture controlOffTexture = new Texture(Gdx.files.internal(controlType.controlOffTexturePath));
+            Texture controlOnTexture = new Texture(Gdx.files.internal(controlType.controlOnTexturePath));
+            usedTextures.add(controlOffTexture);
+            usedTextures.add(controlOnTexture);
+
+            Drawable controlOff = new TextureRegionDrawable(controlOffTexture);
+            Drawable controlOn = new TextureRegionDrawable(controlOnTexture);
+
+            controlButtons[i] = new HoverImageButton(controlOff, controlOn);
+            controlLabels[i] = new Label(controlType.controlName, game.skin);
+
+            controlButtons[i].setHoverAlpha(.7f);
+            controlButtons[i].setClickAlpha(.4f);
+
+            if (i == currentControl) {
+                controlButtons[i].setChecked(true);
+            }
+
+            final int controlIndex = i;
+            controlButtons[i].addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    int currentControl = game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0);
+                    if (controlButtons[currentControl].isChecked()) {
+                        game.preferences.putInteger(Preferences.CONTROL_PREFERENCE, controlIndex);
+                        game.preferences.flush();
+                        controlButtons[currentControl].toggle();
+                    } else {
+                        controlButtons[controlIndex].toggle();
+                    }
+                }
+            });
+        }
+
+        for (HoverImageButton controlButton : controlButtons) {
+            table.add(controlButton).space(5f);
+            stage.addFocusableActor(controlButton);
+        }
         table.row();
-        table.add(piemenuControlLabel).padLeft(5f);
-        table.add(flingControlLabel).padRight(5f);
+        stage.row();
+        for (Label controlLabel : controlLabels) {
+            table.add(controlLabel).space(5f);
+        }
         table.row();
+
 
         final HoverCheckBox showFPS = new HoverCheckBox("Show FPS counter", game.skin);
         showFPS.getImageCell().width(showFPS.getLabel().getPrefHeight()).height(showFPS.getLabel().getPrefHeight());
         showFPS.getImage().setScaling(Scaling.fill);
-        showFPS.setChecked(game.preferences.getBoolean(Constants.FPS_PREFERENCE, false));
+        showFPS.setChecked(game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false));
         showFPSCounter = showFPS.isChecked();
         showFPS.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                game.preferences.putBoolean(Constants.FPS_PREFERENCE, showFPS.isChecked());
+                game.preferences.putBoolean(Preferences.FPS_PREFERENCE, showFPS.isChecked());
                 game.preferences.flush();
                 showFPSCounter = showFPS.isChecked();
             }
         });
 
-        table.add(showFPS).colspan(2).padTop(30f);
+        table.add(showFPS).colspan(controlTypes.length).padTop(30f);
         table.row();
 
         HoverCheckBox discordRPCSwitch = null;
@@ -154,7 +154,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
             discordRPCSwitch = new HoverCheckBox("Enable Discord Rich Presence", game.skin);
             discordRPCSwitch.getImageCell().width(discordRPCSwitch.getLabel().getPrefHeight()).height(discordRPCSwitch.getLabel().getPrefHeight());
             discordRPCSwitch.getImage().setScaling(Scaling.fill);
-            discordRPCSwitch.setChecked(game.preferences.getBoolean(Constants.DISCORD_RPC_PREFERENCE, true));
+            discordRPCSwitch.setChecked(game.preferences.getBoolean(Preferences.DISCORD_RPC_PREFERENCE, true));
             discordRPCSwitch.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
@@ -166,23 +166,20 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
                         game.discordRPCManager.shutdownRPC();
                     }
 
-                    game.preferences.putBoolean(Constants.DISCORD_RPC_PREFERENCE, discordRPCSwitch.isChecked());
+                    game.preferences.putBoolean(Preferences.DISCORD_RPC_PREFERENCE, discordRPCSwitch.isChecked());
                     game.preferences.flush();
                 }
             });
 
-            table.add(discordRPCSwitch).colspan(2).padTop(30f);
+            table.add(discordRPCSwitch).colspan(controlTypes.length).padTop(30f);
         }
 
         masterTable.add(screenScrollPane).grow();
         stage.addActor(masterTable);
-        stage.addFocusableActor(piemenuControl);
-        stage.addFocusableActor(flingControl);
-        stage.row();
-        stage.addFocusableActor(showFPS, 2);
+        stage.addFocusableActor(showFPS, controlTypes.length);
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             stage.row();
-            stage.addFocusableActor(discordRPCSwitch, 2);
+            stage.addFocusableActor(discordRPCSwitch, controlTypes.length);
         }
         stage.setScrollFocus(screenScrollPane);
     }

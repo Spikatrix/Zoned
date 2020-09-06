@@ -41,4 +41,34 @@ public class Assets {
     public void dispose() {
         assetManager.dispose();
     }
+
+    public enum FontManager {
+        STYLED_LARGE        ("recharge.otf",  65),
+        STYLED_SMALL        ("recharge.otf",  24),
+        REGULAR             ("glametrix.otf", 32), // Default font, required to be named as 'REGULAR'
+        SMALL               ("bebasneue.otf", 18),
+        PLAYER_LABEL_NOSCALE("bebasneue.otf",
+                (int) (Map.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
+        // Player label font height is based on cell size minus a bit of line width as calculated above
+
+        private String fontFileName;
+        private int fontSize;
+
+        FontManager(String fontFileName, int fontSize) {
+            this.fontFileName = fontFileName;
+            this.fontSize = fontSize;
+        }
+
+        public int getFontSize() {
+            return fontSize;
+        }
+
+        public String getFontName() {
+            return this.toString().toLowerCase();
+        }
+
+        public String getFontFileName() {
+            return fontFileName;
+        }
+    }
 }

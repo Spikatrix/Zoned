@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TeamData;
@@ -19,7 +18,7 @@ public class PlayerManager extends InputMultiplexer {
 
     private Array<TeamData> teamData;
 
-    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controls, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
+    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controlIndex, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
         this.gameManager = gameManager;
 
         this.players = players;
@@ -34,7 +33,7 @@ public class PlayerManager extends InputMultiplexer {
         }
 
         controlManager = new ControlManager(players, stage);
-        controlManager.setUpOverlay(!gameManager.gameConnectionManager.isActive, controls, skin, scaleFactor, usedTextures);
+        controlManager.setUpOverlay(!gameManager.gameConnectionManager.isActive, controlIndex, skin, scaleFactor, usedTextures);
         this.addProcessor(controlManager.getControls());
     }
 
@@ -56,7 +55,7 @@ public class PlayerManager extends InputMultiplexer {
         }
     }
 
-    public void setPlayerDirections(Direction[] directions) {
+    public void setPlayerDirections(Player.Direction[] directions) {
         for (int i = 0; i < players.length; i++) {
             players[i].direction = directions[i];
         }

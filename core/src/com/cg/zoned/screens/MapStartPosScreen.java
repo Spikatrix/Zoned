@@ -27,11 +27,13 @@ import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Assets;
 import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -99,7 +101,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
@@ -107,13 +109,13 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         setUpMap();
         setUpStage();
         setUpBackButton();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
         animationManager.fadeInStage(stage);
     }
 
     private void setUpMap() {
         map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
-        map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getFontName()));
+        map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName()));
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {

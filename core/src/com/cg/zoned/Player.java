@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.cg.zoned.Constants.Direction;
 
 public class Player extends InputAdapter {
     public Color color;
@@ -110,4 +109,6 @@ public class Player extends InputAdapter {
 
         return false;
     }
+
+    public enum Direction {UP, LEFT, DOWN, RIGHT}
 }

@@ -29,9 +29,9 @@ public class GameManager {
         this.gameConnectionManager = new GameConnectionManager(this, server, client);
     }
 
-    public void setUpDirectionAndPlayerBuffer(Player[] players, Stage stage, int controls, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
+    public void setUpDirectionAndPlayerBuffer(Player[] players, Stage stage, int controlIndex, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
         this.directionBufferManager = new DirectionBufferManager(players.length);
-        this.playerManager = new PlayerManager(this, players, stage, controls, skin, scaleFactor, usedTextures);
+        this.playerManager = new PlayerManager(this, players, stage, controlIndex, skin, scaleFactor, usedTextures);
 
     }
 

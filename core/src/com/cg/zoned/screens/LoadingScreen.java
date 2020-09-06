@@ -26,9 +26,11 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.cg.zoned.Constants;
+import com.cg.zoned.Assets;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.managers.ControlManager;
 
 public class LoadingScreen extends ScreenAdapter {
     final Zoned game;
@@ -50,11 +52,22 @@ public class LoadingScreen extends ScreenAdapter {
     }
 
     private void initSetup() {
-        game.preferences = Gdx.app.getPreferences(Constants.ZONED_PREFERENCES);
-        if (game.preferences.getBoolean(Constants.DISCORD_RPC_PREFERENCE, true)) {
+        // Set up preferences
+        game.preferences = Gdx.app.getPreferences(Preferences.ZONED_PREFERENCES);
+
+        // Set up Discord RPC
+        if (game.preferences.getBoolean(Preferences.DISCORD_RPC_PREFERENCE, true)) {
             game.discordRPCManager.initRPC();
         }
+
+        // Reset player colors
         PlayerColorHelper.resetPlayerColorAlpha();
+
+        // Validate touch controls
+        if (game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0) >= ControlManager.CONTROL_TYPES.length) {
+            game.preferences.putInteger(Preferences.CONTROL_PREFERENCE, 0);
+            game.preferences.flush();
+        }
     }
 
     @Override
@@ -72,7 +85,7 @@ public class LoadingScreen extends ScreenAdapter {
         assetManager.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(resolver));
         assetManager.setLoader(BitmapFont.class, ".otf", new FreetypeFontLoader(resolver));
 
-        for (Constants.FONT_MANAGER font : Constants.FONT_MANAGER.values()) {
+        for (Assets.FontManager font : Assets.FontManager.values()) {
             generateCustomFont("fonts/" + font.getFontFileName(), font.getFontName(), font.getFontSize());
         }
     }
@@ -123,7 +136,7 @@ public class LoadingScreen extends ScreenAdapter {
 
             if (!loadedFonts) {
                 ObjectMap<String, Object> fontMap = new ObjectMap<>();
-                for (Constants.FONT_MANAGER font : Constants.FONT_MANAGER.values()) {
+                for (Assets.FontManager font : Assets.FontManager.values()) {
                     fontMap.put(font.getFontName(), assetManager.get(font.getFontName() + ".otf", BitmapFont.class));
                 }
 

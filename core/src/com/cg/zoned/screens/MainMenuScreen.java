@@ -29,8 +29,9 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.cg.zoned.Constants;
+import com.cg.zoned.Assets;
 import com.cg.zoned.GameMode;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -67,13 +68,13 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         emitterLeft = new ParticleEffect();
         emitterRight = new ParticleEffect();
-        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
+        font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpMainMenu();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
         animationManager.startMainMenuAnimation(mainStage, mainMenuUIButtons);
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
@@ -110,7 +111,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         //mainTable.setDebug(true);
         mainTable.center();
 
-        Label gameTitle = new Label("ZONED", game.skin, Constants.FONT_MANAGER.LARGE.getFontName(), Color.GREEN);
+        Label gameTitle = new Label("ZONED", game.skin, Assets.FontManager.STYLED_LARGE.getFontName(), Color.GREEN);
         mainTable.add(gameTitle).pad(10f * game.getScaleFactor());
         mainTable.row();
 
@@ -122,7 +123,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage(game.assets.getSettingsButtonTexture());
         HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage(game.assets.getCreditsButtonTexture());
         HoverImageButton devButton = null;
-        if (game.preferences.getBoolean(Constants.DEV_MODE_PREFERENCE, false)) {
+        if (game.preferences.getBoolean(Preferences.DEV_MODE_PREFERENCE, false)) {
             devButton = uiButtonManager.addDevButtonToStage(game.assets.getDevButtonTexture());
             devButton.addListener(new ClickListener() {
                 @Override

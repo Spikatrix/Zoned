@@ -19,9 +19,11 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TeamData;
@@ -89,7 +91,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         this.gameManager = new GameManager(this);
         this.gameManager.setUpConnectionManager(server, client);
         this.gameManager.setUpDirectionAndPlayerBuffer(players, fullScreenStage,
-                game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL),
+                game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0),
                 game.skin, game.getScaleFactor(), usedTextures);
 
         this.batch = new SpriteBatch();
@@ -99,7 +101,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
 
-        BitmapFont playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getFontName());
+        BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         initViewports(players);
 
         map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
@@ -123,14 +125,14 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpInputProcessors();
         setUpUI();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
     }
 
     private void setUpUI() {

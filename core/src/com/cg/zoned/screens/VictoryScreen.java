@@ -25,8 +25,9 @@ import com.badlogic.gdx.utils.Sort;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.cg.zoned.Constants;
+import com.cg.zoned.Assets;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.TeamData;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -69,7 +70,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getFontName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         getVictoryStrings(playerManager, rows, cols, wallCount);
     }
@@ -77,7 +78,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void show() {
         setUpStage();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         trailEffect = new ParticleEffect();
         trailEffect.setPosition(0, stage.getHeight() / 2f);
@@ -102,7 +103,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         table.setFillParent(true);
         table.center();
 
-        Label gameOver = new Label("GAME OVER", game.skin, Constants.FONT_MANAGER.LARGE.getFontName(), Color.GREEN);
+        Label gameOver = new Label("GAME OVER", game.skin, Assets.FontManager.STYLED_LARGE.getFontName(), Color.GREEN);
         table.add(gameOver);
 
         stage.addActor(table);
@@ -151,12 +152,10 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             if (i > 0 && teamData.get(i - 1).getScore() == teamData.get(i).getScore()) {
                 rankIndex--;
             }
-            rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Constants.FONT_MANAGER.REGULAR.getFontName(), rankColors[Math.min(rankIndex, 3)]);
-            victoryLabels[i] = new Label(victoryStrings[i], game.skin, Constants.FONT_MANAGER.REGULAR.getFontName(), rankColors[Math.min(rankIndex, 3)]);
+            rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Assets.FontManager.REGULAR.getFontName(), rankColors[Math.min(rankIndex, 3)]);
+            victoryLabels[i] = new Label(victoryStrings[i], game.skin, Assets.FontManager.REGULAR.getFontName(), rankColors[Math.min(rankIndex, 3)]);
             if (rankIndex < rankImageLocations.length) {
                 rankImages[i] = new Image(rankImageTextures[rankIndex]);
-            } else {
-                rankImages[i] = null;
             }
 
             if (rankLabels[i].getPrefWidth() > rankLabelMaxWidth) {
@@ -164,7 +163,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        Label scoreBoardTitle = new Label("SCOREBOARD", game.skin);
+        Label scoreBoardTitle = new Label("SCOREBOARD", game.skin, Assets.FontManager.STYLED_SMALL.getFontName(), Color.WHITE);
         // Setting background drawable on a container since setting it directly to the label means
         // I'll have to reset it otherwise other labels will have it as well since it's the same object
         scoreBoardTitleContainer = new Container<>(scoreBoardTitle);

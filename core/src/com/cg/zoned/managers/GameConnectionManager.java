@@ -2,8 +2,8 @@ package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.Player;
+import com.cg.zoned.Player.Direction;
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;

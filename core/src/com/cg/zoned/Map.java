@@ -15,7 +15,6 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.managers.PlayerManager;
 
 import space.earlygrey.shapedrawer.JoinType;
@@ -222,23 +221,23 @@ public class Map {
 
                 mapColorUpdated = false;
 
-                Direction direction = player.direction;
-                if (direction == Direction.UP && player.position.y < rows - 1 &&
+                Player.Direction direction = player.direction;
+                if (direction == Player.Direction.UP && player.position.y < rows - 1 &&
                         mapGrid[Math.round(player.position.y) + 1][Math.round(player.position.x)].isMovable) {
 
                     player.moveTo(new Vector2(player.position.x, player.position.y + 1), delta);
 
-                } else if (direction == Direction.RIGHT && player.position.x < cols - 1 &&
+                } else if (direction == Player.Direction.RIGHT && player.position.x < cols - 1 &&
                         mapGrid[Math.round(player.position.y)][Math.round(player.position.x) + 1].isMovable) {
 
                     player.moveTo(new Vector2(player.position.x + 1, player.position.y), delta);
 
-                } else if (direction == Direction.DOWN && player.position.y > 0 &&
+                } else if (direction == Player.Direction.DOWN && player.position.y > 0 &&
                         mapGrid[Math.round(player.position.y) - 1][Math.round(player.position.x)].isMovable) {
 
                     player.moveTo(new Vector2(player.position.x, player.position.y - 1), delta);
 
-                } else if (direction == Direction.LEFT && player.position.x > 0 &&
+                } else if (direction == Player.Direction.LEFT && player.position.x > 0 &&
                         mapGrid[Math.round(player.position.y)][Math.round(player.position.x) - 1].isMovable) {
 
                     player.moveTo(new Vector2(player.position.x - 1, player.position.y), delta);

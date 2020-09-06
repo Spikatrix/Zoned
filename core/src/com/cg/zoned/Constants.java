@@ -95,58 +95,8 @@ public final class Constants {
 
     public static final String LOG_TAG = "ZONED";
 
-    // Preferences file name
-    public static final String ZONED_PREFERENCES = "Zoned_Preferences";
-    // Show FPS or not
-    public static final String FPS_PREFERENCE = "FPS_Preference";
-    // 0 = Piemenu control, 1 = Fling control
-    public static final String CONTROL_PREFERENCE = "Control_Preference";
-    // The last used name to be autofilled in the Player name field in the Host join screen
-    public static final String NAME_PREFERENCE = "Name_Preference";
-    // Shows the tutorial prompt the first time the user visits the splitscreen multiplayer screen
-    public static final String SHOW_TUTORIAL_PREFERENCE = "Show_Tutorial_Preference";
-    // Player count in splitscreen multiplayer mode (Developer options)
-    public static final String SPLITSCREEN_PLAYER_COUNT_PREFERENCE = "Splitscreen_Player_Count_Preference";
-    // Splitscreen count in the Map start pos screen (Developer option)
-    public static final String MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE = "Map_Start_Pos_Splitscreen_Count_Preference";
-    // Developer mode unlocked or not
-    public static final String DEV_MODE_PREFERENCE = "Dev_Mode_Preference";
-    // Enable Discord RPC or not
-    public static final String DISCORD_RPC_PREFERENCE = "Discord_RPC_Preference";
-
-    public static final int PIE_MENU_CONTROL = 0;
-    public static final int FLING_CONTROL = 1;
-
-    public enum Direction {UP, LEFT, DOWN, RIGHT}
-
-    public enum FONT_MANAGER {
-        LARGE       ("large-font",                "recharge.otf",  65),
-        REGULAR     ("regular-font",              "glametrix.otf", 32),
-        SMALL       ("small-font",                "bebasneue.otf", 18),
-        PLAYER_LABEL("player-label-font-noscale", "bebasneue.otf",
-                (int) (com.cg.zoned.Map.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
-        // Player label font height is based on cell size minus a bit of line width as calculated above
-
-        private String fontName;
-        private String fontFileName;
-        private int fontSize;
-
-        FONT_MANAGER(String fontName, String fontFileName, int fontSize) {
-            this.fontName = fontName;
-            this.fontFileName = fontFileName;
-            this.fontSize = fontSize;
-        }
-
-        public int getFontSize() {
-            return fontSize;
-        }
-
-        public String getFontName() {
-            return fontName;
-        }
-
-        public String getFontFileName() {
-            return fontFileName;
-        }
-    }
+    // Preferences moved to Preferences.java
+    // Directions moved to Player.java
+    // Controls moved to managers/ControlManager.java
+    // Fonts moved to Assets.java
 }
