@@ -120,7 +120,7 @@ public final class Constants {
     public enum Direction {UP, LEFT, DOWN, RIGHT}
 
     public enum FONT_MANAGER {
-        LARGE       ("large-font",                "recharge.otf",  70),
+        LARGE       ("large-font",                "recharge.otf",  65),
         REGULAR     ("regular-font",              "glametrix.otf", 32),
         SMALL       ("small-font",                "bebasneue.otf", 18),
         PLAYER_LABEL("player-label-font-noscale", "bebasneue.otf",

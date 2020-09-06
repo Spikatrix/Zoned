@@ -95,7 +95,7 @@ public class LoadingScreen extends ScreenAdapter {
 
         table.add(progressBar).growX()
                 .padLeft(100f * game.getScaleFactor()).padRight(100f * game.getScaleFactor())
-                .padTop(32f * game.getScaleFactor());
+                .padTop(16f * game.getScaleFactor());
 
         stage.addActor(table);
     }
