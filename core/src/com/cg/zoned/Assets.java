@@ -42,6 +42,7 @@ public class Assets {
         assetManager.dispose();
     }
 
+    // TODO: The default font size is way too big (really noticeable on mobile screens)
     public enum FontManager {
         STYLED_LARGE        ("recharge.otf",  65),
         STYLED_SMALL        ("recharge.otf",  24),

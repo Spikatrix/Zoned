@@ -10,19 +10,22 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
+import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.Sort;
-import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
@@ -54,17 +57,18 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private ParticleEffect trailEffect;
 
     private Array<TeamData> teamData;
-    private String[] victoryStrings;
+    private double[] capturePercentage;
 
-    private Table[] tableRows;
+    private Actor[][] scoreboardActors;
     private Container<Label> scoreBoardTitleContainer;
     private float rowHeightScale = 1.5f;
-    private float padding = 20f;
+    private float padding;
 
     public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols, int wallCount) {
         this.game = game;
         game.discordRPCManager.updateRPC("Post match");
 
+        this.padding = 16f * game.getScaleFactor();
         this.usedTextures = new Array<>();
 
         this.viewport = new ScreenViewport();
@@ -92,7 +96,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
                 setUpVictoryUI();
                 stage.getRoot().setPosition(0, 0);
                 animationManager.setAnimationListener(null);
-                animationManager.startScoreBoardAnimation(stage, scoreBoardTitleContainer, tableRows, rowHeightScale, padding);
+                animationManager.startScoreBoardAnimation(stage, scoreBoardTitleContainer, scoreboardActors, rowHeightScale, padding);
             }
         });
     }
@@ -121,67 +125,98 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         ScrollPane screenScrollPane = new ScrollPane(table);
         screenScrollPane.setOverscroll(false, true);
 
-        StringBuilder victoryString = new StringBuilder();
-        for (String victoryStr : victoryStrings) {
-            victoryString.append(victoryStr).append("\n");
-        }
-
-        Color[] rankColors = new Color[]{
-                Color.GOLD,
-                Color.LIGHT_GRAY,
-                Color.BROWN,
-                Color.GRAY
+        ScoreboardHeaderData[] headers = new ScoreboardHeaderData[]{
+                new ScoreboardHeaderData("RANK",  2.5f),
+                new ScoreboardHeaderData("TEAM",  4.5f),
+                new ScoreboardHeaderData("SCORE", 2.5f),
         };
 
-        String[] rankImageLocations = new String[]{
-                "icons/rank_icons/ic_no1.png",
-                "icons/rank_icons/ic_no2.png",
-                "icons/rank_icons/ic_no3.png",
+        RankData[] rankData = new RankData[] {
+                new RankData(Color.GOLD,       "icons/rank_icons/ic_no1.png"),
+                new RankData(Color.LIGHT_GRAY, "icons/rank_icons/ic_no2.png"),
+                new RankData(Color.BROWN,      "icons/rank_icons/ic_no3.png"),
+                new RankData(Color.GRAY,       null),
         };
-        Texture[] rankImageTextures = new Texture[rankImageLocations.length];
-        for (int i = 0; i < rankImageTextures.length; i++) {
-            rankImageTextures[i] = new Texture(Gdx.files.internal(rankImageLocations[i]));
-            usedTextures.add(rankImageTextures[i]);
-        }
-        Image[] rankImages = new Image[victoryStrings.length];
-        Label[] victoryLabels = new Label[victoryStrings.length];
-        Label[] rankLabels = new Label[victoryStrings.length];
-        float rankLabelMaxWidth = 0;
-        int rankIndex = 0;
-        for (int i = 0; i < victoryStrings.length; i++, rankIndex++) {
-            if (i > 0 && teamData.get(i - 1).getScore() == teamData.get(i).getScore()) {
-                rankIndex--;
-            }
-            rankLabels[i] = new Label("#" + (rankIndex + 1), game.skin, Assets.FontManager.REGULAR.getFontName(), rankColors[Math.min(rankIndex, 3)]);
-            victoryLabels[i] = new Label(victoryStrings[i], game.skin, Assets.FontManager.REGULAR.getFontName(), rankColors[Math.min(rankIndex, 3)]);
-            if (rankIndex < rankImageLocations.length) {
-                rankImages[i] = new Image(rankImageTextures[rankIndex]);
-            }
 
-            if (rankLabels[i].getPrefWidth() > rankLabelMaxWidth) {
-                rankLabelMaxWidth = rankLabels[i].getPrefWidth();
-            }
-        }
+        scoreboardActors = new Actor[capturePercentage.length + 1][];
+        float rowHeight = getRowHeight();
 
-        Label scoreBoardTitle = new Label("SCOREBOARD", game.skin, Assets.FontManager.STYLED_SMALL.getFontName(), Color.WHITE);
         // Setting background drawable on a container since setting it directly to the label means
         // I'll have to reset it otherwise other labels will have it as well since it's the same object
+        Label scoreBoardTitle = new Label("SCOREBOARD", game.skin, Assets.FontManager.STYLED_SMALL.getFontName(), Color.WHITE);
+        scoreBoardTitle.setAlignment(Align.center);
         scoreBoardTitleContainer = new Container<>(scoreBoardTitle);
-        scoreBoardTitleContainer.setBackground(getGrayDrawable());
+        scoreBoardTitleContainer.fill();
+        scoreBoardTitleContainer.setBackground(getDrawable(new Color(1, 1, 1, .2f)));
         scoreBoardTitleContainer.getColor().a = 0;
-        table.add(scoreBoardTitleContainer).space(padding).padLeft(padding).padRight(padding).growX().uniformX()
-                .height(victoryLabels[0].getPrefHeight() * rowHeightScale);
+        table.add(scoreBoardTitleContainer).space(padding).growX().uniform().height(rowHeight).colspan(headers.length);
         table.row();
 
-        tableRows = new Table[victoryStrings.length];
-        for (int i = 0; i < victoryStrings.length; i++) {
-            tableRows[i] = new Table();
+        scoreboardActors[0] = new Actor[headers.length];
+        for (int i = 0; i < headers.length; i++) {
+            ScoreboardHeaderData headerData = headers[i];
 
-            tableRows[i].add(rankLabels[i]).space(padding).left().width(rankLabelMaxWidth);
-            tableRows[i].add(rankImages[i]).height(victoryLabels[0].getPrefHeight() * rowHeightScale).width(victoryLabels[0].getPrefHeight() * rowHeightScale).space(padding);
-            tableRows[i].add(victoryLabels[i]).right().space(padding).expandX();
+            Label headerLabel = new Label(headerData.headerStr, game.skin);
+            headerLabel.setAlignment(Align.center);
+            Container<Label> headerContainer = new Container<>(headerLabel);
+            headerContainer.fill();
+            headerContainer.setBackground(getDrawable(new Color(1, 1, 1, .2f)));
+            headerContainer.getColor().a = 0;
+            table.add(headerContainer).width((rowHeight * headerData.sizeMultiplier) + padding).uniformY().growY().space(padding);
 
-            table.add(tableRows[i]).space(padding).padLeft(padding).padRight(padding).uniform().grow();
+            scoreboardActors[0][i] = headerContainer;
+        }
+        table.row();
+
+        int rankIndex = 0;
+        for (int i = 1; i < capturePercentage.length + 1; i++, rankIndex++) {
+            if (i > 1 && teamData.get(i - 2).getScore() == teamData.get(i - 1).getScore()) {
+                rankIndex--;
+            }
+
+            int rowIndex = 0;
+            int rankDataIndex = Math.min(rankIndex, rankData.length - 1);
+
+            scoreboardActors[i] = new Actor[headers.length];
+
+            // Rank image and label stack
+            Stack rankStack;
+            Image rankImage = null;
+            Label rankLabel = new Label(Integer.toString(rankIndex + 1), game.skin,
+                    Assets.FontManager.STYLED_SMALL.getFontName(), rankData[rankDataIndex].rankColor);
+            rankLabel.setAlignment(Align.center);
+            if (rankData[rankDataIndex].rankTexture != null) {
+                rankImage = new Image(rankData[rankDataIndex].rankTexture);
+                rankImage.setScaling(Scaling.fit);
+                rankImage.getColor().a = .5f;
+            }
+            if (rankImage != null) {
+                rankStack = new Stack(rankImage, rankLabel);
+            } else {
+                rankStack = new Stack(rankLabel);
+            }
+
+            scoreboardActors[i][rowIndex++] = rankStack;
+
+            Label nameLabel = new Label(PlayerColorHelper.getStringFromColor(teamData.get(i - 1).getColor()), game.skin,
+                    Assets.FontManager.REGULAR.getFontName(), teamData.get(i - 1).getColor());
+            nameLabel.setAlignment(Align.center);
+
+            scoreboardActors[i][rowIndex++] = nameLabel;
+
+            Label victoryLabel = new Label(teamData.get(i - 1).getScore() + " (" + capturePercentage[i - 1] + "%)", game.skin,
+                    Assets.FontManager.REGULAR.getFontName(), rankData[rankDataIndex].rankColor);
+            victoryLabel.setAlignment(Align.center);
+
+            scoreboardActors[i][rowIndex++] = victoryLabel;
+
+            for (int j = 0; j < headers.length; j++) {
+                if (scoreboardActors[i][j] != null) {
+                    table.add(scoreboardActors[i][j]).space(padding).uniformY().height(rowHeight).width(rowHeight * headers[j].sizeMultiplier);
+                } else {
+                    table.add().space(padding).uniformY();
+                }
+            }
             table.row();
         }
 
@@ -193,9 +228,9 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         setUpNextButton();
     }
 
-    private Drawable getGrayDrawable() {
+    private Drawable getDrawable(Color color) {
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA4444);
-        pixmap.setColor(new Color(1, 1, 1, .2f));
+        pixmap.setColor(color);
         pixmap.drawPixel(0, 0);
 
         Texture bgTexture = new Texture(pixmap);
@@ -206,18 +241,22 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         return new TextureRegionDrawable(bgTexture);
     }
 
+    private float getRowHeight() {
+        Label dummyLabel = new Label("DUMMY", game.skin);
+        return dummyLabel.getPrefHeight() * rowHeightScale;
+    }
+
     private void getVictoryStrings(PlayerManager playerManager, int rows, int cols, int wallCount) {
         teamData = playerManager.getTeamData();
         new Sort().sort(teamData, new TeamDataComparator());
-        this.victoryStrings = new String[teamData.size];
+        this.capturePercentage = new double[teamData.size];
 
         DecimalFormat df = new DecimalFormat("#.##");
         for (int i = 0; i < teamData.size; i++) {
             double capturePercentage = 100 * (teamData.get(i).getScore() / (((double) rows * cols) - wallCount));
             capturePercentage = Double.parseDouble(df.format(capturePercentage));
 
-            this.victoryStrings[i] = PlayerColorHelper.getStringFromColor(teamData.get(i).getColor())
-                    + " got a score of " + teamData.get(i).getScore() + " (" + capturePercentage + "%)";
+            this.capturePercentage[i] = capturePercentage;
         }
     }
 
@@ -275,6 +314,30 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         @Override
         public int compare(TeamData t1, TeamData t2) {
             return t2.getScore() - t1.getScore();
+        }
+    }
+
+    private static class ScoreboardHeaderData {
+        private String headerStr;
+        private float sizeMultiplier;
+
+        public ScoreboardHeaderData(String headerStr, float sizeMultiplier) {
+            this.headerStr = headerStr;
+            this.sizeMultiplier = sizeMultiplier;
+        }
+    }
+
+    private class RankData {
+        private Color rankColor;
+        private Texture rankTexture;
+
+        public RankData(Color rankColor, String rankImageLocation) {
+            this.rankColor = rankColor;
+
+            if (rankImageLocation != null) {
+                this.rankTexture = new Texture(Gdx.files.internal(rankImageLocation));
+                usedTextures.add(this.rankTexture);
+            }
         }
     }
 
