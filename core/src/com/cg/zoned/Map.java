@@ -15,7 +15,6 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.Constants.Direction;
 import com.cg.zoned.managers.PlayerManager;
 
 import space.earlygrey.shapedrawer.JoinType;
@@ -33,9 +32,11 @@ public class Map {
     private Rectangle userViewRect = null;
 
     private FrameBuffer playerLabelFbo = null;
+    public static float playerLabelRegionScale = 2f; // Rendered at higher (2x rn) res, downscaled to required size
     private TextureRegion[] playerLabels = null;
 
     private FrameBuffer playerFbo = null;
+    public static float playerTextureRegionScale = 2f; // Rendered at higher (2x rn) res, downscaled to required size
     private TextureRegion playerTextureRegion = null;
 
     private FrameBuffer mapFbo = null;
@@ -62,7 +63,7 @@ public class Map {
     }
 
     private void createPlayerTexture(ShapeDrawer shapeDrawer) {
-        int size = (int) Constants.CELL_SIZE;
+        int size = (int) (((int) Constants.CELL_SIZE) * playerTextureRegionScale);
 
         Batch batch = shapeDrawer.getBatch();
         batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, size, size));
@@ -71,15 +72,16 @@ public class Map {
             playerFbo.dispose();
         }
 
-        playerFbo = new FrameBuffer(Pixmap.Format.RGB565, size, size, false);
+        playerFbo = new FrameBuffer(Pixmap.Format.RGBA4444, size, size, false);
         playerFbo.begin();
         batch.begin();
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         shapeDrawer.setColor(Constants.PLAYER_CIRCLE_COLOR);
-        shapeDrawer.circle(size / 2f, size / 2f, size / 3f, Constants.PLAYER_CIRCLE_WIDTH, JoinType.SMOOTH);
+        shapeDrawer.circle(size / 2f, size / 2f, size / 3f,
+                Constants.PLAYER_CIRCLE_WIDTH * playerTextureRegionScale, JoinType.SMOOTH);
 
         batch.end();
         playerFbo.end();
@@ -88,7 +90,7 @@ public class Map {
         playerTextureRegion.flip(false, true);
     }
 
-    private void createMapTexture(ShapeDrawer shapeDrawer) {
+    public void createMapTexture(ShapeDrawer shapeDrawer) {
         int width = (int) ((cols * Constants.CELL_SIZE) + Constants.MAP_GRID_LINE_WIDTH);
         int height = (int) ((rows * Constants.CELL_SIZE) + Constants.MAP_GRID_LINE_WIDTH);
 
@@ -100,11 +102,11 @@ public class Map {
             mapFbo.dispose();
         }
 
-        mapFbo = new FrameBuffer(Pixmap.Format.RGB565, width, height, false);
+        mapFbo = new FrameBuffer(Pixmap.Format.RGBA4444, width, height, false);
         mapFbo.begin();
         batch.begin();
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         drawGrid(shapeDrawer);
@@ -119,9 +121,9 @@ public class Map {
     public void createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
         playerLabels = new TextureRegion[players.length];
 
-        int totalHeight = ((int) playerLabelFont.getLineHeight()) * players.length;
+        int totalHeight = (((int) (playerLabelFont.getLineHeight() - (Constants.MAP_GRID_LINE_WIDTH / 2))) * players.length);
         int height = totalHeight / players.length;
-        int width = (int) (Constants.CELL_SIZE * 3f);
+        int width = (int) (((int) (Constants.CELL_SIZE * 3f)) * playerLabelRegionScale);
         float radius = height / 2f;
 
         Batch batch = shapeDrawer.getBatch();
@@ -131,11 +133,11 @@ public class Map {
             playerLabelFbo.dispose();
         }
 
-        playerLabelFbo = new FrameBuffer(Pixmap.Format.RGB565, width, totalHeight, false);
+        playerLabelFbo = new FrameBuffer(Pixmap.Format.RGBA4444, width, totalHeight, false);
         playerLabelFbo.begin();
         batch.begin();
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         for (int i = 0; i < playerLabels.length; i++) {
@@ -217,25 +219,25 @@ public class Map {
                     continue;
                 }
 
-                mapColorUpdated = false; // Might need a bit more testing
+                mapColorUpdated = false;
 
-                Direction direction = player.direction;
-                if (direction == Direction.UP && player.position.y < rows - 1 &&
+                Player.Direction direction = player.direction;
+                if (direction == Player.Direction.UP && player.position.y < rows - 1 &&
                         mapGrid[Math.round(player.position.y) + 1][Math.round(player.position.x)].isMovable) {
 
                     player.moveTo(new Vector2(player.position.x, player.position.y + 1), delta);
 
-                } else if (direction == Direction.RIGHT && player.position.x < cols - 1 &&
+                } else if (direction == Player.Direction.RIGHT && player.position.x < cols - 1 &&
                         mapGrid[Math.round(player.position.y)][Math.round(player.position.x) + 1].isMovable) {
 
                     player.moveTo(new Vector2(player.position.x + 1, player.position.y), delta);
 
-                } else if (direction == Direction.DOWN && player.position.y > 0 &&
+                } else if (direction == Player.Direction.DOWN && player.position.y > 0 &&
                         mapGrid[Math.round(player.position.y) - 1][Math.round(player.position.x)].isMovable) {
 
                     player.moveTo(new Vector2(player.position.x, player.position.y - 1), delta);
 
-                } else if (direction == Direction.LEFT && player.position.x > 0 &&
+                } else if (direction == Player.Direction.LEFT && player.position.x > 0 &&
                         mapGrid[Math.round(player.position.y)][Math.round(player.position.x) - 1].isMovable) {
 
                     player.moveTo(new Vector2(player.position.x - 1, player.position.y), delta);
@@ -252,6 +254,7 @@ public class Map {
 
                 setMapWeights(players);
                 setMapColors(playerManager, players);
+                updateCapturePercentage(playerManager);
             }
         }
     }
@@ -279,6 +282,7 @@ public class Map {
             int posX = Math.round(player.position.x);
             int posY = Math.round(player.position.y);
             if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].playerCount == 1) {
+                // TODO: Should we allow multiple players of the same team in the same location capture the cell?
                 mapGrid[posY][posX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
                 if (playerManager != null) {
                     playerManager.incrementScore(player);
@@ -288,6 +292,17 @@ public class Map {
         }
 
         fillSurroundedCells(playerManager, players);
+    }
+
+    private void updateCapturePercentage(PlayerManager playerManager) {
+        if (playerManager == null) {
+            return;
+        }
+
+        Array<TeamData> teamData = playerManager.getTeamData();
+        for (TeamData td : teamData) {
+            td.setCapturePercentage((this.rows * this.cols) - this.wallCount);
+        }
     }
 
     private void fillSurroundedCells(PlayerManager playerManager, Player[] players) {
@@ -364,64 +379,71 @@ public class Map {
     }
 
     public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
+        render(players, 0, shapeDrawer, camera, delta);
+    }
+
+    public void render(Player[] players, int playerIndex, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         Rectangle userViewRect = calcUserViewRect(camera);
 
-        drawColors(shapeDrawer, userViewRect, delta);
-
         Batch batch = shapeDrawer.getBatch();
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
-        drawGrid(userViewRect, batch);
+        drawColors(shapeDrawer, playerIndex, userViewRect, delta);
+        drawGrid(batch);
         drawPlayers(players, userViewRect, batch);
-        renderPlayerLabels(players, userViewRect, batch);
-
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        drawPlayerLabels(players, playerIndex, userViewRect, batch);
     }
 
     private void drawPlayers(Player[] players, Rectangle userViewRect, Batch batch) {
         for (Player player : players) {
-            player.render(userViewRect, batch, playerTextureRegion);
+            player.render(userViewRect, batch, playerTextureRegion, playerTextureRegionScale);
         }
     }
 
-    private void drawColors(ShapeDrawer shapeDrawer, Rectangle userViewRect, float delta) {
+    private void drawColors(ShapeDrawer shapeDrawer, int playerIndex, Rectangle userViewRect, float delta) {
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
                 float startX = j * Constants.CELL_SIZE;
                 float startY = i * Constants.CELL_SIZE;
 
-                if (mapGrid[i][j].cellColor != null && userViewRect.contains(startX, startY)) {
-                    shapeDrawer.setColor(mapGrid[i][j].cellColor);
-                    shapeDrawer.filledRectangle(startX, startY,
-                            Constants.CELL_SIZE, Constants.CELL_SIZE);
+                if (mapGrid[i][j].cellColor != null) {
+                    if (playerIndex == 0 && mapGrid[i][j].cellColor.a != 1f) {
+                        mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
+                    }
 
-                    mapGrid[i][j].cellColor.add(0, 0, 0, 2f * delta);
-
-                    // Use the constant color object to avoid too many redundant color objects
-                    Color constColor = PlayerColorHelper.getConstantColor(mapGrid[i][j].cellColor);
-                    if (constColor != null) {
-                        mapGrid[i][j].cellColor = constColor;
+                    if (userViewRect.contains(startX, startY)) {
+                        shapeDrawer.setColor(mapGrid[i][j].cellColor);
+                        shapeDrawer.filledRectangle(startX, startY, Constants.CELL_SIZE, Constants.CELL_SIZE);
                     }
                 }
             }
         }
     }
 
-    private void drawGrid(Rectangle userViewRect, Batch batch) {
-        // TODO: Optimization: Draw only the region that is in view
+    private void drawGrid(Batch batch) {
         batch.draw(mapTextureRegion, -Constants.MAP_GRID_LINE_WIDTH / 2, -Constants.MAP_GRID_LINE_WIDTH / 2);
     }
 
-    public void renderPlayerLabels(Player[] players, Rectangle userViewRect, Batch batch) {
+    public void drawPlayerLabels(Player[] players, int playerIndex, Rectangle userViewRect, Batch batch) {
         if (playerLabels != null) {
             for (int i = 0; i < players.length; i++) {
-                float posX = (players[i].position.x * Constants.CELL_SIZE) - (playerLabels[i].getRegionWidth() / 2f) + (Constants.CELL_SIZE / 2);
-                float posY = (players[i].position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
-                if (userViewRect.contains(posX + playerLabels[i].getRegionWidth(), posY - (Constants.CELL_SIZE / 2)) ||
-                        userViewRect.contains(posX, posY - (Constants.CELL_SIZE / 2))) {
-                    batch.draw(playerLabels[i], posX, posY);
+                if (i == playerIndex) {
+                    continue;
                 }
+                renderPlayerLabel(players[i], playerLabels[i], userViewRect, batch);
             }
+
+            // Render the current player's label on top of other labels
+            renderPlayerLabel(players[playerIndex], playerLabels[playerIndex], userViewRect, batch);
+        }
+    }
+
+    private void renderPlayerLabel(Player player, TextureRegion playerLabel, Rectangle userViewRect, Batch batch) {
+        float posX = (player.position.x * Constants.CELL_SIZE) - (playerLabel.getRegionWidth() / (playerLabelRegionScale * 2f)) + (Constants.CELL_SIZE / 2);
+        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
+        if (userViewRect.contains(posX + playerLabel.getRegionWidth(), posY - (Constants.CELL_SIZE / 2)) ||
+                userViewRect.contains(posX, posY - (Constants.CELL_SIZE / 2))) {
+            batch.draw(playerLabel, posX, posY,
+                    playerLabel.getRegionWidth() / playerLabelRegionScale, playerLabel.getRegionHeight() / playerLabelRegionScale);
         }
     }
 
@@ -506,7 +528,7 @@ public class Map {
         if (teamData.size == 2) {
             for (TeamData td : teamData) {
                 // For two team games, end the game when a team has captured more than 50% of the cells
-                if (100 * (td.score / (((double) this.rows * this.cols) - this.wallCount)) > 50.0) {
+                if (td.getCapturePercentage() > 50.0) {
                     return true;
                 }
             }

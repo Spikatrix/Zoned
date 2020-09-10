@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * <p>
  * Directory to save the .map and the .png preview files
  * - On Android: /storage/emulated/0/Android/data/com.cg.zoned/files/ZonedExternalMaps/
- * - On Linux: /home/username/Zoned/ZonedExternalMaps/
+ * - On Linux: /home/username/.zoned/ZonedExternalMaps/
  * - On Windows: C:\\Users\\username\\Documents\\Zoned\\ZonedExternalMaps\\
  */
 public class ExternalMapReader {
@@ -26,6 +26,7 @@ public class ExternalMapReader {
     private FileHandle externalMapDir;
 
     private Array<ExternalMapTemplate> loadedMaps;
+    private boolean enableExternalMapLogging = false;
 
     public ExternalMapReader() {
         this.loadedMaps = new Array<>();
@@ -39,12 +40,14 @@ public class ExternalMapReader {
         //  - On Desktop (Linux): /home/<username>/
         //  - On Desktop (Windows): C:\Users\<username>\
 
+        externalMapDir = null;
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
+            // Android
             externalMapDir = Gdx.files.external("Android/data/com.cg.zoned/files/" + mapDirName);
         } else if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             if (Gdx.files.getExternalStoragePath().startsWith("/home")) {
                 // Linux
-                externalMapDir = Gdx.files.external("Zoned/" + mapDirName);
+                externalMapDir = Gdx.files.external(".zoned/" + mapDirName);
             } else {
                 // Windows
                 externalMapDir = Gdx.files.external("Documents/Zoned/" + mapDirName);
@@ -55,7 +58,7 @@ public class ExternalMapReader {
             externalMapDir.mkdirs(); // Create them folders if they don't exist
         } catch (NullPointerException e) {
             e.printStackTrace();
-            Gdx.app.log(Constants.LOG_TAG, "Failed to create external map directory");
+            Gdx.app.error(Constants.LOG_TAG, "Failed to create external map directory");
         }
     }
 
@@ -66,82 +69,110 @@ public class ExternalMapReader {
         }
     }
 
+    public void parseExternalMap(String mapName) {
+        FileHandle mapFile = externalMapDir.child(mapName + ".map");
+        if (!mapFile.exists() || mapFile.isDirectory()) {
+            return;
+        }
+
+        parseMap(mapFile);
+    }
+
     private Array<FileHandle> scanExternalMaps() {
         Array<FileHandle> mapFiles = new Array<>();
 
         try {
-            Gdx.app.log(Constants.LOG_TAG, "Scanning for external maps on "
-                    + Gdx.files.getExternalStoragePath() + externalMapDir.path());
+            if (enableExternalMapLogging) {
+                Gdx.app.log(Constants.LOG_TAG, "Scanning for external maps on "
+                        + Gdx.files.getExternalStoragePath() + externalMapDir.path());
+            }
 
             for (FileHandle mapFile : externalMapDir.list(".map")) {
                 if (!mapFile.isDirectory()) {
-                    Gdx.app.log(Constants.LOG_TAG, "Map found: " + mapFile.name());
+                    if (enableExternalMapLogging) {
+                        Gdx.app.log(Constants.LOG_TAG, "Map found: " + mapFile.name());
+                    }
                     mapFiles.add(mapFile);
                 }
             }
-
-            Gdx.app.log(Constants.LOG_TAG, "External map scan complete (" + mapFiles.size + " maps found)");
+            if (enableExternalMapLogging) {
+                Gdx.app.log(Constants.LOG_TAG, "External map scan complete (" + mapFiles.size + " maps found)");
+            }
         } catch (NullPointerException e) {
             e.printStackTrace();
-            Gdx.app.log(Constants.LOG_TAG, "NPE during external map scan: " + e.getMessage());
+            Gdx.app.error(Constants.LOG_TAG, "NPE during external map scan: " + e.getMessage());
         }
 
         return mapFiles;
     }
 
     private void parseScannedMaps(Array<FileHandle> mapFiles) {
-        Gdx.app.log(Constants.LOG_TAG, "Preparing to parse the scanned maps");
+        if (enableExternalMapLogging) {
+            Gdx.app.log(Constants.LOG_TAG, "Preparing to parse the scanned maps");
+        }
         for (FileHandle mapFile : mapFiles) {
-            String fileContents = mapFile.readString();
+            parseMap(mapFile);
+        }
+        if (enableExternalMapLogging) {
+            Gdx.app.log(Constants.LOG_TAG, "Map parsing completed");
+        }
+    }
 
-            String mapGrid = null, mapName = mapFile.nameWithoutExtension();
-            Array<String> startPosNames = new Array<>();
-            int rowCount = 0, colCount = 0;
+    private void parseMap(FileHandle mapFile) {
+        String fileContents = mapFile.readString();
 
-            StringBuilder mapGridBuilder = new StringBuilder();
+        String mapGrid = null, mapName = mapFile.nameWithoutExtension();
+        Array<String> startPosNames = new Array<>();
+        int rowCount = 0, colCount = 0;
 
-            String rowCountPrompt = "Row count:";
-            String colCountPrompt = "Col count:";
+        StringBuilder mapGridBuilder = new StringBuilder();
 
-            Pattern startPosPattern = Pattern.compile(
-                    "(^[" + MapManager.VALID_START_POSITIONS.charAt(0) + "-" + MapManager.VALID_START_POSITIONS.charAt(MapManager.VALID_START_POSITIONS.length() - 1) + "])" +
-                            ":(.*)",
-                    Pattern.MULTILINE);
+        String rowCountPrompt = "Row count:";
+        String colCountPrompt = "Col count:";
 
-            String[] fileLines = fileContents.split("\r?\n");
-            for (String fileLine : fileLines) {
-                if (fileLine.startsWith(rowCountPrompt)) {
-                    rowCount = Integer.parseInt(fileLine.substring(rowCountPrompt.length()).trim());
-                } else if (fileLine.startsWith(colCountPrompt)) {
-                    colCount = Integer.parseInt(fileLine.substring(colCountPrompt.length()).trim());
-                } else {
-                    Matcher matcher = startPosPattern.matcher(fileLine);
-                    if (matcher.matches()) {
-                        char startPosChar = matcher.group(1).trim().charAt(0);
-                        String startPosName = matcher.group(2).trim();
+        Pattern startPosPattern = Pattern.compile(
+                "(^[" + MapManager.VALID_START_POSITIONS.charAt(0) + "-" + MapManager.VALID_START_POSITIONS.charAt(MapManager.VALID_START_POSITIONS.length() - 1) + "])" +
+                        ":(.*)",
+                Pattern.MULTILINE);
 
-                        int index = startPosChar - MapManager.VALID_START_POSITIONS.charAt(0);
-                        for (int j = startPosNames.size; j <= index; j++) {
-                            startPosNames.add(null);
-                        }
+        String[] fileLines = fileContents.split("\r?\n");
+        for (String fileLine : fileLines) {
+            if (fileLine.startsWith(rowCountPrompt)) {
+                rowCount = Integer.parseInt(fileLine.substring(rowCountPrompt.length()).trim());
+            } else if (fileLine.startsWith(colCountPrompt)) {
+                colCount = Integer.parseInt(fileLine.substring(colCountPrompt.length()).trim());
+            } else {
+                Matcher matcher = startPosPattern.matcher(fileLine);
+                if (matcher.matches()) {
+                    char startPosChar = matcher.group(1).trim().charAt(0);
+                    String startPosName = matcher.group(2).trim();
 
-                        startPosNames.set(index, startPosName);
-                    } else {
-                        mapGridBuilder.append(fileLine).append('\n');
+                    int index = startPosChar - MapManager.VALID_START_POSITIONS.charAt(0);
+                    for (int j = startPosNames.size; j <= index; j++) {
+                        startPosNames.add(null);
                     }
+
+                    startPosNames.set(index, startPosName);
+                } else {
+                    mapGridBuilder.append(fileLine).append('\n');
                 }
             }
-
-            mapGrid = mapGridBuilder.toString();
-
-            if (!mapGrid.isEmpty() && mapName != null && rowCount > 0 && colCount > 0) {
-                loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPosNames, rowCount, colCount));
-                Gdx.app.log(Constants.LOG_TAG, "Successfully parsed " + mapFile.name());
-            } else {
-                Gdx.app.log(Constants.LOG_TAG, "Failed to parse " + mapFile.name());
-            }
         }
-        Gdx.app.log(Constants.LOG_TAG, "Map parsing completed");
+
+        mapGrid = mapGridBuilder.toString();
+
+        if (!mapGrid.isEmpty() && mapName != null && rowCount > 0 && colCount > 0) {
+            loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPosNames, rowCount, colCount));
+            if (enableExternalMapLogging) {
+                Gdx.app.log(Constants.LOG_TAG, "Successfully parsed " + mapFile.name());
+            }
+        } else if (enableExternalMapLogging) {
+            Gdx.app.error(Constants.LOG_TAG, "Failed to parse " + mapFile.name());
+        }
+    }
+
+    public void enableExternalMapLogging(boolean enableExternalMapLogging) {
+        this.enableExternalMapLogging = enableExternalMapLogging;
     }
 
     public Array<ExternalMapTemplate> getLoadedMaps() {

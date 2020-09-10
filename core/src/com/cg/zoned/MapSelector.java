@@ -2,6 +2,7 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -124,6 +125,7 @@ public class MapSelector {
 
         Table contentTable = new Table();
         contentTable.center();
+        Array<Actor> focusableDialogButtons = new Array<>();
         for (int i = 0; i < prompts.spinnerVars.size + 1; i++) {
             Label label;
             if (i == 0) {
@@ -140,12 +142,16 @@ public class MapSelector {
                 int snapValue = prompts.spinnerVars.get(i - 1).snapValue;
 
                 label = new Label(prompts.spinnerVars.get(i - 1).prompt, skin);
-                spinners[i - 1] = new Spinner(skin, skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
+                spinners[i - 1] = new Spinner(skin, skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
                         64f * scaleFactor, true);
                 spinners[i - 1].generateValueRange(lowValue, highValue, skin);
                 spinners[i - 1].snapToStep(snapValue - lowValue);
                 contentTable.add(label).left();
                 contentTable.add(spinners[i - 1]);
+
+                focusableDialogButtons.add(spinners[i - 1].getLeftButton());
+                focusableDialogButtons.add(spinners[i - 1].getRightButton());
+                focusableDialogButtons.add(null);
             }
             contentTable.row();
         }
@@ -154,7 +160,7 @@ public class MapSelector {
         buttonTexts.add("Cancel");
         buttonTexts.add("Set");
 
-        stage.showDialog(contentTable, buttonTexts, false, scaleFactor,
+        stage.showDialog(contentTable, focusableDialogButtons, buttonTexts, false, scaleFactor,
                 new FocusableStage.DialogResultListener() {
                     @Override
                     public void dialogResult(String buttonText) {

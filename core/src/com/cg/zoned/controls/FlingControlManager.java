@@ -3,7 +3,6 @@ package com.cg.zoned.controls;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -11,26 +10,21 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveByAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.Constants;
 import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Player;
 
-public class FlingControlManager extends InputAdapter {
-    private Stage stage;
-    private Player[] players;
-    private boolean isSplitScreenMultiplayer;
-
-    private float scaleFactor;
+public class FlingControlManager extends ControlTypeEntity {
     private Texture arrowTexture;
 
     private Array<GameTouchPoint> clickPoints;
 
-    public FlingControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
+    public FlingControlManager() {
+    }
+
+    public void init(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
+        super.init(players, isSplitScreen, stage, scaleFactor, usedTextures);
+
         this.clickPoints = new Array<>();
-        this.players = players;
-        this.isSplitScreenMultiplayer = isSplitScreen;
-        this.stage = stage;
-        this.scaleFactor = scaleFactor;
 
         arrowTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"));
         usedTextures.add(arrowTexture);
@@ -40,7 +34,7 @@ public class FlingControlManager extends InputAdapter {
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
             int playerIndex = 0;
-            if (isSplitScreenMultiplayer) {
+            if (isSplitScreen) {
                 for (int i = 1; i < this.players.length; i++) {
                     if (screenX > ((stage.getWidth() / this.players.length) * i)) {
                         playerIndex++;
@@ -117,18 +111,18 @@ public class FlingControlManager extends InputAdapter {
                 MoveByAction moveAction;
                 if (Math.abs(subPoint.x) > Math.abs(subPoint.y)) {
                     if (subPoint.x > 0) {
-                        player.updatedDirection = Constants.Direction.RIGHT;
+                        player.updatedDirection = Player.Direction.RIGHT;
                         moveAction = Actions.moveBy(moveAnimationDistance, 0f, .2f);
                     } else {
-                        player.updatedDirection = Constants.Direction.LEFT;
+                        player.updatedDirection = Player.Direction.LEFT;
                         moveAction = Actions.moveBy(-moveAnimationDistance, 0f, .2f);
                     }
                 } else {
                     if (subPoint.y > 0) {
-                        player.updatedDirection = Constants.Direction.DOWN;
+                        player.updatedDirection = Player.Direction.DOWN;
                         moveAction = Actions.moveBy(0f, -moveAnimationDistance, .2f);
                     } else {
-                        player.updatedDirection = Constants.Direction.UP;
+                        player.updatedDirection = Player.Direction.UP;
                         moveAction = Actions.moveBy(0f, moveAnimationDistance, .2f);
                     }
                 }

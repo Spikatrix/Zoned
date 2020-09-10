@@ -1,5 +1,6 @@
 package com.cg.zoned.screens;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -11,6 +12,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -22,13 +24,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.cg.zoned.Constants;
+import com.cg.zoned.Assets;
+import com.cg.zoned.GameMode;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -50,7 +53,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private AnimationManager animationManager;
     private boolean showFPSCounter;
     private BitmapFont font;
-    private Texture roundedCornerBgColorTexture;
+    private NinePatch roundedCornerNP;
 
     private ParticleEffect emitterLeft, emitterRight;
 
@@ -65,13 +68,13 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         emitterLeft = new ParticleEffect();
         emitterRight = new ParticleEffect();
-        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpMainMenu();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
         animationManager.startMainMenuAnimation(mainStage, mainMenuUIButtons);
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
@@ -87,13 +90,14 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, 480, 640, 50);
-                // I suspect pixmap generation caused a noticeable lag so run in a new thread
+                final int radius = 40;
+                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, radius);
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
-                        roundedCornerBgColorTexture = new Texture(pixmap);
+                        Texture roundedCornerBgColorTexture = new Texture(pixmap);
                         usedTextures.add(roundedCornerBgColorTexture);
+                        roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
                         pixmap.dispose();
                     }
                 });
@@ -107,7 +111,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         //mainTable.setDebug(true);
         mainTable.center();
 
-        Label gameTitle = new Label("ZONED", game.skin, Constants.FONT_MANAGER.LARGE.getName(), Color.GREEN);
+        Label gameTitle = new Label("ZONED", game.skin, Assets.FontManager.STYLED_LARGE.getFontName(), Color.GREEN);
         mainTable.add(gameTitle).pad(10f * game.getScaleFactor());
         mainTable.row();
 
@@ -119,7 +123,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage(game.assets.getSettingsButtonTexture());
         HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage(game.assets.getCreditsButtonTexture());
         HoverImageButton devButton = null;
-        if (game.preferences.getBoolean(Constants.DEV_MODE_PREFERENCE, false)) {
+        if (game.preferences.getBoolean(Preferences.DEV_MODE_PREFERENCE, false)) {
             devButton = uiButtonManager.addDevButtonToStage(game.assets.getDevButtonTexture());
             devButton.addListener(new ClickListener() {
                 @Override
@@ -168,7 +172,9 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         }
         mainMenuUIButtons.add(exitButton);
 
-        mainStage.setFocusedActor(playButton);
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+            mainStage.setFocusedActor(playButton);
+        }
         mainStage.addActor(mainTable);
     }
 
@@ -201,7 +207,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                if (roundedCornerBgColorTexture == null) {
+                if (roundedCornerNP == null) {
                     // Thread didn't finish loading the pixmap
                     // Should almost never happen cause processors are hella fast, even mobile ones
                     return;
@@ -230,47 +236,32 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeTable.add(chooseMode).expandX().pad(20f).colspan(2);
         playModeTable.row();
 
-        final int gameModeCount = 2;
-
-        TextureRegionDrawable whiteBG = new TextureRegionDrawable(roundedCornerBgColorTexture);
-
-        String[] backgroundImageLocations = new String[]{
-                "icons/multiplayer_icons/ic_splitscreen_multiplayer.png",
-                "icons/multiplayer_icons/ic_local_multiplayer.png",
+        final GameMode[] gameModes = new GameMode[]{
+                new GameMode("Splitscreen\nMultiplayer", "icons/multiplayer_icons/ic_splitscreen_multiplayer.png", PlayerSetUpScreen.class),
+                new GameMode("Local\nNetwork\nMultiplayer", "icons/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
         };
-        String[] modeLabelStrings = new String[]{
-                "Splitscreen\nMultiplayer",
-                "Local\nNetwork\nMultiplayer",
-        };
-        final Class[] screenClasses = new Class[]{
-                PlayerSetUpScreen.class,
-                HostJoinScreen.class,
-        };
-
-        if (screenClasses.length != gameModeCount ||
-                modeLabelStrings.length != gameModeCount ||
-                backgroundImageLocations.length != gameModeCount) {
-            throw new IndexOutOfBoundsException("Game mode count does not match asset the count");
-        }
 
         final float normalAlpha = .15f;
         final float hoverAlpha = .3f;
         final float clickAlpha = .7f;
-        for (int i = 0; i < gameModeCount; i++) {
+        for (int i = 0; i < gameModes.length; i++) {
             Table table = new Table();
             table.center();
 
-            final Image backgroundColorImage = new Image(whiteBG);
+            final Image backgroundColorImage = new Image(roundedCornerNP);
             backgroundColorImage.getColor().a = normalAlpha;
             backgroundColorImage.setScaling(Scaling.stretch);
 
-            Texture backgroundImageTexture = new Texture(Gdx.files.internal(backgroundImageLocations[i]));
-            usedTextures.add(backgroundImageTexture);
-            Image backgroundImage = new Image(backgroundImageTexture);
-            backgroundImage.setScaling(Scaling.fit);
-            backgroundImage.getColor().a = .3f;
+            Image backgroundImage = null;
+            if (gameModes[i].previewLocation != null) {
+                Texture backgroundImageTexture = new Texture(Gdx.files.internal(gameModes[i].previewLocation));
+                usedTextures.add(backgroundImageTexture);
+                backgroundImage = new Image(backgroundImageTexture);
+                backgroundImage.setScaling(Scaling.fit);
+                backgroundImage.getColor().a = .3f;
+            }
 
-            Label modeLabel = new Label(modeLabelStrings[i], game.skin);
+            Label modeLabel = new Label(gameModes[i].name, game.skin);
             modeLabel.setAlignment(Align.center);
 
             final int finalI = i;
@@ -310,18 +301,30 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                     emitterLeft.allowCompletion();
                     emitterRight.allowCompletion();
                     try {
-                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) screenClasses[finalI].getConstructors()[0].newInstance(game));
+                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) gameModes[finalI].targetClass.getConstructors()[0].newInstance(game));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             });
 
-            Stack stack = new Stack(backgroundColorImage, backgroundImage, modeLabel);
+            Stack stack;
+            if (backgroundImage != null) {
+                stack = new Stack(backgroundColorImage, backgroundImage, modeLabel);
+            } else {
+                stack = new Stack(backgroundColorImage, modeLabel);
+            }
 
-            table.add(stack).expand().pad(40f);
+            float optionPadding = 50f;
+            if (i == 0) {
+                table.add(stack).grow().padLeft(optionPadding).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
+            } else if (i == gameModes.length - 1) {
+                table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding);
+            } else {
+                table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
+            }
 
-            playModeTable.add(table).expand().uniform();
+            playModeTable.add(table).grow().uniform();
             playModeStage.addFocusableActor(table);
         }
 
@@ -369,7 +372,10 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         emitterRight.setPosition(viewport.getWorldWidth(), 0);
     }
 
-    private Pixmap getRoundedCornerPixmap(Color color, int width, int height, int radius) {
+    public Pixmap getRoundedCornerPixmap(Color color, int radius) {
+        final int width = 10 + (radius * 2);
+        final int height = 10 + (radius * 2);
+
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
         pixmap.setColor(color);
         pixmap.fillCircle(radius, radius, radius);

@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class Constants {
-    public static final String GAME_VERSION = "0.0.2-beta";
+    public static final String GAME_VERSION = "0.0.3-dev";
     // Remember to update the versionName in Android's build.gradle
     // And project.setVersion in Desktop's build.gradle
     // And the version in the badge in the README file
@@ -57,7 +57,7 @@ public final class Constants {
      */
     public static final Map<String, Color> PLAYER_COLORS = new LinkedHashMap<String, Color>() {
         {
-            put("GREEN",  new Color(0,    0.8f, 0,    1.0f));
+            put("GREEN",  new Color(0,    0.8f, 0,    1.0f)); // Alpha won't matter
             put("RED",    new Color(0.8f, 0,    0,    1.0f));
             put("BLUE",   new Color(0,    0,    0.8f, 1.0f));
             put("YELLOW", new Color(0.8f, 0.8f, 0,    1.0f));
@@ -86,49 +86,17 @@ public final class Constants {
 
     public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
     // Values from https://developer.android.com/training/multiscreen/screendensities
-    public static final float ANDROID_LDPI_FONT_SCALE_FACTOR = 0.75f;
-    public static final float ANDROID_MDPI_FONT_SCALE_FACTOR = 1.0f;
-    public static final float ANDROID_HDPI_FONT_SCALE_FACTOR = 1.5f;
-    public static final float ANDROID_XHDPI_FONT_SCALE_FACTOR = 2.0f;
-    public static final float ANDROID_XXHDPI_FONT_SCALE_FACTOR = 3.0f;
+    public static final float ANDROID_LDPI_FONT_SCALE_FACTOR    = 0.75f;
+    public static final float ANDROID_MDPI_FONT_SCALE_FACTOR    = 1.0f;
+    public static final float ANDROID_HDPI_FONT_SCALE_FACTOR    = 1.5f;
+    public static final float ANDROID_XHDPI_FONT_SCALE_FACTOR   = 2.0f;
+    public static final float ANDROID_XXHDPI_FONT_SCALE_FACTOR  = 3.0f;
     public static final float ANDROID_XXXHDPI_FONT_SCALE_FACTOR = 4.0f;
 
     public static final String LOG_TAG = "ZONED";
 
-    public static final String ZONED_PREFERENCES = "Zoned_Preferences";
-    public static final String FPS_PREFERENCE = "FPS_Preference";
-    public static final String CONTROL_PREFERENCE = "Control_Preference";
-    public static final String NAME_PREFERENCE = "Name_Preference"; // The last used name
-    public static final String SHOW_TUTORIAL_PREFERENCE = "Show_Tutorial_Preference"; // Shows the tutorial dialog prompt the first time
-    public static final String SPLITSCREEN_PLAYER_COUNT_PREFERENCE = "Splitscreen_Player_Count_Preference";
-    public static final String MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE = "Map_Start_Pos_Splitscreen_Count_Preference";
-    public static final String DEV_MODE_PREFERENCE = "Dev_Mode_Preference";
-
-    public static final int PIE_MENU_CONTROL = 0;
-    public static final int FLING_CONTROL = 1;
-
-    public enum Direction {UP, LEFT, DOWN, RIGHT}
-
-    public enum FONT_MANAGER {
-        LARGE("large-font", 80),
-        REGULAR("regular-font", 32),
-        SMALL("small-font", 18),
-        PLAYER_LABEL("player-label-font-noscale", 20);
-
-        private String name;
-        private int size;
-
-        FONT_MANAGER(String name, int size) {
-            this.name = name;
-            this.size = size;
-        }
-
-        public int getSize() {
-            return size;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
+    // Preferences moved to Preferences.java
+    // Directions moved to Player.java
+    // Controls moved to managers/ControlManager.java
+    // Fonts moved to Assets.java
 }

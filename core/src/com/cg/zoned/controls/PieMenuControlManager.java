@@ -2,7 +2,6 @@ package com.cg.zoned.controls;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
@@ -15,33 +14,28 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
-import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
 import com.cg.zoned.ShapeDrawer;
 import com.payne.games.piemenu.PieMenu;
 
 import java.util.Arrays;
 
-public class PieMenuControlManager extends InputAdapter {
-    private Stage stage;
-    private Player[] players;
-    private boolean isSplitScreenMultiplayer;
-
+public class PieMenuControlManager extends ControlTypeEntity {
     private int piemenuRadius = 80;
-    private float scaleFactor;
     private PieMenu[] menus;
     private int[] pointers;
     private Vector2[] coords;
     private Image[][] arrowImages;
 
-    public PieMenuControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
-        this.players = players;
-        this.isSplitScreenMultiplayer = isSplitScreen;
-        this.stage = stage;
+    public PieMenuControlManager() {
+    }
+
+    public void init(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
+        super.init(players, isSplitScreen, stage, scaleFactor, usedTextures);
+
         this.menus = new PieMenu[players.length];
         this.pointers = new int[players.length];
         this.coords = new Vector2[players.length];
-        this.scaleFactor = scaleFactor;
         Arrays.fill(pointers, -1);
         Arrays.fill(coords, new Vector2());
 
@@ -96,13 +90,13 @@ public class PieMenuControlManager extends InputAdapter {
                     resetArrowColors(arrowImages[finalI]);
                     arrowImages[finalI][highlightedIndex].setColor(Color.BLACK);
                     if (highlightedIndex == 0) {
-                        players[finalI].updatedDirection = Constants.Direction.UP;
+                        players[finalI].updatedDirection = Player.Direction.UP;
                     } else if (highlightedIndex == 1) {
-                        players[finalI].updatedDirection = Constants.Direction.LEFT;
+                        players[finalI].updatedDirection = Player.Direction.LEFT;
                     } else if (highlightedIndex == 2) {
-                        players[finalI].updatedDirection = Constants.Direction.DOWN;
+                        players[finalI].updatedDirection = Player.Direction.DOWN;
                     } else if (highlightedIndex == 3) {
-                        players[finalI].updatedDirection = Constants.Direction.RIGHT;
+                        players[finalI].updatedDirection = Player.Direction.RIGHT;
                     }
                 }
             });
@@ -128,7 +122,7 @@ public class PieMenuControlManager extends InputAdapter {
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
             int playerIndex = 0;
-            if (isSplitScreenMultiplayer) {
+            if (isSplitScreen) {
                 for (int i = 1; i < this.players.length; i++) {
                     if (screenX > ((stage.getWidth() / this.players.length) * i)) {
                         playerIndex++;

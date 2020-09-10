@@ -1,11 +1,14 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferClientConnect;
+import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.listeners.ClientLobbyListener;
 import com.cg.zoned.ui.DropDownMenu;
@@ -76,12 +79,59 @@ public class ClientLobbyConnectionManager {
      *
      * @param mapName        The name of the new map
      * @param mapExtraParams The extra params of the new map, if any
+     * @param mapHash        The hash of the contents of the map in the server
      */
-    public void newMapSet(final String mapName, final int[] mapExtraParams) {
+    public void newMapSet(final String mapName, final int[] mapExtraParams, final int mapHash) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                clientPlayerListener.mapChanged(mapName, mapExtraParams);
+                clientPlayerListener.mapChanged(mapName, mapExtraParams, mapHash, false);
+            }
+        });
+    }
+
+    /**
+     * Called by the client to request new external map data as it doesn't exist in the client
+     *
+     * @param mapName The name of the map to request from the server
+     */
+    public void requestMap(String mapName) {
+        BufferMapData bmd = new BufferMapData();
+        bmd.mapName = mapName;
+        bmd.mapData = null;
+        bmd.mapPreviewData = null;
+
+        client.sendTCP(bmd);
+    }
+
+    public void downloadMap(final String mapName, final String mapData, final int mapHash, final byte[] mapPreviewData) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                FileHandle externalMapDir = clientPlayerListener.getExternalMapDir();
+
+                try {
+                    FileHandle mapFile = externalMapDir.child(mapName + ".map");
+                    mapFile.writeString(mapData, false);
+                } catch (GdxRuntimeException e) {
+                    clientPlayerListener.displayServerError("Failed to download the map '" + "' (" + e.getMessage() + ")");
+                    return;
+                }
+
+                if (mapPreviewData != null) {
+                    try {
+                        FileHandle mapPreviewDataFile = externalMapDir.child(mapName + ".png");
+                        mapPreviewDataFile.writeBytes(mapPreviewData, false);
+
+                        Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'");
+                    } catch (GdxRuntimeException e) {
+                        Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'. Failed to download preview");
+                    }
+                } else {
+                    Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'. Map preview unavailable");
+                }
+
+                clientPlayerListener.mapChanged(mapName, null, mapHash, true);
             }
         });
     }
@@ -155,8 +205,10 @@ public class ClientLobbyConnectionManager {
 
         void disconnected();
 
-        void mapChanged(String mapName, int[] extraParams);
+        void mapChanged(String mapName, int[] extraParams, int mapHash, boolean reloadExternalMaps);
 
         void updatePlayers(Array<String> playerNames, String[] nameStrings, String[] whoStrings, String[] readyStrings, String[] colorStrings, String[] startPosStrings);
+
+        FileHandle getExternalMapDir();
     }
 }

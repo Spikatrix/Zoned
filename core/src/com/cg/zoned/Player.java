@@ -7,30 +7,27 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.cg.zoned.Constants.Direction;
 
 public class Player extends InputAdapter {
     public Color color;
     public String name;
-    public int score;
 
-    public Vector2 position;
     public int[] controls;
     public Direction direction;
     public Direction updatedDirection;
 
+    public Vector2 position;
     public Vector2 prevPosition;
+    public Vector2 targetPosition;
 
     public boolean dummyMoving;
     private Vector2 dummyPosition;
 
-    public Vector2 targetPosition;
     private float timeElapsed;
 
     public Player(Color color, String name) {
         this.color = color;
         this.name = name;
-        this.score = 0;
 
         this.position = new Vector2();
         this.prevPosition = null;
@@ -69,7 +66,7 @@ public class Player extends InputAdapter {
         }
     }
 
-    public void dummyMoveTo(Vector2 targetPosition, float delta) { // Simulate a fake movement for proper timing for server-client synchronization
+    public void dummyMoveTo(Vector2 targetPosition, float delta) { // Simulate a fake movement for timed movement from all players
         if (this.targetPosition == null) {
             this.targetPosition = targetPosition;
             this.dummyMoving = true;
@@ -87,12 +84,14 @@ public class Player extends InputAdapter {
         }
     }
 
-    public void render(Rectangle userViewRect, Batch batch, TextureRegion playerTexture) {
+    public void render(Rectangle userViewRect, Batch batch, TextureRegion playerTexture, float playerTextureRegionScale) {
         float startX = (this.position.x * Constants.CELL_SIZE);
         float startY = (this.position.y * Constants.CELL_SIZE);
 
         if (userViewRect.contains(startX, startY)) {
-            batch.draw(playerTexture, startX, startY);
+            batch.draw(playerTexture, startX, startY,
+                    playerTexture.getRegionWidth() / playerTextureRegionScale,
+                    playerTexture.getRegionHeight() / playerTextureRegionScale);
         }
     }
 
@@ -110,4 +109,6 @@ public class Player extends InputAdapter {
 
         return false;
     }
+
+    public enum Direction {UP, LEFT, DOWN, RIGHT}
 }

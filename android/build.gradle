@@ -21,11 +21,13 @@ android {
         minSdkVersion 14
         targetSdkVersion 29
         versionCode 2
-        versionName "0.0.2-beta"
+        versionName "0.0.3-dev"
         // Remember to update the GAME_VERSION in Constants.java
         // And project.setVersion in Desktop's build.gradle
         // And the version in the badge in the README file
         // Or for Linux users, use the versionUpdate.sh script
+
+        setProperty("archivesBaseName", "${appName}-${versionName}")
     }
     buildTypes {
         release {

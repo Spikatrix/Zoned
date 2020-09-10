@@ -22,8 +22,10 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.KryoHelper;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -39,6 +41,9 @@ import java.net.InetAddress;
 
 public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
+
+    // Bigger buffer as map preview images, which is bigger than text data, are sent
+    private static final int CONNECTION_BUFFER_SIZE = 131072; // 2^17
 
     private Array<Texture> usedTextures = new Array<>();
 
@@ -57,7 +62,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         dialogButtonTexts.add("OK");
     }
@@ -66,7 +71,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     public void show() {
         setUpStage();
         setUpBackButton();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
         animationManager.fadeInStage(stage);
     }
 
@@ -84,14 +89,14 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         Image infoImage = new Image(infoIconTexture);
         Label infoLabel = new Label("Make sure that all players\nare on the same local network", game.skin);
         infoLabel.setAlignment(Align.center);
-        infoTable.add(infoImage).height(game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight())
-                .width(game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight()).padRight(20f);
+        infoTable.add(infoImage).height(game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight())
+                .width(game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight()).padRight(20f);
         infoTable.add(infoLabel).pad(10f);
         stage.addActor(infoTable);
 
         Label playerNameLabel = new Label("Player name: ", game.skin, "themed");
         final TextField playerNameField = new TextField("", game.skin);
-        playerNameField.setText(game.preferences.getString(Constants.NAME_PREFERENCE, null));
+        playerNameField.setText(game.preferences.getString(Preferences.NAME_PREFERENCE, null));
         playerNameField.setCursorPosition(playerNameField.getText().length());
         table.add(playerNameLabel).right();
         table.add(playerNameField).width(playerNameField.getPrefWidth() * game.getScaleFactor()).left();
@@ -121,7 +126,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
                 String name = playerNameField.getText().trim();
                 if (!name.isEmpty()) {
-                    game.preferences.putString(Constants.NAME_PREFERENCE, name);
+                    game.preferences.putString(Preferences.NAME_PREFERENCE, name);
                     game.preferences.flush();
 
                     startServerLobby(playerNameField.getText().trim());
@@ -141,7 +146,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                 String name = playerNameField.getText().trim();
                 if (!name.isEmpty()) {
                     if (searchingLabel.getColor().a == 0) {
-                        game.preferences.putString(Constants.NAME_PREFERENCE, name);
+                        game.preferences.putString(Preferences.NAME_PREFERENCE, name);
                         game.preferences.flush();
 
                         searchingLabel.setText("Searching for servers...");
@@ -179,7 +184,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void startServerLobby(final String playerName) {
-        final Server server = new Server();
+        final Server server = new Server(CONNECTION_BUFFER_SIZE, 2048);
 
         Kryo kryo = server.getKryo();
         KryoHelper.registerClasses(kryo);
@@ -199,7 +204,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void startClientLobby(final String playerName, final Label searchingLabel) {
-        final Client client = new Client();
+        final Client client = new Client(8192, CONNECTION_BUFFER_SIZE);
 
         Kryo kryo = client.getKryo();
         KryoHelper.registerClasses(kryo);

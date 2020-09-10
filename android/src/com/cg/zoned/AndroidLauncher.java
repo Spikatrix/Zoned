@@ -37,6 +37,6 @@ public class AndroidLauncher extends AndroidApplication {
         config.useCompass = false;
         config.hideStatusBar = true;
         config.useImmersiveMode = true;
-        initialize(new Zoned(), config);
+        initialize(new Zoned(null), config); // Discord RPC is not available on Android, hence null
     }
 }

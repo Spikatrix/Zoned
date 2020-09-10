@@ -11,7 +11,8 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.ParallelAction;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.Container;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Zoned;
 
@@ -171,34 +172,54 @@ public class AnimationManager {
         stage.addAction(fadeOutAnimation);
     }
 
-    public void startVictoryAnimation(final Stage stage, Table[] tableRows) {
-        for (int i = 0; i < tableRows.length; i++) {
-            tableRows[i].setTransform(true);
-            tableRows[i].setOrigin(tableRows[i].getPrefWidth() / 2, tableRows[i].getPrefHeight() / 2);
-            tableRows[i].setScale(0f);
-            tableRows[i].getColor().a = 0f;
-
-            ParallelAction fadeZoomOutAnimation = new ParallelAction();
-            fadeZoomOutAnimation.addAction(Actions.fadeIn((i + 1) * .2f, Interpolation.smooth));
-            fadeZoomOutAnimation.addAction(Actions.scaleTo(1f, 1f, (i + 1) * .2f, Interpolation.smooth));
-
-            if (i == tableRows.length - 1) {
-                SequenceAction finalFadeZoomOutAnimation = new SequenceAction();
-                finalFadeZoomOutAnimation.addAction(fadeZoomOutAnimation);
-                finalFadeZoomOutAnimation.addAction(Actions.run(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (animationListener != null) {
-                            animationListener.animationEnd(stage);
-                        }
-                    }
-                }));
-
-                tableRows[i].addAction(finalFadeZoomOutAnimation);
-            } else {
-                tableRows[i].addAction(fadeZoomOutAnimation);
+    public void startScoreBoardAnimation(final Stage stage, Container<Label> scoreBoardTitle, final Actor[][] actors, float rowHeightScale, float padding) {
+        for (Actor[] rowActors : actors) {
+            for (Actor actor : rowActors) {
+                actor.getColor().a = 0f;
             }
         }
+
+        // TODO: Tweak animations to make it more natural
+
+        float moveAmount = ((((scoreBoardTitle.getActor().getPrefHeight() * rowHeightScale) + padding) * actors.length) / 2) + (padding * 2);
+        scoreBoardTitle.addAction(Actions.sequence(
+                Actions.moveBy(0, -moveAmount, .1f, Interpolation.exp10),
+                Actions.fadeIn(.7f, Interpolation.smoother),
+                Actions.moveBy(0, moveAmount, .2f * actors.length, Interpolation.smoother),
+                Actions.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < actors.length; i++) {
+                            for (int j = 0; j < actors[i].length; j++) {
+                                float moveAmount = actors[i][j].getHeight();
+
+                                actors[i][j].addAction(Actions.moveBy(0, moveAmount, .1f, Interpolation.exp10));
+
+                                ParallelAction fadeFallInAnimation = new ParallelAction();
+                                fadeFallInAnimation.addAction(Actions.fadeIn((i + 1) * .2f, Interpolation.smooth));
+                                fadeFallInAnimation.addAction(Actions.moveBy(0, -moveAmount, (i + 1) * .1f, Interpolation.smooth));
+
+                                if (i == actors.length - 1 && j == actors[i].length - 1) {
+                                    SequenceAction finalFadeZoomOutAnimation = new SequenceAction();
+                                    finalFadeZoomOutAnimation.addAction(fadeFallInAnimation);
+                                    finalFadeZoomOutAnimation.addAction(Actions.run(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (animationListener != null) {
+                                                animationListener.animationEnd(stage);
+                                            }
+                                        }
+                                    }));
+
+                                    actors[i][j].addAction(finalFadeZoomOutAnimation);
+                                } else {
+                                    actors[i][j].addAction(fadeFallInAnimation);
+                                }
+                            }
+                        }
+                    }
+                })
+        ));
     }
 
     public void setAnimationListener(AnimationListener animationListener) {

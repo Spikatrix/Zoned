@@ -136,6 +136,10 @@
 			"name": "select-box-pressed",
 			"color": "color"
 		},
+		"select-box-disabled-c": {
+			"name": "select-box-disabled",
+			"color": "color"
+		},
 		"slider-before-c": {
 			"name": "slider-before",
 			"color": "color"
@@ -247,7 +251,7 @@
 			"checkboxOn": "checkbox-pressed-c",
 			"checkboxOff": "checkbox-c",
 			"checkboxOver": "checkbox-over-c",
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed",
 			"downFontColor": "text-selected",
 			"checkedFontColor": "text-selected"
@@ -256,7 +260,7 @@
 			"checkboxOn": "radio-pressed-c",
 			"checkboxOff": "radio-c",
 			"checkboxOver": "radio-over-c",
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "custom-color",
 			"downFontColor": "selected",
 			"checkedFontColor": "text-themed"
@@ -271,7 +275,7 @@
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton$ImageTextButtonStyle": {
 		"default": {
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed",
 			"downFontColor": "text-selected",
 			"up": "button-c",
@@ -284,7 +288,7 @@
 			"imageOver": "checkbox-over-c",
 			"imageChecked": "checkbox-pressed-c",
 			"imageCheckedOver": "checkbox-pressed-over-c",
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed",
 			"downFontColor": "text-selected",
 			"checkedFontColor": "text-selected"
@@ -295,7 +299,7 @@
 			"imageOver": "radio-over-c",
 			"imageChecked": "radio-pressed-c",
 			"imageCheckedOver": "radio-over-c",
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed",
 			"downFontColor": "text-selected",
 			"checkedFontColor": "text-selected"
@@ -303,17 +307,17 @@
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle": {
 		"default": {
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text"
 		},
 		"themed": {
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed"
 		}
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle": {
 		"default": {
-			"font": "regular-font",
+			"font": "regular",
 			"fontColorSelected": "selected",
 			"fontColorUnselected": "text-themed",
 			"selection": "color",
@@ -342,12 +346,13 @@
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.SelectBox$SelectBoxStyle": {
 		"default": {
-			"font": "regular-font",
+			"font": "regular",
 			"background": "select-box-c",
 			"scrollStyle": "default",
 			"listStyle": "default",
 			"backgroundOver": "select-box-over-c",
-			"backgroundOpen": "select-box-pressed-c"
+			"backgroundOpen": "select-box-pressed-c",
+			"backgroundDisabled": "select-box-disabled-c"
 		}
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.Slider$SliderStyle": {
@@ -376,7 +381,7 @@
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle": {
 		"default": {
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed",
 			"downFontColor": "text-selected",
 			"up": "button-c",
@@ -386,7 +391,7 @@
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.TextField$TextFieldStyle": {
 		"default": {
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed",
 			"background": "textfield-c",
 			"focusedBackground": "textfield-selected-c",
@@ -394,7 +399,7 @@
 			"selection": "selected"
 		},
 		"login": {
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed",
 			"background": "textfield-login-c",
 			"focusedBackground": "textfield-login-selected-c",
@@ -402,7 +407,7 @@
 			"selection": "selected"
 		},
 		"password": {
-			"font": "regular-font",
+			"font": "regular",
 			"fontColor": "text-themed",
 			"background": "textfield-password-c",
 			"focusedBackground": "textfield-password-selected-c",
@@ -432,7 +437,7 @@
 	"com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle": {
 		"default": {
 			"background": "window-c",
-			"titleFont": "regular-font",
+			"titleFont": "regular",
 			"titleFontColor": "text-themed"
 		}
 	}

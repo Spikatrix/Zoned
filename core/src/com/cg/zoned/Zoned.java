@@ -8,6 +8,7 @@ import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import com.cg.zoned.managers.DiscordRPCBridge;
 import com.cg.zoned.managers.DiscordRPCManager;
 import com.cg.zoned.screens.LoadingScreen;
 
@@ -20,12 +21,16 @@ public class Zoned extends Game {
 
     private static float SCALE_FACTOR = 1.0f;
 
+    public Zoned(DiscordRPCBridge discordRPCBridge) {
+        super();
+        this.discordRPCManager = new DiscordRPCManager(discordRPCBridge);
+    }
+
     @Override
     public void create() {
         Gdx.app.setLogLevel(Gdx.app.LOG_DEBUG);
         Gdx.input.setCatchKey(Input.Keys.BACK, true);
 
-        setUpDiscordRPC();
         setScaleFactor();
         assets = new Assets();
 
@@ -65,11 +70,6 @@ public class Zoned extends Game {
 
     public void setAssetManager(AssetManager assetManager) {
         assets.setAssetManager(assetManager);
-    }
-
-    private void setUpDiscordRPC() {
-        discordRPCManager = new DiscordRPCManager();
-        discordRPCManager.initRPC();
     }
 
     @Override

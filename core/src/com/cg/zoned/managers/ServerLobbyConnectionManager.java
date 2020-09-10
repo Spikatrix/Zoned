@@ -1,6 +1,7 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -8,12 +9,15 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.SnapshotArray;
 import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferGameStart;
+import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ServerLobbyListener;
+import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
 import com.cg.zoned.ui.DropDownMenu;
+import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
 
@@ -94,7 +98,8 @@ public class ServerLobbyConnectionManager {
             @Override
             public void run() {
                 if (!Constants.GAME_VERSION.equals(clientGameVersion)) {
-                    rejectConnection(connection, "Server client version mismatch\nServer game version: " + Constants.GAME_VERSION + "\nYour game version: " + clientGameVersion);
+                    rejectConnection(connection, "Server client version mismatch!\n" +
+                            "Server game version: " + Constants.GAME_VERSION + "\nYour game version: " + clientGameVersion);
                     return;
                 }
 
@@ -182,12 +187,7 @@ public class ServerLobbyConnectionManager {
             }
         }
 
-        Connection[] connections = server.getConnections();
-        for (int i = 0; i < connections.length; i++) {
-            if (playerNameResolved.get(i)) {
-                connections[i].sendTCP(bpd);
-            }
-        }
+        sentToAcceptedClients(bpd);
     }
 
     /**
@@ -235,9 +235,13 @@ public class ServerLobbyConnectionManager {
         });
     }
 
-    public void acceptPlayer(int playerIndex, MapManager mapManager) {
+    /**
+     * Called when a player is accepted by the server
+     *
+     * @param playerIndex The index of the player accepted
+     */
+    public void acceptPlayer(int playerIndex) {
         playerNameResolved.set(playerIndex, true);
-        sendMapDetails(playerIndex, mapManager);
     }
 
     /**
@@ -252,21 +256,84 @@ public class ServerLobbyConnectionManager {
         // Send map details to the client
         BufferNewMap bnm = new BufferNewMap();
         bnm.mapName = mapManager.getPreparedMap().getName();
+        bnm.mapHash = mapManager.getMap(bnm.mapName).getMapData().hashCode();
         bnm.mapExtraParams = extraParams != null ? extraParams.extraParams : null;
 
-        if (playerIndex > -1) {
+        if (playerIndex > -1 && playerNameResolved.get(playerIndex)) {
             Connection connection = playerConnections.get(playerIndex);
             connection.sendTCP(bnm);
         } else {
-            server.sendToAllTCP(bnm);
+            sentToAcceptedClients(bnm);
         }
     }
 
-    public String validateServerData(SnapshotArray<Actor> playerItems) {
-        if (server.getConnections().length < 1) {
-            return "Insufficient players to start the match";
+    /**
+     * Called when a client requests external map data which it did not have
+     * Server serves the map file data and its preview to the client
+     *
+     * @param connection The connection of the client that requested the map data
+     * @param mapName    The name of the map requested by the client
+     */
+    public void serveMap(final Connection connection, final String mapName) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                FileHandle externalMapDir = serverPlayerListener.getExternalMapDir();
+                FileHandle mapFile = Gdx.files.external(externalMapDir + "/" + mapName + ".map");
+                FileHandle mapPreviewFile = Gdx.files.external(externalMapDir + "/" + mapName + ".png");
+
+                MapEntity map = serverPlayerListener.fetchMap(mapName);
+
+                BufferMapData bmd = new BufferMapData();
+                bmd.mapName = mapName;
+                bmd.mapData = mapFile.readString();
+                bmd.mapHash = map.getMapData().hashCode();
+                if (mapPreviewFile.exists()) {
+                    bmd.mapPreviewData = mapPreviewFile.readBytes();
+                } else {
+                    bmd.mapPreviewData = null;
+                }
+
+                try {
+                    connection.sendTCP(bmd);
+                } catch (KryoException e) {
+                    // Probably a buffer overflow due to the map preview image being too big
+                    Gdx.app.log(Constants.LOG_TAG, "Failed to serve map data (Is the map preview too large?): " + e.getMessage());
+                    Gdx.app.log(Constants.LOG_TAG, "Retrying to server without the map preview image...");
+
+                    // Resend map data without the preview
+                    bmd.mapPreviewData = null;
+                    connection.sendTCP(bmd);
+                }
+            }
+        });
+    }
+
+    /**
+     * Sends the specified packets to only the accepted clients rather than all of them
+     *
+     * @param packet The object to send
+     */
+    private void sentToAcceptedClients(Object packet) {
+        if (playerNameResolved.size == 0) {
+            return;
         }
 
+        Connection[] connections = server.getConnections();
+        for (int i = 0; i < connections.length; i++) {
+            if (playerNameResolved.get(i)) {
+                connections[i].sendTCP(packet);
+            }
+        }
+    }
+
+    /**
+     * Called to validate all data before starting the match
+     *
+     * @param playerItems The array of player data
+     * @return null if no errors, a string showing the error otherwise
+     */
+    public String validateServerData(SnapshotArray<Actor> playerItems) {
         for (int i = 1; i < playerItems.size; i++) {
             Table playerItem = (Table) playerItems.get(i);
 
@@ -282,7 +349,7 @@ public class ServerLobbyConnectionManager {
 
     public void broadcastGameStart() {
         BufferGameStart bgs = new BufferGameStart();
-        server.sendToAllTCP(bgs);
+        sentToAcceptedClients(bgs);
 
         emptyBuffers();
     }
@@ -320,5 +387,9 @@ public class ServerLobbyConnectionManager {
         void updatePlayerDetails(int index, String name, String who, String ready, String color, String startPos);
 
         void playerDisconnected(int itemIndex);
+
+        FileHandle getExternalMapDir();
+
+        MapEntity fetchMap(String mapName);
     }
 }

@@ -1,9 +1,11 @@
 package com.cg.zoned.screens;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -26,11 +28,13 @@ import com.badlogic.gdx.utils.SnapshotArray;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Assets;
 import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -38,6 +42,7 @@ import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -81,7 +86,9 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         viewport = new ScreenViewport();
         stage = new FocusableStage(viewport);
         animationManager = new AnimationManager(this.game, this);
-        font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
+
+        // TODO: Fix bogus client ip being sent to some clients when a map is changed while a new client was joining
 
         startLocations = new Array<>();
         this.serverName = name;
@@ -93,7 +100,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         setUpServerLobbyStage();
         setUpMap();
         setUpBackButton();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         playerConnected(null);
         connectionManager.start();
@@ -107,8 +114,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         serverLobbyTable.center();
         //serverLobbyTable.setDebug(true);
 
-        Label onlinePlayersTitle = new Label("Connected Players", game.skin, "themed");
-        serverLobbyTable.add(onlinePlayersTitle).pad(20f);
+        Label lobbyTitle = new Label("Lobby", game.skin, "themed");
+        serverLobbyTable.add(lobbyTitle).pad(20f);
         serverLobbyTable.row();
 
         Table scrollTable = new Table();
@@ -124,20 +131,26 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         final Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight() * 3);
+                game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
         final Table mapSelectorTable = new Table();
         mapSelectorTable.add(mapSpinner).pad(10f);
 
         final TextButton mapButton = new TextButton(mapSelector.getMapManager().getMapList().get(mapSpinner.getPositionIndex()).getName(), game.skin);
+
+        final Array<String> buttonTexts = new Array<>();
+        buttonTexts.add("Cancel");
+        buttonTexts.add("Set Map");
+
+        final Array<Actor> focusableDialogButtons = new Array<>();
+        focusableDialogButtons.add(mapSpinner.getLeftButton());
+        focusableDialogButtons.add(mapSpinner.getRightButton());
+
         mapButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 final int prevIndex = mapSpinner.getPositionIndex();
-                Array<String> buttonTexts = new Array<>();
-                buttonTexts.add("Cancel");
-                buttonTexts.add("Set Map");
 
-                stage.showDialog(mapSelectorTable, buttonTexts,
+                stage.showDialog(mapSelectorTable, focusableDialogButtons, buttonTexts,
                         false, game.getScaleFactor(),
                         new FocusableStage.DialogResultListener() {
                             @Override
@@ -158,7 +171,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                         }, game.skin);
             }
         });
-        // mapSelector.loadExternalMaps(); Not yet
+        mapSelector.loadExternalMaps();
 
         serverLobbyTable.add(mapButton).width(200f * game.getScaleFactor());
         serverLobbyTable.row();
@@ -283,7 +296,9 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             stage.addFocusableActor(colorSelector);
             stage.addFocusableActor(startPosSelector);
             stage.row();
-            stage.setFocusedActor(colorSelector);
+            if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+                stage.setFocusedActor(colorSelector);
+            }
         } else {
             Label colorLabel = new Label(Constants.PLAYER_COLORS.keySet().iterator().next(), game.skin);
             colorLabel.setName("color-label");
@@ -327,7 +342,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         Label nameLabel = playerItem.findActor("name-label");
         nameLabel.setText(clientName);
 
-        connectionManager.acceptPlayer(playerIndex, mapSelector.getMapManager());
+        connectionManager.acceptPlayer(playerIndex);
+        connectionManager.sendMapDetails(playerIndex, mapSelector.getMapManager());
         connectionManager.broadcastPlayerInfo(playerList.getChildren(), -1); // Send info about the new player to other clients and vice-versa
     }
 
@@ -389,6 +405,16 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         }
 
         connectionManager.sendMapDetails(-1, mapSelector.getMapManager());
+    }
+
+    @Override
+    public FileHandle getExternalMapDir() {
+        return this.mapSelector.getMapManager().getExternalMapDir();
+    }
+
+    @Override
+    public MapEntity fetchMap(String mapName) {
+        return this.mapSelector.getMapManager().getMap(mapName);
     }
 
     private void startGame(MapManager mapManager) {
@@ -567,7 +593,10 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
-        map.dispose();
+        if (map != null) {
+            map.dispose();
+            map = null;
+        }
     }
 
     private void onBackPressed() {

@@ -27,11 +27,13 @@ import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Assets;
 import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -99,7 +101,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
 
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
@@ -107,12 +109,13 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         setUpMap();
         setUpStage();
         setUpBackButton();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
         animationManager.fadeInStage(stage);
     }
 
     private void setUpMap() {
         map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
+        map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName()));
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {
@@ -143,9 +146,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             } else {
                 dividerRightColor[i] = Color.BLACK;
             }
-
-            dividerLeftColor[i].mul(10);
-            dividerRightColor[i].mul(10);
         }
     }
 
@@ -169,7 +169,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             if (i < players.length) {
                 playerLabels[i] = new Label("Player " + (i + 1), game.skin);
                 Color labelColor = new Color(players[i].color);
-                labelColor.mul(10);
                 playerLabels[i].setColor(labelColor);
                 if (alignLeft) {
                     table.add(playerLabels[i]).padBottom(10f * game.getScaleFactor()).left().expandX();
@@ -348,7 +347,6 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
                         playerLabels[i].setText("Player " + (i + playerIndex + 1));
                         Color labelColor = new Color(players[i + playerIndex].color);
-                        labelColor.mul(10);
                         playerLabels[i].setColor(labelColor);
 
                         radioButtons[i][(i + playerIndex) % radioButtons[i].length].setChecked(true);
@@ -399,14 +397,16 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         });
     }
 
-    private void focusAndRenderViewport(Viewport viewport, Player player, Vector2 vel, float delta) {
-        focusCameraOnPlayer(viewport, player, vel, delta);
+    private void renderMap(int playerIndex, float delta) {
+        int mapViewportIndex = playerIndex - this.playerIndex;
+        Viewport viewport = mapViewports[mapViewportIndex];
+
+        focusCameraOnPlayer(viewport, players[playerIndex], dragOffset[mapViewportIndex], delta);
         viewport.apply();
 
         batch.setProjectionMatrix(viewport.getCamera().combined);
-
         batch.begin();
-        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        map.render(players, playerIndex, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
         batch.end();
     }
 
@@ -481,7 +481,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
         for (int i = 0; i < mapViewports.length; i++) {
             if (playerIndex + i < players.length) {
-                focusAndRenderViewport(mapViewports[i], players[playerIndex + i], dragOffset[i], delta);
+                renderMap(playerIndex + i, delta);
             }
         }
 

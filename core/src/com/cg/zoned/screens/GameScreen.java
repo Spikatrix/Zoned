@@ -19,9 +19,11 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TeamData;
@@ -47,7 +49,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private Map map;
 
-    private ExtendViewport[] playerViewports; // Two viewports in split-screen mode; else one
+    private ExtendViewport[] playerViewports;
 
     private ShapeDrawer shapeDrawer;
     private SpriteBatch batch;
@@ -89,7 +91,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         this.gameManager = new GameManager(this);
         this.gameManager.setUpConnectionManager(server, client);
         this.gameManager.setUpDirectionAndPlayerBuffer(players, fullScreenStage,
-                game.preferences.getInteger(Constants.CONTROL_PREFERENCE, Constants.PIE_MENU_CONTROL),
+                game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0),
                 game.skin, game.getScaleFactor(), usedTextures);
 
         this.batch = new SpriteBatch();
@@ -99,7 +101,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
 
-        BitmapFont playerLabelFont = game.skin.getFont(Constants.FONT_MANAGER.PLAYER_LABEL.getName());
+        BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         initViewports(players);
 
         map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
@@ -123,14 +125,14 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpInputProcessors();
         setUpUI();
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
     }
 
     private void setUpUI() {
@@ -196,11 +198,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         int highscore = 0;
         for (TeamData teamData : gameManager.playerManager.getTeamData()) {
-            if (teamData.score > highscore) {
-                highscore = teamData.score;
-                targetBgColor.set(teamData.color);
+            if (teamData.getScore() > highscore) {
+                highscore = teamData.getScore();
+                targetBgColor.set(teamData.getColor());
                 targetBgColor.a = bgAlpha;
-            } else if (teamData.score == highscore) {
+            } else if (teamData.getScore() == highscore) {
                 targetBgColor.set(0, 0, 0, bgAlpha);
             }
         }
@@ -254,14 +256,16 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         }
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
+            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
+                    UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
         }
         if (gameManager.gameConnectionManager.isActive) {
             float yOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
             if (!showFPSCounter) {
                 yOffset = -yOffset + scoreBars.scoreBarHeight + UITextDisplayer.padding;
             }
-            UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
+            UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
+                    gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
         }
 
         fullScreenStage.act(delta);
@@ -283,11 +287,12 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 gameManager.gameConnectionManager.close();
             }
 
-            Gdx.app.postRunnable(new Runnable() { // Hopefully fixes the occasional SIGSEGVs around 1 second after transitioning to VictoryScreen
+            // Transition to VictoryScreen after completing rendering the current frame to avoid SIGSEGV crashes
+            Gdx.app.postRunnable(new Runnable() {
                 @Override
                 public void run() {
                     dispose();
-                    game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
+                    game.setScreen(new VictoryScreen(game, gameManager.playerManager));
                 }
             });
         }
@@ -322,7 +327,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
-        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
+        map.render(players, index, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
         batch.end();
     }
 

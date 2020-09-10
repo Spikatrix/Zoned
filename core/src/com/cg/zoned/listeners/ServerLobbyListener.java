@@ -1,6 +1,7 @@
 package com.cg.zoned.listeners;
 
 import com.cg.zoned.buffers.BufferClientConnect;
+import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.esotericsoftware.kryonet.Connection;
@@ -21,6 +22,9 @@ public class ServerLobbyListener extends Listener {
         } else if (object instanceof BufferPlayerData) {
             BufferPlayerData bpd = (BufferPlayerData) object;
             serverLobbyConnectionManager.receiveClientData(connection, bpd.nameStrings[0], bpd.whoStrings[0], bpd.readyStrings[0], bpd.colorStrings[0], bpd.startPosStrings[0]);
+        } else if (object instanceof BufferMapData) {
+            BufferMapData bmd = (BufferMapData) object;
+            serverLobbyConnectionManager.serveMap(connection, bmd.mapName);
         }
 
         super.received(connection, object);

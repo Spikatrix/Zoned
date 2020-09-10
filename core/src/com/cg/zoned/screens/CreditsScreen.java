@@ -24,7 +24,9 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -54,7 +56,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
@@ -62,7 +64,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         setUpStage();
         setUpBackButton();
 
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         animationManager.fadeInStage(stage);
     }
@@ -92,7 +94,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         addCreditItem(table,
                 "Powered By",
                 Gdx.files.internal("icons/ic_libgdx.png"), null,
-                "https://libgdx.badlogicgames.com");
+                "https://libgdx.com");
 
         addCreditItem(table,
                 "Inspired By",
@@ -131,7 +133,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         gameLogoImage.setScaling(Scaling.fit);
         gameLogoImage.getColor().a = .3f;
 
-        final Label titleLabel = new Label(title, game.skin, Constants.FONT_MANAGER.LARGE.getName(), Color.GREEN);
+        final Label titleLabel = new Label(title, game.skin, Assets.FontManager.STYLED_LARGE.getFontName(), Color.GREEN);
         titleLabel.setAlignment(Align.center);
 
         Stack stack = new Stack();
@@ -265,9 +267,9 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
     private void toggleDevMode() {
         // owo what's this
 
-        boolean devModeUnlocked = game.preferences.getBoolean(Constants.DEV_MODE_PREFERENCE, false);
+        boolean devModeUnlocked = game.preferences.getBoolean(Preferences.DEV_MODE_PREFERENCE, false);
         devModeUnlocked = !devModeUnlocked;
-        game.preferences.putBoolean(Constants.DEV_MODE_PREFERENCE, devModeUnlocked);
+        game.preferences.putBoolean(Preferences.DEV_MODE_PREFERENCE, devModeUnlocked);
         game.preferences.flush();
 
         Array<String> buttonTexts = new Array<>();

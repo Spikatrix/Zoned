@@ -14,7 +14,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.cg.zoned.Constants;
+import com.cg.zoned.Assets;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -46,7 +47,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         this.viewport = new ScreenViewport();
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(game, this);
-        this.font = game.skin.getFont(Constants.FONT_MANAGER.SMALL.getName());
+        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
@@ -54,7 +55,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         setUpStage();
         setUpBackButton();
 
-        showFPSCounter = game.preferences.getBoolean(Constants.FPS_PREFERENCE, false);
+        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         animationManager.fadeInStage(stage);
     }
@@ -74,20 +75,20 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         screenScrollPane.setOverscroll(false, true);
 
         int maxPlayerCount = 100;
-        int currentPlayerCount = game.preferences.getInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
+        int currentPlayerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         Label splitscreenPlayerCountLabel = new Label("Splitscreen player count", game.skin);
         splitscreenPlayerCountSpinner = new Spinner(game.skin,
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
+                game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
                 64f * game.getScaleFactor(),
                 true);
         splitscreenPlayerCountSpinner.generateValueRange(minPlayerCount, maxPlayerCount, game.skin);
         splitscreenPlayerCountSpinner.snapToStep(currentPlayerCount - minPlayerCount);
 
         int maxSplitScreenCount = 100;
-        int currentSplitScreenCount = game.preferences.getInteger(Constants.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
+        int currentSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
         Label mapStartPosSplitscreenCountLabel = new Label("Map start position splitscreen count", game.skin);
         mapStartPosSplitscreenCountSpinner = new Spinner(game.skin,
-                game.skin.getFont(Constants.FONT_MANAGER.REGULAR.getName()).getLineHeight(),
+                game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
                 64f * game.getScaleFactor(),
                 true);
         mapStartPosSplitscreenCountSpinner.generateValueRange(minSplitScreenCount, maxSplitScreenCount, game.skin);
@@ -148,8 +149,8 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void saveData() {
-        game.preferences.putInteger(Constants.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, splitscreenPlayerCountSpinner.getPositionIndex() + minPlayerCount);
-        game.preferences.putInteger(Constants.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, mapStartPosSplitscreenCountSpinner.getPositionIndex() + minSplitScreenCount);
+        game.preferences.putInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, splitscreenPlayerCountSpinner.getPositionIndex() + minPlayerCount);
+        game.preferences.putInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, mapStartPosSplitscreenCountSpinner.getPositionIndex() + minSplitScreenCount);
         game.preferences.flush();
     }
 
