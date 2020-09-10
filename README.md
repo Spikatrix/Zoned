@@ -1,4 +1,4 @@
-# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.3-dev](https://img.shields.io/badge/version-0.0.3--dev-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.3-dev)
+# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.3-beta](https://img.shields.io/badge/version-0.0.3--beta-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.3-beta)
 
 <img src="https://i.stack.imgur.com/cunrq.png" alt="Zoned Icon" align="left" style="margin: 10px 20px 10px 10px; border-radius: 20%; box-shadow: 0 6px 20px 2px black" height="162px">
 
