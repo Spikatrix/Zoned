@@ -51,7 +51,7 @@ jobs:
         overwrite: true
         prerelease: true
         release_name: "Zoned Developer Build"
-        body: "Latest bleeding edge version of Zoned. Might be buggy"
+        body: "Latest bleeding edge version of Zoned"
         
     - name: Upload apk release
       uses: kittaakos/upload-release-action@GH-26
