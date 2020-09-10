@@ -254,6 +254,7 @@ public class Map {
 
                 setMapWeights(players);
                 setMapColors(playerManager, players);
+                updateCapturePercentage(playerManager);
             }
         }
     }
@@ -291,6 +292,17 @@ public class Map {
         }
 
         fillSurroundedCells(playerManager, players);
+    }
+
+    private void updateCapturePercentage(PlayerManager playerManager) {
+        if (playerManager == null) {
+            return;
+        }
+
+        Array<TeamData> teamData = playerManager.getTeamData();
+        for (TeamData td : teamData) {
+            td.setCapturePercentage((this.rows * this.cols) - this.wallCount);
+        }
     }
 
     private void fillSurroundedCells(PlayerManager playerManager, Player[] players) {
@@ -516,7 +528,7 @@ public class Map {
         if (teamData.size == 2) {
             for (TeamData td : teamData) {
                 // For two team games, end the game when a team has captured more than 50% of the cells
-                if (100 * (td.getScore() / (((double) this.rows * this.cols) - this.wallCount)) > 50.0) {
+                if (td.getCapturePercentage() > 50.0) {
                     return true;
                 }
             }

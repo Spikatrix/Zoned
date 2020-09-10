@@ -57,14 +57,13 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private ParticleEffect trailEffect;
 
     private Array<TeamData> teamData;
-    private double[] capturePercentage;
 
     private Actor[][] scoreboardActors;
     private Container<Label> scoreBoardTitleContainer;
     private float rowHeightScale = 1.5f;
     private float padding;
 
-    public VictoryScreen(final Zoned game, PlayerManager playerManager, int rows, int cols, int wallCount) {
+    public VictoryScreen(final Zoned game, PlayerManager playerManager) {
         this.game = game;
         game.discordRPCManager.updateRPC("Post match");
 
@@ -76,7 +75,17 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
-        getVictoryStrings(playerManager, rows, cols, wallCount);
+        finalizeTeamData(playerManager);
+    }
+
+    private void finalizeTeamData(PlayerManager playerManager) {
+        teamData = playerManager.getTeamData();
+        new Sort().sort(teamData, new TeamDataComparator());
+
+        DecimalFormat df = new DecimalFormat("#.##");
+        for (TeamData td : teamData) {
+            td.roundCapturePercentage(df);
+        }
     }
 
     @Override
@@ -131,14 +140,14 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
                 new ScoreboardHeaderData("SCORE", 2.5f),
         };
 
-        RankData[] rankData = new RankData[] {
+        RankData[] rankData = new RankData[]{
                 new RankData(Color.GOLD,       "icons/rank_icons/ic_no1.png"),
                 new RankData(Color.LIGHT_GRAY, "icons/rank_icons/ic_no2.png"),
                 new RankData(Color.BROWN,      "icons/rank_icons/ic_no3.png"),
                 new RankData(Color.GRAY,       null),
         };
 
-        scoreboardActors = new Actor[capturePercentage.length + 1][];
+        scoreboardActors = new Actor[teamData.size + 1][];
         float rowHeight = getRowHeight();
 
         // Setting background drawable on a container since setting it directly to the label means
@@ -169,7 +178,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         table.row();
 
         int rankIndex = 0;
-        for (int i = 1; i < capturePercentage.length + 1; i++, rankIndex++) {
+        for (int i = 1; i < teamData.size + 1; i++, rankIndex++) {
             if (i > 1 && teamData.get(i - 2).getScore() == teamData.get(i - 1).getScore()) {
                 rankIndex--;
             }
@@ -204,7 +213,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
             scoreboardActors[i][rowIndex++] = nameLabel;
 
-            Label victoryLabel = new Label(teamData.get(i - 1).getScore() + " (" + capturePercentage[i - 1] + "%)", game.skin,
+            Label victoryLabel = new Label(teamData.get(i - 1).getScore() + " (" + teamData.get(i - 1).getCapturePercentage() + "%)", game.skin,
                     Assets.FontManager.REGULAR.getFontName(), rankData[rankDataIndex].rankColor);
             victoryLabel.setAlignment(Align.center);
 
@@ -244,20 +253,6 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private float getRowHeight() {
         Label dummyLabel = new Label("DUMMY", game.skin);
         return dummyLabel.getPrefHeight() * rowHeightScale;
-    }
-
-    private void getVictoryStrings(PlayerManager playerManager, int rows, int cols, int wallCount) {
-        teamData = playerManager.getTeamData();
-        new Sort().sort(teamData, new TeamDataComparator());
-        this.capturePercentage = new double[teamData.size];
-
-        DecimalFormat df = new DecimalFormat("#.##");
-        for (int i = 0; i < teamData.size; i++) {
-            double capturePercentage = 100 * (teamData.get(i).getScore() / (((double) rows * cols) - wallCount));
-            capturePercentage = Double.parseDouble(df.format(capturePercentage));
-
-            this.capturePercentage[i] = capturePercentage;
-        }
     }
 
     private void setUpNextButton() {

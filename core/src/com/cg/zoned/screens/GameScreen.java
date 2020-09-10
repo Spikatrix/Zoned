@@ -256,14 +256,16 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         }
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
+            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
+                    UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
         }
         if (gameManager.gameConnectionManager.isActive) {
             float yOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
             if (!showFPSCounter) {
                 yOffset = -yOffset + scoreBars.scoreBarHeight + UITextDisplayer.padding;
             }
-            UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font, gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
+            UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
+                    gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
         }
 
         fullScreenStage.act(delta);
@@ -285,11 +287,12 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 gameManager.gameConnectionManager.close();
             }
 
-            Gdx.app.postRunnable(new Runnable() { // Hopefully fixes the occasional SIGSEGVs around 1 second after transitioning to VictoryScreen
+            // Transition to VictoryScreen after completing rendering the current frame to avoid SIGSEGV crashes
+            Gdx.app.postRunnable(new Runnable() {
                 @Override
                 public void run() {
                     dispose();
-                    game.setScreen(new VictoryScreen(game, gameManager.playerManager, map.rows, map.cols, map.wallCount));
+                    game.setScreen(new VictoryScreen(game, gameManager.playerManager));
                 }
             });
         }
