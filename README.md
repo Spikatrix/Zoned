@@ -23,8 +23,8 @@ The game is currently in beta. I've made a [list of work][beta_work] to be done 
 
 ## Screenshots
 
-<img src="https://lh3.googleusercontent.com/SKRnPCRlO8k8-Ks8A22rI3spRsJ6G-r73kZOgUGrbOsBG04esMiOnRtzvRhyK1rRWA=w720-h310-rw" width="46%"> &nbsp; &nbsp;
-<img src="https://lh3.googleusercontent.com/6uD4h1HkZLwxhmt2gtZnRiCTLW-QVmF-F9XsVK9HHCy5GUbRpvJm8aLKLNTlnlnok3Bw=w720-h310-rw" width="46%"> &nbsp; &nbsp;
+<img src="https://lh3.googleusercontent.com/Aa7SU89CHEz5EBsE8erSxLYjmjHGOSpd0a6cvxyQFc4bG4__wnnWehJ3ArAwHm1lSAk=w720-h310-rw" width="46%"> &nbsp; &nbsp;
+<img src="https://lh3.googleusercontent.com/9SUjMfMI1uFCJwppqdDfpXs3o2aO89CP0fXmAQwOWs-cCnU2tXt4_GA3REftqh5IzII=w720-h310-rw" width="46%"> &nbsp; &nbsp;
 
 More screenshots are available in the [Google Play Store page][play_store_page]
 
@@ -64,3 +64,4 @@ This project is licensed under the [GNU GPLv3 License][project_license]
 [email_feedback]: mailto:cg.devworks@gmail.com?subject=Zoned+Feedback&body=Your+feedback+here
 [custom_external_map_wiki]: https://github.com/Spikatrix/Zoned/wiki/Custom-External-Maps
 [project_license]: https://github.com/Spikatrix/Zoned/blob/master/LICENSE
+
