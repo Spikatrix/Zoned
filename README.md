@@ -1,4 +1,4 @@
-# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.4-dev](https://img.shields.io/badge/version-0.0.4--dev-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.4-dev)
+# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.3-beta](https://img.shields.io/badge/version-0.0.3--beta-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.3-beta)
 
 <img src="https://i.stack.imgur.com/cunrq.png" alt="Zoned Icon" align="left" style="margin: 10px 20px 10px 10px; border-radius: 20%; box-shadow: 0 6px 20px 2px black" height="162px">
 
@@ -23,8 +23,8 @@ The game is currently in beta. I've made a [list of work][beta_work] to be done 
 
 ## Screenshots
 
-<img src="https://lh3.googleusercontent.com/SKRnPCRlO8k8-Ks8A22rI3spRsJ6G-r73kZOgUGrbOsBG04esMiOnRtzvRhyK1rRWA=w720-h310-rw" width="46%"> &nbsp; &nbsp;
-<img src="https://lh3.googleusercontent.com/6uD4h1HkZLwxhmt2gtZnRiCTLW-QVmF-F9XsVK9HHCy5GUbRpvJm8aLKLNTlnlnok3Bw=w720-h310-rw" width="46%"> &nbsp; &nbsp;
+<img src="https://lh3.googleusercontent.com/Aa7SU89CHEz5EBsE8erSxLYjmjHGOSpd0a6cvxyQFc4bG4__wnnWehJ3ArAwHm1lSAk=w720-h310-rw" width="46%"> &nbsp; &nbsp;
+<img src="https://lh3.googleusercontent.com/9SUjMfMI1uFCJwppqdDfpXs3o2aO89CP0fXmAQwOWs-cCnU2tXt4_GA3REftqh5IzII=w720-h310-rw" width="46%"> &nbsp; &nbsp;
 
 More screenshots are available in the [Google Play Store page][play_store_page]
 
@@ -64,3 +64,4 @@ This project is licensed under the [GNU GPLv3 License][project_license]
 [email_feedback]: mailto:cg.devworks@gmail.com?subject=Zoned+Feedback&body=Your+feedback+here
 [custom_external_map_wiki]: https://github.com/Spikatrix/Zoned/wiki/Custom-External-Maps
 [project_license]: https://github.com/Spikatrix/Zoned/blob/master/LICENSE
+
