@@ -91,7 +91,7 @@ task zonedDist(dependsOn: [dist]) {
         exec {
             workingDir 'build/dist'
             commandLine 'sed', '-i', '$a \\\n\\n' +
-                    'canvas {' +
+                    'canvas {\\n' +
                     '  border-radius: 12px;\\n' +
                     '  margin-top: 25px;\\n' +
                     '}\\n' +
