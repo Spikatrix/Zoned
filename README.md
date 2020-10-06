@@ -4,7 +4,7 @@
 
 Zoned is a cross-platform grid based multiplayer strategy game powered by [libGDX][libGDX]. The game is primarily targeted for Android, but it will work just fine on Windows and Linux as well.
 
-It is available to download on the [Google Play Store][play_store_page] (Android) as well as on [GitHub][github_release_page] (Windows, Linux and Android)
+It is available to download on the [Google Play Store][play_store_page] (Android) as well as on [GitHub][github_release_page] (Windows, Linux, Android and [Web][gwt_release_page])
 
 <p>
 	<a href="https://play.google.com/store/apps/details?id=com.cg.zoned">
@@ -59,6 +59,7 @@ This project is licensed under the [GNU GPLv3 License][project_license]
 [libGDX]: https://github.com/libgdx/libgdx
 [play_store_page]: https://play.google.com/store/apps/details?id=com.cg.zoned
 [github_release_page]: https://github.com/Spikatrix/Zoned/releases
+[gwt_release_page]: https://spikatrix.github.io/Zoned/
 [beta_work]: https://github.com/Spikatrix/Zoned/projects/1
 [issue_tracker]: https://github.com/Spikatrix/Zoned/issues
 [email_feedback]: mailto:cg.devworks@gmail.com?subject=Zoned+Feedback&body=Your+feedback+here
