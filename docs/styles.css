@@ -42,7 +42,8 @@ body {
     background-color: rgb(100,100,100);
 }
 
-canvas {  border-radius: 12px;
+canvas {
+  border-radius: 12px;
   margin-top: 25px;
 }
 
