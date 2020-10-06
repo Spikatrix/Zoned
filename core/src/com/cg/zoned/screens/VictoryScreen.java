@@ -29,6 +29,7 @@ import com.badlogic.gdx.utils.Sort;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
+import com.cg.zoned.DoubleFormatter;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.TeamData;
@@ -40,7 +41,6 @@ import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
-import java.text.DecimalFormat;
 import java.util.Comparator;
 
 public class VictoryScreen extends ScreenAdapter implements InputProcessor {
@@ -75,14 +75,13 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
-        finalizeTeamData(playerManager);
+        finalizeTeamData(playerManager, game.doubleFormatter);
     }
 
-    private void finalizeTeamData(PlayerManager playerManager) {
+    private void finalizeTeamData(PlayerManager playerManager, DoubleFormatter df) {
         teamData = playerManager.getTeamData();
         new Sort().sort(teamData, new TeamDataComparator());
 
-        DecimalFormat df = new DecimalFormat("#.##");
         for (TeamData td : teamData) {
             td.roundCapturePercentage(df);
         }

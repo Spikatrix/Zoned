@@ -65,7 +65,7 @@ public class ControlManager {
         overlayColors = new Color[splitScreenCount];
         controlTables = new Table[splitScreenCount];
         Label[] controlLabels = null;
-        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop || Gdx.app.getType() == Application.ApplicationType.WebGL) {
             controlLabels = new Label[splitScreenCount];
         }
 

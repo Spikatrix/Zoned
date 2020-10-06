@@ -183,10 +183,8 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
-        mapSelector.getMapManager().enableExternalMapLogging(true);
         Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
-        mapSelector.loadExternalMaps();
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
 

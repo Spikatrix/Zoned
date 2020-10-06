@@ -7,9 +7,6 @@ import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Cell;
-import com.cg.zoned.Constants;
-import com.cg.zoned.maps.ExternalMapReader;
-import com.cg.zoned.maps.ExternalMapTemplate;
 import com.cg.zoned.maps.InvalidMapCharacter;
 import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
@@ -30,66 +27,17 @@ public class MapManager {
     private Array<GridPoint2> preparedStartPositions = null;
     private Array<String> preparedStartPosNames = null;
     private int wallCount = 0;
-    private int internalMapCount = 0;
-
-    private ExternalMapReader externalMapReader;
-    private FileHandle externalMapDir;
 
     public MapManager() {
         this.mapList = new Array<>();
 
         loadDefaultMaps();
-
-        this.externalMapReader = new ExternalMapReader();
-        externalMapDir = externalMapReader.getExternalMapDir();
     }
 
     private void loadDefaultMaps() {
         mapList.add(new RectangleMap());
         mapList.add(new HoloMap());
         mapList.add(new XMap());
-
-        internalMapCount = mapList.size;
-    }
-
-    public void loadExternalMaps(final OnExternalMapLoadListener mapLoadListener) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (mapList.size != internalMapCount) {
-                    mapList.removeRange(internalMapCount, mapList.size - 1);
-                }
-
-                externalMapReader.scanAndParseExternalMaps();
-                Array<ExternalMapTemplate> externalLoadedMaps = externalMapReader.getLoadedMaps();
-
-                int externalMapStartIndex = mapList.size;
-                for (MapEntity externalMap : externalLoadedMaps) {
-                    mapList.add(externalMap);
-                }
-
-                mapLoadListener.onExternalMapLoaded(getMapList(), externalMapStartIndex);
-            }
-        }).start();
-    }
-
-    public void loadExternalMap(String mapName) {
-        // Loading on the main thread itself because it's just one map
-        // (And because new threads messes up stuff in client lobby where this is called xD)
-
-        for (MapEntity map : mapList) {
-            if (map.getName().equals(mapName)) { // Map already loaded
-                return;
-            }
-        }
-
-        int sizeBefore = externalMapReader.getLoadedMaps().size;
-        externalMapReader.parseExternalMap(mapName);
-        Array<ExternalMapTemplate> externalMapList = externalMapReader.getLoadedMaps();
-
-        if (externalMapList.size > sizeBefore) {
-            mapList.add(externalMapList.get(sizeBefore));
-        }
     }
 
     public Texture getMapPreview(String mapName) {
@@ -102,35 +50,11 @@ public class MapManager {
         } catch (GdxRuntimeException ignored) {
         }
 
-        // Scan for the map preview in the external directory
-        try {
-            FileHandle fileHandle = Gdx.files.external(externalMapDir + "/" + mapName + ".png");
-            if (fileHandle.exists()) {
-                return new Texture(fileHandle);
-            }
-        } catch (GdxRuntimeException | NullPointerException e) {
-            Gdx.app.log(Constants.LOG_TAG, "Failed to load map preview image for '" + mapName + "' (" + e.getMessage() + ")");
-        }
-
         return null;
     }
 
     public Array<MapEntity> getMapList() {
         return mapList;
-    }
-
-    public MapEntity getMap(String mapName) {
-        for (MapEntity map : mapList) {
-            if (map.getName().equals(mapName)) {
-                return map;
-            }
-        }
-
-        return null;
-    }
-
-    public void prepareMap(MapEntity map) throws NoStartPositionsFound, InvalidMapDimensions, InvalidMapCharacter {
-        prepareMap(mapList.indexOf(map, false));
     }
 
     public void prepareMap(int mapIndex) throws InvalidMapCharacter, NoStartPositionsFound, InvalidMapDimensions {
@@ -199,10 +123,6 @@ public class MapManager {
         this.wallCount = wallCount;
     }
 
-    public void enableExternalMapLogging(boolean enableExternalMapLogging) {
-        this.externalMapReader.enableExternalMapLogging(enableExternalMapLogging);
-    }
-
     public MapEntity getPreparedMap() {
         return preparedMap;
     }
@@ -221,13 +141,5 @@ public class MapManager {
 
     public int getWallCount() {
         return wallCount;
-    }
-
-    public FileHandle getExternalMapDir() {
-        return externalMapDir;
-    }
-
-    public interface OnExternalMapLoadListener {
-        void onExternalMapLoaded(Array<MapEntity> mapList, int externalMapStartIndex);
     }
 }

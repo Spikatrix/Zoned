@@ -27,6 +27,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
+import com.badlogic.gdx.utils.reflect.ClassReflection;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
@@ -87,22 +88,17 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             }
         });
 
-        new Thread(new Runnable() {
+        final int radius = 40;
+        final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, radius);
+        Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                final int radius = 40;
-                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, radius);
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        Texture roundedCornerBgColorTexture = new Texture(pixmap);
-                        usedTextures.add(roundedCornerBgColorTexture);
-                        roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
-                        pixmap.dispose();
-                    }
-                });
+                Texture roundedCornerBgColorTexture = new Texture(pixmap);
+                usedTextures.add(roundedCornerBgColorTexture);
+                roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
+                pixmap.dispose();
             }
-        }).start();
+        });
     }
 
     private void setUpMainMenu() {
@@ -172,7 +168,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         }
         mainMenuUIButtons.add(exitButton);
 
-        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop || Gdx.app.getType() == Application.ApplicationType.WebGL) {
             mainStage.setFocusedActor(playButton);
         }
         mainStage.addActor(mainTable);
@@ -238,7 +234,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         final GameMode[] gameModes = new GameMode[]{
                 new GameMode("Splitscreen\nMultiplayer", "icons/multiplayer_icons/ic_splitscreen_multiplayer.png", PlayerSetUpScreen.class),
-                new GameMode("Local\nNetwork\nMultiplayer", "icons/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
+                new GameMode("Local\nNetwork\nMultiplayer", "icons/multiplayer_icons/ic_local_multiplayer.png", null),
         };
 
         final float normalAlpha = .15f;
@@ -298,10 +294,20 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
+                    if (gameModes[finalI].targetClass == null) {
+                        Array<String> buttonTexts = new Array<>();
+                        buttonTexts.add("OK");
+                        playModeStage.showDialog("Network multiplayer is not supported in this\n"+
+                                                      "version of Zoned. You'll have to install the\n"+
+                                                      "Desktop/Android client if you want to try it out",
+                                buttonTexts, false,
+                                game.getScaleFactor(), null, game.skin);
+                        return;
+                    }
                     emitterLeft.allowCompletion();
                     emitterRight.allowCompletion();
                     try {
-                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) gameModes[finalI].targetClass.getConstructors()[0].newInstance(game));
+                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) ClassReflection.getConstructors(gameModes[finalI].targetClass)[0].newInstance(game));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

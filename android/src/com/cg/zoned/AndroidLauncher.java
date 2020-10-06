@@ -1,12 +1,10 @@
 package com.cg.zoned;
 
-import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-import com.cg.zoned.maps.ExternalMapReader;
 
 public class AndroidLauncher extends AndroidApplication {
 
@@ -23,11 +21,6 @@ public class AndroidLauncher extends AndroidApplication {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            /* Creates /storage/emulated/0/Android/data/com.cg.zoned/files/ZonedExternalMaps */
-            getExternalFilesDir(ExternalMapReader.mapDirName);
-        }
-
         startGame();
     }
 
@@ -37,6 +30,6 @@ public class AndroidLauncher extends AndroidApplication {
         config.useCompass = false;
         config.hideStatusBar = true;
         config.useImmersiveMode = true;
-        initialize(new Zoned(null), config); // Discord RPC is not available on Android, hence null
+        initialize(new Zoned(null, new AndroidDoubleFormatter()), config); // Discord RPC is not available on Android, hence null
     }
 }

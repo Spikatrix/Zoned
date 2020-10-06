@@ -160,12 +160,17 @@ public class AnimationManager {
         fadeOutAnimation.addAction(Actions.run(new Runnable() {
             @Override
             public void run() {
-                Gdx.input.setInputProcessor(null);
-                fromScreen.dispose();
-                game.setScreen(toScreen);
-                if (animationListener != null) {
-                    animationListener.animationEnd(stage);
-                }
+                Gdx.app.postRunnable(new Runnable() {
+                    @Override
+                    public void run() {
+                        Gdx.input.setInputProcessor(null);
+                        fromScreen.dispose();
+                        game.setScreen(toScreen);
+                        if (animationListener != null) {
+                            animationListener.animationEnd(stage);
+                        }
+                    }
+                });
             }
         }));
 

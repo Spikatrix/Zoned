@@ -24,16 +24,12 @@ public class PlayerManager extends InputMultiplexer {
         this.players = players;
         initTeamData();
 
-        if (gameManager.gameConnectionManager.isActive) { // Not split screen; only add first player's inputs
-            this.addProcessor(players[0]);
-        } else {
             for (Player player : players) {
                 this.addProcessor(player);
             }
-        }
 
         controlManager = new ControlManager(players, stage);
-        controlManager.setUpOverlay(!gameManager.gameConnectionManager.isActive, controlIndex, skin, scaleFactor, usedTextures);
+        controlManager.setUpOverlay(true, controlIndex, skin, scaleFactor, usedTextures);
         this.addProcessor(controlManager.getControls());
     }
 

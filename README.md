@@ -1,5 +1,13 @@
 # Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.3-beta](https://img.shields.io/badge/version-0.0.3--beta-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.3-beta)
 
+<hr>
+
+**Note:** This branch contains the code of Zoned for the GWT Edition based on [v0.0.3-beta](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.3-beta). There are certain limitations with this version which include no support for local network multiplayer as well as [custom external maps][custom_external_map_wiki]. Other changes include library updates (libGDX 1.9.10 -> 1.9.11, PieMenu 4.2.0 -> Custom 4.3.0).
+
+Also, GWT Editions may not be published for future releases due to limitations. I created it just because I can :p
+
+<hr>
+
 <img src="https://i.stack.imgur.com/cunrq.png" alt="Zoned Icon" align="left" style="margin: 10px 20px 10px 10px; border-radius: 20%; box-shadow: 0 6px 20px 2px black" height="162px">
 
 Zoned is a cross-platform grid based multiplayer strategy game powered by [libGDX][libGDX]. The game is primarily targeted for Android, but it will work just fine on Windows and Linux as well.

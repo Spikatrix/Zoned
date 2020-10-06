@@ -20,8 +20,12 @@ allprojects {
     version = '1.0'
     ext {
         appName = "Zoned"
-        gdxVersion = '1.9.10' // Should I update? Hmm
-        pieMenuVersion = '4.2.0'
+        gdxVersion = '1.9.11'
+        gwtFreeTypeVersion = '1.9.11-SNAPSHOT'
+        shapedrawerVersion = '2.3.0'
+        pieMenuVersion = '5.0.0' // 4.2.0 has issues on GWT
+        pieMenuVersionMine = 'shadow-SNAPSHOT' // Shadow under the PieMenu
+        gwtNumberFormatVersion = '1.1.4'
     }
 
     repositories {
@@ -31,7 +35,13 @@ allprojects {
         google()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://oss.sonatype.org/content/repositories/releases/" }
-        maven { url 'https://jitpack.io' }
+        maven {
+            url 'https://jitpack.io'
+            metadataSources {
+                artifact() // Look directly for artifact
+                           // Without this, fetching it from a commit fails
+            }
+        }
     }
 }
 
@@ -71,8 +81,8 @@ project(":android") {
     }
 }
 
-// No HTML support since the game uses Kryonet and generated FreeTypeFonts which isn't supported there
-/*project(":html") {
+// Kryonet does not work on HTML, so no networking for now
+project(":html") {
     apply plugin: "gwt"
     apply plugin: "war"
 
@@ -81,9 +91,14 @@ project(":android") {
         implementation "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion"
         implementation "com.badlogicgames.gdx:gdx:$gdxVersion:sources"
         implementation "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion:sources"
-        
+        implementation "com.github.intrigus.gdx-freetype-gwt:gdx-freetype-gwt:$gwtFreeTypeVersion"
+        implementation "com.github.intrigus.gdx-freetype-gwt:gdx-freetype-gwt:$gwtFreeTypeVersion:sources"
+
+        implementation "space.earlygrey:shapedrawer:$shapedrawerVersion:sources"
+        // implementation "com.github.payne911:PieMenu:$pieMenuVersion:sources"
+        implementation "com.github.Spikatrix:PieMenu:$pieMenuVersionMine:sources"
     }
-}*/
+}
 
 project(":core") {
     apply plugin: "java-library"
@@ -93,8 +108,9 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
 
         api "com.esotericsoftware:kryonet:2.22.0-RC1"
-        api "com.github.payne911:PieMenu:$pieMenuVersion"
-        // Piemenu depends on ShapeDrawer, so that'll get imported as well
+        api "space.earlygrey:shapedrawer:$shapedrawerVersion"
+        // api "com.github.payne911:PieMenu:$pieMenuVersion"
+        api "com.github.Spikatrix:PieMenu:$pieMenuVersionMine"
     }
 }
 

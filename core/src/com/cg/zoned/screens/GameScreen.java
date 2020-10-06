@@ -29,16 +29,11 @@ import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.TeamData;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
-import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.GameManager;
 import com.cg.zoned.managers.MapManager;
-import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
-import com.esotericsoftware.kryonet.Client;
-import com.esotericsoftware.kryonet.Connection;
-import com.esotericsoftware.kryonet.Server;
 
 public class GameScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
@@ -71,25 +66,12 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
     public GameScreen(final Zoned game, MapManager mapManager, Player[] players) {
-        this(game, mapManager, players, null, null);
-    }
-
-    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, ServerLobbyConnectionManager connectionManager) {
-        this(game, mapManager, players, connectionManager.getServer(), null);
-    }
-
-    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, ClientLobbyConnectionManager connectionManager) {
-        this(game, mapManager, players, null, connectionManager.getClient());
-    }
-
-    private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
         this.game = game;
         game.discordRPCManager.updateRPC("Playing a match", mapManager.getPreparedMap().getName(), players.length - 1);
 
         this.fullScreenStage = new FocusableStage(new ScreenViewport());
 
         this.gameManager = new GameManager(this);
-        this.gameManager.setUpConnectionManager(server, client);
         this.gameManager.setUpDirectionAndPlayerBuffer(players, fullScreenStage,
                 game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0),
                 game.skin, game.getScaleFactor(), usedTextures);
@@ -210,11 +192,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
 
         if (!gameManager.gameOver) {
-            if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
-                gameManager.gameConnectionManager.serverClientCommunicate();
-            } else {                                // We're playing on the same device (Splitscreen)
-                gameManager.playerManager.updatePlayerDirections();
-            }
+            gameManager.playerManager.updatePlayerDirections();
         }
 
         map.update(gameManager.playerManager, delta);
@@ -259,14 +237,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
                     UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
         }
-        if (gameManager.gameConnectionManager.isActive) {
-            float yOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
-            if (!showFPSCounter) {
-                yOffset = -yOffset + scoreBars.scoreBarHeight + UITextDisplayer.padding;
-            }
-            UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
-                    gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
-        }
 
         fullScreenStage.act(delta);
         fullScreenStage.draw();
@@ -283,9 +253,6 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
             gameCompleteFadeOutDone = true;
-            if (gameManager.gameConnectionManager.isActive) {
-                gameManager.gameConnectionManager.close();
-            }
 
             // Transition to VictoryScreen after completing rendering the current frame to avoid SIGSEGV crashes
             Gdx.app.postRunnable(new Runnable() {
@@ -346,28 +313,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         camera.zoom += (targetZoom - camera.zoom) * lerp * 3 * delta;
     }
 
-    private void showDisconnectionDialog() {
-        final Array<String> dialogButtonTexts = new Array<>();
-        dialogButtonTexts.add("OK");
-        fullScreenStage.showDialog("Disconnected", dialogButtonTexts,
-                false,
-                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(String buttonText) {
-                        gameManager.gameConnectionManager.close();
-                        dispose();
-                        game.setScreen(new MainMenuScreen(game));
-                    }
-                }, game.skin);
-    }
-
     private void showPauseDialog() {
         gamePaused = true;
 
         gameManager.playerManager.stopPlayers(false);
-        if (!gameManager.gameConnectionManager.isActive) {
-            gameManager.directionBufferManager.clearBuffer();
-        }
+        gameManager.directionBufferManager.clearBuffer();
 
         final Array<String> dialogButtonTexts = new Array<>();
         dialogButtonTexts.add("Resume");
@@ -379,12 +329,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                     @Override
                     public void dialogResult(String buttonText) {
                         if (buttonText.equals(dialogButtonTexts.get(1))) {
-                            if (gameManager.gameConnectionManager.isActive) {
-                                gameManager.gameConnectionManager.close();
-                            } else {
-                                dispose();
-                                game.setScreen(new MainMenuScreen(game));
-                            }
+                            dispose();
+                            game.setScreen(new MainMenuScreen(game));
                         }
 
                         gamePaused = false;
@@ -393,57 +339,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private boolean isSplitscreenMultiplayer() {
-        return !gameManager.gameConnectionManager.isActive;
-    }
-
-    public void serverPlayerDisconnected(final Connection connection) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                if (gameManager.gameOver) {
-                    return;
-                }
-
-                int connIndex = connection.getID();
-                String playerName = gameManager.playerManager.getPlayer(connIndex).name;
-
-                gameManager.playerManager.stopPlayers(false);
-
-                gameManager.directionBufferManager.ignorePlayer();
-                gameManager.gameConnectionManager.sendPlayerDisconnectedBroadcast(playerName);
-                showPlayerDisconnectedDialog(playerName);
-            }
-        });
-    }
-
-    public void clientPlayerDisconnected(String playerName) {
-        gameManager.playerManager.stopPlayers(false);
-        gameManager.directionBufferManager.ignorePlayer();
-        showPlayerDisconnectedDialog(playerName);
-
-    }
-
-    private void showPlayerDisconnectedDialog(String playerName) {
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("OK");
-
-        fullScreenStage.showDialog(playerName + " got disconnected", buttonTexts,
-                false, game.getScaleFactor(),
-                null, game.skin);
-    }
-
-    public void disconnected() {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                if (!gameManager.gameOver) {
-                    gameManager.playerManager.stopPlayers(false);
-                    gameManager.directionBufferManager.clearBuffer();
-                    showDisconnectionDialog();
-                    Gdx.input.setInputProcessor(fullScreenStage);
-                }
-            }
-        });
+        return true;
     }
 
     @Override

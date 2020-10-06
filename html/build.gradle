@@ -1,7 +1,7 @@
 gwt {
-    gwtVersion='2.8.2' // Should match the gwt version used for building the gwt backend
-    maxHeapSize="1G" // Default 256m is not enough for gwt compiler. GWT is HUNGRY
-    minHeapSize="1G"
+    gwtVersion = '2.8.2' // Should match the gwt version used for building the gwt backend
+    maxHeapSize = "1G" // Default 256m is not enough for gwt compiler. GWT is HUNGRY
+    minHeapSize = "1G"
 
     src = files(file("src/")) // Needs to be in front of "modules" below.
     modules 'com.cg.zoned.GdxDefinition'
@@ -19,7 +19,7 @@ import org.wisepersist.gradle.plugins.gwt.GwtSuperDev
 HttpFileServer server = null
 def httpFilePort = 8080
 
-task startHttpServer () {
+task startHttpServer() {
     dependsOn draftCompileGwt
 
     String output = project.buildDir.path + "/gwt/draftOut"
@@ -41,7 +41,7 @@ task startHttpServer () {
     }
 }
 
-task superDev (type: GwtSuperDev) {
+task superDev(type: GwtSuperDev) {
     dependsOn startHttpServer
     doFirst {
         gwt.modules = gwt.devModules
@@ -59,10 +59,99 @@ task dist(dependsOn: [clean, compileGwt]) {
         copy {
             from "webapp"
             into "build/dist"
-            }
+        }
         copy {
             from "war"
             into "build/dist"
+        }
+    }
+}
+
+task zonedDist(dependsOn: [dist]) {
+    doLast {
+        // Remove refresh button (line 13)
+        exec {
+            workingDir 'build/dist'
+            commandLine 'sed', '-i', '13d', 'index.html'
+        }
+        // Add jQuery and Bootstrap via a CDN
+        exec {
+            workingDir 'build/dist'
+            commandLine 'sed', '-i', '7i <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>\\n' +
+                    '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">\\n' +
+                    '<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>',
+                    'index.html'
+        }
+        // Insert canvas and info-icon CSS into styles.css
+        exec {
+            workingDir 'build/dist'
+            commandLine 'sed', '-i', '$a \\\n\\n' +
+                    'canvas {' +
+                    '  border-radius: 12px;\\n' +
+                    '  margin-top: 25px;\\n' +
+                    '}\\n' +
+                    '\\n' +
+                    '#info-icon {\\n' +
+                    '  position: absolute;\\n' +
+                    '  right: 0;\\n' +
+                    '  width: 30px;\\n' +
+                    '  padding: 5px;\\n' +
+                    '  border-radius: 50%;\\n' +
+                    '  transition: background-color 0.4s;\\n' +
+                    '}\\n' +
+                    '\\n' +
+                    '#info-icon:hover {\\n' +
+                    '  background-color: #6f6f6f;\\n' +
+                    '  cursor: grab;\\n' +
+                    '}', 'styles.css'
+        }
+        // Prevent the browser from consuming certain keys
+        exec {
+            workingDir 'build/dist'
+            commandLine 'sed', '-i', '38i' +
+                    '\\\n\\n' +
+                    'window.onkeydown =\\n' +
+                    'function(event) {\\n' +
+                    '    // Prevent all navigation keys and the tab key\\n' +
+                    '    if([9, 33, 34, 35, 36, 37, 38, 39, 40].indexOf(event.keyCode) > -1) {\\n' +
+                    '        event.preventDefault();\\n' +
+                    '        return false;\\n' +
+                    '    }\\n' +
+                    '};\\n' +
+                    'window.onkeypress =\\n' +
+                    'function(event) {\\n' +
+                    '    // Prevent the space key\\n' +
+                    '    if(event.keyCode == 32){\\n' +
+                    '        event.preventDefault();\\n' +
+                    '        return false;\\n' +
+                    '    }\\n' +
+                    '};', 'index.html'
+        }
+        // Insert info dialog code
+        exec {
+            workingDir 'build/dist'
+            commandLine 'sed', '-i', '16i' +
+                    '\\\n' +
+                    '<img id="info-icon" src="https://i.stack.imgur.com/wpjjB.png" alt="Information icon" title="Click for more info" data-toggle="modal" data-target="#modal">\\n' +
+                    '<div class="modal fade" id="modal" role="dialog" aria-labelledby="modal-label">\\n' +
+                    '  <div class="modal-dialog" role="document">\\n' +
+                    '    <div class="modal-content">\\n' +
+                    '      <div class="modal-header">\\n' +
+                    '        <h4 class="modal-title" id="modal-label">Zoned v0.0.3-beta (GWT Edition)</h4>\\n' +
+                    '      </div>\\n' +
+                    '      <div class="modal-body">\\n' +
+                    '        This web version of Zoned is based on <a href="https://github.com/Spikatrix/Zoned/releases/tag/v0.0.3-beta">v0.0.3-beta</a><br><br>' +
+                    '        It has some limitations compared to the v0.0.3-beta Desktop/Android client which include ' +
+                    '        no support for local network multiplayer as well as custom external maps<br><br>' +
+                    '        Other changes in this version compared to v0.0.3-beta are library upgrades (libGDX 1.9.11 and PieMenu custom 4.3.0) <br><br>' +
+                    '        <a href="https://github.com/Spikatrix/Zoned/tree/gwt">Source code</a> for this version' +
+                    '      </div>\\n' +
+                    '      <div class="modal-footer">\\n' +
+                    '        <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">OK</button>\\n' +
+                    '      </div>\\n' +
+                    '    </div>\\n' +
+                    '  </div>\\n' +
+                    '</div>', 'index.html'
         }
     }
 }
@@ -77,7 +166,7 @@ tasks.compileGwt.dependsOn(addSource)
 tasks.draftCompileGwt.dependsOn(addSource)
 
 sourceCompatibility = 1.7
-sourceSets.main.java.srcDirs = [ "src/" ]
+sourceSets.main.java.srcDirs = ["src/"]
 
 
 eclipse.project {

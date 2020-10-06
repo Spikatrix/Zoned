@@ -51,7 +51,6 @@ public class PieMenuControlManager extends ControlTypeEntity {
         for (int i = 0; i < menus.length; i++) {
             final PieMenu.PieMenuStyle style = new PieMenu.PieMenuStyle();
             style.separatorWidth = 1;
-            style.backgroundColor = Color.BLACK;
             style.separatorColor = Color.BLACK;
             style.downColor = Color.WHITE;
             style.sliceColor = players[i].color;

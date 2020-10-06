@@ -2,8 +2,6 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.graphics.Color;
 
-import java.text.DecimalFormat;
-
 public class TeamData {
     private Color color;
     private int score;
@@ -31,8 +29,8 @@ public class TeamData {
         capturePercentage = 100 * ((double) score / total);
     }
 
-    public void roundCapturePercentage(DecimalFormat df) {
-        capturePercentage = Double.parseDouble(df.format(capturePercentage));
+    public void roundCapturePercentage(DoubleFormatter df) {
+        capturePercentage = df.formatDouble(capturePercentage);
     }
 
     public double getCapturePercentage() {

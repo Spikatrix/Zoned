@@ -18,12 +18,14 @@ public class Zoned extends Game {
 
     public Assets assets;
     public DiscordRPCManager discordRPCManager;
+    public DoubleFormatter doubleFormatter;
 
     private static float SCALE_FACTOR = 1.0f;
 
-    public Zoned(DiscordRPCBridge discordRPCBridge) {
+    public Zoned(DiscordRPCBridge discordRPCBridge, DoubleFormatter doubleFormatter) {
         super();
         this.discordRPCManager = new DiscordRPCManager(discordRPCBridge);
+        this.doubleFormatter = doubleFormatter;
     }
 
     @Override
@@ -56,6 +58,8 @@ public class Zoned extends Game {
             }
         } else if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             SCALE_FACTOR = Constants.DESKTOP_FONT_SCALE_FACTOR;
+        } else if (Gdx.app.getType() == Application.ApplicationType.WebGL) {
+            SCALE_FACTOR = Constants.GWT_FONT_SCALE_FACTOR;
         }
     }
 

@@ -1,6 +1,5 @@
 package com.cg.zoned;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -101,23 +100,6 @@ public class MapSelector {
         }
 
         return stack;
-    }
-
-    public void loadExternalMaps() {
-        mapManager.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
-            @Override
-            public void onExternalMapLoaded(final Array<MapEntity> mapList, final int externalMapStartIndex) {
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = externalMapStartIndex; i < mapList.size; i++) {
-                            MapEntity map = mapList.get(i);
-                            mapSpinner.addContent(getMapStack(map, mapManager.getMapPreview(map.getName())));
-                        }
-                    }
-                });
-            }
-        });
     }
 
     private void showExtraParamDialog(final MapExtraParams prompts, final MapEntity map) {

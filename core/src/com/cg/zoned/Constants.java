@@ -85,6 +85,7 @@ public final class Constants {
     public static final float ZOOM_MAX_VALUE = 1.6f;
 
     public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
+    public static final float GWT_FONT_SCALE_FACTOR = 1.0f;
     // Values from https://developer.android.com/training/multiscreen/screendensities
     public static final float ANDROID_LDPI_FONT_SCALE_FACTOR    = 0.75f;
     public static final float ANDROID_MDPI_FONT_SCALE_FACTOR    = 1.0f;

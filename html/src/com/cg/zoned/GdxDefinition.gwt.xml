@@ -2,6 +2,11 @@
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit trunk//EN" "http://www.gwtproject.org/doctype/2.8.0/gwt-module.dtd">
 <module rename-to="html">
 	<inherits name='com.badlogic.gdx.backends.gdx_backends_gwt' />
+	<inherits name="com.badlogic.gdx.graphics.g2d.freetype.freetype-gwt" />
+	<inherits name="space.earlygrey.shapedrawer"/>
+	<inherits name="PieMenu"/>
+
+	<extend-configuration-property name="gdx.reflect.include" value="com.cg.zoned.screens.PlayerSetUpScreen" />
 
 	<inherits name='Zoned' />
 	<entry-point class='com.cg.zoned.client.HtmlLauncher' />
