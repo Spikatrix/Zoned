@@ -2,9 +2,9 @@
 
 <hr>
 
-**Note:** This branch contains the code of Zoned for the GWT Edition based on [v0.0.3-beta](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.3-beta). There are certain limitations with this version which include no support for local network multiplayer as well as [custom external maps][custom_external_map_wiki]. Other changes include library updates (libGDX 1.9.10 -> 1.9.11, PieMenu 4.2.0 -> Custom 4.3.0).
+**Note:** This branch contains the code of Zoned for the [GWT Edition][gwt_release_page] based on [v0.0.3-beta](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.3-beta). There are certain limitations with this version which include no support for local network multiplayer as well as [custom external maps][custom_external_map_wiki]. Other changes include library updates (libGDX 1.9.10 -> 1.9.11, PieMenu 4.2.0 -> Custom 4.3.0).
 
-Also, GWT Editions may not be published for future releases due to limitations. I created it just because I can :p
+Also, GWT Editions may not be published for future releases due to limitations. Android is the primary target for this game with Desktop support and not GWT. I created this GWT release just because I can :p
 
 <hr>
 
@@ -12,7 +12,7 @@ Also, GWT Editions may not be published for future releases due to limitations. 
 
 Zoned is a cross-platform grid based multiplayer strategy game powered by [libGDX][libGDX]. The game is primarily targeted for Android, but it will work just fine on Windows and Linux as well.
 
-It is available to download on the [Google Play Store][play_store_page] (Android) as well as on [GitHub][github_release_page] (Windows, Linux and Android)
+It is available to download on the [Google Play Store][play_store_page] (Android) as well as on [GitHub][github_release_page] (Windows, Linux, Android and [Web][gwt_release_page])
 
 <p>
 	<a href="https://play.google.com/store/apps/details?id=com.cg.zoned">
@@ -44,12 +44,14 @@ If you wish to build from source, clone the repo and run gradle's `android:assem
     $ cd Zoned
     $ ./gradlew android:assembleDebug // Android
     $ ./gradlew desktop:dist          // Desktop
+    $ ./gradlew html:zonedDist        // GWT
 
 (Use `gradlew.bat` if you're on Windows)
 
 You can then find the generated binaries at
  - Desktop: `Zoned/desktop/build/libs/*.jar`
  - Android: `Zoned/android/build/outputs/apk/debug/*.apk`
+ - GWT: `Zoned/html/build/dist/*`
 
 ## Contributing
 
@@ -67,6 +69,7 @@ This project is licensed under the [GNU GPLv3 License][project_license]
 [libGDX]: https://github.com/libgdx/libgdx
 [play_store_page]: https://play.google.com/store/apps/details?id=com.cg.zoned
 [github_release_page]: https://github.com/Spikatrix/Zoned/releases
+[gwt_release_page]: https://spikatrix.github.io/Zoned/
 [beta_work]: https://github.com/Spikatrix/Zoned/projects/1
 [issue_tracker]: https://github.com/Spikatrix/Zoned/issues
 [email_feedback]: mailto:cg.devworks@gmail.com?subject=Zoned+Feedback&body=Your+feedback+here
