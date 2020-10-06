@@ -32,3 +32,4 @@ jobs:
         BRANCH: gwt
         FOLDER: html/build/dist
         CLEAN: false
+        TARGET_FOLDER: docs
