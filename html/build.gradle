@@ -74,6 +74,11 @@ task zonedDist(dependsOn: [dist]) {
             workingDir 'build/dist'
             commandLine 'sed', '-i', '13d', 'index.html'
         }
+        // Capitalize 'doctype' (Not sure if this is needed for proper site redirection)
+        exec {
+            workingDir 'build/dist'
+            commandLine 'sed', '-i', '1s/doctype/DOCTYPE/', 'index.html'
+        }
         // Capitalize game name in the title
         exec {
             workingDir 'build/dist'
