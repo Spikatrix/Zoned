@@ -74,6 +74,11 @@ task zonedDist(dependsOn: [dist]) {
             workingDir 'build/dist'
             commandLine 'sed', '-i', '13d', 'index.html'
         }
+        // Capitalize game name in the title
+        exec {
+            workingDir 'build/dist'
+            commandLine 'sed', '-i', '4s/zoned/Zoned/', 'index.html'
+        }
         // Add jQuery and Bootstrap via a CDN
         exec {
             workingDir 'build/dist'
