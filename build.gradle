@@ -8,8 +8,8 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'org.wisepersist:gwt-gradle-plugin:1.0.9'
-        classpath 'com.android.tools.build:gradle:3.6.3' // Updating this might break shit so meh
+        classpath 'org.wisepersist:gwt-gradle-plugin:1.0.13'
+        classpath 'com.android.tools.build:gradle:4.0.1'
     }
 }
 
