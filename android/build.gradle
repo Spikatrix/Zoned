@@ -1,5 +1,5 @@
 android {
-    buildToolsVersion "28.0.3"
+    buildToolsVersion "29.0.3"
     compileSdkVersion 29
     sourceSets {
         main {
@@ -11,11 +11,21 @@ android {
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
         }
-
     }
+
+    // Configure only for each module that uses Java 8
+    // language features (either in its source code or
+    // through dependencies).
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        // TODO: Check if these affect APK size (shadow-SNAPSHOT vs shadow-4.2.0-SNAPSHOT for testing)
+    }
+
     packagingOptions {
         exclude 'META-INF/robovm/ios/robovm.xml'
     }
+
     defaultConfig {
         applicationId "com.cg.zoned"
         minSdkVersion 14
@@ -29,6 +39,7 @@ android {
 
         setProperty("archivesBaseName", "${appName}-${versionName}")
     }
+
     buildTypes {
         release {
             minifyEnabled false // Don't set this to true because it'll result in a lot of classes missing causing Runtime crashes (Unless you `-keep` them all)

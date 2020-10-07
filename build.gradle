@@ -8,8 +8,8 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'org.wisepersist:gwt-gradle-plugin:1.0.9'
-        classpath 'com.android.tools.build:gradle:3.6.3' // Updating this might break shit so meh
+        classpath 'org.wisepersist:gwt-gradle-plugin:1.0.13'
+        classpath 'com.android.tools.build:gradle:4.0.1'
     }
 }
 
@@ -20,8 +20,9 @@ allprojects {
     version = '1.0'
     ext {
         appName = "Zoned"
-        gdxVersion = '1.9.10' // Should I update? Hmm
-        pieMenuVersion = '4.2.0'
+        gdxVersion = '1.9.11'
+        shapedrawerVersion = '2.3.0'
+        pieMenuVersion = 'shadow-SNAPSHOT'
     }
 
     repositories {
@@ -71,7 +72,7 @@ project(":android") {
     }
 }
 
-// No HTML support since the game uses Kryonet and generated FreeTypeFonts which isn't supported there
+// See the GWT branch for this
 /*project(":html") {
     apply plugin: "gwt"
     apply plugin: "war"
@@ -93,8 +94,9 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
 
         api "com.esotericsoftware:kryonet:2.22.0-RC1"
-        api "com.github.payne911:PieMenu:$pieMenuVersion"
-        // Piemenu depends on ShapeDrawer, so that'll get imported as well
+        api "space.earlygrey:shapedrawer:$shapedrawerVersion"
+        api "com.github.Spikatrix:PieMenu:$pieMenuVersion" // Forked version with a shadow
+        // api "com.github.payne911:PieMenu:$pieMenuVersion"
     }
 }
 

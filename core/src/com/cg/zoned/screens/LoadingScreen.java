@@ -159,9 +159,14 @@ public class LoadingScreen extends ScreenAdapter {
                 sequenceAction.addAction(Actions.run(new Runnable() {
                     @Override
                     public void run() {
-                        game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);
-                        dispose();
-                        game.setScreen(new MainMenuScreen(game));
+                        Gdx.app.postRunnable(new Runnable() { // Crashes on GWT without this
+                            @Override
+                            public void run() {
+                                game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);
+                                dispose();
+                                game.setScreen(new MainMenuScreen(game));
+                            }
+                        });
                     }
                 }));
 
