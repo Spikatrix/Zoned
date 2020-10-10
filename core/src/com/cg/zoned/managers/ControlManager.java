@@ -25,7 +25,7 @@ import com.cg.zoned.controls.PieMenuControlManager;
 public class ControlManager {
     // Specify at least one control mechanism. Otherwise, it will crash and burn.
     public static final ControlType[] CONTROL_TYPES = {
-            new ControlType("Piemenu",
+            new ControlType("D-Pad",
                     "icons/control_icons/ic_control_piemenu_off.png",
                     "icons/control_icons/ic_control_piemenu_on.png",
                     new PieMenuControlManager()),
