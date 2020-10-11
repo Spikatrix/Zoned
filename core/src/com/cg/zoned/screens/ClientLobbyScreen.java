@@ -14,10 +14,12 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -146,6 +148,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         clientLobbyTable.row();
 
         readyButton = new TextButton("Ready up", game.skin);
+        readyButton.setTransform(true);
         readyButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -175,6 +178,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             }
         });
         clientLobbyTable.add(readyButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
+
+        readyButton.setOrigin(200 * game.getScaleFactor() / 2f, readyButton.getHeight() / 2);
 
         stage.addFocusableActor(readyButton, 2);
         stage.row();
@@ -223,7 +228,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         }
     }
 
-    private void addPlayer(String name, String who, String ready, String color, String startPos) {
+    private void addPlayer(String name, String who, final String ready, String color, String startPos) {
         Table playerItem = new Table();
         playerItem.pad(10 * game.getScaleFactor());
 
@@ -274,6 +279,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
                     connectionManager.broadcastClientInfo((Table) playerList.getChild(0));
                 }
             });
+            colorSelector.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    if (colorSelector.isDisabled()) {
+                        nudgeReadyButton();
+                    }
+                }
+            });
             playerItem.add(colorSelector);
 
             final DropDownMenu startPosSelector = new DropDownMenu(game.skin);
@@ -285,6 +298,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
                     updateMapColor(players[0], players[0].color, startPosSelector.getSelectedIndex());
 
                     connectionManager.broadcastClientInfo((Table) playerList.getChild(0));
+                }
+            });
+            startPosSelector.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    if (startPosSelector.isDisabled()) {
+                        nudgeReadyButton();
+                    }
                 }
             });
             playerItem.add(startPosSelector);
@@ -309,6 +330,26 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         playerList.row();
 
         addNewPlayerIntoMap(name, color, startPos);
+    }
+
+    private void nudgeReadyButton() {
+        if (!readyButton.hasActions()) {
+            int nudgeAngle = 10;
+            float nudgeTime = 0.05f;
+            float scaleAmount = 1.2f;
+            int nudgeRepeatCount = 2;
+            Interpolation nudgeInterpolation = Interpolation.fastSlow;
+
+            readyButton.addAction(Actions.sequence(
+                    Actions.scaleTo(scaleAmount, scaleAmount, nudgeTime * 2, nudgeInterpolation),
+                    Actions.repeat(nudgeRepeatCount, Actions.sequence(
+                            Actions.rotateBy(nudgeAngle, nudgeTime, nudgeInterpolation),
+                            Actions.rotateBy(-nudgeAngle * 2, nudgeTime * 2, nudgeInterpolation),
+                            Actions.rotateBy(nudgeAngle, nudgeTime, nudgeInterpolation)
+                    )),
+                    Actions.scaleTo(1f, 1f, nudgeTime * 2, nudgeInterpolation)
+            ));
+        }
     }
 
     @Override
