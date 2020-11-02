@@ -21,7 +21,7 @@ allprojects {
     ext {
         appName = "Zoned"
         gdxVersion = '1.9.12'
-        shapedrawerVersion = '2.3.0'
+        shapedrawerVersion = 'libgdx-1.9.12-SNAPSHOT' // Was 2.3.0
         pieMenuVersion = 'shadow-SNAPSHOT'
     }
 
@@ -94,7 +94,9 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
 
         api "com.esotericsoftware:kryonet:2.22.0-RC1"
-        api "space.earlygrey:shapedrawer:$shapedrawerVersion"
+        api "com.github.Dgzt:ShapeDrawer:$shapedrawerVersion" // Fixes the angle issue with libGDX 1.9.12
+        // TODO: WARNING: The line above conflicts with PieMenu as it uses a different version of ShapeDrawer
+        //api "space.earlygrey:shapedrawer:$shapedrawerVersion"
         api "com.github.Spikatrix:PieMenu:$pieMenuVersion" // Forked version with a shadow
         // api "com.github.payne911:PieMenu:$pieMenuVersion"
     }

@@ -43,7 +43,7 @@ public class ExternalMapReader {
         externalMapDir = null;
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
             // Android
-            externalMapDir = Gdx.files.external("Android/data/com.cg.zoned/files/" + mapDirName);
+            externalMapDir = Gdx.files.external(mapDirName);
         } else if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             if (Gdx.files.getExternalStoragePath().startsWith("/home")) {
                 // Linux
