@@ -653,7 +653,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }

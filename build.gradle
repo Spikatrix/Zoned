@@ -9,7 +9,7 @@ buildscript {
     }
     dependencies {
         classpath 'org.wisepersist:gwt-gradle-plugin:1.0.13'
-        classpath 'com.android.tools.build:gradle:4.0.1'
+        classpath 'com.android.tools.build:gradle:4.1.0'
     }
 }
 
@@ -20,7 +20,7 @@ allprojects {
     version = '1.0'
     ext {
         appName = "Zoned"
-        gdxVersion = '1.9.11'
+        gdxVersion = '1.9.12'
         shapedrawerVersion = '2.3.0'
         pieMenuVersion = 'shadow-SNAPSHOT'
     }

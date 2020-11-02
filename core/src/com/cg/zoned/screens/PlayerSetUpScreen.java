@@ -128,7 +128,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         Table masterTable = new Table();
         masterTable.setFillParent(true);
-        //masterTable.setDebug(true);
+        // masterTable.setDebug(true);
         masterTable.center();
 
         Table table = new Table();
@@ -353,7 +353,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }

@@ -228,7 +228,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         }
     }
 
-    private void addPlayer(String name, String who, final String ready, String color, String startPos) {
+    private void addPlayer(String name, String who, String ready, String color, String startPos) {
         Table playerItem = new Table();
         playerItem.pad(10 * game.getScaleFactor());
 
@@ -794,7 +794,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }
