@@ -15,10 +15,10 @@ public class Spinner extends Table {
     private StepScrollPane stepScrollPane;
     private TextButton rightButton;
 
-    private final boolean isVerticalSpinner;
+    private boolean isVerticalSpinner;
 
-    private final float scrollPaneHeight;
-    private final float scrollPaneWidth;
+    private float scrollPaneHeight;
+    private float scrollPaneWidth;
     private float buttonHeight;
     private float buttonWidth;
     private int buttonStepCount = 10;
@@ -107,6 +107,7 @@ public class Spinner extends Table {
         } else {
             stepScrollPane.setStepSize(scrollPaneWidth);
         }
+        stepScrollPane.layout();
     }
 
     public void generateValueRange(int valLowLimit, int valHighLimit, Skin skin) {
@@ -122,10 +123,12 @@ public class Spinner extends Table {
         valueLabel.setText(sb.toString());
 
         stepScrollPane.add(valueLabel);
+        stepScrollPane.layout();
     }
 
     public void addContent(Actor actor) {
         stepScrollPane.add(actor);
+        stepScrollPane.layout();
     }
 
     public void setButtonStepCount(int buttonStepCount) {

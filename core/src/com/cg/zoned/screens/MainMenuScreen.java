@@ -318,7 +318,11 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
             float optionPadding = 50f;
             if (i == 0) {
-                table.add(stack).grow().padLeft(optionPadding).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
+                if (gameModes.length == 1) {
+                    table.add(stack).grow().padLeft(optionPadding).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding);
+                } else {
+                    table.add(stack).grow().padLeft(optionPadding).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
+                }
             } else if (i == gameModes.length - 1) {
                 table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding);
             } else {
