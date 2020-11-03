@@ -48,12 +48,7 @@ public class StepScrollPane extends ScrollPane {
         addListener(new InputListener() {
             @Override
             public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
-                /* TODO: libGDX 1.9.12 issues I've noticed:
-                          1. ScrollPane not using its full height
-                          2. Test and integrate scrollpane horizontal scroll
-                          3. ShapeDrawer issues
-                 */
-                com.badlogic.gdx.Gdx.app.log("test", "AmountX: " + amountX + " AmountY: " + amountY);
+                // `amountX` is always 0 for me on Linux even though horizontal scrolling is enabled via `synclient` ¯\_(ツ)_/¯
                 snapToStep((int) amountY);
                 return true;
             }
