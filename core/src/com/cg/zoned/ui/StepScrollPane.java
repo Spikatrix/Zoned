@@ -14,7 +14,7 @@ import static java.lang.Math.abs;
 public class StepScrollPane extends ScrollPane {
     private Table content;
 
-    private boolean isVerticalScrollPane;
+    private final boolean isVerticalScrollPane;
 
     private boolean wasPanDragFling = false;
     private float destinationPosition = 0f;
@@ -57,8 +57,8 @@ public class StepScrollPane extends ScrollPane {
 
     private void disableScrollBars() {
         this.setScrollBarTouch(false);
-        this.setScrollbarsOnTop(false);
         this.setScrollbarsVisible(false);
+        this.setScrollbarsOnTop(true);
         this.setScrollingDisabled(isVerticalScrollPane, !isVerticalScrollPane);
         this.setupFadeScrollBars(0f, 0f);
     }
