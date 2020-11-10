@@ -99,7 +99,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         this.animationManager = new AnimationManager(this.game, this);
 
         this.batch = new SpriteBatch();
-        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
+        this.shapeDrawer = new ShapeDrawer(batch, game.skin);
 
         this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }

@@ -5,9 +5,18 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 
 public class ShapeDrawer extends space.earlygrey.shapedrawer.ShapeDrawer {
+    public ShapeDrawer(Batch batch, Skin skin) {
+        super(batch, skin.getRegion("white"));
+    }
+
+    public ShapeDrawer(Batch batch, TextureRegion whiteTextureRegion) {
+        super(batch, whiteTextureRegion);
+    }
+
     public ShapeDrawer(Batch batch, Array<Texture> usedTextures) {
         super(batch, ShapeDrawer.get1x1TextureRegion(usedTextures));
     }

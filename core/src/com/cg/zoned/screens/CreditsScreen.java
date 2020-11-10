@@ -89,7 +89,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
                 "Developer", "Spikatrix");
 
         addCreditItem(table,
-                "Neon-UI Skin", "Raymond \"Raeleus\" Buckley");
+                "Original Neon-UI Skin", "Raymond \"Raeleus\" Buckley");
 
         addCreditItem(table,
                 "Powered By",

@@ -1,6 +1,4 @@
 {
-	"com.badlogic.gdx.graphics.g2d.BitmapFont": {
-	},
 	"com.badlogic.gdx.graphics.Color": {
 		"color": {
 			"r": 0.14,
@@ -208,6 +206,10 @@
 			"name": "touchpad-knob",
 			"color": "color"
 		},
+		"border-outline": {
+			"name": "border",
+			"color": "color"
+		},
 		"plus-c": {
 			"name": "plus",
 			"color": "color"
@@ -313,6 +315,11 @@
 		"themed": {
 			"font": "regular",
 			"fontColor": "text-themed"
+		},
+		"themed-header": {
+			"font": "regular",
+			"fontColor": "text-themed",
+			"background": "border-outline"
 		}
 	},
 	"com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle": {

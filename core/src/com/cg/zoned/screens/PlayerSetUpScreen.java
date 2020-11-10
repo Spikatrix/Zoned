@@ -70,7 +70,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         this.batch = new SpriteBatch();
-        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
+        this.shapeDrawer = new ShapeDrawer(batch, game.skin);
 
         this.playerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         this.playerList = new Table();

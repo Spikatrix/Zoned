@@ -95,7 +95,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 game.skin, game.getScaleFactor(), usedTextures);
 
         this.batch = new SpriteBatch();
-        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
+        this.shapeDrawer = new ShapeDrawer(batch, game.skin);
         this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount(), this.shapeDrawer);
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
