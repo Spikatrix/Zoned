@@ -77,7 +77,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         ControlType[] controlTypes = ControlManager.CONTROL_TYPES;
         int currentControl = game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0);
 
-        Label controlSchemeLabel = new Label("Control scheme", game.skin, "themed");
+        Label controlSchemeLabel = new Label("Control setting", game.skin, "themed-rounded-background");
         table.add(controlSchemeLabel).colspan(controlTypes.length).padBottom(10f);
         table.row();
 
@@ -131,6 +131,9 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         }
         table.row();
 
+        Label miscLabel = new Label("Misc", game.skin, "themed-rounded-background");
+        table.add(miscLabel).colspan(controlTypes.length).padTop(40f);
+        table.row();
 
         final HoverCheckBox showFPS = new HoverCheckBox("Show FPS counter", game.skin);
         showFPS.getImageCell().width(showFPS.getLabel().getPrefHeight()).height(showFPS.getLabel().getPrefHeight());
@@ -146,7 +149,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
             }
         });
 
-        table.add(showFPS).colspan(controlTypes.length).padTop(30f);
+        table.add(showFPS).colspan(controlTypes.length).padTop(20f);
         table.row();
 
         HoverCheckBox discordRPCSwitch = null;
@@ -171,7 +174,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
                 }
             });
 
-            table.add(discordRPCSwitch).colspan(controlTypes.length).padTop(30f);
+            table.add(discordRPCSwitch).colspan(controlTypes.length).padTop(20f);
         }
 
         masterTable.add(screenScrollPane).grow();

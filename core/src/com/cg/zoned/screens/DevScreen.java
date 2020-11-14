@@ -65,7 +65,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         table.center();
         table.setFillParent(true);
 
-        table.add(new Label("Developer Options", game.skin, "themed")).expandX().pad(20f);
+        table.add(new Label("Developer Options", game.skin, "themed-rounded-background")).expandX().pad(20f);
         table.row();
 
         Table innerTable = new Table();

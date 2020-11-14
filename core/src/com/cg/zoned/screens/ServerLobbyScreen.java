@@ -114,7 +114,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         serverLobbyTable.center();
         //serverLobbyTable.setDebug(true);
 
-        Label lobbyTitle = new Label("Lobby", game.skin, "themed");
+        Label lobbyTitle = new Label("Lobby", game.skin, "themed-rounded-background");
         serverLobbyTable.add(lobbyTitle).pad(20f);
         serverLobbyTable.row();
 

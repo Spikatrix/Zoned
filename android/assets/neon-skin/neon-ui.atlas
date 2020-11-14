@@ -3,13 +3,22 @@ size: 512,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-border
+border-slanted
   rotate: false
-  xy: 53, 94
-  size: 42, 36
-  split: 16, 16, 8, 8
-  pad: 16, 16, 8, 8
-  orig: 74, 112
+  xy: 45, 50
+  size: 57, 27
+  split: 23, 24, 0, 0
+  pad: 32, 32, 32, 32
+  orig: 65, 38
+  offset: 0, 0
+  index: -1
+border-rounded
+  rotate: false
+  xy: 49, 88
+  size: 50, 35
+  split: 15, 15, 0, 0
+  pad: 20, 20, 12, 13
+  orig: 75, 105
   offset: 0, 0
   index: -1
 button

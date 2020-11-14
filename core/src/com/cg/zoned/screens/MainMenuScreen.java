@@ -233,7 +233,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeTable.setFillParent(true);
         playModeTable.center();
 
-        Label chooseMode = new Label("Choose the game mode", game.skin, "themed");
+        Label chooseMode = new Label("Choose the game mode", game.skin, "themed-rounded-background");
         playModeTable.add(chooseMode).expandX().pad(20f).colspan(2);
         playModeTable.row();
 

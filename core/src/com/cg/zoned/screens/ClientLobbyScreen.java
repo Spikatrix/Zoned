@@ -129,7 +129,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         //clientLobbyTable.setDebug(true);
         clientLobbyTable.center();
 
-        Label lobbyTitle = new Label("Lobby", game.skin, "themed");
+        Label lobbyTitle = new Label("Lobby", game.skin, "themed-rounded-background");
         clientLobbyTable.add(lobbyTitle).pad(20);
 
         clientLobbyTable.row();
