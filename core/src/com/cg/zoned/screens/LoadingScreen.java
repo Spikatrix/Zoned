@@ -252,7 +252,6 @@ public class LoadingScreen extends ScreenAdapter {
 
         NinePatch ninePatch = new NinePatch(loadingTexture, radius, radius, radius, radius);
         NinePatchDrawable ninePatchDrawable = new NinePatchDrawable(ninePatch);
-        //ninePatchDrawable.setMinWidth(0);
 
         return ninePatchDrawable;
     }

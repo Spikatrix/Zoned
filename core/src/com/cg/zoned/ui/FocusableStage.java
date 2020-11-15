@@ -12,7 +12,6 @@ import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -252,7 +251,10 @@ public class FocusableStage extends Stage {
                     dialogResultListener.dialogResult((String) object);
                 }
 
-                dialog.hide(Actions.scaleTo(0, 0, .2f, Interpolation.fastSlow));
+                dialog.hide(Actions.parallel(
+                        Actions.scaleTo(.6f, .6f, .3f, Interpolation.swingIn),
+                        Actions.fadeOut(.2f, Interpolation.smooth)
+                ));
                 dialog = previousDialog;
             }
         };
@@ -260,7 +262,8 @@ public class FocusableStage extends Stage {
         dialog.getContentTable().add(content).pad(20f);
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
         dialog.getButtonTable().padBottom(10f).padLeft(10f).padRight(10f);
-        dialog.setScale(0);
+        dialog.setScale(0.6f);
+        dialog.getColor().a = 0;
 
         if (content instanceof Label) {
             Label label = (Label) content;
@@ -293,7 +296,10 @@ public class FocusableStage extends Stage {
         }
 
         dialog.getStyle().stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
-        dialog.show(this, Actions.scaleTo(1f, 1f, .2f, Interpolation.fastSlow));
+        dialog.show(this, Actions.parallel(
+                Actions.scaleTo(1f, 1f, .3f, Interpolation.swingOut),
+                Actions.fadeIn(.2f, Interpolation.smooth)
+        ));
         dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
         dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
     }
