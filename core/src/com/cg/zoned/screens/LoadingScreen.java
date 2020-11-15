@@ -11,18 +11,21 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -31,6 +34,7 @@ import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.ControlManager;
+import com.cg.zoned.ui.PixmapFactory;
 
 public class LoadingScreen extends ScreenAdapter {
     final Zoned game;
@@ -40,10 +44,11 @@ public class LoadingScreen extends ScreenAdapter {
     private AssetManager assetManager;
 
     private Stage stage;
-    private Skin progressBarSkin;
+    private Skin tempSkin;
+    private Label loadingLabel;
     private ProgressBar progressBar;
     private boolean finishedLoading;
-    private boolean loadedFonts;
+    private boolean loadedStageTwo;
 
     public LoadingScreen(final Zoned game) {
         this.game = game;
@@ -60,7 +65,7 @@ public class LoadingScreen extends ScreenAdapter {
             game.discordRPCManager.initRPC();
         }
 
-        // Reset player colors
+        // Reset player color alpha
         PlayerColorHelper.resetPlayerColorAlpha();
 
         // Validate touch controls
@@ -76,10 +81,10 @@ public class LoadingScreen extends ScreenAdapter {
         game.setAssetManager(assetManager); // For disposing
 
         stage = new Stage(new ScreenViewport());
-        progressBarSkin = createProgressBarSkin();
+        tempSkin = createTempSkin();
 
         setUpLoadingUI();
-        finishedLoading = loadedFonts = false;
+        finishedLoading = loadedStageTwo = false;
 
         FileHandleResolver resolver = new InternalFileHandleResolver();
         assetManager.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(resolver));
@@ -103,13 +108,23 @@ public class LoadingScreen extends ScreenAdapter {
         table.add(loading);
         table.row();
 
-        progressBar = new ProgressBar(0, 1, .01f, false, progressBarSkin);
-        progressBar.setAnimateDuration(.5f);
+        progressBar = new ProgressBar(0, 1, .01f, false, tempSkin);
+        progressBar.setAnimateDuration(.4f);
+        progressBar.setAnimateInterpolation(Interpolation.fastSlow);
 
         table.add(progressBar).growX()
                 .padLeft(100f * game.getScaleFactor()).padRight(100f * game.getScaleFactor())
                 .padTop(16f * game.getScaleFactor());
 
+        Table loadingContainer = new Table();
+        loadingContainer.setFillParent(true);
+        loadingContainer.bottom().right();
+        loadingLabel = new Label("0", tempSkin, "loading-font", Color.WHITE);
+        loadingContainer.add(loadingLabel);
+        loadingContainer.add(new Label("%", tempSkin, "loading-font", Color.WHITE));
+        loadingContainer.pad(16f * game.getScaleFactor());
+
+        stage.addActor(loadingContainer);
         stage.addActor(table);
     }
 
@@ -134,43 +149,13 @@ public class LoadingScreen extends ScreenAdapter {
         if (!finishedLoading && assetManager.update()) {
             finishedLoading = true;
 
-            if (!loadedFonts) {
-                ObjectMap<String, Object> fontMap = new ObjectMap<>();
-                for (Assets.FontManager font : Assets.FontManager.values()) {
-                    fontMap.put(font.getFontName(), assetManager.get(font.getFontName() + ".otf", BitmapFont.class));
-                }
+            if (!loadedStageTwo) {
+                loadStageTwo();
 
-                SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
-                assetManager.load("neon-skin/neon-ui.json", Skin.class, parameter);
-
-                assetManager.load("icons/ui_icons/ic_play_sheet.png", Texture.class); // Big image, loading directly will lag on less powerful hardware
-                assetManager.load("icons/ui_icons/ic_back.png", Texture.class);
-                assetManager.load("icons/ui_icons/ic_credits.png", Texture.class);
-                assetManager.load("icons/ui_icons/ic_cross.png", Texture.class);
-                assetManager.load("icons/ui_icons/ic_dev.png", Texture.class);
-                assetManager.load("icons/ui_icons/ic_settings.png", Texture.class);
-                assetManager.load("icons/ui_icons/ic_tutorial.png", Texture.class);
-
-                loadedFonts = true;
+                loadedStageTwo = true;
                 finishedLoading = false;
             } else {
-                SequenceAction sequenceAction = new SequenceAction();
-                sequenceAction.addAction(Actions.fadeOut(1f));
-                sequenceAction.addAction(Actions.run(new Runnable() {
-                    @Override
-                    public void run() {
-                        Gdx.app.postRunnable(new Runnable() { // Crashes on GWT without this
-                            @Override
-                            public void run() {
-                                game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);
-                                dispose();
-                                game.setScreen(new MainMenuScreen(game));
-                            }
-                        });
-                    }
-                }));
-
-                stage.addAction(sequenceAction);
+                endLoading();
             }
         }
 
@@ -179,14 +164,54 @@ public class LoadingScreen extends ScreenAdapter {
 
         float progress = assetManager.getProgress();
         progress = 0.5f * progress;
-        if (loadedFonts) {
+        if (loadedStageTwo) {
             progressBar.setValue(0.5f + progress);
         } else {
             progressBar.setValue(progress);
         }
 
+        loadingLabel.setText((int) (progressBar.getValue() * 100));
+
         stage.act(delta);
         stage.draw();
+    }
+
+    private void loadStageTwo() {
+        ObjectMap<String, Object> fontMap = new ObjectMap<>();
+        for (Assets.FontManager font : Assets.FontManager.values()) {
+            fontMap.put(font.getFontName(), assetManager.get(font.getFontName() + ".otf", BitmapFont.class));
+        }
+
+        SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
+        assetManager.load("neon-skin/neon-ui.json", Skin.class, parameter);
+
+        assetManager.load("icons/ui_icons/ic_play_sheet.png", Texture.class); // Big image, loading directly will lag on less powerful hardware
+        assetManager.load("icons/ui_icons/ic_back.png", Texture.class);
+        assetManager.load("icons/ui_icons/ic_credits.png", Texture.class);
+        assetManager.load("icons/ui_icons/ic_cross.png", Texture.class);
+        assetManager.load("icons/ui_icons/ic_dev.png", Texture.class);
+        assetManager.load("icons/ui_icons/ic_settings.png", Texture.class);
+        assetManager.load("icons/ui_icons/ic_tutorial.png", Texture.class);
+    }
+
+    private void endLoading() {
+        SequenceAction sequenceAction = new SequenceAction();
+        sequenceAction.addAction(Actions.fadeOut(1f));
+        sequenceAction.addAction(Actions.run(new Runnable() {
+            @Override
+            public void run() {
+                Gdx.app.postRunnable(new Runnable() { // Crashes on GWT without this
+                    @Override
+                    public void run() {
+                        game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);
+                        dispose();
+                        game.setScreen(new MainMenuScreen(game));
+                    }
+                });
+            }
+        }));
+
+        stage.addAction(sequenceAction);
     }
 
     @Override
@@ -197,32 +222,38 @@ public class LoadingScreen extends ScreenAdapter {
     @Override
     public void dispose() {
         stage.dispose();
-        progressBarSkin.dispose();
+        tempSkin.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
     }
 
-    private Skin createProgressBarSkin() {
+    /*
+     * Creates a temporary skin with a horizontal progress bar and a limited loading font
+     */
+    private Skin createTempSkin() {
         Skin tempSkin = new Skin();
-        tempSkin.add("progress-bar", createDrawable(1, 20, Color.GREEN), Drawable.class);
+        tempSkin.add("progress-bar", createNinePatchDrawable(14, 14, 6, Color.GREEN), Drawable.class);
         ProgressBar.ProgressBarStyle progressBarStyle = new ProgressBar.ProgressBarStyle();
         progressBarStyle.knobBefore = tempSkin.getDrawable("progress-bar");
         tempSkin.add("default-horizontal", progressBarStyle);
 
+        tempSkin.add("loading-font", new BitmapFont(Gdx.files.internal("fonts/loading/loading.fnt")), BitmapFont.class);
+
         return tempSkin;
     }
 
-    private Drawable createDrawable(int width, int height, Color color) {
-        Pixmap loadingPixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-        loadingPixmap.setColor(color);
-        loadingPixmap.fillRectangle(0, 0, width, height);
+    private NinePatchDrawable createNinePatchDrawable(int width, int height, int radius, Color color) {
+        Pixmap loadingPixmap = PixmapFactory.getRoundedCornerPixmap(color, width, height, radius);
 
         Texture loadingTexture = new Texture(loadingPixmap);
         usedTextures.add(loadingTexture);
         loadingPixmap.dispose();
-        TextureRegionDrawable textureRegionDrawable = new TextureRegionDrawable(loadingTexture);
-        textureRegionDrawable.setMinWidth(0);
-        return textureRegionDrawable;
+
+        NinePatch ninePatch = new NinePatch(loadingTexture, radius, radius, radius, radius);
+        NinePatchDrawable ninePatchDrawable = new NinePatchDrawable(ninePatch);
+        //ninePatchDrawable.setMinWidth(0);
+
+        return ninePatchDrawable;
     }
 }

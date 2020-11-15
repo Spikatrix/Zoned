@@ -40,6 +40,7 @@ import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.AnimatedDrawable;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
+import com.cg.zoned.ui.PixmapFactory;
 
 public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     final Zoned game;
@@ -92,7 +93,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             @Override
             public void run() {
                 final int radius = 40;
-                final Pixmap pixmap = getRoundedCornerPixmap(Color.GREEN, radius);
+                final Pixmap pixmap = PixmapFactory.getRoundedCornerPixmap(Color.GREEN, radius);
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
@@ -375,22 +376,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage.resize(width, height);
         playModeStage.resize(width, height);
         emitterRight.setPosition(viewport.getWorldWidth(), 0);
-    }
-
-    public Pixmap getRoundedCornerPixmap(Color color, int radius) {
-        final int width = 10 + (radius * 2);
-        final int height = 10 + (radius * 2);
-
-        Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-        pixmap.setColor(color);
-        pixmap.fillCircle(radius, radius, radius);
-        pixmap.fillCircle(width - radius, radius, radius);
-        pixmap.fillCircle(width - radius, height - radius, radius);
-        pixmap.fillCircle(radius, height - radius, radius);
-        pixmap.fillRectangle(0, radius, width, height - (radius * 2));
-        pixmap.fillRectangle(radius, 0, width - (radius * 2), height);
-
-        return pixmap;
     }
 
     @Override
