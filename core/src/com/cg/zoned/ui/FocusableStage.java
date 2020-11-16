@@ -17,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
@@ -295,7 +296,12 @@ public class FocusableStage extends Stage {
             focus(this.focusableActorArray.get(0));
         }
 
-        dialog.getStyle().stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
+        if (previousDialog == null) {
+            // Darken background only for the first Dialog
+            Window.WindowStyle darkBackgroundStyle = new Window.WindowStyle(dialog.getStyle());
+            darkBackgroundStyle.stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
+            dialog.setStyle(darkBackgroundStyle);
+        }
         dialog.show(this, Actions.parallel(
                 Actions.scaleTo(1f, 1f, .3f, Interpolation.swingOut),
                 Actions.fadeIn(.2f, Interpolation.smooth)
