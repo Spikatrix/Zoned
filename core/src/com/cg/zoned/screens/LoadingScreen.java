@@ -5,6 +5,7 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.SkinLoader;
+import com.badlogic.gdx.assets.loaders.TextureLoader;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -177,21 +178,31 @@ public class LoadingScreen extends ScreenAdapter {
     }
 
     private void loadStageTwo() {
+        String[] preloadTextureLocations = new String[] {
+                "icons/ui_icons/ic_play_sheet.png",
+                "icons/ui_icons/ic_back.png",
+                "icons/ui_icons/ic_credits.png",
+                "icons/ui_icons/ic_cross.png",
+                "icons/ui_icons/ic_dev.png",
+                "icons/ui_icons/ic_settings.png",
+                "icons/ui_icons/ic_tutorial.png",
+        };
+
         ObjectMap<String, Object> fontMap = new ObjectMap<>();
         for (Assets.FontManager font : Assets.FontManager.values()) {
             fontMap.put(font.getFontName(), assetManager.get(font.getFontName() + ".otf", BitmapFont.class));
         }
 
-        SkinLoader.SkinParameter parameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
-        assetManager.load("neon-skin/neon-ui.json", Skin.class, parameter);
+        SkinLoader.SkinParameter skinParameter = new SkinLoader.SkinParameter("neon-skin/neon-ui.atlas", fontMap);
+        assetManager.load("neon-skin/neon-ui.json", Skin.class, skinParameter);
 
-        assetManager.load("icons/ui_icons/ic_play_sheet.png", Texture.class); // Big image, loading directly will lag on less powerful hardware
-        assetManager.load("icons/ui_icons/ic_back.png", Texture.class);
-        assetManager.load("icons/ui_icons/ic_credits.png", Texture.class);
-        assetManager.load("icons/ui_icons/ic_cross.png", Texture.class);
-        assetManager.load("icons/ui_icons/ic_dev.png", Texture.class);
-        assetManager.load("icons/ui_icons/ic_settings.png", Texture.class);
-        assetManager.load("icons/ui_icons/ic_tutorial.png", Texture.class);
+        TextureLoader.TextureParameter textureParameter = new TextureLoader.TextureParameter();
+        textureParameter.minFilter = Texture.TextureFilter.Linear;
+        textureParameter.magFilter = Texture.TextureFilter.Linear;
+
+        for (String textureFileLocation : preloadTextureLocations) {
+            assetManager.load(textureFileLocation, Texture.class, textureParameter);
+        }
     }
 
     private void endLoading() {
