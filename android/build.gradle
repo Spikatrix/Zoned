@@ -19,7 +19,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
-        // TODO: Check if these affect APK size (shadow-SNAPSHOT vs shadow-4.2.0-SNAPSHOT for testing)
     }
 
     packagingOptions {
@@ -42,7 +41,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false // Don't set this to true because it'll result in a lot of classes missing causing Runtime crashes (Unless you `-keep` them all)
+            minifyEnabled false // Don't set this to true because it'll result in a lot of classes missing causing Runtime crashes (Unless you `-keep` them all) TODO: Read wiki page on this
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

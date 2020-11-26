@@ -110,7 +110,7 @@ public class LoadingScreen extends ScreenAdapter {
         table.row();
 
         progressBar = new ProgressBar(0, 1, .01f, false, tempSkin);
-        progressBar.setAnimateDuration(.4f);
+        progressBar.setAnimateDuration(.8f);
         progressBar.setAnimateInterpolation(Interpolation.fastSlow);
 
         table.add(progressBar).growX()

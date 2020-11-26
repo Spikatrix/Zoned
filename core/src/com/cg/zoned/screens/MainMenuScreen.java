@@ -182,7 +182,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
     private HoverImageButton setUpAnimatedPlayButton(Table mainTable) {
         Texture playSheet = game.assets.getPlayButtonTexture();
-        int rowCount = 6, colCount = 5;
+        int rowCount = 5, colCount = 6;
 
         TextureRegion[][] tmp = TextureRegion.split(playSheet,
                 playSheet.getWidth() / colCount,
