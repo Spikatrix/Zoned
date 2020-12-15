@@ -95,7 +95,7 @@ public class MapManager {
     public Texture getMapPreview(String mapName) {
         // Scan for the map preview in the internal directory
         try {
-            FileHandle fileHandle = Gdx.files.internal("icons/map_icons/" + mapName + ".png");
+            FileHandle fileHandle = Gdx.files.internal("images/map_icons/" + mapName + ".png");
             if (fileHandle.exists()) {
                 return new Texture(fileHandle);
             }

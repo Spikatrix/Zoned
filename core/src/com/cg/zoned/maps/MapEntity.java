@@ -11,8 +11,9 @@ public interface MapEntity {
     /**
      * Used to display the Map's name.
      * Make sure that it does not conflict with other map names as that could create issues.
-     * Also, save the map's preview with the <MapName>.png in icons/map_icons if you want to show
-     * a preview of it in the map selector spinner
+     * Also, save the map's preview with the <MapName>.png in images/map_icons for internal maps
+     * or the custom external map directory if you want to show a preview of it in the map
+     * selector spinner
      *
      * @return The map's name
      */

@@ -81,7 +81,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         screenScrollPane.setOverscroll(false, true);
 
         addCreditItem(table,
-                Gdx.files.internal("icons/ic_zoned_desktop_icon.png"),
+                Gdx.files.internal("images/ic_zoned_desktop_icon.png"),
                 "ZONED",
                 "Game version: " + Constants.GAME_VERSION);
 
@@ -93,22 +93,22 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         addCreditItem(table,
                 "Powered By",
-                Gdx.files.internal("icons/credits_icons/ic_libgdx.png"), null,
+                Gdx.files.internal("images/credits_icons/ic_libgdx.png"), null,
                 "https://libgdx.com");
 
         addCreditItem(table,
                 "Inspired By",
-                Gdx.files.internal("icons/credits_icons/ic_codingame.png"), "Back to the Code",
+                Gdx.files.internal("images/credits_icons/ic_codingame.png"), "Back to the Code",
                 "https://www.codingame.com/multiplayer/bot-programming/back-to-the-code");
 
         addCreditItem(table,
                 "Contribute to the game",
-                Gdx.files.internal("icons/credits_icons/ic_github.png"), "GitHub",
+                Gdx.files.internal("images/credits_icons/ic_github.png"), "GitHub",
                 "https://github.com/Spikatrix/Zoned");
 
         addCreditItem(table,
                 "Feedback",
-                Gdx.files.internal("icons/credits_icons/ic_gmail.png"), "cg.devworks@gmail.com",
+                Gdx.files.internal("images/credits_icons/ic_gmail.png"), "cg.devworks@gmail.com",
                 "mailto:cg.devworks@gmail.com?subject=Zoned+Feedback");
 
         addCreditItem(table,

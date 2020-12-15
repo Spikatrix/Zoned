@@ -69,7 +69,12 @@ public class StepScrollPane extends ScrollPane {
     }
 
     public void add(Actor actor) {
-        content.add(actor).width(getWidth());
+        // Ugh, this whole thing is ugly. But it's difficult to get it right in scene2d
+        if (isVerticalScrollPane) {
+            content.add(actor).width(getWidth());
+        } else {
+            content.add(actor).width(getWidth()).height(getHeight());
+        }
     }
 
     @Override

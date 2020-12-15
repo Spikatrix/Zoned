@@ -84,7 +84,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         Table infoTable = new Table();
         infoTable.setFillParent(true);
         infoTable.center().bottom();
-        Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
+        Texture infoIconTexture = new Texture(Gdx.files.internal("images/ui_icons/ic_info.png"));
         usedTextures.add(infoIconTexture);
         Image infoImage = new Image(infoIconTexture);
         Label infoLabel = new Label("Make sure that all players\nare on the same local network", game.skin);

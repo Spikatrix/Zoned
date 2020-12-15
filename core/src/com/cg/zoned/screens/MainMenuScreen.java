@@ -11,9 +11,11 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -50,12 +52,16 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private FocusableStage mainStage;
     private FocusableStage playModeStage;
     private Viewport viewport;
+    private SpriteBatch batch;
     private boolean exitDialogIsActive = false;
     private Array<Actor> mainMenuUIButtons;
     private AnimationManager animationManager;
     private boolean showFPSCounter;
     private BitmapFont font;
     private NinePatch roundedCornerNP;
+    private Texture bgTexture;
+    private float bgScrollAmount;
+    private float bgAlpha;
 
     private ParticleEffect emitterLeft, emitterRight;
 
@@ -67,6 +73,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         mainStage = new FocusableStage(viewport);
         playModeStage = new FocusableStage(viewport);
         animationManager = new AnimationManager(this.game, this);
+        batch = new SpriteBatch();
+        batch.setColor(1, 1, 1, bgAlpha);
 
         emitterLeft = new ParticleEffect();
         emitterRight = new ParticleEffect();
@@ -86,6 +94,11 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 emitterRight.setPosition(viewport.getWorldWidth(), 0);
                 emitterLeft.start();
                 emitterRight.start();
+
+                bgTexture = game.assets.getGameBgTexture();
+                bgTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+
+                bgAlpha = 1;
             }
         });
 
@@ -101,6 +114,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                         usedTextures.add(roundedCornerBgColorTexture);
                         roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
                         pixmap.dispose();
+
+                        setUpPlayMenu();
                     }
                 });
             }
@@ -208,15 +223,13 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                if (roundedCornerNP == null) {
-                    // Thread didn't finish loading the pixmap
+                if (roundedCornerNP == null || !playModeStage.getRoot().hasChildren()) {
                     // Should almost never happen cause processors are hella fast, even mobile ones
                     return;
                 }
 
-                if (!playModeStage.getRoot().hasChildren()) {
-                    setUpPlayMenu();
-                }
+                bgAlpha = 0f;
+
                 animationManager.startPlayModeAnimation(mainStage, playModeStage, playButton);
             }
         });
@@ -238,8 +251,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeTable.row();
 
         final GameMode[] gameModes = new GameMode[]{
-                new GameMode("Splitscreen\nMultiplayer", "icons/multiplayer_icons/ic_splitscreen_multiplayer.png", PlayerSetUpScreen.class),
-                new GameMode("Local\nNetwork\nMultiplayer", "icons/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
+                new GameMode("Splitscreen\nMultiplayer", "images/multiplayer_icons/ic_splitscreen_multiplayer.png", PlayerSetUpScreen.class),
+                new GameMode("Local\nNetwork\nMultiplayer", "images/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
         };
 
         final float normalAlpha = .15f;
@@ -334,10 +347,11 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         }
 
         UIButtonManager uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton exitButton = uiButtonManager.addHideButtonToStage(game.assets.getBackButtonTexture());
-        exitButton.addListener(new ClickListener() {
+        HoverImageButton hideButton = uiButtonManager.addHideButtonToStage(game.assets.getBackButtonTexture());
+        hideButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                bgAlpha = 1f;
                 animationManager.endPlayModeAnimation(mainStage, playModeStage);
             }
         });
@@ -354,13 +368,16 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         viewport.apply(true);
 
-        mainStage.getBatch().begin();
-        emitterLeft.draw(mainStage.getBatch(), delta);
-        emitterRight.draw(mainStage.getBatch(), delta);
-        mainStage.getBatch().end();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+
+        batch.begin();
+        emitterLeft.draw(batch, delta);
+        emitterRight.draw(batch, delta);
+        drawBG(batch, delta);
+        batch.end();
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, mainStage.getBatch(), font);
+            UITextDisplayer.displayFPS(viewport, batch, font);
         }
 
         mainStage.draw();
@@ -368,6 +385,37 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
         playModeStage.draw();
         playModeStage.act(delta);
+    }
+
+    private void drawBG(Batch batch, float delta) {
+        if (bgTexture != null) {
+            int bgTextureW = bgTexture.getWidth();
+            int bgTextureH = bgTexture.getHeight();
+            float stageW = mainStage.getWidth();
+            float stageH = mainStage.getHeight();
+
+            Color color = batch.getColor();
+            if (color.a != bgAlpha) {
+                color.a += delta * 6f * (bgAlpha - color.a);
+                if (color.a < 0) {
+                    color.a = 0;
+                }
+                else if (color.a > 1) {
+                    color.a = 1;
+                }
+
+                batch.setColor(color);
+            }
+
+            batch.draw(bgTexture, 0, 0,
+                    (int) (bgTextureW - ((stageW % bgTextureW)) / 2),
+                    (int) (bgTextureH - bgScrollAmount - ((stageH % bgTextureH)) / 2),
+                    (int) stageW, (int) stageH);
+            bgScrollAmount += 20 * delta * game.getScaleFactor();
+            if (bgScrollAmount > bgTextureH) {
+                bgScrollAmount %= bgTextureH;
+            }
+        }
     }
 
     @Override
@@ -383,6 +431,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeStage.dispose();
         emitterLeft.dispose();
         emitterRight.dispose();
+        batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
         }
@@ -412,6 +461,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         if (mainStage.getRoot().getColor().a == 1f) {
             showExitDialog();
         } else {
+            bgAlpha = 1f;
             animationManager.endPlayModeAnimation(mainStage, playModeStage);
         }
     }

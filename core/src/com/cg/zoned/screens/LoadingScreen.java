@@ -103,14 +103,14 @@ public class LoadingScreen extends ScreenAdapter {
         table.setFillParent(true);
         table.center();
 
-        Texture loadingImageTexture = new Texture(Gdx.files.internal("icons/ic_loading.png"));
+        Texture loadingImageTexture = new Texture(Gdx.files.internal("images/ic_loading.png"));
         usedTextures.add(loadingImageTexture);
         Image loading = new Image(loadingImageTexture);
         table.add(loading);
         table.row();
 
         progressBar = new ProgressBar(0, 1, .01f, false, tempSkin);
-        progressBar.setAnimateDuration(.8f);
+        progressBar.setAnimateDuration(.7f);
         progressBar.setAnimateInterpolation(Interpolation.fastSlow);
 
         table.add(progressBar).growX()
@@ -179,13 +179,14 @@ public class LoadingScreen extends ScreenAdapter {
 
     private void loadStageTwo() {
         String[] preloadTextureLocations = new String[] {
-                "icons/ui_icons/ic_play_sheet.png",
-                "icons/ui_icons/ic_back.png",
-                "icons/ui_icons/ic_credits.png",
-                "icons/ui_icons/ic_cross.png",
-                "icons/ui_icons/ic_dev.png",
-                "icons/ui_icons/ic_settings.png",
-                "icons/ui_icons/ic_tutorial.png",
+                Assets.TEXTURE_DIAMOND_LOCATION,
+                Assets.TEXTURE_PLAY_SHEET_LOCATION,
+                Assets.TEXTURE_BACK_LOCATION,
+                Assets.TEXTURE_CREDITS_LOCATION,
+                Assets.TEXTURE_CROSS_LOCATION,
+                Assets.TEXTURE_DEV_LOCATION,
+                Assets.TEXTURE_SETTINGS_LOCATION,
+                Assets.TEXTURE_TUTORIAL_LOCATION,
         };
 
         ObjectMap<String, Object> fontMap = new ObjectMap<>();

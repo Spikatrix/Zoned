@@ -197,7 +197,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         if (playerCount == 2) {
             Table infoTable = new Table();
             infoTable.center();
-            Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
+            Texture infoIconTexture = new Texture(Gdx.files.internal("images/ui_icons/ic_info.png"));
             usedTextures.add(infoIconTexture);
             Image infoImage = new Image(infoIconTexture);
             Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);

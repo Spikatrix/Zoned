@@ -64,6 +64,7 @@ public class MapSelector {
 
         Label mapNameLabel = new Label(map.getName(), skin);
         mapNameLabel.setAlignment(Align.center);
+
         if (mapPreviewTexture != null) {
             if (usedTextures != null) {
                 usedTextures.add(mapPreviewTexture);
@@ -72,10 +73,9 @@ public class MapSelector {
             mapPreviewImage.getColor().a = .2f;
             mapPreviewImage.setScaling(Scaling.fit);
             stack.add(mapPreviewImage);
-            stack.add(mapNameLabel);
-        } else {
-            stack.add(mapNameLabel);
         }
+
+        stack.add(mapNameLabel);
 
         final MapExtraParams extraParams = map.getExtraParams();
         if (extraParams != null) {

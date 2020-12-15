@@ -26,7 +26,7 @@ public class FlingControlManager extends ControlTypeEntity {
 
         this.clickPoints = new Array<>();
 
-        arrowTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"));
+        arrowTexture = new Texture(Gdx.files.internal("images/control_icons/ic_arrow.png"));
         usedTextures.add(arrowTexture);
     }
 

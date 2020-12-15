@@ -66,12 +66,12 @@ public class UIButtonManager {
 
     public HoverImageButton addPauseButtonToStage() {
         return addButtonToStage(.8f, .65f, .5f, 20f, 0,
-                Position.TOP_CENTER, getTexture(Gdx.files.internal("icons/ui_icons/ic_pause.png")), null);
+                Position.TOP_CENTER, getTexture(Gdx.files.internal("images/ui_icons/ic_pause.png")), null);
     }
 
     public HoverImageButton addZoomButtonToStage() {
         return addButtonToStage(.8f, .65f, .5f, 20f, 0,
-                Position.TOP_CENTER, getTexture(Gdx.files.internal("icons/ui_icons/ic_zoom_out.png")), getTexture(Gdx.files.internal("icons/ui_icons/ic_zoom_in.png")));
+                Position.TOP_CENTER, getTexture(Gdx.files.internal("images/ui_icons/ic_zoom_out.png")), getTexture(Gdx.files.internal("images/ui_icons/ic_zoom_in.png")));
     }
 
     public HoverImageButton addTutorialButtonToStage(Texture tutorialTexture) {

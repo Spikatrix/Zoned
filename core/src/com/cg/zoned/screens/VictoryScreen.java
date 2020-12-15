@@ -141,9 +141,9 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         };
 
         RankData[] rankData = new RankData[]{
-                new RankData(Color.GOLD,       "icons/rank_icons/ic_no1.png"),
-                new RankData(Color.LIGHT_GRAY, "icons/rank_icons/ic_no2.png"),
-                new RankData(Color.BROWN,      "icons/rank_icons/ic_no3.png"),
+                new RankData(Color.GOLD,       "images/rank_icons/ic_no1.png"),
+                new RankData(Color.LIGHT_GRAY, "images/rank_icons/ic_no2.png"),
+                new RankData(Color.BROWN,      "images/rank_icons/ic_no3.png"),
                 new RankData(Color.GRAY,       null),
         };
 

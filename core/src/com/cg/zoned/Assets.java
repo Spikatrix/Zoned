@@ -6,32 +6,45 @@ import com.badlogic.gdx.graphics.Texture;
 public class Assets {
     private AssetManager assetManager;
 
+    public static final String TEXTURE_DIAMOND_LOCATION    = "images/ic_diamond.png";
+    public static final String TEXTURE_PLAY_SHEET_LOCATION = "images/ui_icons/ic_play_sheet.png";
+    public static final String TEXTURE_BACK_LOCATION       = "images/ui_icons/ic_back.png";
+    public static final String TEXTURE_CREDITS_LOCATION    = "images/ui_icons/ic_credits.png";
+    public static final String TEXTURE_CROSS_LOCATION      = "images/ui_icons/ic_cross.png";
+    public static final String TEXTURE_DEV_LOCATION        = "images/ui_icons/ic_dev.png";
+    public static final String TEXTURE_SETTINGS_LOCATION   = "images/ui_icons/ic_settings.png";
+    public static final String TEXTURE_TUTORIAL_LOCATION   = "images/ui_icons/ic_tutorial.png";
+
+    public Texture getGameBgTexture() {
+        return assetManager.get(TEXTURE_DIAMOND_LOCATION, Texture.class);
+    }
+
     public Texture getPlayButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_play_sheet.png", Texture.class);
+        return assetManager.get(TEXTURE_PLAY_SHEET_LOCATION, Texture.class);
     }
 
     public Texture getBackButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_back.png", Texture.class);
+        return assetManager.get(TEXTURE_BACK_LOCATION, Texture.class);
     }
 
     public Texture getCreditsButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_credits.png", Texture.class);
+        return assetManager.get(TEXTURE_CREDITS_LOCATION, Texture.class);
     }
 
     public Texture getCrossButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_cross.png", Texture.class);
+        return assetManager.get(TEXTURE_CROSS_LOCATION, Texture.class);
     }
 
     public Texture getDevButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_dev.png", Texture.class);
+        return assetManager.get(TEXTURE_DEV_LOCATION, Texture.class);
     }
 
     public Texture getSettingsButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_settings.png", Texture.class);
+        return assetManager.get(TEXTURE_SETTINGS_LOCATION, Texture.class);
     }
 
     public Texture getTutorialButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_tutorial.png", Texture.class);
+        return assetManager.get(TEXTURE_TUTORIAL_LOCATION, Texture.class);
     }
 
     public void setAssetManager(AssetManager assetManager) {
