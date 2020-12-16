@@ -58,6 +58,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     private BitmapFont font;
     private boolean showFPSCounter;
     private Label dummyLabel;
+    private float textboxHeight;
 
     private ShapeDrawer shapeDrawer;
     private SpriteBatch batch;
@@ -85,6 +86,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
 
         this.dummyLabel = new Label("DUMMY", game.skin); // Used to set the height of the tutorial table
+        this.textboxHeight = (dummyLabel.getPrefHeight() * 2) + 20f;
 
         initMap();
     }
@@ -334,8 +336,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         drawDarkOverlay(delta);
 
         batch.begin();
-        shapeDrawer.filledRectangle(0, (dummyLabel.getPrefHeight() * 2) + 20f, stage.getWidth(), 8f,
-                Constants.VIEWPORT_DIVIDER_FADE_COLOR, Constants.VIEWPORT_DIVIDER_FADE_COLOR, Color.WHITE, Color.WHITE);
+        shapeDrawer.filledRectangle(0, textboxHeight, stage.getWidth(), 2f, Color.WHITE);
         batch.end();
 
         if (showFPSCounter) {
