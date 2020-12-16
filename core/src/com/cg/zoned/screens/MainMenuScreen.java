@@ -114,8 +114,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                         usedTextures.add(roundedCornerBgColorTexture);
                         roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
                         pixmap.dispose();
-
-                        setUpPlayMenu();
                     }
                 });
             }
@@ -223,9 +221,14 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                if (roundedCornerNP == null || !playModeStage.getRoot().hasChildren()) {
+                if (roundedCornerNP == null) {
                     // Should almost never happen cause processors are hella fast, even mobile ones
                     return;
+                }
+
+                if (!playModeStage.getRoot().hasChildren()) {
+                    // Causes a bit of noticeable lag on my mobile
+                    setUpPlayMenu();
                 }
 
                 bgAlpha = 0f;
@@ -246,14 +249,14 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeTable.setFillParent(true);
         playModeTable.center();
 
-        Label chooseMode = new Label("Choose the game mode", game.skin, "themed-rounded-background");
-        playModeTable.add(chooseMode).expandX().pad(20f).colspan(2);
-        playModeTable.row();
-
         final GameMode[] gameModes = new GameMode[]{
                 new GameMode("Splitscreen\nMultiplayer", "images/multiplayer_icons/ic_splitscreen_multiplayer.png", PlayerSetUpScreen.class),
                 new GameMode("Local\nNetwork\nMultiplayer", "images/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
         };
+
+        Label chooseMode = new Label("Choose the game mode", game.skin, "themed-rounded-background");
+        playModeTable.add(chooseMode).expandX().pad(20f).colspan(gameModes.length);
+        playModeTable.row();
 
         final float normalAlpha = .15f;
         final float hoverAlpha = .3f;
@@ -329,18 +332,18 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 stack = new Stack(backgroundColorImage, modeLabel);
             }
 
-            float optionPadding = 50f;
+            float optionPadding = 50f, padLeft = optionPadding, padRight = optionPadding;
             if (i == 0) {
-                if (gameModes.length == 1) {
-                    table.add(stack).grow().padLeft(optionPadding).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding);
-                } else {
-                    table.add(stack).grow().padLeft(optionPadding).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
+                if (gameModes.length != 1) {
+                    padRight /= 2;
                 }
             } else if (i == gameModes.length - 1) {
-                table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding);
+                padLeft /= 2;
             } else {
-                table.add(stack).grow().padLeft(optionPadding / 2).padTop(optionPadding).padBottom(optionPadding).padRight(optionPadding / 2);
+                padLeft /= 2;
+                padRight /= 2;
             }
+            table.add(stack).grow().padLeft(padLeft).padTop(optionPadding).padBottom(optionPadding).padRight(padRight);
 
             playModeTable.add(table).grow().uniform();
             playModeStage.addFocusableActor(table);
