@@ -14,7 +14,6 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
-import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -63,8 +62,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private float bgScrollAmount;
     private float bgAlpha;
 
-    private ParticleEffect emitterLeft, emitterRight;
-
     public MainMenuScreen(final Zoned game) {
         this.game = game;
         this.game.discordRPCManager.updateRPC("Main Menu");
@@ -76,8 +73,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         batch = new SpriteBatch();
         batch.setColor(1, 1, 1, bgAlpha);
 
-        emitterLeft = new ParticleEffect();
-        emitterRight = new ParticleEffect();
         font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
@@ -89,12 +84,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
-                emitterLeft.load(Gdx.files.internal("particles/left_emitter.p"), Gdx.files.internal("particles"));
-                emitterRight.load(Gdx.files.internal("particles/right_emitter.p"), Gdx.files.internal("particles"));
-                emitterRight.setPosition(viewport.getWorldWidth(), 0);
-                emitterLeft.start();
-                emitterRight.start();
-
                 bgTexture = game.assets.getGameBgTexture();
                 bgTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
@@ -143,8 +132,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             devButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    emitterLeft.allowCompletion();
-                    emitterRight.allowCompletion();
                     animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new DevScreen(game));
                 }
             });
@@ -152,16 +139,12 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         settingsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                emitterLeft.allowCompletion();
-                emitterRight.allowCompletion();
                 animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new SettingsScreen(game));
             }
         });
         creditsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                emitterLeft.allowCompletion();
-                emitterRight.allowCompletion();
                 animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new CreditsScreen(game));
             }
         });
@@ -231,7 +214,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                     setUpPlayMenu();
                 }
 
-                bgAlpha = 0f;
+                bgAlpha = .2f;
 
                 animationManager.startPlayModeAnimation(mainStage, playModeStage, playButton);
             }
@@ -259,8 +242,8 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         playModeTable.row();
 
         final float normalAlpha = .15f;
-        final float hoverAlpha = .3f;
-        final float clickAlpha = .7f;
+        final float hoverAlpha = .25f;
+        final float clickAlpha = .5f;
         for (int i = 0; i < gameModes.length; i++) {
             Table table = new Table();
             table.center();
@@ -315,8 +298,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    emitterLeft.allowCompletion();
-                    emitterRight.allowCompletion();
                     try {
                         animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) ClassReflection.getConstructors(gameModes[finalI].targetClass)[0].newInstance(game));
                     } catch (Exception e) {
@@ -374,8 +355,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         batch.setProjectionMatrix(viewport.getCamera().combined);
 
         batch.begin();
-        emitterLeft.draw(batch, delta);
-        emitterRight.draw(batch, delta);
         drawBG(batch, delta);
         batch.end();
 
@@ -425,15 +404,12 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     public void resize(int width, int height) {
         mainStage.resize(width, height);
         playModeStage.resize(width, height);
-        emitterRight.setPosition(viewport.getWorldWidth(), 0);
     }
 
     @Override
     public void dispose() {
         mainStage.dispose();
         playModeStage.dispose();
-        emitterLeft.dispose();
-        emitterRight.dispose();
         batch.dispose();
         for (Texture texture : usedTextures) {
             texture.dispose();
