@@ -132,6 +132,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             devButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
+                    bgAlpha = 0;
                     animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new DevScreen(game));
                 }
             });
@@ -139,12 +140,14 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         settingsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                bgAlpha = 0;
                 animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new SettingsScreen(game));
             }
         });
         creditsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                bgAlpha = 0;
                 animationManager.fadeOutStage(mainStage, MainMenuScreen.this, new CreditsScreen(game));
             }
         });
@@ -237,8 +240,11 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 new GameMode("Local\nNetwork\nMultiplayer", "images/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
         };
 
+        UIButtonManager uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures);
+
         Label chooseMode = new Label("Choose the game mode", game.skin, "themed-rounded-background");
-        playModeTable.add(chooseMode).expandX().pad(20f).colspan(gameModes.length);
+        float headerPad = uiButtonManager.getHeaderPad(chooseMode.getPrefHeight());
+        playModeTable.add(chooseMode).expandX().padTop(headerPad).colspan(gameModes.length);
         playModeTable.row();
 
         final float normalAlpha = .15f;
@@ -299,6 +305,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     try {
+                        bgAlpha = 0;
                         animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) ClassReflection.getConstructors(gameModes[finalI].targetClass)[0].newInstance(game));
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -330,7 +337,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
             playModeStage.addFocusableActor(table);
         }
 
-        UIButtonManager uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures);
         HoverImageButton hideButton = uiButtonManager.addHideButtonToStage(game.assets.getBackButtonTexture());
         hideButton.addListener(new ClickListener() {
             @Override
@@ -378,7 +384,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
             Color color = batch.getColor();
             if (color.a != bgAlpha) {
-                color.a += delta * 6f * (bgAlpha - color.a);
+                color.a += delta * 5f * (bgAlpha - color.a);
                 if (color.a < 0) {
                     color.a = 0;
                 }

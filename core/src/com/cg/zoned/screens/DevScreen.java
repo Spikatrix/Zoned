@@ -53,7 +53,6 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void show() {
         setUpStage();
-        setUpBackButton();
 
         showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
@@ -65,7 +64,11 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         table.center();
         table.setFillParent(true);
 
-        table.add(new Label("Developer Options", game.skin, "themed-rounded-background")).expandX().pad(20f);
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+
+        Label devOptions = new Label("Developer Options", game.skin, "themed-rounded-background");
+        float headerPad = uiButtonManager.getHeaderPad(devOptions.getPrefHeight());
+        table.add(devOptions).expandX().pad(headerPad);
         table.row();
 
         Table innerTable = new Table();
@@ -115,10 +118,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
 
         stage.addActor(table);
         stage.setScrollFocus(screenScrollPane);
-    }
 
-    private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override

@@ -18,6 +18,11 @@ public class UIButtonManager {
 
     private Array<Table> buttonPositionTables;
 
+    private final float buttonHeight = 64f;
+    private final float buttonWidth = 64f;
+
+    private final float buttonPadding = 24f;
+
     public UIButtonManager(Stage stage, float scaleFactor, Array<Texture> usedTextures) {
         this.stage = stage;
         this.scaleFactor = scaleFactor;
@@ -45,52 +50,52 @@ public class UIButtonManager {
     }
 
     public HoverImageButton addBackButtonToStage(Texture backTexture) {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+        return addButtonToStage(1f, .65f, .5f, 0,
                 Position.TOP_LEFT, backTexture, null);
     }
 
     public HoverImageButton addNextButtonToStage(Texture backTexture) {
-        return addButtonToStage(1f, .65f, .5f, 24f, 180f,
+        return addButtonToStage(1f, .65f, .5f, 180f,
                 Position.BOTTOM_RIGHT, backTexture, null);
     }
 
     public HoverImageButton addHideButtonToStage(Texture backTexture) {
-        return addButtonToStage(1f, .65f, .5f, 24f, 90f,
+        return addButtonToStage(1f, .65f, .5f, 90f,
                 Position.TOP_LEFT, backTexture, null);
     }
 
     public HoverImageButton addSettingsButtonToStage(Texture settingsTexture) {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+        return addButtonToStage(1f, .65f, .5f, 0,
                 Position.TOP_RIGHT, settingsTexture, null);
     }
 
     public HoverImageButton addPauseButtonToStage() {
-        return addButtonToStage(.8f, .65f, .5f, 20f, 0,
+        return addButtonToStage(.8f, .65f, .5f, 0,
                 Position.TOP_CENTER, getTexture(Gdx.files.internal("images/ui_icons/ic_pause.png")), null);
     }
 
     public HoverImageButton addZoomButtonToStage() {
-        return addButtonToStage(.8f, .65f, .5f, 20f, 0,
+        return addButtonToStage(.8f, .65f, .5f, 0,
                 Position.TOP_CENTER, getTexture(Gdx.files.internal("images/ui_icons/ic_zoom_out.png")), getTexture(Gdx.files.internal("images/ui_icons/ic_zoom_in.png")));
     }
 
     public HoverImageButton addTutorialButtonToStage(Texture tutorialTexture) {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+        return addButtonToStage(1f, .65f, .5f, 0,
                 Position.TOP_RIGHT, tutorialTexture, null);
     }
 
     public HoverImageButton addDevButtonToStage(Texture devTexture) {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+        return addButtonToStage(1f, .65f, .5f, 0,
                 Position.TOP_RIGHT, devTexture, null);
     }
 
     public HoverImageButton addCreditsButtonToStage(Texture creditsTexture) {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+        return addButtonToStage(1f, .65f, .5f, 0,
                 Position.TOP_RIGHT, creditsTexture, null);
     }
 
     public HoverImageButton addExitButtonToStage(Texture crossTexture) {
-        return addButtonToStage(1f, .65f, .5f, 24f, 0,
+        return addButtonToStage(1f, .65f, .5f, 0,
                 Position.TOP_LEFT, crossTexture, null);
     }
 
@@ -101,7 +106,6 @@ public class UIButtonManager {
     }
 
     private HoverImageButton addButtonToStage(float normalAlpha, float hoverAlpha, float clickAlpha,
-                                              float paddingTop,
                                               float rotateDegrees, Position position,
                                               Texture texture1,
                                               Texture texture2) {
@@ -114,9 +118,6 @@ public class UIButtonManager {
             button = new HoverImageButton(new TextureRegionDrawable(texture1), new TextureRegionDrawable(texture2));
         }
 
-        float buttonWidth = 64f;
-        float buttonHeight = 64f;
-
         Image buttonImage = button.getImage();
         buttonImage.setOrigin(buttonWidth * scaleFactor / 2, buttonHeight * scaleFactor / 2);
         buttonImage.rotateBy(rotateDegrees);
@@ -125,19 +126,23 @@ public class UIButtonManager {
         button.setClickAlpha(clickAlpha);
 
         Cell<HoverImageButton> cell = table.add(button)
-                .padLeft(24f).padRight(24f)
+                .padLeft(buttonPadding).padRight(buttonPadding)
                 .width(buttonWidth * scaleFactor)
                 .height(buttonHeight * scaleFactor);
         if (position.name().startsWith("TOP")) {
-            cell.padTop(paddingTop * scaleFactor);
+            cell.padTop(buttonPadding * scaleFactor);
         } else if (position.name().startsWith("BOTTOM")) {
-            cell.padBottom(paddingTop * scaleFactor);
+            cell.padBottom(buttonPadding * scaleFactor);
         }
         table.row();
 
         stage.addActor(table);
 
         return button;
+    }
+
+    public float getHeaderPad(float givenHeight) {
+        return (buttonPadding * scaleFactor) + (((buttonHeight * scaleFactor) - givenHeight) / 2);
     }
 
     private enum Position {

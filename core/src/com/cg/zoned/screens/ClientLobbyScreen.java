@@ -103,7 +103,6 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     public void show() {
         setUpClientLobbyStage();
         setUpMap();
-        setUpBackButton();
         showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         addPlayer(null, null, null, null, null);
@@ -126,11 +125,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private void setUpClientLobbyStage() {
         Table clientLobbyTable = new Table();
         clientLobbyTable.setFillParent(true);
-        //clientLobbyTable.setDebug(true);
         clientLobbyTable.center();
+        //clientLobbyTable.setDebug(true);
+
+        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
 
         Label lobbyTitle = new Label("Lobby", game.skin, "themed-rounded-background");
-        clientLobbyTable.add(lobbyTitle).pad(20);
+        float headerPad = uiButtonManager.getHeaderPad(lobbyTitle.getPrefHeight());
+        clientLobbyTable.add(lobbyTitle).pad(headerPad);
 
         clientLobbyTable.row();
 
@@ -186,6 +188,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
         stage.addActor(clientLobbyTable);
         stage.setScrollFocus(playerListScrollPane);
+
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                onBackPressed();
+            }
+        });
     }
 
     private void setUpMap() {
@@ -197,17 +207,6 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         this.players = new Player[0];
         // This array size is increased in playerConnected
         // I know I should use Arrays (libGDX's ArrayLists) instead, but Map works with regular 'ol arrays for now
-    }
-
-    private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
-        backButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                onBackPressed();
-            }
-        });
     }
 
     public void performClick(Actor actor) {
