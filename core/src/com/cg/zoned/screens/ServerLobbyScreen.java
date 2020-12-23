@@ -139,10 +139,6 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
         final TextButton mapButton = new TextButton(mapSelector.getMapManager().getMapList().get(mapSpinner.getPositionIndex()).getName(), game.skin);
 
-        final Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("Cancel");
-        buttonTexts.add("Set Map");
-
         final Array<Actor> focusableDialogButtons = new Array<>();
         focusableDialogButtons.add(mapSpinner.getLeftButton());
         focusableDialogButtons.add(mapSpinner.getRightButton());
@@ -152,12 +148,13 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             public void clicked(InputEvent event, float x, float y) {
                 final int prevIndex = mapSpinner.getPositionIndex();
 
-                stage.showDialog(mapSelectorTable, focusableDialogButtons, buttonTexts,
+                stage.showDialog(mapSelectorTable, focusableDialogButtons,
+                        new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.SetMap },
                         false, game.getScaleFactor(),
                         new FocusableStage.DialogResultListener() {
                             @Override
-                            public void dialogResult(String buttonText) {
-                                if (buttonText.equals("Set Map")) {
+                            public void dialogResult(FocusableStage.DialogButton button) {
+                                if (button == FocusableStage.DialogButton.SetMap) {
                                     mapSelector.loadSelectedMap();
                                     mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
                                     mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
@@ -185,11 +182,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                 if (mapSelector.loadSelectedMap()) {
                     String errorMsg = connectionManager.validateServerData(playerList.getChildren());
                     if (errorMsg != null) {
-                        Array<String> dialogButtonTexts = new Array<>();
-                        dialogButtonTexts.add("OK");
-
-                        stage.showDialog(errorMsg, dialogButtonTexts,
-                                false,
+                        stage.showOKDialog(errorMsg, false,
                                 game.getScaleFactor(), null, game.skin);
                         return;
                     }

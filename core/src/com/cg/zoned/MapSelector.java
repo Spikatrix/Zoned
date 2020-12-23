@@ -156,15 +156,13 @@ public class MapSelector {
             contentTable.row();
         }
 
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("Cancel");
-        buttonTexts.add("Set");
-
-        stage.showDialog(contentTable, focusableDialogButtons, buttonTexts, false, scaleFactor,
+        stage.showDialog(contentTable, focusableDialogButtons,
+                new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Set},
+                false, scaleFactor,
                 new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
-                        if (buttonText.equals("Set")) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
+                        if (button == FocusableStage.DialogButton.Set) {
                             for (int i = 0; i < prompts.spinnerVars.size; i++) {
                                 prompts.extraParams[i] = spinners[i].getPositionIndex() + prompts.spinnerVars.get(i).lowValue;
                             }
@@ -177,14 +175,11 @@ public class MapSelector {
     public boolean loadSelectedMap() {
         int mapIndex = mapSpinner.getPositionIndex();
 
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("OK");
-
         try {
             mapManager.prepareMap(mapIndex);
         } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
+            stage.showOKDialog("Error: " + e.getMessage(), false, scaleFactor, null, skin);
             e.printStackTrace();
-            stage.showDialog("Error: " + e.getMessage(), buttonTexts, false, scaleFactor, null, skin);
             return false;
         }
 

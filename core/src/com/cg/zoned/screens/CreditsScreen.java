@@ -272,9 +272,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         game.preferences.putBoolean(Preferences.DEV_MODE_PREFERENCE, devModeUnlocked);
         game.preferences.flush();
 
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("OK");
-        stage.showDialog("Developer mode " + ((devModeUnlocked) ? ("un") : ("re")) + "locked!", buttonTexts,
+        stage.showOKDialog("Developer mode " + ((devModeUnlocked) ? ("un") : ("re")) + "locked!",
                 false, game.getScaleFactor(),
                 null, game.skin);
     }

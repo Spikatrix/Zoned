@@ -425,17 +425,15 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private void showExitDialog() {
         if (exitDialogIsActive) return;
 
-        final Array<String> dialogButtonTexts = new Array<>();
-        dialogButtonTexts.add("Cancel");
-        dialogButtonTexts.add("Exit");
         exitDialogIsActive = true;
-        mainStage.showDialog("Are you sure that you want to exit?", dialogButtonTexts,
+        mainStage.showDialog("Are you sure that you want to exit?",
+                new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Exit },
                 false,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
                         exitDialogIsActive = false;
-                        if (buttonText.equals(dialogButtonTexts.get(1))) {
+                        if (button == FocusableStage.DialogButton.Exit) {
                             Gdx.app.exit();
                         }
                     }

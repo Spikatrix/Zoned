@@ -501,14 +501,10 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     @Override
     public void displayServerError(String errorMsg) {
-        final Array<String> dialogButtonTexts = new Array<>();
-        dialogButtonTexts.add("OK");
-
-        stage.showDialog(errorMsg, dialogButtonTexts,
-                false,
+        stage.showOKDialog(errorMsg, false,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
                         disconnected();
                     }
                 }, game.skin);

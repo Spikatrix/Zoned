@@ -244,16 +244,13 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showTutorialDialog() {
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("Cancel");
-        buttonTexts.add("Yes");
-
-        stage.showDialog("Start the tutorial?", buttonTexts,
+        stage.showDialog("Start the tutorial?",
+                new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Yes },
                 false, game.getScaleFactor(),
                 new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
-                        if (buttonText.equals("Yes")) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
+                        if (button == FocusableStage.DialogButton.Yes) {
                             animationManager.fadeOutStage(stage, PlayerSetUpScreen.this, new TutorialScreen(game));
                         }
                     }

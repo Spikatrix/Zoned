@@ -212,28 +212,34 @@ public class FocusableStage extends Stage {
      * Shows an dialog with focus properties on its buttons
      *
      * @param msg                   The message to display
-     * @param buttonTexts           Texts for each button in the dialog
+     * @param buttons               Buttons to be displayed in the dialog
      * @param useVerticalButtonList Determines whether the dialog buttons are arranged horizontally or vertically
      * @param scaleFactor           The game's scaleFactor to scale up/down dialog button width
-     * @param dialogResultListener  Interface for beaming back the selected dialog option
+     * @param dialogResultListener  Listener for beaming back the selected dialog option to the caller
      * @param skin                  The skin to use for the dialog
      */
     public void showDialog(String msg,
-                           Array<String> buttonTexts, boolean useVerticalButtonList,
+                           DialogButton[] buttons, boolean useVerticalButtonList,
                            float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog(new Label(msg, skin), null, buttonTexts, useVerticalButtonList,
+        showDialog(new Label(msg, skin), null, buttons, useVerticalButtonList,
                 scaleFactor, dialogResultListener, skin);
     }
 
     public void showDialog(Table contentTable, Array<Actor> dialogFocusableActorArray,
-                           Array<String> buttonTexts, boolean useVerticalButtonList,
+                           DialogButton[] buttons, boolean useVerticalButtonList,
                            float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog((Actor) contentTable, dialogFocusableActorArray, buttonTexts, useVerticalButtonList,
+        showDialog((Actor) contentTable, dialogFocusableActorArray, buttons, useVerticalButtonList,
+                scaleFactor, dialogResultListener, skin);
+    }
+
+    public void showOKDialog(String msg,  boolean useVerticalButtonList,
+                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
+        showDialog(new Label(msg, skin), null, new DialogButton[]{ DialogButton.OK }, useVerticalButtonList,
                 scaleFactor, dialogResultListener, skin);
     }
 
     private void showDialog(Actor content, Array<Actor> dialogFocusableActorArray,
-                            Array<String> buttonTexts, boolean useVerticalButtonList,
+                            DialogButton[] buttons, boolean useVerticalButtonList,
                             float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
         final Array<Actor> backupCurrentActorArray = new Array<>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
@@ -244,12 +250,13 @@ public class FocusableStage extends Stage {
             @Override
             protected void result(Object object) {
                 focusableActorArray = backupCurrentActorArray;
-                if (backupFocusedActor != null) {
-                    focus(backupFocusedActor);
+                currentFocusedActor = backupFocusedActor;
+                if (currentFocusedActor != null) {
+                    focus(currentFocusedActor);
                 }
 
                 if (dialogResultListener != null) {
-                    dialogResultListener.dialogResult((String) object);
+                    dialogResultListener.dialogResult((DialogButton) object);
                 }
 
                 dialog.hide(Actions.parallel(
@@ -277,9 +284,9 @@ public class FocusableStage extends Stage {
             this.focusableActorArray.add(null);
         }
 
-        for (int i = 0; i < buttonTexts.size; i++) {
-            TextButton textButton = new TextButton(buttonTexts.get(i), skin);
-            dialog.button(textButton, textButton.getText().toString());
+        for (DialogButton button : buttons) {
+            TextButton textButton = new TextButton(button.toString(), skin);
+            dialog.button(textButton, button);
             this.focusableActorArray.add(textButton);
             if (useVerticalButtonList) {
                 dialog.getButtonTable().row();
@@ -288,7 +295,7 @@ public class FocusableStage extends Stage {
         }
 
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            // Unlikely people are going to use keyboards with playing on Android
+            // Unlikely that people are going to use keyboards with playing on Android
             // Looks a bit weird with the focus in those cases. So just defocus
             defocus(backupFocusedActor);
         } else {
@@ -639,7 +646,12 @@ public class FocusableStage extends Stage {
         if (focusableActorArray.contains(target, true)) {
             setFocusedActor(target);
         } else {
+            // An Actor outside the provided focusable array was focused, say, by using the mouse
+            // In that case, defocus the current actor to show focus loss, but keep the actor reference
+            // so that we can start from it back again once the keyboard is used once again
+            Actor backup = currentFocusedActor;
             defocus(currentFocusedActor);
+            currentFocusedActor = backup;
         }
 
         super.addTouchFocus(listener, listenerActor, target, pointer, button);
@@ -652,6 +664,29 @@ public class FocusableStage extends Stage {
     }
 
     public interface DialogResultListener {
-        void dialogResult(String buttonText);
+        void dialogResult(DialogButton button);
+    }
+
+    public enum DialogButton {
+        OK("OK"),
+        Cancel("Cancel"),
+        Set("Set"),
+        Yes("Yes"),
+        Resume("Resume"),
+        MainMenu("Main Menu"),
+        Exit("Exit"),
+        Restart("Restart"),
+        SetMap("Set Map");
+
+        private final String buttonText;
+
+        DialogButton(String buttonText) {
+            this.buttonText = buttonText;
+        }
+
+        @Override
+        public String toString() {
+            return this.buttonText;
+        }
     }
 }

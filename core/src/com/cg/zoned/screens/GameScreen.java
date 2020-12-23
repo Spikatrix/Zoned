@@ -348,13 +348,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showDisconnectionDialog() {
-        final Array<String> dialogButtonTexts = new Array<>();
-        dialogButtonTexts.add("OK");
-        fullScreenStage.showDialog("Disconnected", dialogButtonTexts,
-                false,
+        fullScreenStage.showOKDialog("Disconnected", false,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
                         gameManager.gameConnectionManager.close();
                         dispose();
                         game.setScreen(new MainMenuScreen(game));
@@ -370,16 +367,15 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             gameManager.directionBufferManager.clearBuffer();
         }
 
-        final Array<String> dialogButtonTexts = new Array<>();
-        dialogButtonTexts.add("Resume");
         //dialogButtonTexts.add("Restart");
-        dialogButtonTexts.add("Main Menu");
-        fullScreenStage.showDialog("Game Paused", dialogButtonTexts,
+
+        fullScreenStage.showDialog("Game Paused",
+                new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu },
                 true,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
-                        if (buttonText.equals(dialogButtonTexts.get(1))) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
+                        if (button == FocusableStage.DialogButton.MainMenu) {
                             if (gameManager.gameConnectionManager.isActive) {
                                 gameManager.gameConnectionManager.close();
                             } else {
@@ -421,14 +417,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         gameManager.playerManager.stopPlayers(false);
         gameManager.directionBufferManager.ignorePlayer();
         showPlayerDisconnectedDialog(playerName);
-
     }
 
     private void showPlayerDisconnectedDialog(String playerName) {
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("OK");
-
-        fullScreenStage.showDialog(playerName + " got disconnected", buttonTexts,
+        fullScreenStage.showOKDialog(playerName + " got disconnected",
                 false, game.getScaleFactor(),
                 null, game.skin);
     }

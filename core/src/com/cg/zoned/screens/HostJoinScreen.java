@@ -53,8 +53,6 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
     private boolean showFPSCounter;
     private BitmapFont font;
 
-    private Array<String> dialogButtonTexts = new Array<>();
-
     public HostJoinScreen(final Zoned game) {
         this.game = game;
         game.discordRPCManager.updateRPC("Setting up local multiplayer");
@@ -63,8 +61,6 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         this.stage = new FocusableStage(this.viewport);
         this.animationManager = new AnimationManager(this.game, this);
         this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
-
-        dialogButtonTexts.add("OK");
     }
 
     @Override
@@ -131,8 +127,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
                     startServerLobby(playerNameField.getText().trim());
                 } else {
-                    stage.showDialog("Please enter the player name", dialogButtonTexts,
-                            false,
+                    stage.showOKDialog("Please enter the player name", false,
                             game.getScaleFactor(), null, game.skin);
                 }
             }
@@ -155,8 +150,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                         searchingLabel.setText("Already searching for servers...");
                     }
                 } else {
-                    stage.showDialog("Please enter the player name", dialogButtonTexts,
-                            false,
+                    stage.showOKDialog("Please enter the player name", false,
                             game.getScaleFactor(), null, game.skin);
                 }
             }
@@ -193,8 +187,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         try {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException | IllegalArgumentException e) {
-            stage.showDialog("Server bind error\n" + e.getMessage(), dialogButtonTexts,
-                    false,
+            stage.showOKDialog("Server bind error\n" + e.getMessage(), false,
                     game.getScaleFactor(), null, game.skin);
             e.printStackTrace();
             return;
@@ -235,16 +228,14 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             }
             client.connect(4000, addr, Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
-            stage.showDialog("Error connecting to the server\n" + e.getMessage(), dialogButtonTexts,
-                    false,
+            stage.showOKDialog("Error connecting to the server\n" + e.getMessage(), false,
                     game.getScaleFactor(), null, game.skin);
             searchingLabel.addAction(Actions.fadeOut(.2f));
             return;
         }
 
         if (!client.isConnected()) {
-            stage.showDialog("Failed to connect to the server", dialogButtonTexts,
-                    false,
+            stage.showOKDialog("Failed to connect to the server", false,
                     game.getScaleFactor(), null, game.skin);
             searchingLabel.addAction(Actions.fadeOut(.2f));
             return;
