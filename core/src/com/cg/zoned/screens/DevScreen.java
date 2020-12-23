@@ -35,9 +35,9 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
     private BitmapFont font;
     private boolean showFPSCounter;
 
-    private Spinner splitscreenPlayerCountSpinner;
+    private Spinner splitscreenSpinner;
     private int minPlayerCount = 1;
-    private Spinner mapStartPosSplitscreenCountSpinner;
+    private Spinner mapSplitScreenSpinner;
     private int minSplitScreenCount = 1;
 
     public DevScreen(final Zoned game) {
@@ -80,38 +80,38 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         int maxPlayerCount = 100;
         int currentPlayerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         Label splitscreenPlayerCountLabel = new Label("Splitscreen player count", game.skin);
-        splitscreenPlayerCountSpinner = new Spinner(game.skin,
+        splitscreenSpinner = new Spinner(game.skin,
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
                 64f * game.getScaleFactor(),
                 true);
-        splitscreenPlayerCountSpinner.generateValueRange(minPlayerCount, maxPlayerCount, game.skin);
-        splitscreenPlayerCountSpinner.snapToStep(currentPlayerCount - minPlayerCount);
+        splitscreenSpinner.generateValueRange(minPlayerCount, maxPlayerCount, game.skin);
+        splitscreenSpinner.snapToStep(currentPlayerCount - minPlayerCount);
 
         int maxSplitScreenCount = 100;
         int currentSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
         Label mapStartPosSplitscreenCountLabel = new Label("Map start position splitscreen count", game.skin);
-        mapStartPosSplitscreenCountSpinner = new Spinner(game.skin,
+        mapSplitScreenSpinner = new Spinner(game.skin,
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
                 64f * game.getScaleFactor(),
                 true);
-        mapStartPosSplitscreenCountSpinner.generateValueRange(minSplitScreenCount, maxSplitScreenCount, game.skin);
-        mapStartPosSplitscreenCountSpinner.snapToStep(currentSplitScreenCount - minSplitScreenCount);
+        mapSplitScreenSpinner.generateValueRange(minSplitScreenCount, maxSplitScreenCount, game.skin);
+        mapSplitScreenSpinner.snapToStep(currentSplitScreenCount - minSplitScreenCount);
 
         innerTable.add(splitscreenPlayerCountLabel);
         innerTable.row();
-        innerTable.add(splitscreenPlayerCountSpinner);
+        innerTable.add(splitscreenSpinner);
         innerTable.row();
 
-        stage.addFocusableActor(splitscreenPlayerCountSpinner.getLeftButton());
-        stage.addFocusableActor(splitscreenPlayerCountSpinner.getRightButton());
+        stage.addFocusableActor(splitscreenSpinner.getLeftButton());
+        stage.addFocusableActor(splitscreenSpinner.getRightButton());
         stage.row();
 
         innerTable.add(mapStartPosSplitscreenCountLabel).padTop(20f);
         innerTable.row();
-        innerTable.add(mapStartPosSplitscreenCountSpinner);
+        innerTable.add(mapSplitScreenSpinner);
 
-        stage.addFocusableActor(mapStartPosSplitscreenCountSpinner.getLeftButton());
-        stage.addFocusableActor(mapStartPosSplitscreenCountSpinner.getRightButton());
+        stage.addFocusableActor(mapSplitScreenSpinner.getLeftButton());
+        stage.addFocusableActor(mapSplitScreenSpinner.getRightButton());
         stage.row();
 
         table.add(screenScrollPane).grow();
@@ -149,9 +149,24 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void saveData() {
-        game.preferences.putInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, splitscreenPlayerCountSpinner.getPositionIndex() + minPlayerCount);
-        game.preferences.putInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, mapStartPosSplitscreenCountSpinner.getPositionIndex() + minSplitScreenCount);
-        game.preferences.flush();
+        boolean prefUpdated = false;
+
+        int splitScreenVal = splitscreenSpinner.getPositionIndex() + minPlayerCount;
+        int mapSplitScreenVal = mapSplitScreenSpinner.getPositionIndex() + minSplitScreenCount;
+
+        // These conditions are there for performance reasons (I think saving is a bit slow, haven't actually benchmarked this)
+        if (splitScreenVal != game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, splitScreenVal)) {
+            game.preferences.putInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, splitScreenVal);
+            prefUpdated = true;
+        }
+        if (mapSplitScreenVal != game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, mapSplitScreenVal)) {
+            game.preferences.putInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, mapSplitScreenVal);
+            prefUpdated = true;
+        }
+
+        if (prefUpdated) {
+            game.preferences.flush();
+        }
     }
 
     @Override

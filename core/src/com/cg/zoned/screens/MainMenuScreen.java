@@ -399,7 +399,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                     (int) (bgTextureW - ((stageW % bgTextureW)) / 2),
                     (int) (bgTextureH - bgScrollAmount - ((stageH % bgTextureH)) / 2),
                     (int) stageW, (int) stageH);
-            bgScrollAmount += 20 * delta * game.getScaleFactor();
+            bgScrollAmount += 20 * delta;
             if (bgScrollAmount > bgTextureH) {
                 bgScrollAmount %= bgTextureH;
             }

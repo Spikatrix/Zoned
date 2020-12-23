@@ -35,13 +35,6 @@ public final class Constants {
     public static final float VIEWPORT_DIVIDER_FADE_WIDTH = 25f;
     public static final Color VIEWPORT_DIVIDER_FADE_COLOR = new Color(0f, 0f, 0f, 0f);
 
-    /**
-     * The number of players when playing on the same device
-     * <p>
-     * Beware: There may not be enough horizontal space especially on mobile devices to play comfortably
-     */
-    //public static final int NO_OF_PLAYERS = 2; Moved to dev mode settings
-
     public static final Color PLAYER_CIRCLE_COLOR = Color.WHITE;
     public static final float PLAYER_CIRCLE_WIDTH = 2.5f;
 
