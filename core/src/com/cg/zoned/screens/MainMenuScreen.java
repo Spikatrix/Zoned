@@ -52,7 +52,6 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     private FocusableStage playModeStage;
     private Viewport viewport;
     private SpriteBatch batch;
-    private boolean exitDialogIsActive = false;
     private Array<Actor> mainMenuUIButtons;
     private AnimationManager animationManager;
     private boolean showFPSCounter;
@@ -423,16 +422,12 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showExitDialog() {
-        if (exitDialogIsActive) return;
-
-        exitDialogIsActive = true;
         mainStage.showDialog("Are you sure that you want to exit?",
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Exit },
                 false,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
                     public void dialogResult(FocusableStage.DialogButton button) {
-                        exitDialogIsActive = false;
                         if (button == FocusableStage.DialogButton.Exit) {
                             Gdx.app.exit();
                         }
@@ -440,20 +435,33 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
                 }, game.skin);
     }
 
-    private void onBackPressed() {
+    /**
+     * Actions to do when the back/escape button is pressed
+     *
+     * @return true if the action has been handled from this screen
+     *         false if the action needs to be sent down the inputmultiplexer chain
+     */
+    private boolean onBackPressed() {
+        if (mainStage.dialogIsActive()) {
+            // Exit dialog is active
+            // Return false as the dialog can take keyboard inputs
+            return false;
+        }
+
         if (mainStage.getRoot().getColor().a == 1f) {
             showExitDialog();
         } else {
             bgAlpha = 1f;
             animationManager.endPlayModeAnimation(mainStage, playModeStage);
         }
+
+        return true;
     }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -472,8 +480,7 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;

@@ -28,19 +28,19 @@ import com.badlogic.gdx.utils.viewport.Viewport;
  * This means that it can track and focus actors when the user navigates using the keyboard
  *
  * <p>
- * Custom behavior implemented for:
- * - TextField
- * - SelectBox
+ * Custom behavior implemented for: <br>
+ * - TextField <br>
+ * - SelectBox <br>
  *
  * <p>
- * Currently supported keyboard inputs include:
- * - TAB            for focusing the next Actor
- * - SHIFT + TAB    for focusing the previous Actor
- * - LEFT           for focusing the previous Actor
- * - RIGHT          for focusing the next Actor
- * - UP             for focusing the above Actor
- * - DOWN           for focusing the below Actor
- * - Enter or Space for pressing the currently focused Actor
+ * Currently supported keyboard inputs include: <br>
+ * - TAB            for focusing the next Actor <br>
+ * - SHIFT + TAB    for focusing the previous Actor <br>
+ * - LEFT           for focusing the previous Actor <br>
+ * - RIGHT          for focusing the next Actor <br>
+ * - UP             for focusing the above Actor <br>
+ * - DOWN           for focusing the below Actor <br>
+ * - Enter or Space for pressing the currently focused Actor <br>
  * provided the currently focused actor is not busy
  *
  * @author Spikatrix
@@ -65,9 +65,9 @@ public class FocusableStage extends Stage {
     private Actor downActor;
 
     /**
-     * Dialog that has focus properties for its buttons
+     * Active dialog list
      */
-    private Dialog dialog;
+    private Array<Dialog> dialogs = new Array<>();
 
     /**
      * The Texture used in the background of a dialog when it is active
@@ -76,7 +76,7 @@ public class FocusableStage extends Stage {
 
     /**
      * Master switch for enabling keyboard based focus management
-     * When this is false, it will behave like a regular Stage
+     * When this is false, this class will mostly behave like a regular Stage
      */
     private boolean isActive = true;
 
@@ -232,9 +232,9 @@ public class FocusableStage extends Stage {
                 scaleFactor, dialogResultListener, skin);
     }
 
-    public void showOKDialog(String msg,  boolean useVerticalButtonList,
-                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog(new Label(msg, skin), null, new DialogButton[]{ DialogButton.OK }, useVerticalButtonList,
+    public void showOKDialog(String msg, boolean useVerticalButtonList,
+                             float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
+        showDialog(new Label(msg, skin), null, new DialogButton[]{DialogButton.OK}, useVerticalButtonList,
                 scaleFactor, dialogResultListener, skin);
     }
 
@@ -244,11 +244,17 @@ public class FocusableStage extends Stage {
         final Array<Actor> backupCurrentActorArray = new Array<>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
 
-        final Dialog previousDialog = dialog;
-
-        dialog = new Dialog("", skin) {
+        final Dialog dialog = new Dialog("", skin) {
             @Override
             protected void result(Object object) {
+                Dialog dialog;
+                try {
+                    dialog = dialogs.pop();
+                } catch (IllegalStateException e) {
+                    // Edge case; buttons were pressed frantically
+                    return;
+                }
+
                 focusableActorArray = backupCurrentActorArray;
                 currentFocusedActor = backupFocusedActor;
                 if (currentFocusedActor != null) {
@@ -263,9 +269,14 @@ public class FocusableStage extends Stage {
                         Actions.scaleTo(.6f, .6f, .3f, Interpolation.swingIn),
                         Actions.fadeOut(.2f, Interpolation.smooth)
                 ));
-                dialog = previousDialog;
             }
         };
+
+        dialog.key(Input.Keys.ESCAPE, null);
+        dialog.key(Input.Keys.BACK, null);
+        dialog.button(Input.Buttons.BACK, null);
+
+        dialogs.add(dialog);
 
         dialog.getContentTable().add(content).pad(20f);
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
@@ -303,7 +314,7 @@ public class FocusableStage extends Stage {
             focus(this.focusableActorArray.get(0));
         }
 
-        if (previousDialog == null) {
+        if (dialogs.size == 1) {
             // Darken background only for the first Dialog
             Window.WindowStyle darkBackgroundStyle = new Window.WindowStyle(dialog.getStyle());
             darkBackgroundStyle.stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
@@ -318,9 +329,8 @@ public class FocusableStage extends Stage {
     }
 
     public void resize(int width, int height) {
-        // TODO: In case of multiple dialogs shown simultaneously, the ones in the back do not reset position on resize
         getViewport().update(width, height, true);
-        if (dialog != null) {
+        for (Dialog dialog : dialogs) {
             dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
         }
     }
@@ -643,6 +653,7 @@ public class FocusableStage extends Stage {
             return;
         }
 
+        // Couldn't access Stage's mouse hover actor as it is private
         if (focusableActorArray.contains(target, true)) {
             setFocusedActor(target);
         } else {
@@ -655,6 +666,10 @@ public class FocusableStage extends Stage {
         }
 
         super.addTouchFocus(listener, listenerActor, target, pointer, button);
+    }
+
+    public boolean dialogIsActive() {
+        return dialogs.size > 0;
     }
 
     @Override

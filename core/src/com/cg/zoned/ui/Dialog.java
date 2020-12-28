@@ -1,6 +1,7 @@
 package com.cg.zoned.ui;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Action;
@@ -28,7 +29,9 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
  * the content table and buttons to the button table, but any widgets can be added. When a button is clicked,
  * {@link #result(Object)} is called and the dialog is removed from the stage.
  *
- * The only change from scene2d's official Dialog implementation is extending the custom Window class
+ * Changes from scene2d's official Dialog implementation are <br>
+ *  - Extending the custom Window class <br>
+ *  - New button event fire method {@link #button(int, Object)} similar to {@link #key(int, Object)}
  *
  * @author Nathan Sweet */
 public class Dialog extends Window {
@@ -259,6 +262,28 @@ public class Dialog extends Window {
                         }
                     });
                 }
+                return false;
+            }
+        });
+        return this;
+    }
+
+    /** If this button is pressed, {@link #result(Object)} is called with the specified object.
+     * @see Buttons */
+    public Dialog button (final int button, final @Null Object object) {
+        addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button2) {
+                if (button == button2) {
+                    Gdx.app.postRunnable(new Runnable() {
+                        public void run () {
+                            result(object);
+                            if (!cancelHide) hide();
+                            cancelHide = false;
+                        }
+                    });
+                }
+
                 return false;
             }
         });

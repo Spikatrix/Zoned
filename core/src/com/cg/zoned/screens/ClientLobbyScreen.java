@@ -738,15 +738,25 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         }
     }
 
-    private void onBackPressed() {
+    /**
+     * Actions to do when the back/escape button is pressed
+     *
+     * @return true if the action has been handled from this screen
+     *         false if the action needs to be sent down the inputmultiplexer chain
+     */
+    private boolean onBackPressed() {
+        if (stage.dialogIsActive()) {
+            return false;
+        }
+
         disconnected();
+        return true;
     }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -766,8 +776,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
