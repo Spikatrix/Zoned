@@ -23,7 +23,6 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
@@ -50,6 +49,7 @@ import com.cg.zoned.maps.NoStartPositionsFound;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
+import com.cg.zoned.ui.TextButton;
 import com.esotericsoftware.kryonet.Client;
 
 import java.util.Arrays;
@@ -209,21 +209,11 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         // I know I should use Arrays (libGDX's ArrayLists) instead, but Map works with regular 'ol arrays for now
     }
 
-    public void performClick(Actor actor) {
-        InputEvent touchDownEvent = new InputEvent();
-        touchDownEvent.setType(InputEvent.Type.touchDown);
-        actor.fire(touchDownEvent);
-
-        InputEvent touchUpEvent = new InputEvent();
-        touchUpEvent.setType(InputEvent.Type.touchUp);
-        actor.fire(touchUpEvent);
-    }
-
     @Override
     public void pause() {
         if (readyButton.getText().toString().equals("Unready")) {
             // Game was minimized in the mobile; so make the player unready
-            performClick(readyButton);
+            readyButton.performClick();
         }
     }
 
@@ -403,7 +393,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     @Override
     public void mapChanged(final String mapName, final int[] mapExtraParams, final int mapHash, boolean isNewMap) {
         if (readyButton.getText().toString().equals("Unready")) {
-            performClick(readyButton);
+            readyButton.performClick();
         }
 
         if (isNewMap) {

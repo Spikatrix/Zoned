@@ -64,6 +64,7 @@ public class MapSelector {
 
         Label mapNameLabel = new Label(map.getName(), skin);
         mapNameLabel.setAlignment(Align.center);
+        mapNameLabel.setWrap(true);
 
         if (mapPreviewTexture != null) {
             if (usedTextures != null) {
@@ -184,6 +185,17 @@ public class MapSelector {
         }
 
         return true;
+    }
+
+    public boolean extraParamShortcutPressed() {
+        MapEntity map = mapManager.getMapList().get(mapSpinner.getPositionIndex());
+        MapExtraParams extraParams = map.getExtraParams();
+        if (extraParams != null) {
+            showExtraParamDialog(extraParams, map);
+            return true;
+        }
+
+        return false;
     }
 
     public TextButton getLeftButton() {

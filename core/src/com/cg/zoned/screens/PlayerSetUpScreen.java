@@ -59,6 +59,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     private int playerCount;
     private Table playerList;
+    private MapSelector mapSelector;
 
     public PlayerSetUpScreen(final Zoned game) {
         this.game = game;
@@ -181,7 +182,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         table.add(playerList).colspan(NO_OF_COLORS + 1).expandX();
         table.row();
 
-        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
+        mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         mapSelector.getMapManager().enableExternalMapLogging(true);
         Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
@@ -319,6 +320,11 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
             return onBackPressed();
+        } else if (keycode == Input.Keys.S) { // S as the 'Settings' button is used for the extra params option
+            return mapSelector.extraParamShortcutPressed();
+        } else if (keycode == Input.Keys.T) {
+            showTutorialDialog();
+            return true;
         }
 
         return false;

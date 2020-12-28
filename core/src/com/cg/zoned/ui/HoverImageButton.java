@@ -83,4 +83,14 @@ public class HoverImageButton extends ImageButton {
     public void setClickAlpha(float clickAlpha) {
         this.clickAlpha = clickAlpha;
     }
+
+    public void performClick() {
+        InputEvent touchDownEvent = new InputEvent();
+        touchDownEvent.setType(InputEvent.Type.touchDown);
+        this.fire(touchDownEvent);
+
+        InputEvent touchUpEvent = new InputEvent();
+        touchUpEvent.setType(InputEvent.Type.touchUp);
+        this.fire(touchUpEvent);
+    }
 }

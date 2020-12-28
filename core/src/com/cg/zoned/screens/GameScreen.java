@@ -68,6 +68,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private float bgAnimSpeed = 1.8f;
     private float bgAlpha = .25f;
 
+    private HoverImageButton zoomButton;
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
     public GameScreen(final Zoned game, MapManager mapManager, Player[] players) {
@@ -153,7 +154,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpZoomButton(UIButtonManager uiButtonManager) {
-        final HoverImageButton zoomButton = uiButtonManager.addZoomButtonToStage();
+        zoomButton = uiButtonManager.addZoomButtonToStage();
         zoomButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -458,9 +459,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
-        if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
+        if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE || keycode == Input.Keys.P) {
             showPauseDialog();
-
+            return true;
+        } else if (keycode == Input.Keys.Z) {
+            zoomButton.performClick();
             return true;
         }
 
