@@ -13,7 +13,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -155,9 +157,9 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpZoomButton(UIButtonManager uiButtonManager) {
         zoomButton = uiButtonManager.addZoomButtonToStage();
-        zoomButton.addListener(new ClickListener() {
+        zoomButton.addListener(new ChangeListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void changed(ChangeEvent event, Actor actor) {
                 if (targetZoom == Constants.ZOOM_MIN_VALUE) {
                     targetZoom = Constants.ZOOM_MAX_VALUE;
                 } else if (targetZoom == Constants.ZOOM_MAX_VALUE) {
@@ -463,7 +465,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             showPauseDialog();
             return true;
         } else if (keycode == Input.Keys.Z) {
-            zoomButton.performClick();
+            zoomButton.toggle();
             return true;
         }
 

@@ -23,6 +23,7 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
@@ -49,7 +50,6 @@ import com.cg.zoned.maps.NoStartPositionsFound;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
-import com.cg.zoned.ui.TextButton;
 import com.esotericsoftware.kryonet.Client;
 
 import java.util.Arrays;
@@ -213,7 +213,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     public void pause() {
         if (readyButton.getText().toString().equals("Unready")) {
             // Game was minimized in the mobile; so make the player unready
-            readyButton.performClick();
+            readyButton.toggle();
         }
     }
 
@@ -393,7 +393,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     @Override
     public void mapChanged(final String mapName, final int[] mapExtraParams, final int mapHash, boolean isNewMap) {
         if (readyButton.getText().toString().equals("Unready")) {
-            readyButton.performClick();
+            readyButton.toggle();
         }
 
         if (isNewMap) {
