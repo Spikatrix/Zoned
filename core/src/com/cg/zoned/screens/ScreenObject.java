@@ -27,13 +27,10 @@ public abstract class ScreenObject extends ScreenAdapter {
     protected AnimationManager animationManager;
 
     public ScreenObject(final Zoned game) {
-        this.game = game;
-        this.usedTextures = new Array<>();
-
-        init();
+        this(game, true);
     }
 
-    // preset = true is called from the Loading screen where the pref and skin aren't yet loaded
+    // preset = false is called from the Loading screen where the pref and skin aren't yet loaded
     public ScreenObject(final Zoned game, boolean preset) {
         this.game = game;
         this.usedTextures = new Array<>();
