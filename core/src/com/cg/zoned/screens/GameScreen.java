@@ -4,12 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
@@ -17,7 +15,6 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -42,27 +39,18 @@ import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
 
-public class GameScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
+public class GameScreen extends ScreenObject implements InputProcessor {
     private GameManager gameManager;
 
     private Map map;
 
     private ExtendViewport[] playerViewports;
 
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
     private Color[] dividerLeftColor, dividerRightColor;
 
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
     private boolean gameCompleteFadeOutDone = false;
 
-    private FocusableStage fullScreenStage;
-    private BitmapFont font;
-    private boolean showFPSCounter;
     private ScoreBar scoreBars;
     private boolean gamePaused = false;
 
@@ -86,14 +74,15 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Playing a match", mapManager.getPreparedMap().getName(), players.length - 1);
 
-        this.fullScreenStage = new FocusableStage(new ScreenViewport());
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
 
         this.gameManager = new GameManager(this);
         this.gameManager.setUpConnectionManager(server, client);
-        this.gameManager.setUpDirectionAndPlayerBuffer(players, fullScreenStage,
+        this.gameManager.setUpDirectionAndPlayerBuffer(players, screenStage,
                 game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0),
                 game.skin, game.getScaleFactor(), usedTextures);
 
@@ -110,7 +99,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
 
-        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
+        this.scoreBars = new ScoreBar(screenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
     }
 
     private void initViewports(Player[] players) {
@@ -128,19 +117,16 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 this.dividerRightColor[i] = new Color(players[i + 1].color);
             }
         }
-
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpInputProcessors();
         setUpUI();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
     }
 
     private void setUpUI() {
-        UIButtonManager uiButtonManager = new UIButtonManager(fullScreenStage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         setUpPauseButton(uiButtonManager);
         setUpZoomButton(uiButtonManager);
     }
@@ -171,7 +157,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpInputProcessors() {
         InputMultiplexer inputMultiplexer = new InputMultiplexer();
-        inputMultiplexer.addProcessor(fullScreenStage);
+        inputMultiplexer.addProcessor(screenStage);
         inputMultiplexer.addProcessor(gameManager.playerManager);
         inputMultiplexer.addProcessor(this); // ESC key, Back button etc
         Gdx.input.setInputProcessor(inputMultiplexer);
@@ -186,7 +172,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         }
 
         scoreBars.resize(width, height);
-        fullScreenStage.resize(width, height);
+        screenStage.resize(width, height);
     }
 
     private void updateCamera(Camera camera, int width, int height) {
@@ -223,10 +209,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         map.update(gameManager.playerManager, delta);
 
-        batch.setProjectionMatrix(fullScreenStage.getCamera().combined);
+        batch.setProjectionMatrix(screenStage.getCamera().combined);
         batch.begin();
         shapeDrawer.setColor(currentBgColor);
-        shapeDrawer.filledRectangle(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
+        shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
         batch.end();
 
         for (int i = 0; i < this.playerViewports.length; i++) {
@@ -234,8 +220,8 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             renderMap(i, delta);
         }
 
-        fullScreenStage.getViewport().apply(true);
-        batch.setProjectionMatrix(fullScreenStage.getCamera().combined);
+        screenStage.getViewport().apply(true);
+        batch.setProjectionMatrix(screenStage.getCamera().combined);
         batch.begin();
 
         if (isSplitscreenMultiplayer() && playerViewports.length >= 2) {
@@ -247,7 +233,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
         }
 
-        scoreBars.render(shapeDrawer, font, gameManager.playerManager.getTeamData(), delta);
+        scoreBars.render(shapeDrawer, smallFont, gameManager.playerManager.getTeamData(), delta);
 
         if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getTeamData())) {
             gameManager.directionBufferManager.clearBuffer();
@@ -260,7 +246,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         }
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
+            UITextDisplayer.displayFPS(screenStage.getViewport(), screenStage.getBatch(), smallFont,
                     UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
         }
         if (gameManager.gameConnectionManager.isActive) {
@@ -268,12 +254,12 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             if (!showFPSCounter) {
                 yOffset = -yOffset + scoreBars.scoreBarHeight + UITextDisplayer.padding;
             }
-            UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
+            UITextDisplayer.displayPing(screenStage.getViewport(), screenStage.getBatch(), smallFont,
                     gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
         }
 
-        fullScreenStage.act(delta);
-        fullScreenStage.draw();
+        screenStage.act(delta);
+        screenStage.draw();
     }
 
     private void fadeOutScreen(float delta) {
@@ -282,7 +268,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         batch.begin();
         shapeDrawer.setColor(fadeOutOverlay);
-        shapeDrawer.filledRectangle(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
+        shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
         batch.end();
 
         if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
@@ -304,11 +290,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private void drawViewportDividers() {
         int lineCount = gameManager.playerManager.getPlayers().length - 1;
-        float height = fullScreenStage.getViewport().getWorldHeight();
+        float height = screenStage.getViewport().getWorldHeight();
         float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (playerViewports.length - 1), 3f);
         float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (playerViewports.length - 1), 1f);
         for (int i = 0; i < lineCount; i++) {
-            float startX = (fullScreenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
+            float startX = (screenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
             shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
                     dividerSolidWidth * 2, height,
@@ -351,7 +337,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showDisconnectionDialog() {
-        fullScreenStage.showOKDialog("Disconnected", false,
+        screenStage.showOKDialog("Disconnected", false,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
                     public void dialogResult(FocusableStage.DialogButton button) {
@@ -372,7 +358,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         //dialogButtonTexts.add("Restart");
 
-        fullScreenStage.showDialog("Game Paused",
+        screenStage.showDialog("Game Paused",
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu },
                 true,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
@@ -423,7 +409,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showPlayerDisconnectedDialog(String playerName) {
-        fullScreenStage.showOKDialog(playerName + " got disconnected",
+        screenStage.showOKDialog(playerName + " got disconnected",
                 false, game.getScaleFactor(),
                 null, game.skin);
     }
@@ -436,7 +422,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                     gameManager.playerManager.stopPlayers(false);
                     gameManager.directionBufferManager.clearBuffer();
                     showDisconnectionDialog();
-                    Gdx.input.setInputProcessor(fullScreenStage);
+                    Gdx.input.setInputProcessor(screenStage);
                 }
             }
         });
@@ -451,11 +437,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
-        fullScreenStage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
         map.dispose();
     }
 

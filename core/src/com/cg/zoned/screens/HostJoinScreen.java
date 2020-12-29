@@ -4,10 +4,8 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -19,9 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.KryoHelper;
@@ -39,36 +35,25 @@ import com.esotericsoftware.kryonet.Server;
 import java.io.IOException;
 import java.net.InetAddress;
 
-public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
+public class HostJoinScreen extends ScreenObject implements InputProcessor {
     // Bigger buffer as map preview images, which is bigger than text data, are sent
     private static final int CONNECTION_BUFFER_SIZE = 131072; // 2^17
 
-    private Array<Texture> usedTextures = new Array<>();
-
-    private FocusableStage stage;
-    private Viewport viewport;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
-
     public HostJoinScreen(final Zoned game) {
-        this.game = game;
+        super(game);
+
         game.discordRPCManager.updateRPC("Setting up local multiplayer");
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpStage();
         setUpBackButton();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpStage() {
@@ -88,7 +73,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         infoTable.add(infoImage).height(game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight())
                 .width(game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight()).padRight(20f);
         infoTable.add(infoLabel).pad(10f);
-        stage.addActor(infoTable);
+        screenStage.addActor(infoTable);
 
         Label playerNameLabel = new Label("Player name: ", game.skin, "themed");
         final TextField playerNameField = new TextField("", game.skin);
@@ -98,8 +83,8 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         table.add(playerNameField).width(playerNameField.getPrefWidth() * game.getScaleFactor()).left();
 
         table.row().pad(10 * game.getScaleFactor());
-        stage.addFocusableActor(playerNameField, 2);
-        stage.row();
+        screenStage.addFocusableActor(playerNameField, 2);
+        screenStage.row();
 
         TextButton hostButton = new TextButton("Host", game.skin);
         TextButton joinButton = new TextButton("Join", game.skin);
@@ -107,8 +92,8 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         table.add(joinButton).width(200 * game.getScaleFactor());
         table.row();
 
-        stage.addFocusableActor(hostButton);
-        stage.addFocusableActor(joinButton);
+        screenStage.addFocusableActor(hostButton);
+        screenStage.addFocusableActor(joinButton);
 
         final Label searchingLabel = new Label("Searching for servers...", game.skin, "themed");
         searchingLabel.getColor().a = 0;
@@ -127,7 +112,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
                     startServerLobby(playerNameField.getText().trim());
                 } else {
-                    stage.showOKDialog("Please enter the player name", false,
+                    screenStage.showOKDialog("Please enter the player name", false,
                             game.getScaleFactor(), null, game.skin);
                 }
             }
@@ -150,7 +135,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                         searchingLabel.setText("Already searching for servers...");
                     }
                 } else {
-                    stage.showOKDialog("Please enter the player name", false,
+                    screenStage.showOKDialog("Please enter the player name", false,
                             game.getScaleFactor(), null, game.skin);
                 }
             }
@@ -159,15 +144,15 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
             Table outTable = createRestoreScreenPrompt();
             setMoveUpOnClick(playerNameField);
-            stage.addActor(outTable);
+            screenStage.addActor(outTable);
         }
 
-        stage.addActor(table);
-        stage.setFocusedActor(playerNameField);
+        screenStage.addActor(table);
+        screenStage.setFocusedActor(playerNameField);
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
@@ -187,13 +172,13 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         try {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException | IllegalArgumentException e) {
-            stage.showOKDialog("Server bind error\n" + e.getMessage(), false,
+            screenStage.showOKDialog("Server bind error\n" + e.getMessage(), false,
                     game.getScaleFactor(), null, game.skin);
             e.printStackTrace();
             return;
         }
 
-        animationManager.fadeOutStage(stage, this, new ServerLobbyScreen(game, server, playerName));
+        animationManager.fadeOutStage(screenStage, this, new ServerLobbyScreen(game, server, playerName));
     }
 
     private void startClientLobby(final String playerName, final Label searchingLabel) {
@@ -228,36 +213,36 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
             }
             client.connect(4000, addr, Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
-            stage.showOKDialog("Error connecting to the server\n" + e.getMessage(), false,
+            screenStage.showOKDialog("Error connecting to the server\n" + e.getMessage(), false,
                     game.getScaleFactor(), null, game.skin);
             searchingLabel.addAction(Actions.fadeOut(.2f));
             return;
         }
 
         if (!client.isConnected()) {
-            stage.showOKDialog("Failed to connect to the server", false,
+            screenStage.showOKDialog("Failed to connect to the server", false,
                     game.getScaleFactor(), null, game.skin);
             searchingLabel.addAction(Actions.fadeOut(.2f));
             return;
         }
 
-        animationManager.fadeOutStage(stage, this, new ClientLobbyScreen(game, client, playerName));
+        animationManager.fadeOutStage(screenStage, this, new ClientLobbyScreen(game, client, playerName));
     }
 
     private void restoreScreen() {
         Gdx.input.setOnscreenKeyboardVisible(false);
 
-        stage.addAction(Actions.moveTo(0, 0, .5f, Interpolation.fastSlow));
-        stage.unfocusAll();
+        screenStage.addAction(Actions.moveTo(0, 0, .5f, Interpolation.fastSlow));
+        screenStage.unfocusAll();
     }
 
     private Table createRestoreScreenPrompt() {
         Table outTable = new Table();
         outTable.setTouchable(Touchable.enabled);
         Label restoreLabel = new Label("Tap anywhere else to restore the screen", game.skin, "themed");
-        outTable.setHeight(stage.getHeight() * 2);
-        outTable.setWidth(stage.getWidth());
-        outTable.setPosition(outTable.getPrefWidth() / 2, -stage.getHeight());
+        outTable.setHeight(screenStage.getHeight() * 2);
+        outTable.setWidth(screenStage.getWidth());
+        outTable.setPosition(outTable.getPrefWidth() / 2, -screenStage.getHeight());
         outTable.add(restoreLabel).padTop(restoreLabel.getHeight() * game.getScaleFactor()).align(Align.center);
         outTable.addListener(new ClickListener() {
             @Override
@@ -277,9 +262,9 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
                 super.clicked(event, x, y);
 
                 if (textField.getY() != 0) {
-                    stage.addAction(Actions.moveTo(0, stage.getHeight() - textField.getY() - textField.getHeight() - 10f, .5f, Interpolation.fastSlow));
+                    screenStage.addAction(Actions.moveTo(0, screenStage.getHeight() - textField.getY() - textField.getHeight() - 10f, .5f, Interpolation.fastSlow));
                 } else {
-                    stage.addAction(Actions.moveTo(0, stage.getHeight() - textField.getParent().getY() - textField.getParent().getHeight() - 10f, .5f, Interpolation.fastSlow));
+                    screenStage.addAction(Actions.moveTo(0, screenStage.getHeight() - textField.getParent().getY() - textField.getParent().getHeight() - 10f, .5f, Interpolation.fastSlow));
                 }
             }
         });
@@ -288,7 +273,7 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        screenStage.resize(width, height);
     }
 
     @Override
@@ -296,22 +281,19 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        viewport.apply(true);
+        screenViewport.apply(true);
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        stage.draw();
-        stage.act(delta);
+        screenStage.draw();
+        screenStage.act(delta);
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
     }
 
     /**
@@ -321,11 +303,11 @@ public class HostJoinScreen extends ScreenAdapter implements InputProcessor {
      *         false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (stage.dialogIsActive()) {
+        if (screenStage.dialogIsActive()) {
             return false;
         }
 
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
         return true;
     }
 

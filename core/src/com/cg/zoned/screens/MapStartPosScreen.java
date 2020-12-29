@@ -4,13 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
@@ -33,7 +30,6 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
-import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -45,22 +41,10 @@ import com.cg.zoned.ui.CheckBox;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
-public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
+public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private Cell[][] mapGrid;
     private Array<GridPoint2> startPositions;
     private Array<String> startPosNames;
-
-    private AnimationManager animationManager;
-    private ScreenViewport viewport;
-    private FocusableStage stage;
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
-    private BitmapFont font;
-    private boolean showFPSCounter;
 
     private MapManager mapManager;
     private Map map;
@@ -79,7 +63,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     public MapStartPosScreen(final Zoned game, MapManager mapManager,
                              Player[] players, int splitScreenCount, boolean firstPlayerOnly) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Choosing start positions");
 
         this.mapManager = mapManager;
@@ -94,14 +78,12 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             this.splitScreenCount = splitScreenCount;
         }
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
-
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
@@ -109,8 +91,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         setUpMap();
         setUpStage();
         setUpBackButton();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpMap() {
@@ -265,11 +246,11 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             dragOffset[i] = new Vector2(0, 0);
             touchPoint[i] = new GameTouchPoint(0, 0, -1, null, -1);
         }
-        stage.addListener(new ClickListener() {
+        screenStage.addListener(new ClickListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 int splitPaneIndex = 0;
-                float width = stage.getViewport().getWorldWidth();
+                float width = screenStage.getViewport().getWorldWidth();
                 for (int i = 1; i < splitScreenCount; i++) {
                     if (x > ((width / splitScreenCount) * i)) {
                         splitPaneIndex++;
@@ -328,7 +309,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     for (Player player : players) {
                         mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
                     }
-                    animationManager.fadeOutStage(stage, thisScreen, new GameScreen(game, mapManager, players));
+                    animationManager.fadeOutStage(screenStage, thisScreen, new GameScreen(game, mapManager, players));
                 } else {
                     // Some more players are remaining
                     playerIndex += splitScreenCount;
@@ -353,17 +334,17 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     }
 
                     if (excessCount > 0) {
-                        stage.clearFocusableArray();
+                        screenStage.clearFocusableArray();
                         for (int i = 0; i < radioButtons[0].length; i++) {
                             for (int j = 0; j < radioButtons.length; j++) {
                                 if (j >= excessCount) {
                                     break;
                                 }
-                                stage.addFocusableActor(radioButtons[j][i]);
+                                screenStage.addFocusableActor(radioButtons[j][i]);
                             }
-                            stage.row();
+                            screenStage.row();
                         }
-                        stage.addFocusableActor(doneButton, splitScreenCount - excessCount);
+                        screenStage.addFocusableActor(doneButton, splitScreenCount - excessCount);
                     }
                 }
             }
@@ -377,17 +358,17 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
                     excess = j - radioButtons.length;
                     break;
                 }
-                stage.addFocusableActor(radioButtons[j][i]);
+                screenStage.addFocusableActor(radioButtons[j][i]);
             }
-            stage.row();
+            screenStage.row();
         }
-        stage.addFocusableActor(doneButton, splitScreenCount - excess);
+        screenStage.addFocusableActor(doneButton, splitScreenCount - excess);
 
-        stage.addActor(masterTable);
+        screenStage.addActor(masterTable);
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
@@ -428,7 +409,7 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        screenStage.resize(width, height);
 
         for (int i = 0; i < mapViewports.length; i++) {
             mapViewports[i].update(width / mapViewports.length, height);
@@ -448,9 +429,9 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         int lineCount = splitScreenCount - 1;
         float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (mapViewports.length - 1), 3f);
         float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (mapViewports.length - 1), 1f);
-        float height = stage.getViewport().getWorldHeight();
+        float height = screenStage.getViewport().getWorldHeight();
         for (int i = 0; i < lineCount; i++) {
-            float startX = (stage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
+            float startX = (screenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
             shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
                     dividerSolidWidth * 2, height,
@@ -466,8 +447,8 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void drawDarkOverlay() {
-        float height = stage.getViewport().getWorldHeight();
-        float width = stage.getViewport().getWorldWidth();
+        float height = screenStage.getViewport().getWorldHeight();
+        float width = screenStage.getViewport().getWorldWidth();
         shapeDrawer.setColor(mapDarkOverlayColor);
         batch.begin();
         shapeDrawer.filledRectangle(0, 0, width, height);
@@ -485,8 +466,8 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
             }
         }
 
-        this.viewport.apply(true);
-        batch.setProjectionMatrix(this.viewport.getCamera().combined);
+        this.screenViewport.apply(true);
+        batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
         if (splitScreenCount > 1 && mapViewports.length >= 2) {
             drawViewportDividers();
@@ -494,20 +475,16 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         drawDarkOverlay();
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        stage.act(delta);
-        stage.draw();
+        screenStage.act(delta);
+        screenStage.draw();
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
         map.dispose();
     }
 
@@ -518,11 +495,11 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
      *         false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (stage.dialogIsActive()) {
+        if (screenStage.dialogIsActive()) {
             return false;
         }
 
-        animationManager.fadeOutStage(stage, this, new PlayerSetUpScreen(game));
+        animationManager.fadeOutStage(screenStage, this, new PlayerSetUpScreen(game));
         return true;
     }
 
@@ -574,3 +551,4 @@ public class MapStartPosScreen extends ScreenAdapter implements InputProcessor {
         return false;
     }
 }
+

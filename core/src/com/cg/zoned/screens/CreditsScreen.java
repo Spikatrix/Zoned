@@ -3,12 +3,10 @@ package com.cg.zoned.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -21,7 +19,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
@@ -35,28 +32,17 @@ import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.ParticleEffectActor;
 
-public class CreditsScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
-    private ScreenViewport viewport;
-    private FocusableStage stage;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
-
+public class CreditsScreen extends ScreenObject implements InputProcessor {
     private Color linkColor = new Color(.4f, .4f, 1f, 1f);
     private ParticleEffect clickParticleEffect = null;
 
     public CreditsScreen(final Zoned game) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Viewing credits");
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(game, this);
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
@@ -64,9 +50,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         setUpStage();
         setUpBackButton();
 
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
-
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpStage() {
@@ -116,8 +100,8 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         masterTable.add(screenScrollPane).grow();
 
-        stage.setScrollFocus(screenScrollPane);
-        stage.addActor(masterTable);
+        screenStage.setScrollFocus(screenScrollPane);
+        screenStage.addActor(masterTable);
     }
 
     private void addCreditItem(Table table, FileHandle imageLocation, String title, String version) {
@@ -171,8 +155,8 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         Label versionLabel = new Label(version, game.skin);
         versionLabel.setAlignment(Align.center);
 
-        float spaceBottom = (stage.getHeight() / 4) - (height / 2) - versionLabel.getPrefHeight();
-        float padTop = (stage.getHeight() / 2) - (height / 2);
+        float spaceBottom = (screenStage.getHeight() / 4) - (height / 2) - versionLabel.getPrefHeight();
+        float padTop = (screenStage.getHeight() / 2) - (height / 2);
 
         spaceBottom = Math.max(spaceBottom, 10f);
 
@@ -206,7 +190,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
             contentTable.add(image).height(contentLabel.getPrefHeight()).width(contentLabel.getPrefHeight());
             contentTable.add(contentLabel).padLeft(20f);
         } else {
-            contentTable.add(image).height(contentLabel.getPrefHeight() * 4 / 3).width(3 * stage.getWidth() / 4);
+            contentTable.add(image).height(contentLabel.getPrefHeight() * 4 / 3).width(3 * screenStage.getWidth() / 4);
         }
 
         if (link != null) {
@@ -221,12 +205,12 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         }
 
         table.add(titleLabel).growX()
-                .padTop(stage.getHeight() / 5)
+                .padTop(screenStage.getHeight() / 5)
                 .padLeft(10f)
                 .padRight(10f);
         table.row();
         table.add(contentTable).growX()
-                .padBottom(stage.getHeight() / 5)
+                .padBottom(screenStage.getHeight() / 5)
                 .padLeft(10f)
                 .padRight(10f);
         table.row();
@@ -241,23 +225,23 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
         if (title.contains("Thank You")) { // Last item in the credits screen
             table.add(titleLabel).growX()
-                    .padTop(stage.getHeight() / 2)
+                    .padTop(screenStage.getHeight() / 2)
                     .padLeft(10f)
                     .padRight(10f);
             table.row();
             table.add(contentLabel).growX()
-                    .padBottom((stage.getHeight() / 2) - titleLabel.getHeight())
+                    .padBottom((screenStage.getHeight() / 2) - titleLabel.getHeight())
                     .padLeft(10f)
                     .padRight(10f);
             // Hacky line above, but this whole thing is kinda hacky and doesn't work on resize anyway
         } else {
             table.add(titleLabel).growX()
-                    .padTop(stage.getHeight() / 5)
+                    .padTop(screenStage.getHeight() / 5)
                     .padLeft(10f)
                     .padRight(10f);
             table.row();
             table.add(contentLabel).growX()
-                    .padBottom(stage.getHeight() / 5)
+                    .padBottom(screenStage.getHeight() / 5)
                     .padLeft(10f)
                     .padRight(10f);
         }
@@ -272,13 +256,13 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         game.preferences.putBoolean(Preferences.DEV_MODE_PREFERENCE, devModeUnlocked);
         game.preferences.flush();
 
-        stage.showOKDialog("Developer mode " + ((devModeUnlocked) ? ("un") : ("re")) + "locked!",
+        screenStage.showOKDialog("Developer mode " + ((devModeUnlocked) ? ("un") : ("re")) + "locked!",
                 false, game.getScaleFactor(),
                 null, game.skin);
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
@@ -290,7 +274,7 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        screenStage.resize(width, height);
     }
 
     @Override
@@ -298,22 +282,19 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        this.viewport.apply(true);
+        this.screenViewport.apply(true);
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        stage.act(delta);
-        stage.draw();
+        screenStage.act(delta);
+        screenStage.draw();
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
         if (clickParticleEffect != null) {
             clickParticleEffect.dispose();
             clickParticleEffect = null;
@@ -327,11 +308,11 @@ public class CreditsScreen extends ScreenAdapter implements InputProcessor {
      *         false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (stage.dialogIsActive()) {
+        if (screenStage.dialogIsActive()) {
             return false;
         }
 
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
         return true;
     }
 

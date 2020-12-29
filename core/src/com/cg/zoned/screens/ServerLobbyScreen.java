@@ -4,14 +4,11 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
@@ -34,7 +31,6 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
-import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
@@ -52,22 +48,9 @@ import com.esotericsoftware.kryonet.Server;
 import java.util.Arrays;
 import java.util.Map;
 
-public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConnectionManager.ServerPlayerListener, InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
+public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnectionManager.ServerPlayerListener, InputProcessor {
     private ServerLobbyConnectionManager connectionManager;
     private String serverName;
-
-    private FocusableStage stage;
-    private Viewport viewport;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
-
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
 
     private com.cg.zoned.Map map;
     private Cell[][] mapGrid;
@@ -77,16 +60,16 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     private Table playerList;
     private MapSelector mapSelector;
+    private boolean mapSelectorActive;
     private Array<String> startLocations;
 
     public ServerLobbyScreen(final Zoned game, Server server, String name) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("In the Server Lobby");
 
-        viewport = new ScreenViewport();
-        stage = new FocusableStage(viewport);
+        screenViewport = new ScreenViewport();
+        screenStage = new FocusableStage(screenViewport);
         animationManager = new AnimationManager(this.game, this);
-        font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         // TODO: Fix bogus client ip being sent to some clients when a map is changed while a new client was joining
 
@@ -99,12 +82,11 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     public void show() {
         setUpServerLobbyStage();
         setUpMap();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
-        playerConnected(null);
+        playerConnected(null); // Add the host player (oneself) to the player list
         connectionManager.start();
 
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpServerLobbyStage() {
@@ -113,7 +95,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         serverLobbyTable.center();
         //serverLobbyTable.setDebug(true);
 
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         Label lobbyTitle = new Label("Lobby", game.skin, "themed-rounded-background");
         float headerPad = uiButtonManager.getHeaderPad(lobbyTitle.getPrefHeight());
@@ -130,7 +112,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         serverLobbyTable.add(playerListScrollPane).grow();
         serverLobbyTable.row();
 
-        mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
+        mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         final Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
@@ -147,8 +129,9 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 final int prevIndex = mapSpinner.getPositionIndex();
+                mapSelectorActive = true;
 
-                stage.showDialog(mapSelectorTable, focusableDialogButtons,
+                screenStage.showDialog(mapSelectorTable, focusableDialogButtons,
                         new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.SetMap },
                         false, game.getScaleFactor(),
                         new FocusableStage.DialogResultListener() {
@@ -163,9 +146,11 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                                     repopulateMapStartPosLocations();
                                     updateMapColor(players[0], players[0].color, 0);
                                 } else {
-                                    // Cancel was pressed; restore the spinner pos
+                                    // Cancelled; restore the spinner pos
                                     mapSpinner.snapToStep(mapSpinner.getPositionIndex() - prevIndex);
                                 }
+
+                                mapSelectorActive = false;
                             }
                         }, game.skin);
             }
@@ -182,7 +167,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                 if (mapSelector.loadSelectedMap()) {
                     String errorMsg = connectionManager.validateServerData(playerList.getChildren());
                     if (errorMsg != null) {
-                        stage.showOKDialog(errorMsg, false,
+                        screenStage.showOKDialog(errorMsg, false,
                                 game.getScaleFactor(), null, game.skin);
                         return;
                     }
@@ -195,12 +180,12 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         });
         serverLobbyTable.add(startButton).width(250 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
-        stage.addActor(serverLobbyTable);
-        stage.addFocusableActor(mapButton, 2);
-        stage.row();
-        stage.addFocusableActor(startButton, 2);
-        stage.row();
-        stage.setScrollFocus(playerListScrollPane);
+        screenStage.addActor(serverLobbyTable);
+        screenStage.addFocusableActor(mapButton, 2);
+        screenStage.row();
+        screenStage.addFocusableActor(startButton, 2);
+        screenStage.row();
+        screenStage.setScrollFocus(playerListScrollPane);
 
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
@@ -285,11 +270,11 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                 playerItem.add(startPosSelector); // idk why .expandX on stuff added to playerItem doesn't do anything
             }
 
-            stage.addFocusableActor(colorSelector);
-            stage.addFocusableActor(startPosSelector);
-            stage.row();
+            screenStage.addFocusableActor(colorSelector);
+            screenStage.addFocusableActor(startPosSelector);
+            screenStage.row();
             if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-                stage.setFocusedActor(colorSelector);
+                screenStage.setFocusedActor(colorSelector);
             }
         } else {
             Label colorLabel = new Label(Constants.PLAYER_COLORS.keySet().iterator().next(), game.skin);
@@ -412,7 +397,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     private void startGame(MapManager mapManager) {
         Player[] players = inflatePlayerList(mapManager);
         clearMapGrid();
-        animationManager.fadeOutStage(stage, this, new GameScreen(game, mapManager, players, connectionManager));
+        animationManager.fadeOutStage(screenStage, this, new GameScreen(game, mapManager, players, connectionManager));
     }
 
     private Player[] inflatePlayerList(MapManager mapManager) {
@@ -514,17 +499,17 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
         renderMap(delta);
 
-        this.viewport.apply(true);
-        batch.setProjectionMatrix(this.viewport.getCamera().combined);
+        this.screenViewport.apply(true);
+        batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
         drawDarkOverlay();
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        stage.draw();
-        stage.act(delta);
+        screenStage.draw();
+        screenStage.act(delta);
     }
 
     private void renderMap(float delta) {
@@ -555,7 +540,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        screenStage.resize(width, height);
 
         mapViewport.update(width, height);
         updateCamera(mapViewport.getCamera(), width, height);
@@ -569,8 +554,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     }
 
     private void drawDarkOverlay() {
-        float height = stage.getViewport().getWorldHeight();
-        float width = stage.getViewport().getWorldWidth();
+        float height = screenStage.getViewport().getWorldHeight();
+        float width = screenStage.getViewport().getWorldWidth();
 
         shapeDrawer.setColor(mapDarkOverlayColor);
         batch.begin();
@@ -580,11 +565,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     @Override
     public void dispose() {
-        stage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
         if (map != null) {
             map.dispose();
             map = null;
@@ -598,14 +579,14 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
      *         false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (stage.dialogIsActive()) {
+        if (screenStage.dialogIsActive()) {
             return false;
         }
 
         playerList.clear();
         connectionManager.closeConnection();
 
-        animationManager.fadeOutStage(stage, this, new HostJoinScreen(game));
+        animationManager.fadeOutStage(screenStage, this, new HostJoinScreen(game));
         return true;
     }
 
@@ -613,6 +594,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
             return onBackPressed();
+        } else if (keycode == Input.Keys.S && mapSelectorActive) {
+            return mapSelector.extraParamShortcutPressed();
         }
 
         return false;

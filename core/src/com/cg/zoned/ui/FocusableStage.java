@@ -320,10 +320,12 @@ public class FocusableStage extends Stage {
             darkBackgroundStyle.stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
             dialog.setStyle(darkBackgroundStyle);
         }
+
         dialog.show(this, Actions.parallel(
                 Actions.scaleTo(1f, 1f, .3f, Interpolation.swingOut),
                 Actions.fadeIn(.2f, Interpolation.smooth)
         ));
+
         dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
         dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
     }

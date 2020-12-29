@@ -3,11 +3,9 @@ package com.cg.zoned.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -20,7 +18,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
@@ -38,20 +35,7 @@ import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 
-public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
-    private FocusableStage stage;
-    private Viewport viewport;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
-
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
-
+public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     private float bgAlpha = .25f;
     private float bgAnimSpeed = 1.8f;
     private Color[] currentBgColors;
@@ -62,13 +46,12 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     private MapSelector mapSelector;
 
     public PlayerSetUpScreen(final Zoned game) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Setting up splitscreen multiplayer");
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
@@ -88,7 +71,6 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     public void show() {
         setUpStage();
         setUpUIButtons();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
@@ -102,11 +84,11 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpUIButtons() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
@@ -161,7 +143,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
                 playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS).height(COLOR_BUTTON_DIMENSIONS);
 
-                stage.addFocusableActor(colorButtons[i][j]);
+                screenStage.addFocusableActor(colorButtons[i][j]);
             }
 
             final int finalI = i;
@@ -175,14 +157,14 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
             colorButtonGroups[i].uncheckAll();
             colorButtons[i][i % NO_OF_COLORS].setChecked(true);
-            stage.row();
+            screenStage.row();
             playerList.add(playerItem).right();
             playerList.row();
         }
         table.add(playerList).colspan(NO_OF_COLORS + 1).expandX();
         table.row();
 
-        mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
+        mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         mapSelector.getMapManager().enableExternalMapLogging(true);
         Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
@@ -191,9 +173,9 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
 
-        stage.addFocusableActor(mapSelector.getLeftButton(), 1);
-        stage.addFocusableActor(mapSelector.getRightButton(), NO_OF_COLORS - 1);
-        stage.row();
+        screenStage.addFocusableActor(mapSelector.getLeftButton(), 1);
+        screenStage.addFocusableActor(mapSelector.getRightButton(), NO_OF_COLORS - 1);
+        screenStage.row();
 
         if (playerCount == 2) {
             Table infoTable = new Table();
@@ -224,10 +206,10 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         });
         table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1).expandX();
-        stage.addFocusableActor(startButton, NO_OF_COLORS);
+        screenStage.addFocusableActor(startButton, NO_OF_COLORS);
         masterTable.add(screenScrollPane).grow();
-        stage.setScrollFocus(screenScrollPane);
-        stage.addActor(masterTable);
+        screenStage.setScrollFocus(screenScrollPane);
+        screenStage.addActor(masterTable);
     }
 
     private void startGame(Array<Color> playerColors, MapManager mapManager) {
@@ -241,18 +223,18 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         }
 
         int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
-        animationManager.fadeOutStage(stage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount, false));
+        animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount, false));
     }
 
     private void showTutorialDialog() {
-        stage.showDialog("Start the tutorial?",
+        screenStage.showDialog("Start the tutorial?",
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Yes },
                 false, game.getScaleFactor(),
                 new FocusableStage.DialogResultListener() {
                     @Override
                     public void dialogResult(FocusableStage.DialogButton button) {
                         if (button == FocusableStage.DialogButton.Yes) {
-                            animationManager.fadeOutStage(stage, PlayerSetUpScreen.this, new TutorialScreen(game));
+                            animationManager.fadeOutStage(screenStage, PlayerSetUpScreen.this, new TutorialScreen(game));
                         }
                     }
                 }, game.skin);
@@ -260,7 +242,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        screenStage.resize(width, height);
     }
 
     @Override
@@ -270,35 +252,31 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         for (int i = 0; i < currentBgColors.length; i++) {
             currentBgColors[i].lerp(targetBgColors[i], bgAnimSpeed * delta);
-            currentBgColors[i].a = Math.min(targetBgColors[i].a, stage.getRoot().getColor().a / 2.5f);
+            currentBgColors[i].a = Math.min(targetBgColors[i].a, screenStage.getRoot().getColor().a / 2.5f);
         }
 
-        viewport.apply(true);
+        screenViewport.apply(true);
 
-        batch.setProjectionMatrix(viewport.getCamera().combined);
+        batch.setProjectionMatrix(screenViewport.getCamera().combined);
         batch.begin();
         for (int i = 0; i < currentBgColors.length; i++) {
             shapeDrawer.setColor(currentBgColors[i]);
-            shapeDrawer.filledRectangle(i * stage.getWidth() / currentBgColors.length, 0,
-                    stage.getWidth() / currentBgColors.length, stage.getHeight());
+            shapeDrawer.filledRectangle(i * screenStage.getWidth() / currentBgColors.length, 0,
+                    screenStage.getWidth() / currentBgColors.length, screenStage.getHeight());
         }
         batch.end();
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        stage.draw();
-        stage.act(delta);
+        screenStage.draw();
+        screenStage.act(delta);
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
     }
 
     /**
@@ -308,11 +286,11 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
      *         false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (stage.dialogIsActive()) {
+        if (screenStage.dialogIsActive()) {
             return false;
         }
 
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
         return true;
     }
 
@@ -320,9 +298,10 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
             return onBackPressed();
-        } else if (keycode == Input.Keys.S) { // S as the 'Settings' button is used for the extra params option
+        } else if (keycode == Input.Keys.S && !screenStage.dialogIsActive()) {
+            // S as the 'Settings' button is used for the extra params option
             return mapSelector.extraParamShortcutPressed();
-        } else if (keycode == Input.Keys.T) {
+        } else if (keycode == Input.Keys.T && !screenStage.dialogIsActive()) {
             showTutorialDialog();
             return true;
         }

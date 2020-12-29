@@ -1,7 +1,6 @@
 package com.cg.zoned.screens;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.SkinLoader;
@@ -17,7 +16,6 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
 import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -27,7 +25,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
@@ -35,16 +32,12 @@ import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.ControlManager;
+import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.PixmapFactory;
 
-public class LoadingScreen extends ScreenAdapter {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
+public class LoadingScreen extends ScreenObject {
     private AssetManager assetManager;
 
-    private Stage stage;
     private Skin tempSkin;
     private Label loadingLabel;
     private ProgressBar progressBar;
@@ -52,7 +45,7 @@ public class LoadingScreen extends ScreenAdapter {
     private boolean loadedStageTwo;
 
     public LoadingScreen(final Zoned game) {
-        this.game = game;
+        super(game, false);
         game.discordRPCManager.updateRPC("Loading game");
         initSetup();
     }
@@ -81,7 +74,8 @@ public class LoadingScreen extends ScreenAdapter {
         assetManager = new AssetManager();
         game.setAssetManager(assetManager); // For disposing
 
-        stage = new Stage(new ScreenViewport());
+        screenViewport = new ScreenViewport();
+        screenStage = new FocusableStage(screenViewport);
         tempSkin = createTempSkin();
 
         setUpLoadingUI();
@@ -97,7 +91,7 @@ public class LoadingScreen extends ScreenAdapter {
     }
 
     private void setUpLoadingUI() {
-        stage.clear();
+        screenStage.clear();
 
         Table table = new Table();
         table.setFillParent(true);
@@ -110,7 +104,7 @@ public class LoadingScreen extends ScreenAdapter {
         table.row();
 
         progressBar = new ProgressBar(0, 1, .01f, false, tempSkin);
-        progressBar.setAnimateDuration(.7f);
+        progressBar.setAnimateDuration(.68f);
         progressBar.setAnimateInterpolation(Interpolation.fastSlow);
 
         table.add(progressBar).growX()
@@ -125,8 +119,8 @@ public class LoadingScreen extends ScreenAdapter {
         loadingContainer.add(new Label("%", tempSkin, "loading-font", Color.WHITE));
         loadingContainer.pad(16f * game.getScaleFactor());
 
-        stage.addActor(loadingContainer);
-        stage.addActor(table);
+        screenStage.addActor(loadingContainer);
+        screenStage.addActor(table);
     }
 
     private void generateCustomFont(String fontFileName, String fontName, int fontSize) {
@@ -173,8 +167,8 @@ public class LoadingScreen extends ScreenAdapter {
 
         loadingLabel.setText((int) (progressBar.getValue() * 100));
 
-        stage.act(delta);
-        stage.draw();
+        screenStage.act(delta);
+        screenStage.draw();
     }
 
     private void loadStageTwo() {
@@ -223,21 +217,18 @@ public class LoadingScreen extends ScreenAdapter {
             }
         }));
 
-        stage.addAction(sequenceAction);
+        screenStage.addAction(sequenceAction);
     }
 
     @Override
     public void resize(int width, int height) {
-        stage.getViewport().update(width, height, true);
+        screenStage.getViewport().update(width, height, true);
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
+        super.dispose();
         tempSkin.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
     }
 
     /*

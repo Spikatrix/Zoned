@@ -3,16 +3,12 @@ package com.cg.zoned.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Preferences;
@@ -24,39 +20,26 @@ import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 
-public class DevScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
-    private ScreenViewport viewport;
-    private FocusableStage stage;
-    private AnimationManager animationManager;
-    private BitmapFont font;
-    private boolean showFPSCounter;
-
+public class DevScreen extends ScreenObject implements InputProcessor {
     private Spinner splitscreenSpinner;
     private int minPlayerCount = 1;
     private Spinner mapSplitScreenSpinner;
     private int minSplitScreenCount = 1;
 
     public DevScreen(final Zoned game) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Exploring secrets");
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(game, this);
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpStage();
 
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
-
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpStage() {
@@ -64,7 +47,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         table.center();
         table.setFillParent(true);
 
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         Label devOptions = new Label("Developer Options", game.skin, "themed-rounded-background");
         float headerPad = uiButtonManager.getHeaderPad(devOptions.getPrefHeight());
@@ -102,22 +85,22 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         innerTable.add(splitscreenSpinner);
         innerTable.row();
 
-        stage.addFocusableActor(splitscreenSpinner.getLeftButton());
-        stage.addFocusableActor(splitscreenSpinner.getRightButton());
-        stage.row();
+        screenStage.addFocusableActor(splitscreenSpinner.getLeftButton());
+        screenStage.addFocusableActor(splitscreenSpinner.getRightButton());
+        screenStage.row();
 
         innerTable.add(mapStartPosSplitscreenCountLabel).padTop(20f);
         innerTable.row();
         innerTable.add(mapSplitScreenSpinner);
 
-        stage.addFocusableActor(mapSplitScreenSpinner.getLeftButton());
-        stage.addFocusableActor(mapSplitScreenSpinner.getRightButton());
-        stage.row();
+        screenStage.addFocusableActor(mapSplitScreenSpinner.getLeftButton());
+        screenStage.addFocusableActor(mapSplitScreenSpinner.getRightButton());
+        screenStage.row();
 
         table.add(screenScrollPane).grow();
 
-        stage.addActor(table);
-        stage.setScrollFocus(screenScrollPane);
+        screenStage.addActor(table);
+        screenStage.setScrollFocus(screenScrollPane);
 
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
@@ -130,7 +113,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        screenStage.resize(width, height);
     }
 
     @Override
@@ -138,14 +121,14 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        this.viewport.apply(true);
+        this.screenViewport.apply(true);
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        stage.act(delta);
-        stage.draw();
+        screenStage.act(delta);
+        screenStage.draw();
     }
 
     private void saveData() {
@@ -171,10 +154,7 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
-        stage.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
     }
 
     /**
@@ -184,12 +164,12 @@ public class DevScreen extends ScreenAdapter implements InputProcessor {
      *         false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (stage.dialogIsActive()) {
+        if (screenStage.dialogIsActive()) {
             return false;
         }
 
         saveData();
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
         return true;
     }
 

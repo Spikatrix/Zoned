@@ -33,6 +33,7 @@ public class MapSelector {
 
     private FocusableStage stage;
     private Spinner mapSpinner;
+    private boolean extraParamsDialogActive;
 
     private Assets assets;
     private Array<Texture> usedTextures;
@@ -157,6 +158,7 @@ public class MapSelector {
             contentTable.row();
         }
 
+        extraParamsDialogActive = true;
         stage.showDialog(contentTable, focusableDialogButtons,
                 new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Set},
                 false, scaleFactor,
@@ -169,6 +171,8 @@ public class MapSelector {
                             }
                             map.applyExtraParams();
                         }
+
+                        extraParamsDialogActive = false;
                     }
                 }, skin);
     }
@@ -188,6 +192,11 @@ public class MapSelector {
     }
 
     public boolean extraParamShortcutPressed() {
+        if (extraParamsDialogActive) {
+            // Dialog is already active
+            return false;
+        }
+
         MapEntity map = mapManager.getMapList().get(mapSpinner.getPositionIndex());
         MapExtraParams extraParams = map.getExtraParams();
         if (extraParams != null) {

@@ -5,12 +5,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Interpolation;
@@ -46,22 +44,7 @@ import com.cg.zoned.ui.HoverImageButton;
 
 import java.util.Random;
 
-public class TutorialScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
-    private ScreenViewport viewport;
-    private FocusableStage stage;
-    private Table tutorialTable;
-    private AnimationManager animationManager;
-    private BitmapFont font;
-    private boolean showFPSCounter;
-    private Label dummyLabel;
-    private float textboxHeight;
-
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
+public class TutorialScreen extends ScreenObject implements InputProcessor {
     private Map map;
     private Cell[][] mapGrid;
     private ExtendViewport mapViewport;
@@ -70,23 +53,26 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     private Color mapNoOverlayColor;
     private boolean drawOverlay;
     private Player[] players;
-    private BitmapFont playerLabelFont;
     private ControlManager controlManager;
 
+    private Table tutorialTable;
+    private ScrollPane tutorialScrollPane;
+    private Label mainLabel;
+    private Label subLabel;
+    private float textboxHeight;
+    private Array<TutorialItem> tutorialPrompts;
+    private int tutorialPromptIndex = 0;
+
     public TutorialScreen(final Zoned game) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Playing the Tutorial");
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(game, this);
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
-
-        this.dummyLabel = new Label("DUMMY", game.skin); // Used to set the height of the tutorial table
-        this.textboxHeight = (dummyLabel.getPrefHeight() * 2) + 20f;
 
         initMap();
     }
@@ -104,9 +90,9 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         this.players[0] = new Player(PlayerColorHelper.getColorFromString("GREEN"), "Player");
         this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
         this.players[0].setControlIndex(0);
-        this.playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
+        BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
-        this.controlManager = new ControlManager(players, stage);
+        this.controlManager = new ControlManager(players, screenStage);
         this.controlManager.setUpControls(game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0),
                 false, game.getScaleFactor(), usedTextures);
     }
@@ -128,132 +114,137 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         setUpStage();
         setUpBackButton();
 
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
-
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpStage() {
+        mainLabel = new Label("Welcome to the tutorial!", game.skin, "themed");
+        subLabel = new Label("Tap here to continue >", game.skin);
+        textboxHeight = (mainLabel.getPrefHeight() * 2) + 20f;
+
         tutorialTable = new Table();
-        tutorialTable.setSize(stage.getWidth(), (dummyLabel.getPrefHeight() * 2) + 20f);
+        tutorialTable.setSize(screenStage.getWidth(), textboxHeight);
         tutorialTable.setPosition(0, 0);
         tutorialTable.left().bottom().pad(10f);
 
         Table innerTable = new Table();
-        final ScrollPane scrollPane = new ScrollPane(innerTable);
-        scrollPane.setOverscroll(false, false);
+        tutorialScrollPane = new ScrollPane(innerTable);
+        tutorialScrollPane.setOverscroll(false, false);
 
-        final Label mainLabel = new Label("Welcome to the tutorial!", game.skin, "themed");
         innerTable.add(mainLabel).grow();
         innerTable.row();
-
-        final Label subLabel = new Label("Tap here to continue >", game.skin);
         innerTable.add(subLabel).grow();
         innerTable.row();
 
-        final int[] tutorialPromptIndex = {0};
-        final Array<TutorialItem> tutorialPrompts = new Array<>();
-        tutorialPrompts.add(new TutorialItem(
-                "Every game is played in a grid based map",
-                "Each player is represented by a circle",
-                false));
+        tutorialPromptIndex = 0;
+        tutorialPrompts = new Array<>();
+        tutorialPrompts.addAll(
+                new TutorialItem(
+                        "Every game is played in a grid based map",
+                        "Each player is represented by a circle",
+                        false),
 
-        tutorialPrompts.add(new TutorialItem(
-                "Try moving around the grid (Tap here when done)",
-                ((Gdx.app.getType() == Application.ApplicationType.Android) ?
-                        ("You can move by using the touchscreen") :
-                        ("You can move by using the mouse or the keyboard (WASD)")),
-                true));
+                new TutorialItem(
+                        "Try moving around the grid (Tap here when done)",
+                        ((Gdx.app.getType() == Application.ApplicationType.Android) ?
+                                ("You can move by using the touchscreen") :
+                                ("You can move by using the mouse or the keyboard (WASD)")),
+                        true),
 
-        tutorialPrompts.add(new TutorialItem(
-                "The main objective is to capture as many cells as you can",
-                "You can capture cells by moving onto black (uncaptured) cells",
-                false));
+                new TutorialItem(
+                        "The main objective is to capture as many cells as you can",
+                        "You can capture cells by moving onto black (uncaptured) cells",
+                        false),
 
-        tutorialPrompts.add(new TutorialItem(
-                "Try capturing a group of cells at once (Tap here when done)",
-                "You can do that by surrounding a group of cells",
-                true));
+                new TutorialItem(
+                        "You can surround a group of cells to capture them all at once",
+                        "Try it out (Tap here when done)",
+                        true),
 
-        tutorialPrompts.add(new TutorialItem(
-                "Surrounded cells are captured based on certain rules",
-                "1. Every color in the border of the surrounded region is the player's color",
-                false));
+                new TutorialItem(
+                        "Surrounded cells are captured based on certain rules",
+                        "1. Every color in the border of the surrounded region is the player's color",
+                        false),
 
-        tutorialPrompts.add(new TutorialItem(
-                "Surrounded cells are captured based on certain rules",
-                "2. Every cell interior to the region is either empty (black) or the player's color",
-                false));
+                new TutorialItem(
+                        "Surrounded cells are captured based on certain rules",
+                        "2. Every cell interior to the region is either empty (black) or the player's color",
+                        false),
 
-        tutorialPrompts.add(new TutorialItem(
-                "Walls may be present on certain maps and they block players",
-                "Walls are white in color",
-                false));
+                new TutorialItem(
+                        "Walls may be present on certain maps and they block players",
+                        "Cells in the map with a wall are white in color",
+                        false),
 
-        tutorialPrompts.add(new TutorialItem(
-                "That's basically it!",
-                "Now go have fun competing with friends and assert your dominance!",
-                true));
+                new TutorialItem(
+                        "That's basically it!",
+                        "Now go have fun competing with friends and assert your dominance!",
+                        true),
 
-        tutorialPrompts.add(new TutorialItem(
-                "Thank you for playing the tutorial!",
-                "Tap here to finish",
-                true));
+                new TutorialItem(
+                        "Thank you for playing the tutorial!",
+                        "Tap here to finish",
+                        true)
+        );
 
         tutorialTable.setTouchable(Touchable.enabled);
         tutorialTable.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                tutorialTable.clearActions();
-
-                players[0].updatedDirection = players[0].direction = null;
-                players[0].position.x = Math.round(players[0].position.x);
-                players[0].position.y = Math.round(players[0].position.y);
-
-                if (mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor == null) {
-                    mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor =
-                            new Color(players[0].color.r, players[0].color.g, players[0].color.b, 0.1f);
-                }
-
-                if (tutorialPromptIndex[0] == tutorialPrompts.size) {
-                    togglePlayerInterable(false);
-                    animationManager.fadeOutStage(stage, TutorialScreen.this, new MainMenuScreen(game));
-                    return;
-                }
-
-                if (!scrollPane.isRightEdge()) {
-                    scrollPane.scrollTo(scrollPane.getScrollX() + scrollPane.getWidth(), 0,
-                            scrollPane.getWidth(), scrollPane.getHeight());
-                    return;
-                } else {
-                    scrollPane.scrollTo(0, 0, scrollPane.getWidth(), scrollPane.getHeight());
-                }
-
-                tutorialTable.addAction(Actions.sequence(
-                        Actions.fadeOut(.2f, Interpolation.fastSlow),
-                        Actions.run(new Runnable() {
-                            @Override
-                            public void run() {
-                                String mainText = tutorialPrompts.get(tutorialPromptIndex[0]).mainItem;
-                                if (mainText.contains("Walls")) {
-                                    generateRandomWalls();
-                                    map.createMapTexture(shapeDrawer);
-                                }
-
-                                displayNextTutorialText(mainLabel, subLabel, mainText, tutorialPrompts.get(tutorialPromptIndex[0]).subItem);
-                                togglePlayerInterable(tutorialPrompts.get(tutorialPromptIndex[0]).enablePlayerInteraction);
-
-                                tutorialPromptIndex[0]++;
-                            }
-                        }),
-                        Actions.fadeIn(.2f, Interpolation.fastSlow)
-                ));
+                showNextTutorialItem();
             }
         });
 
-        tutorialTable.add(scrollPane);
-        stage.addActor(tutorialTable);
-        stage.setScrollFocus(scrollPane);
+        tutorialTable.add(tutorialScrollPane);
+        screenStage.addActor(tutorialTable);
+        screenStage.setScrollFocus(tutorialScrollPane);
+    }
+
+    private void showNextTutorialItem() {
+        tutorialTable.clearActions();
+
+        players[0].updatedDirection = players[0].direction = null;
+        players[0].position.x = Math.round(players[0].position.x);
+        players[0].position.y = Math.round(players[0].position.y);
+
+        if (mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor == null) {
+            mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor =
+                    new Color(players[0].color.r, players[0].color.g, players[0].color.b, 0.1f);
+        }
+
+        if (tutorialPromptIndex == tutorialPrompts.size) {
+            togglePlayerInteractable(false);
+            animationManager.fadeOutStage(screenStage, TutorialScreen.this, new MainMenuScreen(game));
+            return;
+        }
+
+        if (!tutorialScrollPane.isRightEdge()) {
+            tutorialScrollPane.scrollTo(tutorialScrollPane.getScrollX() + tutorialScrollPane.getWidth(), 0,
+                    tutorialScrollPane.getWidth(), tutorialScrollPane.getHeight());
+            return;
+        } else {
+            tutorialScrollPane.scrollTo(0, 0, tutorialScrollPane.getWidth(), tutorialScrollPane.getHeight());
+        }
+
+        tutorialTable.addAction(Actions.sequence(
+                Actions.fadeOut(.2f, Interpolation.fastSlow),
+                Actions.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        String mainText = tutorialPrompts.get(tutorialPromptIndex).mainItem;
+                        if (mainText.contains("Walls")) {
+                            generateRandomWalls();
+                            map.createMapTexture(shapeDrawer);
+                        }
+
+                        displayNextTutorialText(mainLabel, subLabel, mainText, tutorialPrompts.get(tutorialPromptIndex).subItem);
+                        togglePlayerInteractable(tutorialPrompts.get(tutorialPromptIndex).enablePlayerInteraction);
+
+                        tutorialPromptIndex++;
+                    }
+                }),
+                Actions.fadeIn(.2f, Interpolation.fastSlow)
+        ));
     }
 
     private void generateRandomWalls() {
@@ -281,10 +272,10 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
         subLabel.setText(subText);
     }
 
-    private void togglePlayerInterable(boolean playerInteractable) {
+    private void togglePlayerInteractable(boolean playerInteractable) {
         this.drawOverlay = !playerInteractable;
 
-        InputMultiplexer inputMultiplexer = new InputMultiplexer(this, stage);
+        InputMultiplexer inputMultiplexer = new InputMultiplexer(this, screenStage);
         if (playerInteractable) {
             inputMultiplexer.addProcessor(players[0]);
             inputMultiplexer.addProcessor(controlManager.getControls());
@@ -294,7 +285,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
         backButton.addListener(new ClickListener() {
             @Override
@@ -306,12 +297,12 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        screenStage.resize(width, height);
 
-        tutorialTable.setSize(width, (dummyLabel.getPrefHeight() * 2) + 20f);
-        mapViewport.update(width, (int) Math.max(0, height - ((dummyLabel.getPrefHeight() * 2) + 20f)));
-        updateCamera(mapViewport.getCamera(), width, (int) Math.max(0, height - ((dummyLabel.getPrefHeight() * 2) + 20f)));
-        mapViewport.setScreenPosition(0, (int) ((dummyLabel.getPrefHeight() * 2) + 20f));
+        tutorialTable.setSize(width, textboxHeight);
+        mapViewport.update(width, (int) Math.max(0, height - textboxHeight));
+        updateCamera(mapViewport.getCamera(), width, (int) Math.max(0, height - textboxHeight));
+        mapViewport.setScreenPosition(0, (int) textboxHeight);
     }
 
     private void updateCamera(Camera camera, int width, int height) {
@@ -330,21 +321,21 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
         renderMap(delta);
 
-        this.viewport.apply(true);
-        batch.setProjectionMatrix(this.viewport.getCamera().combined);
+        this.screenViewport.apply(true);
+        batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
         drawDarkOverlay(delta);
 
         batch.begin();
-        shapeDrawer.filledRectangle(0, textboxHeight, stage.getWidth(), 2f, Color.WHITE);
+        shapeDrawer.filledRectangle(0, textboxHeight, screenStage.getWidth(), 2f, Color.WHITE);
         batch.end();
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        stage.act(delta);
-        stage.draw();
+        screenStage.act(delta);
+        screenStage.draw();
     }
 
     private void renderMap(float delta) {
@@ -380,8 +371,8 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
             mapOverlayColor.lerp(mapNoOverlayColor, 1.8f * delta);
         }
 
-        float height = stage.getViewport().getWorldHeight();
-        float width = stage.getViewport().getWorldWidth();
+        float height = screenStage.getViewport().getWorldHeight();
+        float width = screenStage.getViewport().getWorldWidth();
         batch.begin();
         shapeDrawer.setColor(mapOverlayColor);
         shapeDrawer.filledRectangle(0, 0, width, height);
@@ -390,11 +381,7 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
-        stage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
         map.dispose();
     }
 
@@ -402,15 +389,15 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
      * Actions to do when the back/escape button is pressed
      *
      * @return true if the action has been handled from this screen
-     *         false if the action needs to be sent down the inputmultiplexer chain
+     * false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (stage.dialogIsActive()) {
+        if (screenStage.dialogIsActive()) {
             return false;
         }
 
-        togglePlayerInterable(false);
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+        togglePlayerInteractable(false);
+        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
         return true;
     }
 
@@ -418,6 +405,9 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
             return onBackPressed();
+        } else if (keycode == Input.Keys.ENTER || keycode == Input.Keys.SPACE) {
+            showNextTutorialItem();
+            return true;
         }
 
         return false;
@@ -437,6 +427,9 @@ public class TutorialScreen extends ScreenAdapter implements InputProcessor {
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
             return onBackPressed();
+        } else if (button == Input.Buttons.FORWARD) {
+            showNextTutorialItem();
+            return true;
         }
 
         return false;

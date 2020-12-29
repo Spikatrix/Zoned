@@ -5,14 +5,12 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -30,7 +28,6 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.reflect.ClassReflection;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.GameMode;
 import com.cg.zoned.Preferences;
@@ -43,42 +40,31 @@ import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.PixmapFactory;
 
-public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
+public class MainMenuScreen extends ScreenObject implements InputProcessor {
     private FocusableStage mainStage;
     private FocusableStage playModeStage;
-    private Viewport viewport;
-    private SpriteBatch batch;
     private Array<Actor> mainMenuUIButtons;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
     private NinePatch roundedCornerNP;
     private Texture bgTexture;
     private float bgScrollAmount;
     private float bgAlpha;
 
     public MainMenuScreen(final Zoned game) {
-        this.game = game;
+        super(game);
         this.game.discordRPCManager.updateRPC("Main Menu");
 
-        viewport = new ScreenViewport();
-        mainStage = new FocusableStage(viewport);
-        playModeStage = new FocusableStage(viewport);
+        screenViewport = new ScreenViewport();
+        screenStage = new FocusableStage(screenViewport);
+        mainStage = screenStage;
+        playModeStage = new FocusableStage(screenViewport);
         animationManager = new AnimationManager(this.game, this);
         batch = new SpriteBatch();
         batch.setColor(1, 1, 1, bgAlpha);
-
-        font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpMainMenu();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
         animationManager.startMainMenuAnimation(mainStage, mainMenuUIButtons);
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
@@ -355,16 +341,16 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        viewport.apply(true);
+        screenViewport.apply(true);
 
-        batch.setProjectionMatrix(viewport.getCamera().combined);
+        batch.setProjectionMatrix(screenViewport.getCamera().combined);
 
         batch.begin();
         drawBG(batch, delta);
         batch.end();
 
         if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, batch, font);
+            UITextDisplayer.displayFPS(screenViewport, batch, smallFont);
         }
 
         mainStage.draw();
@@ -413,12 +399,9 @@ public class MainMenuScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
-        mainStage.dispose();
+        super.dispose();
+        // mainStage (screenStage) is disposed in super above
         playModeStage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
     }
 
     private void showExitDialog() {
