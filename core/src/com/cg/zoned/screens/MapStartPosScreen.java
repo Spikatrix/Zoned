@@ -54,15 +54,13 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private Color[] dividerLeftColor, dividerRightColor;
     private int splitScreenCount;
 
-    private boolean firstPlayerOnly;
     private Player[] players;
     private CheckBox[][] radioButtons;
     private ButtonGroup[] buttonGroup;
     private Label[] playerLabels;
     private int playerIndex;
 
-    public MapStartPosScreen(final Zoned game, MapManager mapManager,
-                             Player[] players, int splitScreenCount, boolean firstPlayerOnly) {
+    public MapStartPosScreen(final Zoned game, MapManager mapManager, Player[] players, int splitScreenCount) {
         super(game);
         game.discordRPCManager.updateRPC("Choosing start positions");
 
@@ -71,12 +69,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         this.startPositions = mapManager.getPreparedStartPositions();
         this.startPosNames = mapManager.getPreparedStartPosNames();
         this.players = players;
-        this.firstPlayerOnly = firstPlayerOnly;
-        if (firstPlayerOnly) {
-            this.splitScreenCount = 1;
-        } else {
-            this.splitScreenCount = splitScreenCount;
-        }
+        this.splitScreenCount = splitScreenCount;
 
         this.screenViewport = new ScreenViewport();
         this.screenStage = new FocusableStage(this.screenViewport);
@@ -224,12 +217,12 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                 });
             }
 
+            com.badlogic.gdx.scenes.scene2d.ui.Cell<Table> cell = masterTable.add(table)
+                    .expand().uniformX().padLeft(20f * game.getScaleFactor()).padRight(10f * game.getScaleFactor());
             if (alignLeft) {
-                masterTable.add(table).expand().uniformX().left()
-                        .padLeft(20f * game.getScaleFactor()).padRight(10f * game.getScaleFactor());
+                cell.left();
             } else {
-                masterTable.add(table).expand().uniformX().right()
-                        .padRight(20f * game.getScaleFactor()).padLeft(10f * game.getScaleFactor());
+                cell.right();
 
                 if (startPosScrollPane != null) {
                     startPosScrollPane.layout();
@@ -290,7 +283,10 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                 }
             }
         });
-        final TextButton doneButton = new TextButton("Start Game", game.skin);
+
+        final TextButton doneButton = new TextButton("Next", game.skin);
+        setDoneButtonText(doneButton);
+
         final Screen thisScreen = this;
         doneButton.addListener(new ClickListener() {
             @Override
@@ -298,13 +294,10 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                 for (int i = 0; i < splitScreenCount; i++) {
                     if (i + playerIndex < players.length) {
                         players[i + playerIndex].setStartPos(startPositions.get(buttonGroup[i].getCheckedIndex()));
-                        if (firstPlayerOnly) {
-                            break;
-                        }
                     }
                 }
 
-                if (firstPlayerOnly || (playerIndex >= players.length - splitScreenCount)) {
+                if (playerIndex >= players.length - splitScreenCount) {
                     // Done with all players
                     for (Player player : players) {
                         mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
@@ -347,6 +340,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                         screenStage.addFocusableActor(doneButton, splitScreenCount - excessCount);
                     }
                 }
+
+                setDoneButtonText(doneButton);
             }
         });
         masterTable.add(doneButton).expandX().colspan(splitScreenCount).width(200f * game.getScaleFactor()).pad(20f * game.getScaleFactor());
@@ -365,6 +360,13 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         screenStage.addFocusableActor(doneButton, splitScreenCount - excess);
 
         screenStage.addActor(masterTable);
+    }
+
+    private void setDoneButtonText(TextButton doneButton) {
+        if (playerIndex >= players.length - splitScreenCount) {
+            doneButton.setText("Start Game");
+        }
+        // By default it's "Next"
     }
 
     private void setUpBackButton() {
