@@ -223,7 +223,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         }
 
         int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
-        animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount, false));
+        animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount));
     }
 
     private void showTutorialDialog() {
