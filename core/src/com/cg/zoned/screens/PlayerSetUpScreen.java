@@ -161,9 +161,6 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         // Have to set overscrollX to false since on Android, it seems to overscroll even when there is space
         // But on Desktop it works perfectly well.
 
-        // TODO: Fix vertical scroll issue because the color buttons are added within another table
-        screenStage.setScrollpane(screenScrollPane);
-
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
         final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];

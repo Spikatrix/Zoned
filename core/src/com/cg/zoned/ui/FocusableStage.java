@@ -198,7 +198,8 @@ public class FocusableStage extends Stage {
         this.setKeyboardFocus(actor);
         this.setScrollFocus(actor);
 
-        if (scrollpane != null) {
+        if (scrollpane != null && !dialogIsActive()) {
+            // TODO: getY() doesn't give the desired value when the actor is inside a table
             scrollpane.scrollTo(actor.getX(), actor.getY(),
                     actor.getWidth(), actor.getHeight(), true, true);
         }

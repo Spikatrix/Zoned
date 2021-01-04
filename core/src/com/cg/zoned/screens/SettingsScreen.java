@@ -57,6 +57,8 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         ScrollPane screenScrollPane = new ScrollPane(table);
         screenScrollPane.setOverscroll(false, true);
 
+        screenStage.setScrollpane(screenScrollPane);
+
         ControlType[] controlTypes = ControlManager.CONTROL_TYPES;
         int currentControl = game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0);
 

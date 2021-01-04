@@ -101,6 +101,7 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
         masterTable.add(screenScrollPane).grow();
 
         screenStage.setScrollFocus(screenScrollPane);
+        screenStage.setScrollpane(screenScrollPane);
         screenStage.addActor(masterTable);
     }
 
@@ -127,6 +128,10 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
 
         float height = titleLabel.getPrefHeight() * 3 / 2f;
         innerTable.add(stack).height(height);
+
+        screenStage.addFocusableActor(innerTable);
+        screenStage.setFocusedActor(innerTable);
+        screenStage.row();
 
         if (title.equals("ZONED")) {
             final int[] clickCount = {0}; // Have to use an array here because Java
@@ -193,6 +198,9 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
             contentTable.add(image).height(contentLabel.getPrefHeight() * 4 / 3).width(3 * screenStage.getWidth() / 4);
         }
 
+        screenStage.addFocusableActor(contentTable);
+        screenStage.row();
+
         if (link != null) {
             contentLabel.setColor(linkColor);
             contentTable.setTouchable(Touchable.enabled);
@@ -222,6 +230,9 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
 
         titleLabel.setAlignment(Align.center);
         contentLabel.setAlignment(Align.center);
+
+        screenStage.addFocusableActor(titleLabel);
+        screenStage.row();
 
         if (title.contains("Thank You")) { // Last item in the credits screen
             table.add(titleLabel).growX()
