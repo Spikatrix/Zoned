@@ -297,7 +297,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        screenStage.resize(width, height);
+        super.resize(width, height);
 
         tutorialTable.setSize(width, textboxHeight);
         mapViewport.update(width, (int) Math.max(0, height - textboxHeight));
@@ -330,8 +330,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         shapeDrawer.filledRectangle(0, textboxHeight, screenStage.getWidth(), 2f, Color.WHITE);
         batch.end();
 
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
         screenStage.act(delta);

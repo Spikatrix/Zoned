@@ -1,13 +1,12 @@
 package com.cg.zoned.screens;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.cg.zoned.Assets;
-import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
@@ -22,27 +21,32 @@ public abstract class ScreenObject extends ScreenAdapter {
     protected FocusableStage screenStage;
     protected ShapeDrawer shapeDrawer;
     protected SpriteBatch batch;
-    protected BitmapFont smallFont;
-    protected boolean showFPSCounter;
     protected AnimationManager animationManager;
 
     public ScreenObject(final Zoned game) {
-        this(game, true);
-    }
-
-    // preset = false is called from the Loading screen where the pref and skin aren't yet loaded
-    public ScreenObject(final Zoned game, boolean preset) {
         this.game = game;
         this.usedTextures = new Array<>();
+    }
 
-        if (preset) {
-            init();
+    @Override
+    public void resize(int width, int height) {
+        if (screenStage != null) {
+            screenStage.resize(width, height);
         }
     }
 
-    private void init() {
-        smallFont = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
+    @Override
+    public void render(float delta) {
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        if (screenViewport != null) {
+            screenViewport.apply(true);
+        }
+
+        if (batch != null) {
+            batch.setProjectionMatrix(screenViewport.getCamera().combined);
+        }
     }
 
     public void dispose() {

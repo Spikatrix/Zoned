@@ -4,7 +4,6 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -123,13 +122,11 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         final HoverCheckBox showFPS = new HoverCheckBox("Show FPS counter", game.skin);
         showFPS.getImageCell().width(showFPS.getLabel().getPrefHeight()).height(showFPS.getLabel().getPrefHeight());
         showFPS.getImage().setScaling(Scaling.fill);
-        showFPS.setChecked(showFPSCounter);
+        showFPS.setChecked(game.showFPSCounter());
         showFPS.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                game.preferences.putBoolean(Preferences.FPS_PREFERENCE, showFPS.isChecked());
-                game.preferences.flush();
-                showFPSCounter = showFPS.isChecked();
+                game.toggleFPSCounter();
             }
         });
 
@@ -183,19 +180,11 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
     }
 
     @Override
-    public void resize(int width, int height) {
-        screenStage.resize(width, height);
-    }
-
-    @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        super.render(delta);
 
-        screenViewport.apply(true);
-
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
         screenStage.draw();

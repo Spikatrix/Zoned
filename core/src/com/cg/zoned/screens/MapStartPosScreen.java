@@ -409,7 +409,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        screenStage.resize(width, height);
+        super.resize(width, height);
 
         for (int i = 0; i < mapViewports.length; i++) {
             mapViewports[i].update(width / mapViewports.length, height);
@@ -474,8 +474,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         }
         drawDarkOverlay();
 
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
         screenStage.act(delta);

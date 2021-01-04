@@ -5,7 +5,6 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.math.Interpolation;
@@ -284,19 +283,11 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
     }
 
     @Override
-    public void resize(int width, int height) {
-        screenStage.resize(width, height);
-    }
-
-    @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        super.render(delta);
 
-        this.screenViewport.apply(true);
-
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
         screenStage.act(delta);

@@ -543,8 +543,8 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
         drawDarkOverlay();
 
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
         screenStage.act(delta);
@@ -586,7 +586,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
     @Override
     public void resize(int width, int height) {
-        screenStage.resize(width, height);
+        super.resize(width, height);
 
         mapViewport.update(width, height);
         updateCamera(mapViewport.getCamera(), width, height);

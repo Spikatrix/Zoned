@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
@@ -252,23 +251,20 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        screenStage.resize(width, height);
+        super.resize(width, height);
         trailEffect.setPosition(0, height / 2f);
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        screenViewport.apply(true);
+        super.render(delta);
 
         screenStage.getBatch().begin();
         trailEffect.draw(screenStage.getBatch(), delta);
         screenStage.getBatch().end();
 
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
         screenStage.draw();

@@ -172,7 +172,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         }
 
         scoreBars.resize(width, height);
-        screenStage.resize(width, height);
+        super.resize(width, height);
     }
 
     private void updateCamera(Camera camera, int width, int height) {
@@ -232,6 +232,9 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         if (!gameManager.gameOver) {
             gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
         }
+
+        BitmapFont smallFont = game.getSmallFont();
+        boolean showFPSCounter = game.showFPSCounter();
 
         scoreBars.render(shapeDrawer, smallFont, gameManager.playerManager.getTeamData(), delta);
 

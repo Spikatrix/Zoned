@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -280,23 +279,14 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     }
 
     @Override
-    public void resize(int width, int height) {
-        screenStage.resize(width, height);
-    }
-
-    @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        super.render(delta);
 
         for (int i = 0; i < currentBgColors.length; i++) {
             currentBgColors[i].lerp(targetBgColors[i], bgAnimSpeed * delta);
             currentBgColors[i].a = Math.min(targetBgColors[i].a, screenStage.getRoot().getColor().a / 2.5f);
         }
 
-        screenViewport.apply(true);
-
-        batch.setProjectionMatrix(screenViewport.getCamera().combined);
         batch.begin();
         for (int i = 0; i < currentBgColors.length; i++) {
             shapeDrawer.setColor(currentBgColors[i]);
@@ -305,8 +295,8 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         }
         batch.end();
 
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
         screenStage.act(delta);

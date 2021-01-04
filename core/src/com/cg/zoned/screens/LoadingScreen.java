@@ -7,7 +7,6 @@ import com.badlogic.gdx.assets.loaders.SkinLoader;
 import com.badlogic.gdx.assets.loaders.TextureLoader;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -45,7 +44,8 @@ public class LoadingScreen extends ScreenObject {
     private boolean loadedStageTwo;
 
     public LoadingScreen(final Zoned game) {
-        super(game, false);
+        super(game);
+
         game.discordRPCManager.updateRPC("Loading game");
         initSetup();
     }
@@ -154,8 +154,7 @@ public class LoadingScreen extends ScreenObject {
             }
         }
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        super.render(delta);
 
         float progress = assetManager.getProgress();
         progress = 0.5f * progress;
@@ -210,6 +209,7 @@ public class LoadingScreen extends ScreenObject {
                     @Override
                     public void run() {
                         game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);
+                        game.initFPSUtils();
                         dispose();
                         game.setScreen(new MainMenuScreen(game));
                     }
@@ -218,11 +218,6 @@ public class LoadingScreen extends ScreenObject {
         }));
 
         screenStage.addAction(sequenceAction);
-    }
-
-    @Override
-    public void resize(int width, int height) {
-        screenStage.getViewport().update(width, height, true);
     }
 
     @Override
