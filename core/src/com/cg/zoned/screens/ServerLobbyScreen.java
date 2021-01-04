@@ -60,7 +60,10 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
     private Table playerList;
     private MapSelector mapSelector;
+    private FocusableStage mapSelectorStage;
+    private Spinner mapSpinner;
     private boolean mapSelectorActive;
+    private boolean extendedMapSelectorActive;
     private Array<String> startLocations;
 
     public ServerLobbyScreen(final Zoned game, Server server, String name) {
@@ -80,13 +83,50 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
     @Override
     public void show() {
+        setUpMapSelectorStage();
         setUpServerLobbyStage();
         setUpMap();
 
         playerConnected(null); // Add the host player (oneself) to the player list
         connectionManager.start();
 
-        animationManager.fadeInStage(screenStage);
+        screenStage.getRoot().getColor().a = 0;
+
+        // The screen is faded in once the maps and the extended selector is loaded
+        mapSelector.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+            @Override
+            public void onExternalMapsLoaded(Array<MapEntity> mapList, final int externalMapStartIndex) {
+                // Set up the extended map selector once external maps have been loaded
+                mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
+                    @Override
+                    public void onExtendedMapSelectorOpened() {
+                        openExtendedMapSelector();
+                    }
+
+                    @Override
+                    public void onMapSelect(int mapIndex) {
+                        if (mapIndex != -1) {
+                            mapSpinner.snapToStep(mapIndex - mapSpinner.getPositionIndex());
+                        }
+                        animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+                        extendedMapSelectorActive = false;
+                    }
+                });
+
+                animationManager.fadeInStage(screenStage);
+            }
+        });
+    }
+
+    private void openExtendedMapSelector() {
+        extendedMapSelectorActive = true;
+        animationManager.startExtendedMapSelectorAnimation(screenStage, mapSelectorStage, 0);
+        mapSpinner.snapToStep(0);
+    }
+
+    private void setUpMapSelectorStage() {
+        mapSelectorStage = new FocusableStage(screenViewport);
+        mapSelectorStage.getRoot().getColor().a = 0f;
     }
 
     private void setUpServerLobbyStage() {
@@ -114,7 +154,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
         mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
-        final Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
+        mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
         final Table mapSelectorTable = new Table();
         mapSelectorTable.add(mapSpinner).pad(10f);
@@ -155,7 +195,6 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
                         }, game.skin);
             }
         });
-        mapSelector.loadExternalMaps();
 
         serverLobbyTable.add(mapButton).width(200f * game.getScaleFactor());
         serverLobbyTable.row();
@@ -508,8 +547,15 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
             UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        screenStage.draw();
         screenStage.act(delta);
+        if (screenStage.getRoot().getColor().a > 0) {
+            screenStage.draw();
+        }
+
+        mapSelectorStage.act(delta);
+        if (mapSelectorStage.getRoot().getColor().a > 0) {
+            mapSelectorStage.draw();
+        }
     }
 
     private void renderMap(float delta) {
@@ -566,6 +612,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
     @Override
     public void dispose() {
         super.dispose();
+        mapSelectorStage.dispose();
         if (map != null) {
             map.dispose();
             map = null;
@@ -579,7 +626,11 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
      *         false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (screenStage.dialogIsActive()) {
+        if (extendedMapSelectorActive) {
+            animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+            extendedMapSelectorActive = false;
+            return true;
+        } else if (screenStage.dialogIsActive()) {
             return false;
         }
 
@@ -594,8 +645,13 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
             return onBackPressed();
-        } else if (keycode == Input.Keys.S && mapSelectorActive) {
-            return mapSelector.extraParamShortcutPressed();
+        } else if (mapSelectorActive && !extendedMapSelectorActive && !mapSelector.extraParamsDialogActive()) {
+            if (keycode == Input.Keys.S) {
+                return mapSelector.extraParamShortcutPressed();
+            } else if (keycode == Input.Keys.E) {
+                openExtendedMapSelector();
+                return true;
+            }
         }
 
         return false;

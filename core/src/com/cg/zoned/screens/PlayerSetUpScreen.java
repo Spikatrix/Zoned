@@ -30,6 +30,7 @@ import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.ButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -42,8 +43,10 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     private Color[] targetBgColors;
 
     private int playerCount;
-    private Table playerList;
+    private FocusableStage mapSelectorStage;
     private MapSelector mapSelector;
+    private Spinner mapSpinner;
+    private boolean extendedMapSelectorActive;
 
     public PlayerSetUpScreen(final Zoned game) {
         super(game);
@@ -57,7 +60,6 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
 
         this.playerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
-        this.playerList = new Table();
 
         this.currentBgColors = new Color[this.playerCount];
         this.targetBgColors = new Color[this.playerCount];
@@ -69,6 +71,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
 
     @Override
     public void show() {
+        setUpMapSelectorStage();
         setUpStage();
         setUpUIButtons();
 
@@ -84,7 +87,43 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
                 }
             }
         });
-        animationManager.fadeInStage(screenStage);
+        screenStage.getRoot().getColor().a = 0;
+
+        // The screen is faded in once the maps and the extended selector is loaded
+        mapSelector.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+            @Override
+            public void onExternalMapsLoaded(Array<MapEntity> mapList, final int externalMapStartIndex) {
+                // Set up the extended map selector once external maps have been loaded
+                mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
+                    @Override
+                    public void onExtendedMapSelectorOpened() {
+                        openExtendedMapSelector();
+                    }
+
+                    @Override
+                    public void onMapSelect(int mapIndex) {
+                        if (mapIndex != -1) {
+                            mapSpinner.snapToStep(mapIndex - mapSpinner.getPositionIndex());
+                        }
+                        animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+                        extendedMapSelectorActive = false;
+                    }
+                });
+
+                animationManager.fadeInStage(screenStage);
+            }
+        });
+    }
+
+    private void openExtendedMapSelector() {
+        extendedMapSelectorActive = true;
+        animationManager.startExtendedMapSelectorAnimation(screenStage, mapSelectorStage, .15f);
+        mapSpinner.snapToStep(0);
+    }
+
+    private void setUpMapSelectorStage() {
+        mapSelectorStage = new FocusableStage(screenViewport);
+        mapSelectorStage.getRoot().getColor().a = 0f;
     }
 
     private void setUpUIButtons() {
@@ -122,9 +161,13 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         // Have to set overscrollX to false since on Android, it seems to overscroll even when there is space
         // But on Desktop it works perfectly well.
 
+        // TODO: Fix vertical scroll issue because the color buttons are added within another table
+        screenStage.setScrollpane(screenScrollPane);
+
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
         final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];
+        Table playerList = new Table();
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
             playerItem.center();
@@ -167,9 +210,8 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         mapSelector.getMapManager().enableExternalMapLogging(true);
-        Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
+        mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
-        mapSelector.loadExternalMaps();
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
 
@@ -270,13 +312,19 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
             UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), smallFont);
         }
 
-        screenStage.draw();
         screenStage.act(delta);
+        screenStage.draw();
+
+        mapSelectorStage.act(delta);
+        if (mapSelectorStage.getRoot().getColor().a > 0) {
+            mapSelectorStage.draw();
+        }
     }
 
     @Override
     public void dispose() {
         super.dispose();
+        mapSelectorStage.dispose();
     }
 
     /**
@@ -286,7 +334,11 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
      *         false if the action needs to be sent down the inputmultiplexer chain
      */
     private boolean onBackPressed() {
-        if (screenStage.dialogIsActive()) {
+        if (extendedMapSelectorActive) {
+            animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+            extendedMapSelectorActive = false;
+            return true;
+        } else if (screenStage.dialogIsActive()) {
             return false;
         }
 
@@ -298,12 +350,16 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
             return onBackPressed();
-        } else if (keycode == Input.Keys.S && !screenStage.dialogIsActive()) {
-            // S as the 'Settings' button is used for the extra params option
-            return mapSelector.extraParamShortcutPressed();
-        } else if (keycode == Input.Keys.T && !screenStage.dialogIsActive()) {
-            showTutorialDialog();
-            return true;
+        } else if (!screenStage.dialogIsActive() && !extendedMapSelectorActive) {
+            if (keycode == Input.Keys.E) {
+                openExtendedMapSelector();
+                return true;
+            } else if (keycode == Input.Keys.S) {
+                return mapSelector.extraParamShortcutPressed();
+            } else if (keycode == Input.Keys.T) {
+                showTutorialDialog();
+                return true;
+            }
         }
 
         return false;

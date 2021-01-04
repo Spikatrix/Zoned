@@ -92,7 +92,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
             public void animationEnd(Stage stage) {
                 mapManager.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
                     @Override
-                    public void onExternalMapLoaded(Array<MapEntity> mapList, int externalMapStartIndex) {
+                    public void onExternalMapsLoaded(Array<MapEntity> mapList, int externalMapStartIndex) {
                         connectionManager.sendClientNameToServer(clientName);
                     }
                 });

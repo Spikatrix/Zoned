@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
@@ -81,6 +82,11 @@ public class FocusableStage extends Stage {
     private boolean isActive = true;
 
     /**
+     * If set, the scrollpane will scroll focused actors into view
+     */
+    private ScrollPane scrollpane;
+
+    /**
      * Constructor for initializing the Stage
      *
      * @param viewport Viewport for the super class Stage
@@ -91,6 +97,9 @@ public class FocusableStage extends Stage {
         createDialogBGTexture();
     }
 
+    public void setScrollpane(ScrollPane scrollPane) {
+        this.scrollpane = scrollPane;
+    }
     /**
      * Creates the dialog background texture
      */
@@ -188,6 +197,11 @@ public class FocusableStage extends Stage {
         currentFocusedActor = actor;
         this.setKeyboardFocus(actor);
         this.setScrollFocus(actor);
+
+        if (scrollpane != null) {
+            scrollpane.scrollTo(actor.getX(), actor.getY(),
+                    actor.getWidth(), actor.getHeight(), true, true);
+        }
     }
 
     /**

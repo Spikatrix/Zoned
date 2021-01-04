@@ -68,7 +68,7 @@ public class MapManager {
                     mapList.add(externalMap);
                 }
 
-                mapLoadListener.onExternalMapLoaded(getMapList(), externalMapStartIndex);
+                mapLoadListener.onExternalMapsLoaded(getMapList(), externalMapStartIndex);
             }
         }).start();
     }
@@ -228,6 +228,6 @@ public class MapManager {
     }
 
     public interface OnExternalMapLoadListener {
-        void onExternalMapLoaded(Array<MapEntity> mapList, int externalMapStartIndex);
+        void onExternalMapsLoaded(Array<MapEntity> mapList, int externalMapStartIndex);
     }
 }

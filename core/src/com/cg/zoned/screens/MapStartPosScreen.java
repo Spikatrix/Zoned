@@ -83,7 +83,6 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     public void show() {
         setUpMap();
         setUpStage();
-        setUpBackButton();
         animationManager.fadeInStage(screenStage);
     }
 
@@ -128,8 +127,18 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         masterTable.center();
         masterTable.setFillParent(true);
 
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                onBackPressed();
+            }
+        });
+
         Label title = new Label("Choose start positions", game.skin, "themed-rounded-background");
-        masterTable.add(title).colspan(splitScreenCount).expandX().pad(20f);
+        float headerPad = uiButtonManager.getHeaderPad(title.getPrefHeight());
+        masterTable.add(title).expandX().padTop(headerPad);
         masterTable.row();
 
         playerLabels = new Label[splitScreenCount];
@@ -367,17 +376,6 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
             doneButton.setText("Start Game");
         }
         // By default it's "Next"
-    }
-
-    private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
-        backButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                onBackPressed();
-            }
-        });
     }
 
     private void renderMap(int playerIndex, float delta) {

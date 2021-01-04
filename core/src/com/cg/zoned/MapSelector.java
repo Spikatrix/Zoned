@@ -2,10 +2,14 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -24,6 +28,7 @@ import com.cg.zoned.maps.NoStartPositionsFound;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
+import com.cg.zoned.ui.StepScrollPane;
 
 public class MapSelector {
     private MapManager mapManager;
@@ -33,6 +38,8 @@ public class MapSelector {
 
     private FocusableStage stage;
     private Spinner mapSpinner;
+    private Array<Boolean> mapPreviewChecked;
+    private Array<Image> mapPreviewImages;
     private boolean extraParamsDialogActive;
 
     private Assets assets;
@@ -40,24 +47,66 @@ public class MapSelector {
 
     public MapSelector(FocusableStage stage, float scaleFactor, Assets assets, Skin skin) {
         this.mapManager = new MapManager();
+
         this.stage = stage;
         this.skin = skin;
         this.assets = assets;
         this.scaleFactor = scaleFactor;
+
+        mapPreviewChecked = new Array<>();
+        mapPreviewImages = new Array<>();
     }
 
     public Spinner loadMapSelectorSpinner(float spinnerWidth, float spinnerHeight) {
         mapSpinner = new Spinner(skin, spinnerHeight, spinnerWidth, false);
 
-        for (final MapEntity map : mapManager.getMapList()) {
-            mapSpinner.addContent(getMapStack(map, mapManager.getMapPreview(map.getName())));
+        final Array<MapEntity> mapList = mapManager.getMapList();
+        for (int i = 0; i < mapList.size; i++) {
+            if (i <= 1) {
+                // Load first two maps with previews
+                mapPreviewChecked.add(true);
+                mapSpinner.addContent(getMapStack(mapList.get(i), mapManager.getMapPreview(mapList.get(i).getName())));
+            } else {
+                // Loading tons of previews causes a major lag
+                // So they're loaded when they're scrolled into view
+                mapPreviewChecked.add(false);
+                mapSpinner.addContent(getMapStack(mapList.get(i), null));
+            }
         }
+
+        mapSpinner.setDestinationPositionListener(new StepScrollPane.StepScrollListener() {
+            @Override
+            public void destinationPositionChanged(float newDestPos, float oldDestPos) {
+                updatePreview(mapList, mapSpinner.getPositionIndex());
+            }
+
+            @Override
+            public void stepChanged(int newStep) {
+                if (newStep < mapList.size - 1) {
+                    // Lazy load next image, hence the + 1
+                    updatePreview(mapList, newStep + 1);
+                }
+            }
+        });
 
         mapSpinner.getLeftButton().setText(" < ");
         mapSpinner.getRightButton().setText(" > ");
         mapSpinner.setButtonStepCount(1);
 
         return mapSpinner;
+    }
+
+    private void updatePreview(Array<MapEntity> mapList, int index) {
+        if (!mapPreviewChecked.get(index)) {
+            Texture mapPreviewTexture = mapManager.getMapPreview(mapList.get(index).getName());
+            if (mapPreviewTexture != null) {
+                if (usedTextures != null) {
+                    usedTextures.add(mapPreviewTexture);
+                }
+                mapPreviewImages.get(index).setDrawable(new TextureRegionDrawable(new TextureRegion(mapPreviewTexture)));
+            }
+            mapPreviewChecked.set(index, true);
+        }
     }
 
     private Stack getMapStack(final MapEntity map, Texture mapPreviewTexture) {
@@ -67,16 +116,20 @@ public class MapSelector {
         mapNameLabel.setAlignment(Align.center);
         mapNameLabel.setWrap(true);
 
-        if (mapPreviewTexture != null) {
-            if (usedTextures != null) {
-                usedTextures.add(mapPreviewTexture);
-            }
-            Image mapPreviewImage = new Image(mapPreviewTexture);
-            mapPreviewImage.getColor().a = .2f;
-            mapPreviewImage.setScaling(Scaling.fit);
-            stack.add(mapPreviewImage);
+        if (usedTextures != null && mapPreviewTexture != null) {
+            usedTextures.add(mapPreviewTexture);
         }
+        Image mapPreviewImage;
+        if (mapPreviewTexture != null) {
+            mapPreviewImage = new Image(mapPreviewTexture);
+        } else {
+            mapPreviewImage = new Image();
+        }
+        mapPreviewImage.getColor().a = .2f;
+        mapPreviewImage.setScaling(Scaling.fit);
+        mapPreviewImages.add(mapPreviewImage);
 
+        stack.add(mapPreviewImage);
         stack.add(mapNameLabel);
 
         final MapExtraParams extraParams = map.getExtraParams();
@@ -105,16 +158,21 @@ public class MapSelector {
         return stack;
     }
 
-    public void loadExternalMaps() {
+    public void loadExternalMaps(final MapManager.OnExternalMapLoadListener externalMapLoadListener) {
         mapManager.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
             @Override
-            public void onExternalMapLoaded(final Array<MapEntity> mapList, final int externalMapStartIndex) {
+            public void onExternalMapsLoaded(final Array<MapEntity> mapList, final int externalMapStartIndex) {
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
                         for (int i = externalMapStartIndex; i < mapList.size; i++) {
                             MapEntity map = mapList.get(i);
-                            mapSpinner.addContent(getMapStack(map, mapManager.getMapPreview(map.getName())));
+                            mapPreviewChecked.add(false);
+                            mapSpinner.addContent(getMapStack(map, null));
+                        }
+
+                        if (externalMapLoadListener != null) {
+                            externalMapLoadListener.onExternalMapsLoaded(mapList, externalMapStartIndex);
                         }
                     }
                 });
@@ -191,6 +249,77 @@ public class MapSelector {
         return true;
     }
 
+    public void setUpExtendedSelector(final FocusableStage mapSelectorStage, final ExtendedMapSelectionListener extendedMapSelectionListener) {
+        mapSelectorStage.clear();
+        mapSelectorStage.clearFocusableArray();
+
+        Table mainTable = new Table();
+        mainTable.setFillParent(true);
+        mainTable.center();
+
+        Table scrollTable = new Table();
+        final ScrollPane scrollPane = new ScrollPane(scrollTable, skin);
+        scrollPane.setScrollingDisabled(true, false);
+        scrollPane.setScrollbarsOnTop(true);
+        scrollPane.setFadeScrollBars(false);
+
+        Array<MapEntity> mapList = mapManager.getMapList();
+        for (int i = 0; i < mapList.size; i++) {
+            final Stack stack = new Stack();
+            final Image image = new Image(skin.getRegion("white"));
+            image.getColor().a = 0;
+            stack.add(image);
+
+            Label mapLabel = new Label(mapList.get(i).getName(), skin);
+            mapLabel.setAlignment(Align.center);
+            mapLabel.setWrap(true);
+
+            stack.add(mapLabel);
+
+            final int mapIndex = i;
+            stack.addListener(new ClickListener() {
+                @Override
+                public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                    image.clearActions();
+                    image.addAction(Actions.alpha(.25f, .2f, Interpolation.smooth));
+                }
+
+                @Override
+                public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+                    image.clearActions();
+                    image.addAction(Actions.alpha(0, .2f, Interpolation.smooth));
+                }
+
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    if (extendedMapSelectionListener != null) {
+                        extendedMapSelectionListener.onMapSelect(mapIndex);
+                    }
+                }
+            });
+
+            scrollTable.add(stack)
+                    .growX()
+                    .height(mapLabel.getPrefHeight() * 2);
+            scrollTable.row();
+
+            mapSelectorStage.addFocusableActor(stack);
+            mapSelectorStage.setScrollpane(scrollPane);
+            mapSelectorStage.row();
+
+            if (i == 0) {
+                mapSelectorStage.setFocusedActor(stack);
+            }
+        }
+
+        mainTable.add(scrollPane).grow();
+        mapSelectorStage.addActor(mainTable);
+
+        if (extendedMapSelectionListener != null) {
+            mapSpinner.setExtendedListener(extendedMapSelectionListener);
+        }
+    }
+
     public boolean extraParamShortcutPressed() {
         if (extraParamsDialogActive) {
             // Dialog is already active
@@ -207,6 +336,10 @@ public class MapSelector {
         return false;
     }
 
+    public boolean extraParamsDialogActive() {
+        return extraParamsDialogActive;
+    }
+
     public TextButton getLeftButton() {
         return mapSpinner.getLeftButton();
     }
@@ -221,5 +354,10 @@ public class MapSelector {
 
     public MapManager getMapManager() {
         return mapManager;
+    }
+
+    public interface ExtendedMapSelectionListener {
+        void onExtendedMapSelectorOpened();
+        void onMapSelect(int mapIndex);
     }
 }

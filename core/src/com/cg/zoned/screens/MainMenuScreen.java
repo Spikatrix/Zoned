@@ -353,11 +353,15 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
             UITextDisplayer.displayFPS(screenViewport, batch, smallFont);
         }
 
-        mainStage.draw();
         mainStage.act(delta);
+        if (mainStage.getRoot().getColor().a > 0) {
+            mainStage.draw();
+        }
 
-        playModeStage.draw();
         playModeStage.act(delta);
+        if (playModeStage.getRoot().getColor().a > 0) {
+            playModeStage.draw();
+        }
     }
 
     private void drawBG(Batch batch, float delta) {
