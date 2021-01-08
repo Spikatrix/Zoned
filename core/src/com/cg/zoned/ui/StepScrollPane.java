@@ -73,7 +73,7 @@ public class StepScrollPane extends ScrollPane {
     }
 
     public void add(Actor actor) {
-        // Ugh, this whole thing is ugly. But it's difficult to get it right in scene2d
+        // Might have bugs, hmm
         if (isVerticalScrollPane) {
             content.add(actor).width(getWidth());
         } else {
@@ -170,6 +170,10 @@ public class StepScrollPane extends ScrollPane {
         if (oldDestPos != destinationPosition && stepScrollListener != null) {
             stepScrollListener.destinationPositionChanged(destinationPosition, oldDestPos);
         }
+    }
+
+    public int getPositionIndex() {
+        return Math.round(destinationPosition / stepSize);
     }
 
     public float getStepSize() {

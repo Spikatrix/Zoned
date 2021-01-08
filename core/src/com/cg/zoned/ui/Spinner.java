@@ -148,7 +148,7 @@ public class Spinner extends Table {
     }
 
     public int getPositionIndex() {
-        return Math.round(stepScrollPane.getDestinationPosition() / stepScrollPane.getStepSize());
+        return stepScrollPane.getPositionIndex();
     }
 
     public void setExtendedListener(final MapSelector.ExtendedMapSelectionListener extendedMapSelectionListener) {

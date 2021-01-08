@@ -64,7 +64,7 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
         screenScrollPane.setOverscroll(false, true);
 
         addCreditItem(table,
-                Gdx.files.internal("images/ic_zoned_desktop_icon.png"),
+                Gdx.files.internal("images/desktop_icons/ic_zoned_desktop_icon_128x128.png"),
                 "ZONED",
                 "Game version: " + Constants.GAME_VERSION);
 
