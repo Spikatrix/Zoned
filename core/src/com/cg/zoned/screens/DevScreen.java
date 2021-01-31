@@ -20,9 +20,9 @@ import com.cg.zoned.ui.Spinner;
 
 public class DevScreen extends ScreenObject implements InputProcessor {
     private Spinner splitscreenSpinner;
-    private int minPlayerCount = 1;
+    private final int minPlayerCount = 1;
     private Spinner mapSplitScreenSpinner;
-    private int minSplitScreenCount = 1;
+    private final int minSplitScreenCount = 1;
 
     public DevScreen(final Zoned game) {
         super(game);

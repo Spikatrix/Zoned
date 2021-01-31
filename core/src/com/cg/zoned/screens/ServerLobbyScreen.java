@@ -187,7 +187,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
                                     updateMapColor(players[0], players[0].color, 0);
                                 } else {
                                     // Cancelled; restore the spinner pos
-                                    mapSpinner.snapToStep(mapSpinner.getPositionIndex() - prevIndex);
+                                    mapSpinner.snapToStep(prevIndex - mapSpinner.getPositionIndex());
                                 }
 
                                 mapSelectorActive = false;
