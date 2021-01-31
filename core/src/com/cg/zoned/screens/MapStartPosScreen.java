@@ -138,7 +138,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
 
         Label title = new Label("Choose start positions", game.skin, "themed-rounded-background");
         float headerPad = uiButtonManager.getHeaderPad(title.getPrefHeight());
-        masterTable.add(title).expandX().padTop(headerPad);
+        masterTable.add(title).expandX().padTop(headerPad).colspan(splitScreenCount);
         masterTable.row();
 
         playerLabels = new Label[splitScreenCount];
