@@ -14,9 +14,8 @@ public final class Constants {
     // Or for Linux users, use the versionUpdate.sh script
 
     /**
-     * Enables Discord Rich Presence functionality on Windows and Linux
-     * <p>
-     * Note: When this is enabled, running multiple instances of the game will crash with a SIGSEGV
+     * Enables Discord Rich Presence on Windows and Linux
+     * Overrides in-game RPC setting
      */
     public static final boolean ENABLE_DISCORD_RPC = true;
 
