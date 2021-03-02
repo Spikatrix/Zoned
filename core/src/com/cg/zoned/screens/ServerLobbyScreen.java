@@ -226,7 +226,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         screenStage.row();
         screenStage.setScrollFocus(playerListScrollPane);
 
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

@@ -68,7 +68,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
-                bgTexture = game.assets.getGameBgTexture();
+                bgTexture = game.assets.getTexture(Assets.TextureObject.DIAMOND_TEXTURE);
                 bgTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
                 bgAlpha = 1;
@@ -108,11 +108,11 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         mainStage.row();
 
         UIButtonManager uiButtonManager = new UIButtonManager(mainStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage(game.assets.getSettingsButtonTexture());
-        HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage(game.assets.getCreditsButtonTexture());
+        HoverImageButton settingsButton = uiButtonManager.addSettingsButtonToStage(game.assets.getTexture(Assets.TextureObject.SETTINGS_TEXTURE));
+        HoverImageButton creditsButton = uiButtonManager.addCreditsButtonToStage(game.assets.getTexture(Assets.TextureObject.CREDITS_TEXTURE));
         HoverImageButton devButton = null;
         if (game.preferences.getBoolean(Preferences.DEV_MODE_PREFERENCE, false)) {
-            devButton = uiButtonManager.addDevButtonToStage(game.assets.getDevButtonTexture());
+            devButton = uiButtonManager.addDevButtonToStage(game.assets.getTexture(Assets.TextureObject.DEV_TEXTURE));
             devButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
@@ -140,7 +140,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         mainStage.addFocusableActor(creditsButton);
         mainStage.addFocusableActor(devButton);
 
-        HoverImageButton exitButton = uiButtonManager.addExitButtonToStage(game.assets.getCrossButtonTexture());
+        HoverImageButton exitButton = uiButtonManager.addExitButtonToStage(game.assets.getTexture(Assets.TextureObject.CROSS_TEXTURE));
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -164,7 +164,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
     }
 
     private HoverImageButton setUpAnimatedPlayButton(Table mainTable) {
-        Texture playSheet = game.assets.getPlayButtonTexture();
+        Texture playSheet = game.assets.getTexture(Assets.TextureObject.PLAY_SHEET_TEXTURE);
         int rowCount = 5, colCount = 6;
 
         TextureRegion[][] tmp = TextureRegion.split(playSheet,
@@ -321,7 +321,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
             playModeStage.addFocusableActor(table);
         }
 
-        HoverImageButton hideButton = uiButtonManager.addHideButtonToStage(game.assets.getBackButtonTexture());
+        HoverImageButton hideButton = uiButtonManager.addHideButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         hideButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

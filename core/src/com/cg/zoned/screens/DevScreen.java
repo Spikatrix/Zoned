@@ -100,7 +100,7 @@ public class DevScreen extends ScreenObject implements InputProcessor {
         screenStage.addActor(table);
         screenStage.setScrollFocus(screenScrollPane);
 
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

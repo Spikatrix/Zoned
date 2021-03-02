@@ -138,7 +138,7 @@ public class MapSelector {
             innerTable.setFillParent(true);
             innerTable.top().right();
 
-            Texture texture = assets.getSettingsButtonTexture();
+            Texture texture = assets.getTexture(Assets.TextureObject.SETTINGS_TEXTURE);
 
             HoverImageButton hoverImageButton = new HoverImageButton(new TextureRegionDrawable(texture));
             hoverImageButton.getImage().setScaling(Scaling.fit);

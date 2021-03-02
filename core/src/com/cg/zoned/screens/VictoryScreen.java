@@ -239,7 +239,7 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
 
     private void setUpNextButton() {
         UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
-        HoverImageButton nextButton = uiButtonManager.addNextButtonToStage(game.assets.getBackButtonTexture());
+        HoverImageButton nextButton = uiButtonManager.addNextButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         nextButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

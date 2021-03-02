@@ -171,17 +171,6 @@ public class LoadingScreen extends ScreenObject {
     }
 
     private void loadStageTwo() {
-        String[] preloadTextureLocations = new String[] {
-                Assets.TEXTURE_DIAMOND_LOCATION,
-                Assets.TEXTURE_PLAY_SHEET_LOCATION,
-                Assets.TEXTURE_BACK_LOCATION,
-                Assets.TEXTURE_CREDITS_LOCATION,
-                Assets.TEXTURE_CROSS_LOCATION,
-                Assets.TEXTURE_DEV_LOCATION,
-                Assets.TEXTURE_SETTINGS_LOCATION,
-                Assets.TEXTURE_TUTORIAL_LOCATION,
-        };
-
         ObjectMap<String, Object> fontMap = new ObjectMap<>();
         for (Assets.FontManager font : Assets.FontManager.values()) {
             fontMap.put(font.getFontName(), assetManager.get(font.getFontName() + ".otf", BitmapFont.class));
@@ -194,8 +183,9 @@ public class LoadingScreen extends ScreenObject {
         textureParameter.minFilter = Texture.TextureFilter.Linear;
         textureParameter.magFilter = Texture.TextureFilter.Linear;
 
-        for (String textureFileLocation : preloadTextureLocations) {
-            assetManager.load(textureFileLocation, Texture.class, textureParameter);
+        Assets.TextureObject[] preloadTextures = Assets.TextureObject.values();
+        for (Assets.TextureObject textureObject : preloadTextures) {
+            assetManager.load(textureObject.getLocation(), Texture.class, textureParameter);
         }
     }
 
