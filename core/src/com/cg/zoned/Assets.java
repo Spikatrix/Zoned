@@ -3,6 +3,8 @@ package com.cg.zoned;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
 
+import java.util.Locale;
+
 public class Assets {
     private AssetManager assetManager;
 
@@ -78,7 +80,7 @@ public class Assets {
         }
 
         public String getFontName() {
-            return this.toString().toLowerCase();
+            return this.toString().toLowerCase(Locale.ENGLISH);
         }
 
         public String getFontFileName() {

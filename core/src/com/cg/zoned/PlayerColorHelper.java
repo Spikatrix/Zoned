@@ -2,6 +2,7 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.graphics.Color;
 
+import java.util.Locale;
 import java.util.Map;
 
 public final class PlayerColorHelper {
@@ -12,23 +13,13 @@ public final class PlayerColorHelper {
     }
 
     public static Color getColorFromString(String color) {
-        return Constants.PLAYER_COLORS.get(color.toUpperCase());
+        return Constants.PLAYER_COLORS.get(color.toUpperCase(Locale.ENGLISH));
     }
 
     public static String getStringFromColor(Color color) {
         for (Map.Entry<String, Color> entry : Constants.PLAYER_COLORS.entrySet()) {
             if (entry.getValue().equals(color)) {
                 return entry.getKey();
-            }
-        }
-
-        return null;
-    }
-
-    public static Color getConstantColor(Color color) {
-        for (String key : Constants.PLAYER_COLORS.keySet()) {
-            if (Constants.PLAYER_COLORS.get(key).equals(color)) {
-                return Constants.PLAYER_COLORS.get(key);
             }
         }
 

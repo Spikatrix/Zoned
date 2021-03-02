@@ -7,6 +7,8 @@ import com.cg.zoned.managers.DiscordRPCBridge;
 import net.arikia.dev.drpc.DiscordRPC;
 import net.arikia.dev.drpc.DiscordRichPresence;
 
+import java.util.Locale;
+
 // Desktop only (Windows and Linux)
 public class DiscordRPCManager implements DiscordRPCBridge {
     private final String applicationID = "726680223499812954";
@@ -47,7 +49,7 @@ public class DiscordRPCManager implements DiscordRPCBridge {
             richPresence.details = state;
             richPresence.state = "with " + playerCount + " other players";
             richPresence.smallImageText = mapName;
-            richPresence.smallImageKey = mapName.toLowerCase().replace(' ', '_') + "_map";
+            richPresence.smallImageKey = mapName.toLowerCase(Locale.ENGLISH).replace(' ', '_') + "_map";
             if (richPresence.smallImageText.length() == 1) { // Weird bug with 1 letter text not triggering RPC update
                 richPresence.smallImageText = " " + richPresence.smallImageText + " ";
             }

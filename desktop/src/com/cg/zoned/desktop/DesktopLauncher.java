@@ -10,9 +10,13 @@ public class DesktopLauncher {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
         config.title = "Zoned";
         config.vSyncEnabled = true;
-        config.samples = 4; // See issue #4
 
-        // Uses the first icon which is supported in that implementation
+        // Sampling is not enabled on Windows, see issue #4
+        if (!System.getProperty("os.name").startsWith("Windows")) {
+            config.samples = 4;
+        }
+
+        // Uses the first icon which is supported
         config.addIcon("images/desktop_icons/ic_zoned_desktop_icon_128x128.png", Files.FileType.Internal);
         config.addIcon("images/desktop_icons/ic_zoned_desktop_icon_64x64.png",   Files.FileType.Internal);
         config.addIcon("images/desktop_icons/ic_zoned_desktop_icon_32x32.png",   Files.FileType.Internal);
