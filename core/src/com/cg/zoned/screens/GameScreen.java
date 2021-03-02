@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -41,11 +42,10 @@ import com.esotericsoftware.kryonet.Server;
 
 public class GameScreen extends ScreenObject implements InputProcessor {
     private GameManager gameManager;
+    private GLProfiler profiler;
 
     private Map map;
-
     private ExtendViewport[] playerViewports;
-
     private Color[] dividerLeftColor, dividerRightColor;
 
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
@@ -90,6 +90,11 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
         this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount(), this.shapeDrawer);
         this.map.initFloodFillVars();
+
+        if (Constants.DISPLAY_EXTENDED_GL_STATS) {
+            profiler = new GLProfiler(Gdx.graphics);
+            profiler.enable();
+        }
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
@@ -166,6 +171,9 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     @Override
     public void resize(int width, int height) {
         for (int i = 0; i < playerViewports.length; i++) {
+            // TODO: Show the same grid view for all players regardless of what their screen resolution/window size is
+            //       Not sure if this is possible nicely though, i.e, without stretching and letterboxing/pillarboxing
+
             playerViewports[i].update(width / playerViewports.length, height);
             updateCamera(playerViewports[i].getCamera(), width / playerViewports.length, height);
             this.playerViewports[i].setScreenX(i * width / playerViewports.length);
@@ -183,21 +191,14 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     @Override
     public void render(float delta) {
+        if (profiler != null) {
+            profiler.reset();
+        }
+
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        int highscore = 0;
-        for (TeamData teamData : gameManager.playerManager.getTeamData()) {
-            if (teamData.getScore() > highscore) {
-                highscore = teamData.getScore();
-                targetBgColor.set(teamData.getColor());
-                targetBgColor.a = bgAlpha;
-            } else if (teamData.getScore() == highscore) {
-                targetBgColor.set(0, 0, 0, bgAlpha);
-            }
-        }
-        currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
-        currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
+        drawGameBG(delta);
 
         if (!gameManager.gameOver) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
@@ -243,36 +244,61 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             gameManager.playerManager.stopPlayers(true);
             gameManager.gameOver = true;
         }
-        batch.end();
+
         if (gameManager.gameOver) {
             fadeOutScreen(delta);
         }
 
+        batch.end();
+
+        // Display FPS
+        float textTopYOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
+        int uiTextLineIndex = 0;
         if (showFPSCounter) {
             UITextDisplayer.displayFPS(screenStage.getViewport(), screenStage.getBatch(), smallFont,
-                    UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
+                    UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
+            uiTextLineIndex++;
         }
+
+        // Display Ping
         if (gameManager.gameConnectionManager.isActive) {
-            float yOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
-            if (!showFPSCounter) {
-                yOffset = -yOffset + scoreBars.scoreBarHeight + UITextDisplayer.padding;
-            }
             UITextDisplayer.displayPing(screenStage.getViewport(), screenStage.getBatch(), smallFont,
-                    gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
+                    gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
+            uiTextLineIndex++;
         }
 
         screenStage.act(delta);
         screenStage.draw();
+
+        // Display GL Profiler Stats
+        if (profiler != null) {
+            UITextDisplayer.displayExtendedGLStatistics(screenStage.getViewport(), screenStage.getBatch(),
+                    smallFont, profiler, UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
+            uiTextLineIndex++;
+        }
+    }
+
+    private void drawGameBG(float delta) {
+        int highscore = 0;
+        for (TeamData teamData : gameManager.playerManager.getTeamData()) {
+            if (teamData.getScore() > highscore) {
+                highscore = teamData.getScore();
+                targetBgColor.set(teamData.getColor());
+                targetBgColor.a = bgAlpha;
+            } else if (teamData.getScore() == highscore) {
+                targetBgColor.set(0, 0, 0, bgAlpha);
+            }
+        }
+        currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
+        currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
     }
 
     private void fadeOutScreen(float delta) {
         fadeOutOverlay.a += delta * 2f * (2f - fadeOutOverlay.a);
         fadeOutOverlay.a = Math.min(fadeOutOverlay.a, 1f);
 
-        batch.begin();
         shapeDrawer.setColor(fadeOutOverlay);
         shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
-        batch.end();
 
         if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
             gameCompleteFadeOutDone = true;

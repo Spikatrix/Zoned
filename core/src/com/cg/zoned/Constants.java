@@ -19,6 +19,11 @@ public final class Constants {
      */
     public static final boolean ENABLE_DISCORD_RPC = true;
 
+    /**
+     * Displays extended GL stats in GameScreen including Draw calls, GL calls etc
+     */
+    public static final boolean DISPLAY_EXTENDED_GL_STATS = false;
+
     public static final float WORLD_SIZE = 480.0f;
 
     public static final int SERVER_PORT = 22355; // Random port I chose ¯\_(ツ)_/¯

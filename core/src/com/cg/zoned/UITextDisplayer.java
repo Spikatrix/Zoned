@@ -4,12 +4,13 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class UITextDisplayer {
     public static final float padding = 6f;
 
-    public static void displayFPS(Viewport viewport, Batch batch, BitmapFont font, float xOffset, float yOffset) {
+    public static void displayFPS(Viewport viewport, Batch batch, BitmapFont font, float xOffset, float yOffset, int lineIndex) {
         int fps = Gdx.graphics.getFramesPerSecond();
 
         if (fps >= 55) {
@@ -20,17 +21,14 @@ public class UITextDisplayer {
             font.setColor(Color.RED);
         }
 
-        batch.begin();
-        font.draw(batch, "FPS: " + fps,
-                xOffset, viewport.getWorldHeight() - yOffset);
-        batch.end();
+        drawString(batch, "FPS: " + fps, font, viewport, xOffset, yOffset, lineIndex);
     }
 
     public static void displayFPS(Viewport viewport, Batch batch, BitmapFont font) {
-        displayFPS(viewport, batch, font, padding, padding);
+        displayFPS(viewport, batch, font, padding, padding, 0);
     }
 
-    public static void displayPing(Viewport viewport, Batch batch, BitmapFont font, int ping, float xOffset, float yOffset) {
+    public static void displayPing(Viewport viewport, Batch batch, BitmapFont font, int ping, float xOffset, float yOffset, int lineIndex) {
         if (ping < 50) {
             font.setColor(Color.GREEN);
         } else if (ping < 100) {
@@ -39,13 +37,32 @@ public class UITextDisplayer {
             font.setColor(Color.RED);
         }
 
-        batch.begin();
-        font.draw(batch, "Ping: " + ping + " ms",
-                xOffset, viewport.getWorldHeight() - font.getLineHeight() - yOffset);
-        batch.end();
+        drawString(batch, "Ping: " + ping + " ms", font, viewport, xOffset, yOffset, lineIndex);
     }
 
     public static void displayPing(Viewport viewport, Batch batch, BitmapFont font, int ping) {
-        displayPing(viewport, batch, font, ping, padding, padding);
+        displayPing(viewport, batch, font, ping, padding, padding, 0);
+    }
+
+    public static void displayExtendedGLStatistics(Viewport viewport, Batch batch, BitmapFont font, GLProfiler profiler, float xOffset, float yOffset, int lineIndex) {
+        font.setColor(Color.CORAL);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("GL Calls: ").append(profiler.getCalls()).append("\n");
+        sb.append("Draw calls: ").append(profiler.getDrawCalls()).append("\n");
+        sb.append("Shader switches: ").append(profiler.getShaderSwitches()).append("\n");
+        sb.append("Texture bindings: ").append(profiler.getTextureBindings()).append("\n");
+        sb.append("Vertex calls: ").append(profiler.getVertexCount().total).append("\n");
+        long memory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+        sb.append("Used memory: ").append(memory).append(" MB");
+
+        drawString(batch, sb.toString(), font, viewport, xOffset, yOffset, lineIndex);
+    }
+
+    private static void drawString(Batch batch, String string, BitmapFont font, Viewport viewport, float xOffset, float yOffset, int yOffsetLineIndex) {
+        batch.begin();
+        font.draw(batch, string, xOffset,
+                viewport.getWorldHeight() - yOffset - (font.getLineHeight() * yOffsetLineIndex));
+        batch.end();
     }
 }
