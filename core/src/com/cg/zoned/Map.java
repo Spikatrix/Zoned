@@ -14,6 +14,8 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.dataobjects.Cell;
+import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.PlayerManager;
 
 import space.earlygrey.shapedrawer.JoinType;

@@ -2,7 +2,7 @@ package com.cg.zoned.maps;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.SpinnerVars;
+import com.cg.zoned.dataobjects.SpinnerVars;
 
 public class MapExtraParams {
     public String paramSelectTitle;

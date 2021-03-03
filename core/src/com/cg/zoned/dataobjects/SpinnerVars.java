@@ -1,4 +1,4 @@
-package com.cg.zoned;
+package com.cg.zoned.dataobjects;
 
 public class SpinnerVars {
     public String prompt;

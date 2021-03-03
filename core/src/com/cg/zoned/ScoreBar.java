@@ -6,6 +6,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.cg.zoned.dataobjects.TeamData;
 
 public class ScoreBar {
     private static final float SCOREBAR_LERP_VALUE = 3.0f;

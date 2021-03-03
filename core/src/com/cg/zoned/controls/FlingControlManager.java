@@ -10,8 +10,8 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveByAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Player;
+import com.cg.zoned.dataobjects.GameTouchPoint;
 
 public class FlingControlManager extends ControlTypeEntity {
     private Texture arrowTexture;

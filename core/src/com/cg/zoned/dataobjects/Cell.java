@@ -1,4 +1,4 @@
-package com.cg.zoned;
+package com.cg.zoned.dataobjects;
 
 import com.badlogic.gdx.graphics.Color;
 
