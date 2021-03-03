@@ -238,9 +238,6 @@ public class LoadingScreen extends ScreenObject {
         usedTextures.add(loadingTexture);
         loadingPixmap.dispose();
 
-        NinePatch ninePatch = new NinePatch(loadingTexture, radius, radius, radius, radius);
-        NinePatchDrawable ninePatchDrawable = new NinePatchDrawable(ninePatch);
-
-        return ninePatchDrawable;
+        return new NinePatchDrawable(new NinePatch(loadingTexture, radius, radius, radius, radius));
     }
 }

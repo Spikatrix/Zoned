@@ -206,6 +206,11 @@ public class ServerLobbyConnectionManager {
             @Override
             public void run() {
                 int index = getConnectionIndex(connection);
+                if (!playerNameResolved.get(index)) {
+                    // Happens in edge cases like when the map is changed right when a player joins
+                    return;
+                }
+
                 serverPlayerListener.updatePlayerDetails(index, name, who, ready, color, startPos);
             }
         });

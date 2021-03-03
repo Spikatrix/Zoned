@@ -74,8 +74,6 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         screenStage = new FocusableStage(screenViewport);
         animationManager = new AnimationManager(this.game, this);
 
-        // TODO: Fix bogus client ip being sent to some clients when a map is changed while a new client was joining
-
         startLocations = new Array<>();
         this.serverName = name;
         this.connectionManager = new ServerLobbyConnectionManager(server, this);
