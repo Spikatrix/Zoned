@@ -45,12 +45,16 @@ public class ExternalMapReader {
             // Android
             externalMapDir = Gdx.files.external(mapDirName);
         } else if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-            if (Gdx.files.getExternalStoragePath().startsWith("/home")) {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.startsWith("linux")) {
                 // Linux
                 externalMapDir = Gdx.files.external(".zoned/" + mapDirName);
-            } else {
+            } else if (os.startsWith("win")) {
                 // Windows
                 externalMapDir = Gdx.files.external("Documents/Zoned/" + mapDirName);
+            } else {
+                // Mac (I don't own a mac, so I can't test this)
+                externalMapDir = Gdx.files.external("Library/Application Support/Zoned/");
             }
         }
 
