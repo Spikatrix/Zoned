@@ -9,16 +9,16 @@ import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 
-import static java.lang.Math.abs;
-
 public class StepScrollPane extends ScrollPane {
     private Table content;
 
-    private boolean isVerticalScrollPane;
+    private final boolean isVerticalScrollPane;
 
     private boolean wasPanDragFling = false;
     private float destinationPosition = 0f;
+    private int prevStepIndex;
     private float stepSize = 0;
+    private StepScrollListener stepScrollListener;
 
     public StepScrollPane(Skin skin, boolean isVerticalScrollPane) {
         super(null, skin);
@@ -44,11 +44,16 @@ public class StepScrollPane extends ScrollPane {
         }
     }
 
+    public void setStepScrollListener(StepScrollListener stepScrollListener) {
+        this.stepScrollListener = stepScrollListener;
+    }
+
     private void addCustomScrollListener() {
         addListener(new InputListener() {
             @Override
-            public boolean scrolled(InputEvent event, float x, float y, int amount) {
-                snapToStep(amount);
+            public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
+                // `amountX` is always 0 for me on Linux even though horizontal scrolling is enabled via `synclient` ¯\_(ツ)_/¯
+                snapToStep((int) amountY);
                 return true;
             }
         });
@@ -56,8 +61,8 @@ public class StepScrollPane extends ScrollPane {
 
     private void disableScrollBars() {
         this.setScrollBarTouch(false);
-        this.setScrollbarsOnTop(false);
         this.setScrollbarsVisible(false);
+        this.setScrollbarsOnTop(true);
         this.setScrollingDisabled(isVerticalScrollPane, !isVerticalScrollPane);
         this.setupFadeScrollBars(0f, 0f);
     }
@@ -68,7 +73,12 @@ public class StepScrollPane extends ScrollPane {
     }
 
     public void add(Actor actor) {
-        content.add(actor).width(getWidth());
+        // Might have bugs, hmm
+        if (isVerticalScrollPane) {
+            content.add(actor).width(getWidth());
+        } else {
+            content.add(actor).width(getWidth()).height(getHeight());
+        }
     }
 
     @Override
@@ -81,6 +91,15 @@ public class StepScrollPane extends ScrollPane {
         } else {
             if (isPanning() || isDragging() || isFlinging()) {
                 wasPanDragFling = true;
+
+                if (stepScrollListener != null) {
+                    float scroll = isVerticalScrollPane ? getScrollY() : getScrollX();
+                    int currStepIndex = (int) (scroll / stepSize);
+                    if (prevStepIndex != currStepIndex) {
+                        stepScrollListener.stepChanged(currStepIndex);
+                        prevStepIndex = currStepIndex;
+                    }
+                }
             }
         }
     }
@@ -89,7 +108,7 @@ public class StepScrollPane extends ScrollPane {
         if (isVerticalScrollPane) {
             snapToStepY(stepOffset);
         } else {
-            snapToStepX(-stepOffset); // Have to invert, otherwise the direction is opposite
+            snapToStepX(stepOffset);
         }
     }
 
@@ -113,10 +132,14 @@ public class StepScrollPane extends ScrollPane {
             offset = -offset;
         }
 
-        float centerOffset = abs(this.getHeight() - stepSize) / 2;
+        float oldDestPos = destinationPosition;
 
-        destinationPosition = MathUtils.clamp(scrollYPos + offset + centerOffset, 0, getMaxY());
+        destinationPosition = MathUtils.clamp(scrollYPos + offset, 0, getMaxY());
         setScrollY(destinationPosition);
+
+        if (oldDestPos != destinationPosition && stepScrollListener != null) {
+            stepScrollListener.destinationPositionChanged(destinationPosition, oldDestPos);
+        }
     }
 
     private void snapToStepX(int stepOffset) {
@@ -139,10 +162,18 @@ public class StepScrollPane extends ScrollPane {
             offset = -offset;
         }
 
-        float centerOffset = abs(this.getWidth() - stepSize) / 2;
+        float oldDestPos = destinationPosition;
 
-        destinationPosition = MathUtils.clamp(scrollXPos + offset + centerOffset, 0, getMaxX());
+        destinationPosition = MathUtils.clamp(scrollXPos + offset, 0, getMaxX());
         setScrollX(destinationPosition);
+
+        if (oldDestPos != destinationPosition && stepScrollListener != null) {
+            stepScrollListener.destinationPositionChanged(destinationPosition, oldDestPos);
+        }
+    }
+
+    public int getPositionIndex() {
+        return Math.round(destinationPosition / stepSize);
     }
 
     public float getStepSize() {
@@ -155,5 +186,11 @@ public class StepScrollPane extends ScrollPane {
 
     public float getDestinationPosition() {
         return destinationPosition;
+    }
+
+    public interface StepScrollListener {
+        void destinationPositionChanged(float newDestPos, float oldDestPos);
+
+        void stepChanged(int newStep);
     }
 }

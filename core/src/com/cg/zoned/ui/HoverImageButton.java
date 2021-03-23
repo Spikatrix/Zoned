@@ -83,4 +83,6 @@ public class HoverImageButton extends ImageButton {
     public void setClickAlpha(float clickAlpha) {
         this.clickAlpha = clickAlpha;
     }
+
+
 }

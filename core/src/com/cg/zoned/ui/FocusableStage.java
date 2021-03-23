@@ -12,12 +12,13 @@ import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
@@ -28,19 +29,19 @@ import com.badlogic.gdx.utils.viewport.Viewport;
  * This means that it can track and focus actors when the user navigates using the keyboard
  *
  * <p>
- * Custom behavior implemented for:
- * - TextField
- * - SelectBox
+ * Custom behavior implemented for: <br>
+ * - TextField <br>
+ * - SelectBox <br>
  *
  * <p>
- * Currently supported keyboard inputs include:
- * - TAB            for focusing the next Actor
- * - SHIFT + TAB    for focusing the previous Actor
- * - LEFT           for focusing the previous Actor
- * - RIGHT          for focusing the next Actor
- * - UP             for focusing the above Actor
- * - DOWN           for focusing the below Actor
- * - Enter or Space for pressing the currently focused Actor
+ * Currently supported keyboard inputs include: <br>
+ * - TAB            for focusing the next Actor <br>
+ * - SHIFT + TAB    for focusing the previous Actor <br>
+ * - LEFT           for focusing the previous Actor <br>
+ * - RIGHT          for focusing the next Actor <br>
+ * - UP             for focusing the above Actor <br>
+ * - DOWN           for focusing the below Actor <br>
+ * - Enter or Space for pressing the currently focused Actor <br>
  * provided the currently focused actor is not busy
  *
  * @author Spikatrix
@@ -65,9 +66,9 @@ public class FocusableStage extends Stage {
     private Actor downActor;
 
     /**
-     * Dialog that has focus properties for its buttons
+     * Active dialog list
      */
-    private Dialog dialog;
+    private Array<Dialog> dialogs = new Array<>();
 
     /**
      * The Texture used in the background of a dialog when it is active
@@ -76,9 +77,14 @@ public class FocusableStage extends Stage {
 
     /**
      * Master switch for enabling keyboard based focus management
-     * When this is false, it will behave like a regular Stage
+     * When this is false, this class will mostly behave like a regular Stage
      */
     private boolean isActive = true;
+
+    /**
+     * If set, the scrollpane will scroll focused actors into view
+     */
+    private ScrollPane scrollpane;
 
     /**
      * Constructor for initializing the Stage
@@ -91,6 +97,9 @@ public class FocusableStage extends Stage {
         createDialogBGTexture();
     }
 
+    public void setScrollpane(ScrollPane scrollPane) {
+        this.scrollpane = scrollPane;
+    }
     /**
      * Creates the dialog background texture
      */
@@ -188,6 +197,12 @@ public class FocusableStage extends Stage {
         currentFocusedActor = actor;
         this.setKeyboardFocus(actor);
         this.setScrollFocus(actor);
+
+        if (scrollpane != null && !dialogIsActive()) {
+            // TODO: getY() doesn't give the desired value when the actor is inside a table
+            scrollpane.scrollTo(actor.getX(), actor.getY(),
+                    actor.getWidth(), actor.getHeight(), true, true);
+        }
     }
 
     /**
@@ -212,55 +227,77 @@ public class FocusableStage extends Stage {
      * Shows an dialog with focus properties on its buttons
      *
      * @param msg                   The message to display
-     * @param buttonTexts           Texts for each button in the dialog
+     * @param buttons               Buttons to be displayed in the dialog
      * @param useVerticalButtonList Determines whether the dialog buttons are arranged horizontally or vertically
      * @param scaleFactor           The game's scaleFactor to scale up/down dialog button width
-     * @param dialogResultListener  Interface for beaming back the selected dialog option
+     * @param dialogResultListener  Listener for beaming back the selected dialog option to the caller
      * @param skin                  The skin to use for the dialog
      */
     public void showDialog(String msg,
-                           Array<String> buttonTexts, boolean useVerticalButtonList,
+                           DialogButton[] buttons, boolean useVerticalButtonList,
                            float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog(new Label(msg, skin), null, buttonTexts, useVerticalButtonList,
+        showDialog(new Label(msg, skin), null, buttons, useVerticalButtonList,
                 scaleFactor, dialogResultListener, skin);
     }
 
     public void showDialog(Table contentTable, Array<Actor> dialogFocusableActorArray,
-                           Array<String> buttonTexts, boolean useVerticalButtonList,
+                           DialogButton[] buttons, boolean useVerticalButtonList,
                            float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog((Actor) contentTable, dialogFocusableActorArray, buttonTexts, useVerticalButtonList,
+        showDialog((Actor) contentTable, dialogFocusableActorArray, buttons, useVerticalButtonList,
+                scaleFactor, dialogResultListener, skin);
+    }
+
+    public void showOKDialog(String msg, boolean useVerticalButtonList,
+                             float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
+        showDialog(new Label(msg, skin), null, new DialogButton[]{DialogButton.OK}, useVerticalButtonList,
                 scaleFactor, dialogResultListener, skin);
     }
 
     private void showDialog(Actor content, Array<Actor> dialogFocusableActorArray,
-                            Array<String> buttonTexts, boolean useVerticalButtonList,
+                            DialogButton[] buttons, boolean useVerticalButtonList,
                             float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
         final Array<Actor> backupCurrentActorArray = new Array<>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
 
-        final Dialog previousDialog = dialog;
-
-        dialog = new Dialog("", skin) {
+        final Dialog dialog = new Dialog("", skin) {
             @Override
             protected void result(Object object) {
+                Dialog dialog;
+                try {
+                    dialog = dialogs.pop();
+                } catch (IllegalStateException e) {
+                    // Edge case; buttons were pressed frantically
+                    return;
+                }
+
                 focusableActorArray = backupCurrentActorArray;
-                if (backupFocusedActor != null) {
-                    focus(backupFocusedActor);
+                currentFocusedActor = backupFocusedActor;
+                if (currentFocusedActor != null) {
+                    focus(currentFocusedActor);
                 }
 
                 if (dialogResultListener != null) {
-                    dialogResultListener.dialogResult((String) object);
+                    dialogResultListener.dialogResult((DialogButton) object);
                 }
 
-                dialog.hide(Actions.scaleTo(0, 0, .2f, Interpolation.fastSlow));
-                dialog = previousDialog;
+                dialog.hide(Actions.parallel(
+                        Actions.scaleTo(.6f, .6f, .3f, Interpolation.swingIn),
+                        Actions.fadeOut(.2f, Interpolation.smooth)
+                ));
             }
         };
+
+        dialog.key(Input.Keys.ESCAPE, null);
+        dialog.key(Input.Keys.BACK, null);
+        dialog.button(Input.Buttons.BACK, null);
+
+        dialogs.add(dialog);
 
         dialog.getContentTable().add(content).pad(20f);
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
         dialog.getButtonTable().padBottom(10f).padLeft(10f).padRight(10f);
-        dialog.setScale(0);
+        dialog.setScale(0.6f);
+        dialog.getColor().a = 0;
 
         if (content instanceof Label) {
             Label label = (Label) content;
@@ -273,9 +310,9 @@ public class FocusableStage extends Stage {
             this.focusableActorArray.add(null);
         }
 
-        for (int i = 0; i < buttonTexts.size; i++) {
-            TextButton textButton = new TextButton(buttonTexts.get(i), skin);
-            dialog.button(textButton, textButton.getText().toString());
+        for (DialogButton button : buttons) {
+            TextButton textButton = new TextButton(button.toString(), skin);
+            dialog.button(textButton, button);
             this.focusableActorArray.add(textButton);
             if (useVerticalButtonList) {
                 dialog.getButtonTable().row();
@@ -284,7 +321,7 @@ public class FocusableStage extends Stage {
         }
 
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            // Unlikely people are going to use keyboards with playing on Android
+            // Unlikely that people are going to use keyboards with playing on Android
             // Looks a bit weird with the focus in those cases. So just defocus
             defocus(backupFocusedActor);
         } else {
@@ -292,16 +329,25 @@ public class FocusableStage extends Stage {
             focus(this.focusableActorArray.get(0));
         }
 
-        dialog.getStyle().stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
-        dialog.show(this, Actions.scaleTo(1f, 1f, .2f, Interpolation.fastSlow));
+        if (dialogs.size == 1) {
+            // Darken background only for the first Dialog
+            Window.WindowStyle darkBackgroundStyle = new Window.WindowStyle(dialog.getStyle());
+            darkBackgroundStyle.stageBackground = new TextureRegionDrawable(dialogBackgroundTexture);
+            dialog.setStyle(darkBackgroundStyle);
+        }
+
+        dialog.show(this, Actions.parallel(
+                Actions.scaleTo(1f, 1f, .3f, Interpolation.swingOut),
+                Actions.fadeIn(.2f, Interpolation.smooth)
+        ));
+
         dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
         dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
     }
 
     public void resize(int width, int height) {
-        // TODO: In case of multiple dialogs shown simultaneously, the ones in the back do not reset position on resize
         getViewport().update(width, height, true);
-        if (dialog != null) {
+        for (Dialog dialog : dialogs) {
             dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
         }
     }
@@ -624,13 +670,23 @@ public class FocusableStage extends Stage {
             return;
         }
 
+        // Couldn't access Stage's mouse hover actor as it is private
         if (focusableActorArray.contains(target, true)) {
             setFocusedActor(target);
         } else {
+            // An Actor outside the provided focusable array was focused, say, by using the mouse
+            // In that case, defocus the current actor to show focus loss, but keep the actor reference
+            // so that we can start from it back again once the keyboard is used once again
+            Actor backup = currentFocusedActor;
             defocus(currentFocusedActor);
+            currentFocusedActor = backup;
         }
 
         super.addTouchFocus(listener, listenerActor, target, pointer, button);
+    }
+
+    public boolean dialogIsActive() {
+        return dialogs.size > 0;
     }
 
     @Override
@@ -640,6 +696,29 @@ public class FocusableStage extends Stage {
     }
 
     public interface DialogResultListener {
-        void dialogResult(String buttonText);
+        void dialogResult(DialogButton button);
+    }
+
+    public enum DialogButton {
+        OK("OK"),
+        Cancel("Cancel"),
+        Set("Set"),
+        Yes("Yes"),
+        Resume("Resume"),
+        MainMenu("Main Menu"),
+        Exit("Exit"),
+        Restart("Restart"),
+        SetMap("Set Map");
+
+        private final String buttonText;
+
+        DialogButton(String buttonText) {
+            this.buttonText = buttonText;
+        }
+
+        @Override
+        public String toString() {
+            return this.buttonText;
+        }
     }
 }

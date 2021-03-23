@@ -9,18 +9,19 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
-import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.dataobjects.Cell;
+import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.PlayerManager;
 
 import space.earlygrey.shapedrawer.JoinType;
 
 public class Map {
-    private Cell[][] mapGrid;
+    private final Cell[][] mapGrid;
     public int wallCount;
 
     public int rows;
@@ -29,7 +30,7 @@ public class Map {
 
     private boolean mapColorUpdated = false;
 
-    private Rectangle userViewRect = null;
+    private Rectangle userViewRect;
 
     private FrameBuffer playerLabelFbo = null;
     public static float playerLabelRegionScale = 2f; // Rendered at higher (2x rn) res, downscaled to required size
@@ -41,6 +42,7 @@ public class Map {
 
     private FrameBuffer mapFbo = null;
     private TextureRegion mapTextureRegion = null;
+    private FloodFiller floodfiller = null;
 
     /**
      * Creates the map object with features like processing each turn and managing score, rendering
@@ -60,6 +62,10 @@ public class Map {
 
         createPlayerTexture(shapeDrawer);
         createMapTexture(shapeDrawer);
+    }
+
+    public void initFloodFillVars() {
+        this.floodfiller = new FloodFiller(this.rows, this.cols);
     }
 
     private void createPlayerTexture(ShapeDrawer shapeDrawer) {
@@ -291,7 +297,9 @@ public class Map {
             }
         }
 
-        fillSurroundedCells(playerManager, players);
+        if (floodfiller != null) {
+            coloredCells += floodfiller.fillSurroundedCells(mapGrid, playerManager, players);
+        }
     }
 
     private void updateCapturePercentage(PlayerManager playerManager) {
@@ -302,67 +310,6 @@ public class Map {
         Array<TeamData> teamData = playerManager.getTeamData();
         for (TeamData td : teamData) {
             td.setCapturePercentage((this.rows * this.cols) - this.wallCount);
-        }
-    }
-
-    private void fillSurroundedCells(PlayerManager playerManager, Player[] players) {
-        FloodFillGridState[][] gridState = new FloodFillGridState[rows][cols];
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                gridState[i][j] = new FloodFillGridState();
-                if (mapGrid[i][j].cellColor != null) {
-                    gridState[i][j].state = FloodFillGridState.State.VISITED;
-                }
-            }
-        }
-
-        for (int i = 0; i < cols; i++) {
-            if (gridState[0][i].state == FloodFillGridState.State.UNVISITED) {
-                floodFill(gridState, new GridPoint2(0, i), null);
-            }
-            if (gridState[rows - 1][i].state == FloodFillGridState.State.UNVISITED) {
-                floodFill(gridState, new GridPoint2(rows - 1, i), null);
-            }
-        }
-        for (int i = 0; i < rows; i++) {
-            if (gridState[i][0].state == FloodFillGridState.State.UNVISITED) {
-                floodFill(gridState, new GridPoint2(i, 0), null);
-            }
-            if (gridState[i][cols - 1].state == FloodFillGridState.State.UNVISITED) {
-                floodFill(gridState, new GridPoint2(i, cols - 1), null);
-            }
-        }
-
-        Array<GridPoint2> fillPositions = new Array<>();
-        Color fillColor;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (gridState[i][j].state == FloodFillGridState.State.UNVISITED) {
-                    fillColor = floodFill(gridState, new GridPoint2(i, j), fillPositions);
-
-                    if (fillColor != null && fillColor != Color.BLACK) {
-                        int index = -1;
-                        for (int k = 0; k < players.length; k++) {
-                            if (equalColors(players[k].color, fillColor)) {
-                                index = k;
-                                break;
-                            }
-                        }
-
-                        while (!fillPositions.isEmpty()) {
-                            GridPoint2 pos = fillPositions.pop();
-
-                            mapGrid[pos.x][pos.y].cellColor = new Color(fillColor.r, fillColor.g, fillColor.b, 0.1f);
-                            if (playerManager != null) {
-                                playerManager.incrementScore(players[index]);
-                            }
-                            coloredCells++;
-                        }
-                    } else {
-                        fillPositions.clear();
-                    }
-                }
-            }
         }
     }
 
@@ -387,7 +334,7 @@ public class Map {
 
         Batch batch = shapeDrawer.getBatch();
 
-        drawColors(shapeDrawer, playerIndex, userViewRect, delta);
+        drawColors(shapeDrawer, batch, playerIndex, userViewRect, delta);
         drawGrid(batch);
         drawPlayers(players, userViewRect, batch);
         drawPlayerLabels(players, playerIndex, userViewRect, batch);
@@ -399,7 +346,7 @@ public class Map {
         }
     }
 
-    private void drawColors(ShapeDrawer shapeDrawer, int playerIndex, Rectangle userViewRect, float delta) {
+    private void drawColors(ShapeDrawer shapeDrawer, Batch batch, int playerIndex, Rectangle userViewRect, float delta) {
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
                 float startX = j * Constants.CELL_SIZE;
@@ -411,7 +358,9 @@ public class Map {
                     }
 
                     if (userViewRect.contains(startX, startY)) {
-                        shapeDrawer.setColor(mapGrid[i][j].cellColor);
+                        if (!equalColors(batch.getColor(), mapGrid[i][j].cellColor)) {
+                            shapeDrawer.setColor(mapGrid[i][j].cellColor);
+                        }
                         shapeDrawer.filledRectangle(startX, startY, Constants.CELL_SIZE, Constants.CELL_SIZE);
                     }
                 }
@@ -447,82 +396,6 @@ public class Map {
         }
     }
 
-    /**
-     * Flood fill the unvisited cells
-     *
-     * @param gridState    2D array depicting the VISITED or UNVISITED state of the grid
-     * @param startPos     Position to start flood filling from
-     * @param fillPosStack Array that stores the positions of cells in the grid that were flood filled
-     * @return A Color which depicts which color can be filled in the flood filled locations.
-     * If 'null' or 'Color.BLACK', multiple or no colors were present along the edges, or a wall was in between
-     */
-    private Color floodFill(FloodFillGridState[][] gridState, GridPoint2 startPos, Array<GridPoint2> fillPosStack) {
-        Array<GridPoint2> stack = new Array<>();
-        Color fillColor = null;
-
-        gridState[startPos.x][startPos.y].state = FloodFillGridState.State.VISITED;
-        if (!mapGrid[startPos.x][startPos.y].isMovable) {
-            fillColor = Color.BLACK;
-        }
-
-        stack.add(startPos);
-        while (!stack.isEmpty()) {
-            GridPoint2 pos = stack.pop();
-
-            if (pos.x > 0) {
-                fillColor = fillColorHelper(pos.x - 1, pos.y, fillColor, gridState, stack);
-            }
-            if (pos.x < rows - 1) {
-                fillColor = fillColorHelper(pos.x + 1, pos.y, fillColor, gridState, stack);
-            }
-            if (pos.y > 0) {
-                fillColor = fillColorHelper(pos.x, pos.y - 1, fillColor, gridState, stack);
-            }
-            if (pos.y < cols - 1) {
-                fillColor = fillColorHelper(pos.x, pos.y + 1, fillColor, gridState, stack);
-            }
-            if (pos.x > 0 && pos.y > 0) {
-                fillColor = fillColorHelper(pos.x - 1, pos.y - 1, fillColor, gridState, stack);
-            }
-            if (pos.x > 0 && pos.y < cols - 1) {
-                fillColor = fillColorHelper(pos.x - 1, pos.y + 1, fillColor, gridState, stack);
-            }
-            if (pos.x < rows - 1 && pos.y > 0) {
-                fillColor = fillColorHelper(pos.x + 1, pos.y - 1, fillColor, gridState, stack);
-            }
-            if (pos.x < rows - 1 && pos.y < cols - 1) {
-                fillColor = fillColorHelper(pos.x + 1, pos.y + 1, fillColor, gridState, stack);
-            }
-
-            if (fillPosStack != null) {
-                fillPosStack.add(pos);
-            }
-        }
-
-        return fillColor;
-    }
-
-    /**
-     * Helper method for flood fill
-     */
-    private Color fillColorHelper(int x, int y, Color fillColor, FloodFillGridState[][] gridState, Array<GridPoint2> stack) {
-        if (!mapGrid[x][y].isMovable) {
-            fillColor = Color.BLACK;
-        } else if (mapGrid[x][y].cellColor != null) {
-            if (fillColor == null) {
-                fillColor = mapGrid[x][y].cellColor;
-            } else if (!equalColors(fillColor, mapGrid[x][y].cellColor)) {
-                fillColor = Color.BLACK;
-            }
-        }
-
-        if (gridState[x][y].state == FloodFillGridState.State.UNVISITED) {
-            gridState[x][y].state = FloodFillGridState.State.VISITED;
-            stack.add(new GridPoint2(x, y));
-        }
-
-        return fillColor;
-    }
 
     public boolean gameComplete(Array<TeamData> teamData) {
         if (teamData.size == 2) {
@@ -559,17 +432,7 @@ public class Map {
      * @return 'true' if the rgb components of 'c1' and 'c2' are equal
      * 'false' if not
      */
-    private boolean equalColors(Color c1, Color c2) {
+    public static boolean equalColors(Color c1, Color c2) {
         return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
-    }
-
-    static class FloodFillGridState {
-        private enum State {UNVISITED, VISITED}
-
-        private State state;
-
-        FloodFillGridState() {
-            state = State.UNVISITED;
-        }
     }
 }

@@ -6,6 +6,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.managers.DiscordRPCBridge;
@@ -18,6 +19,9 @@ public class Zoned extends Game {
 
     public Assets assets;
     public DiscordRPCManager discordRPCManager;
+
+    private boolean showFPSCounter;
+    private BitmapFont smallFont; // Used for showing the FPS
 
     private static float SCALE_FACTOR = 1.0f;
 
@@ -70,6 +74,26 @@ public class Zoned extends Game {
 
     public void setAssetManager(AssetManager assetManager) {
         assets.setAssetManager(assetManager);
+    }
+
+    // Called from LoadingScreen when the skin and preferences have been loaded to load FPS font and preference
+    public void initFPSUtils() {
+        this.smallFont = skin.getFont(Assets.FontManager.SMALL.getFontName());
+        this.showFPSCounter = preferences.getBoolean(com.cg.zoned.Preferences.FPS_PREFERENCE, false);
+    }
+
+    public void toggleFPSCounter() {
+        this.showFPSCounter = !this.showFPSCounter;
+        preferences.putBoolean(com.cg.zoned.Preferences.FPS_PREFERENCE, this.showFPSCounter);
+        preferences.flush();
+    }
+
+    public Boolean showFPSCounter() {
+        return this.showFPSCounter;
+    }
+
+    public BitmapFont getSmallFont() {
+        return this.smallFont;
     }
 
     @Override

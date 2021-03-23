@@ -25,13 +25,13 @@ import com.cg.zoned.controls.PieMenuControlManager;
 public class ControlManager {
     // Specify at least one control mechanism. Otherwise, it will crash and burn.
     public static final ControlType[] CONTROL_TYPES = {
-            new ControlType("Piemenu",
-                    "icons/control_icons/ic_control_piemenu_off.png",
-                    "icons/control_icons/ic_control_piemenu_on.png",
+            new ControlType("D-Pad",
+                    "images/control_icons/ic_control_piemenu_off.png",
+                    "images/control_icons/ic_control_piemenu_on.png",
                     new PieMenuControlManager()),
             new ControlType("Fling",
-                    "icons/control_icons/ic_control_fling_off.png",
-                    "icons/control_icons/ic_control_fling_on.png",
+                    "images/control_icons/ic_control_fling_off.png",
+                    "images/control_icons/ic_control_fling_on.png",
                     new FlingControlManager()),
     };
 

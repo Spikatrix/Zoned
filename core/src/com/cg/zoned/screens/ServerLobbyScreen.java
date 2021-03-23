@@ -4,14 +4,11 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
@@ -29,15 +26,14 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
-import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
-import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
@@ -52,22 +48,9 @@ import com.esotericsoftware.kryonet.Server;
 import java.util.Arrays;
 import java.util.Map;
 
-public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConnectionManager.ServerPlayerListener, InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
+public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnectionManager.ServerPlayerListener, InputProcessor {
     private ServerLobbyConnectionManager connectionManager;
     private String serverName;
-
-    private FocusableStage stage;
-    private Viewport viewport;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
-
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
 
     private com.cg.zoned.Map map;
     private Cell[][] mapGrid;
@@ -77,18 +60,19 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     private Table playerList;
     private MapSelector mapSelector;
+    private FocusableStage mapSelectorStage;
+    private Spinner mapSpinner;
+    private boolean mapSelectorActive;
+    private boolean extendedMapSelectorActive;
     private Array<String> startLocations;
 
     public ServerLobbyScreen(final Zoned game, Server server, String name) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("In the Server Lobby");
 
-        viewport = new ScreenViewport();
-        stage = new FocusableStage(viewport);
+        screenViewport = new ScreenViewport();
+        screenStage = new FocusableStage(screenViewport);
         animationManager = new AnimationManager(this.game, this);
-        font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
-
-        // TODO: Fix bogus client ip being sent to some clients when a map is changed while a new client was joining
 
         startLocations = new Array<>();
         this.serverName = name;
@@ -97,15 +81,50 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     @Override
     public void show() {
+        setUpMapSelectorStage();
         setUpServerLobbyStage();
         setUpMap();
-        setUpBackButton();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
-        playerConnected(null);
+        playerConnected(null); // Add the host player (oneself) to the player list
         connectionManager.start();
 
-        animationManager.fadeInStage(stage);
+        screenStage.getRoot().getColor().a = 0;
+
+        // The screen is faded in once the maps and the extended selector is loaded
+        mapSelector.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+            @Override
+            public void onExternalMapsLoaded(Array<MapEntity> mapList, final int externalMapStartIndex) {
+                // Set up the extended map selector once external maps have been loaded
+                mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
+                    @Override
+                    public void onExtendedMapSelectorOpened() {
+                        openExtendedMapSelector();
+                    }
+
+                    @Override
+                    public void onMapSelect(int mapIndex) {
+                        if (mapIndex != -1) {
+                            mapSpinner.snapToStep(mapIndex - mapSpinner.getPositionIndex());
+                        }
+                        animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+                        extendedMapSelectorActive = false;
+                    }
+                });
+
+                animationManager.fadeInStage(screenStage);
+            }
+        });
+    }
+
+    private void openExtendedMapSelector() {
+        extendedMapSelectorActive = true;
+        animationManager.startExtendedMapSelectorAnimation(screenStage, mapSelectorStage, 0);
+        mapSpinner.snapToStep(0);
+    }
+
+    private void setUpMapSelectorStage() {
+        mapSelectorStage = new FocusableStage(screenViewport);
+        mapSelectorStage.getRoot().getColor().a = 0f;
     }
 
     private void setUpServerLobbyStage() {
@@ -114,8 +133,11 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         serverLobbyTable.center();
         //serverLobbyTable.setDebug(true);
 
-        Label lobbyTitle = new Label("Lobby", game.skin, "themed");
-        serverLobbyTable.add(lobbyTitle).pad(20f);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
+
+        Label lobbyTitle = new Label("Lobby", game.skin, "themed-rounded-background");
+        float headerPad = uiButtonManager.getHeaderPad(lobbyTitle.getPrefHeight());
+        serverLobbyTable.add(lobbyTitle).pad(headerPad);
         serverLobbyTable.row();
 
         Table scrollTable = new Table();
@@ -128,18 +150,14 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         serverLobbyTable.add(playerListScrollPane).grow();
         serverLobbyTable.row();
 
-        mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
+        mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
-        final Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
+        mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
         final Table mapSelectorTable = new Table();
         mapSelectorTable.add(mapSpinner).pad(10f);
 
         final TextButton mapButton = new TextButton(mapSelector.getMapManager().getMapList().get(mapSpinner.getPositionIndex()).getName(), game.skin);
-
-        final Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("Cancel");
-        buttonTexts.add("Set Map");
 
         final Array<Actor> focusableDialogButtons = new Array<>();
         focusableDialogButtons.add(mapSpinner.getLeftButton());
@@ -149,13 +167,15 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 final int prevIndex = mapSpinner.getPositionIndex();
+                mapSelectorActive = true;
 
-                stage.showDialog(mapSelectorTable, focusableDialogButtons, buttonTexts,
+                screenStage.showDialog(mapSelectorTable, focusableDialogButtons,
+                        new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.SetMap },
                         false, game.getScaleFactor(),
                         new FocusableStage.DialogResultListener() {
                             @Override
-                            public void dialogResult(String buttonText) {
-                                if (buttonText.equals("Set Map")) {
+                            public void dialogResult(FocusableStage.DialogButton button) {
+                                if (button == FocusableStage.DialogButton.SetMap) {
                                     mapSelector.loadSelectedMap();
                                     mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
                                     mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
@@ -164,14 +184,15 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                                     repopulateMapStartPosLocations();
                                     updateMapColor(players[0], players[0].color, 0);
                                 } else {
-                                    // Cancel was pressed; restore the spinner pos
-                                    mapSpinner.snapToStep(mapSpinner.getPositionIndex() - prevIndex);
+                                    // Cancelled; restore the spinner pos
+                                    mapSpinner.snapToStep(prevIndex - mapSpinner.getPositionIndex());
                                 }
+
+                                mapSelectorActive = false;
                             }
                         }, game.skin);
             }
         });
-        mapSelector.loadExternalMaps();
 
         serverLobbyTable.add(mapButton).width(200f * game.getScaleFactor());
         serverLobbyTable.row();
@@ -183,11 +204,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                 if (mapSelector.loadSelectedMap()) {
                     String errorMsg = connectionManager.validateServerData(playerList.getChildren());
                     if (errorMsg != null) {
-                        Array<String> dialogButtonTexts = new Array<>();
-                        dialogButtonTexts.add("OK");
-
-                        stage.showDialog(errorMsg, dialogButtonTexts,
-                                false,
+                        screenStage.showOKDialog(errorMsg, false,
                                 game.getScaleFactor(), null, game.skin);
                         return;
                     }
@@ -200,18 +217,26 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         });
         serverLobbyTable.add(startButton).width(250 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
-        stage.addActor(serverLobbyTable);
-        stage.addFocusableActor(mapButton, 2);
-        stage.row();
-        stage.addFocusableActor(startButton, 2);
-        stage.row();
-        stage.setScrollFocus(playerListScrollPane);
+        screenStage.addActor(serverLobbyTable);
+        screenStage.addFocusableActor(mapButton, 2);
+        screenStage.row();
+        screenStage.addFocusableActor(startButton, 2);
+        screenStage.row();
+        screenStage.setScrollFocus(playerListScrollPane);
+
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                onBackPressed();
+            }
+        });
     }
 
     private void setUpMap() {
         mapSelector.loadSelectedMap();
         this.batch = new SpriteBatch();
-        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
+        this.shapeDrawer = new ShapeDrawer(batch, game.skin);
         this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
         this.mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
@@ -219,17 +244,6 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
         this.players = new Player[0];
         // This array size is increased in playerConnected
         // I know I should use Arrays (libGDX's ArrayLists) instead but Map works with regular 'ol arrays for now
-    }
-
-    private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
-        backButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                onBackPressed();
-            }
-        });
     }
 
     @Override
@@ -293,11 +307,11 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
                 playerItem.add(startPosSelector); // idk why .expandX on stuff added to playerItem doesn't do anything
             }
 
-            stage.addFocusableActor(colorSelector);
-            stage.addFocusableActor(startPosSelector);
-            stage.row();
+            screenStage.addFocusableActor(colorSelector);
+            screenStage.addFocusableActor(startPosSelector);
+            screenStage.row();
             if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-                stage.setFocusedActor(colorSelector);
+                screenStage.setFocusedActor(colorSelector);
             }
         } else {
             Label colorLabel = new Label(Constants.PLAYER_COLORS.keySet().iterator().next(), game.skin);
@@ -420,7 +434,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     private void startGame(MapManager mapManager) {
         Player[] players = inflatePlayerList(mapManager);
         clearMapGrid();
-        animationManager.fadeOutStage(stage, this, new GameScreen(game, mapManager, players, connectionManager));
+        animationManager.fadeOutStage(screenStage, this, new GameScreen(game, mapManager, players, connectionManager));
     }
 
     private Player[] inflatePlayerList(MapManager mapManager) {
@@ -522,17 +536,24 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
         renderMap(delta);
 
-        this.viewport.apply(true);
-        batch.setProjectionMatrix(this.viewport.getCamera().combined);
+        this.screenViewport.apply(true);
+        batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
         drawDarkOverlay();
 
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
-        stage.draw();
-        stage.act(delta);
+        screenStage.act(delta);
+        if (screenStage.getRoot().getColor().a > 0) {
+            screenStage.draw();
+        }
+
+        mapSelectorStage.act(delta);
+        if (mapSelectorStage.getRoot().getColor().a > 0) {
+            mapSelectorStage.draw();
+        }
     }
 
     private void renderMap(float delta) {
@@ -563,7 +584,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        super.resize(width, height);
 
         mapViewport.update(width, height);
         updateCamera(mapViewport.getCamera(), width, height);
@@ -577,8 +598,8 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     }
 
     private void drawDarkOverlay() {
-        float height = stage.getViewport().getWorldHeight();
-        float width = stage.getViewport().getWorldWidth();
+        float height = screenStage.getViewport().getWorldHeight();
+        float width = screenStage.getViewport().getWorldWidth();
 
         shapeDrawer.setColor(mapDarkOverlayColor);
         batch.begin();
@@ -588,29 +609,47 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
 
     @Override
     public void dispose() {
-        stage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
+        mapSelectorStage.dispose();
         if (map != null) {
             map.dispose();
             map = null;
         }
     }
 
-    private void onBackPressed() {
+    /**
+     * Actions to do when the back/escape button is pressed
+     *
+     * @return true if the action has been handled from this screen
+     *         false if the action needs to be sent down the inputmultiplexer chain
+     */
+    private boolean onBackPressed() {
+        if (extendedMapSelectorActive) {
+            animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+            extendedMapSelectorActive = false;
+            return true;
+        } else if (screenStage.dialogIsActive()) {
+            return false;
+        }
+
         playerList.clear();
         connectionManager.closeConnection();
 
-        animationManager.fadeOutStage(stage, this, new HostJoinScreen(game));
+        animationManager.fadeOutStage(screenStage, this, new HostJoinScreen(game));
+        return true;
     }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
+        } else if (mapSelectorActive && !extendedMapSelectorActive && !mapSelector.extraParamsDialogActive()) {
+            if (keycode == Input.Keys.S) {
+                return mapSelector.extraParamShortcutPressed();
+            } else if (keycode == Input.Keys.E) {
+                openExtendedMapSelector();
+                return true;
+            }
         }
 
         return false;
@@ -630,8 +669,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -653,7 +691,7 @@ public class ServerLobbyScreen extends ScreenAdapter implements ServerLobbyConne
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }

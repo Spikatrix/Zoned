@@ -3,35 +3,13 @@ package com.cg.zoned;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
 
+import java.util.Locale;
+
 public class Assets {
     private AssetManager assetManager;
 
-    public Texture getPlayButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_play_sheet.png", Texture.class);
-    }
-
-    public Texture getBackButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_back.png", Texture.class);
-    }
-
-    public Texture getCreditsButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_credits.png", Texture.class);
-    }
-
-    public Texture getCrossButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_cross.png", Texture.class);
-    }
-
-    public Texture getDevButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_dev.png", Texture.class);
-    }
-
-    public Texture getSettingsButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_settings.png", Texture.class);
-    }
-
-    public Texture getTutorialButtonTexture() {
-        return assetManager.get("icons/ui_icons/ic_tutorial.png", Texture.class);
+    public Texture getTexture(TextureObject textureObject) {
+        return assetManager.get(textureObject.location, Texture.class);
     }
 
     public void setAssetManager(AssetManager assetManager) {
@@ -40,6 +18,27 @@ public class Assets {
 
     public void dispose() {
         assetManager.dispose();
+    }
+
+    public enum TextureObject {
+        DIAMOND_TEXTURE    ("images/ic_diamond.png"),
+        PLAY_SHEET_TEXTURE ("images/ui_icons/ic_play_sheet.png"),
+        BACK_TEXTURE       ("images/ui_icons/ic_back.png"),
+        CREDITS_TEXTURE    ("images/ui_icons/ic_credits.png"),
+        CROSS_TEXTURE      ("images/ui_icons/ic_cross.png"),
+        DEV_TEXTURE        ("images/ui_icons/ic_dev.png"),
+        SETTINGS_TEXTURE   ("images/ui_icons/ic_settings.png"),
+        TUTORIAL_TEXTURE   ("images/ui_icons/ic_tutorial.png");
+
+        private final String location;
+
+        TextureObject(String location) {
+            this.location = location;
+        }
+
+        public String getLocation() {
+            return location;
+        }
     }
 
     // TODO: The default font size is way too big (really noticeable on mobile screens)
@@ -65,7 +64,7 @@ public class Assets {
         }
 
         public String getFontName() {
-            return this.toString().toLowerCase();
+            return this.toString().toLowerCase(Locale.ENGLISH);
         }
 
         public String getFontFileName() {

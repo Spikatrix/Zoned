@@ -43,7 +43,7 @@ public class PieMenuControlManager extends ControlTypeEntity {
     }
 
     private void setUpPieMenus(Array<Texture> usedTextures) {
-        Texture arrowTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"));
+        Texture arrowTexture = new Texture(Gdx.files.internal("images/control_icons/ic_arrow.png"));
         usedTextures.add(arrowTexture);
         final Drawable arrow = new TextureRegionDrawable(arrowTexture);
         this.arrowImages = new Image[menus.length][];

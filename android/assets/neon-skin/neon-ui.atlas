@@ -1,9 +1,26 @@
-
 neon-ui.png
 size: 512,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
+border-slanted
+  rotate: false
+  xy: 45, 50
+  size: 57, 27
+  split: 23, 24, 0, 0
+  pad: 32, 32, 32, 32
+  orig: 65, 38
+  offset: 0, 0
+  index: -1
+border-rounded
+  rotate: false
+  xy: 49, 88
+  size: 50, 35
+  split: 15, 15, 0, 0
+  pad: 20, 20, 12, 13
+  orig: 75, 105
+  offset: 0, 0
+  index: -1
 button
   rotate: false
   xy: 145, 41
@@ -68,34 +85,13 @@ checkbox-pressed-over
   orig: 22, 22
   offset: 0, 0
   index: -1
-font-export
-  rotate: false
-  xy: 388, 394
-  size: 116, 117
-  orig: 116, 117
-  offset: 0, 0
-  index: -1
-font-over-export
-  rotate: false
-  xy: 1, 41
-  size: 142, 144
-  orig: 142, 144
-  offset: 0, 0
-  index: -1
-font-pressed-export
-  rotate: false
-  xy: 244, 367
-  size: 142, 144
-  orig: 142, 144
-  offset: 0, 0
-  index: -1
 list
   rotate: false
   xy: 262, 108
   size: 56, 46
   split: 18, 18, 18, 18
   pad: 14, 14, 14, 14
-  orig: 56, 46
+  orig: 290, 131
   offset: 0, 0
   index: -1
 minus

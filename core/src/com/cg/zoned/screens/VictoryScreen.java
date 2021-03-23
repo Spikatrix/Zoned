@@ -3,12 +3,9 @@ package com.cg.zoned.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -27,13 +24,11 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.Sort;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.PlayerColorHelper;
-import com.cg.zoned.Preferences;
-import com.cg.zoned.TeamData;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.PlayerManager;
 import com.cg.zoned.managers.UIButtonManager;
@@ -43,17 +38,7 @@ import com.cg.zoned.ui.HoverImageButton;
 import java.text.DecimalFormat;
 import java.util.Comparator;
 
-public class VictoryScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures;
-
-    private FocusableStage stage;
-    private Viewport viewport;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
-
+public class VictoryScreen extends ScreenObject implements InputProcessor {
     private ParticleEffect trailEffect;
 
     private Array<TeamData> teamData;
@@ -64,16 +49,14 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     private float padding;
 
     public VictoryScreen(final Zoned game, PlayerManager playerManager) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Post match");
 
         this.padding = 16f * game.getScaleFactor();
-        this.usedTextures = new Array<>();
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         finalizeTeamData(playerManager);
     }
@@ -91,13 +74,12 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void show() {
         setUpStage();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         trailEffect = new ParticleEffect();
-        trailEffect.setPosition(0, stage.getHeight() / 2f);
+        trailEffect.setPosition(0, screenStage.getHeight() / 2f);
         trailEffect.load(Gdx.files.internal("particles/trails.p"), Gdx.files.internal("particles"));
 
-        animationManager.startGameOverAnimation(stage, trailEffect);
+        animationManager.startGameOverAnimation(screenStage, trailEffect);
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
@@ -119,7 +101,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         Label gameOver = new Label("GAME OVER", game.skin, Assets.FontManager.STYLED_LARGE.getFontName(), Color.GREEN);
         table.add(gameOver);
 
-        stage.addActor(table);
+        screenStage.addActor(table);
     }
 
     private void setUpVictoryUI() {
@@ -141,9 +123,9 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
         };
 
         RankData[] rankData = new RankData[]{
-                new RankData(Color.GOLD,       "icons/rank_icons/ic_no1.png"),
-                new RankData(Color.LIGHT_GRAY, "icons/rank_icons/ic_no2.png"),
-                new RankData(Color.BROWN,      "icons/rank_icons/ic_no3.png"),
+                new RankData(Color.GOLD,       "images/rank_icons/ic_no1.png"),
+                new RankData(Color.LIGHT_GRAY, "images/rank_icons/ic_no2.png"),
+                new RankData(Color.BROWN,      "images/rank_icons/ic_no3.png"),
                 new RankData(Color.GRAY,       null),
         };
 
@@ -231,8 +213,8 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
 
         masterTable.add(screenScrollPane);
 
-        stage.setScrollFocus(screenScrollPane);
-        stage.addActor(masterTable);
+        screenStage.setScrollFocus(screenScrollPane);
+        screenStage.addActor(masterTable);
 
         setUpNextButton();
     }
@@ -256,53 +238,58 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpNextButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton nextButton = uiButtonManager.addNextButtonToStage(game.assets.getBackButtonTexture());
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
+        HoverImageButton nextButton = uiButtonManager.addNextButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         nextButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                animationManager.fadeOutStage(stage, VictoryScreen.this, new MainMenuScreen(game));
+                animationManager.fadeOutStage(screenStage, VictoryScreen.this, new MainMenuScreen(game));
             }
         });
-        stage.addFocusableActor(nextButton);
+        screenStage.addFocusableActor(nextButton);
     }
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        super.resize(width, height);
         trailEffect.setPosition(0, height / 2f);
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        super.render(delta);
 
-        viewport.apply(true);
+        screenStage.getBatch().begin();
+        trailEffect.draw(screenStage.getBatch(), delta);
+        screenStage.getBatch().end();
 
-        stage.getBatch().begin();
-        trailEffect.draw(stage.getBatch(), delta);
-        stage.getBatch().end();
-
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
-        stage.draw();
-        stage.act(delta);
+        screenStage.draw();
+        screenStage.act(delta);
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
+        super.dispose();
         trailEffect.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
     }
 
-    public void onBackPressed() {
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+    /**
+     * Actions to do when the back/escape button is pressed
+     *
+     * @return true if the action has been handled from this screen
+     *         false if the action needs to be sent down the inputmultiplexer chain
+     */
+    private boolean onBackPressed() {
+        if (screenStage.dialogIsActive()) {
+            return false;
+        }
+
+        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
+        return true;
     }
 
     private static class TeamDataComparator implements Comparator<TeamData> {
@@ -339,8 +326,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -359,8 +345,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -382,7 +367,7 @@ public class VictoryScreen extends ScreenAdapter implements InputProcessor {
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }

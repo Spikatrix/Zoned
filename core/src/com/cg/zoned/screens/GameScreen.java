@@ -4,18 +4,18 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -26,9 +26,9 @@ import com.cg.zoned.Player;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.ShapeDrawer;
-import com.cg.zoned.TeamData;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.GameManager;
 import com.cg.zoned.managers.MapManager;
@@ -40,27 +40,17 @@ import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
 
-public class GameScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
+public class GameScreen extends ScreenObject implements InputProcessor {
     private GameManager gameManager;
+    private GLProfiler profiler;
 
     private Map map;
-
     private ExtendViewport[] playerViewports;
-
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
     private Color[] dividerLeftColor, dividerRightColor;
 
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
     private boolean gameCompleteFadeOutDone = false;
 
-    private FocusableStage fullScreenStage;
-    private BitmapFont font;
-    private boolean showFPSCounter;
     private ScoreBar scoreBars;
     private boolean gamePaused = false;
 
@@ -68,6 +58,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     private float bgAnimSpeed = 1.8f;
     private float bgAlpha = .25f;
 
+    private HoverImageButton zoomButton;
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
     public GameScreen(final Zoned game, MapManager mapManager, Player[] players) {
@@ -83,20 +74,27 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Playing a match", mapManager.getPreparedMap().getName(), players.length - 1);
 
-        this.fullScreenStage = new FocusableStage(new ScreenViewport());
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
 
         this.gameManager = new GameManager(this);
         this.gameManager.setUpConnectionManager(server, client);
-        this.gameManager.setUpDirectionAndPlayerBuffer(players, fullScreenStage,
+        this.gameManager.setUpDirectionAndPlayerBuffer(players, screenStage,
                 game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0),
                 game.skin, game.getScaleFactor(), usedTextures);
 
         this.batch = new SpriteBatch();
-        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
+        this.shapeDrawer = new ShapeDrawer(batch, game.skin);
         this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount(), this.shapeDrawer);
+        this.map.initFloodFillVars();
+
+        if (Constants.DISPLAY_EXTENDED_GL_STATS) {
+            profiler = new GLProfiler(Gdx.graphics);
+            profiler.enable();
+        }
 
         currentBgColor = new Color(0, 0, 0, bgAlpha);
         targetBgColor = new Color(0, 0, 0, bgAlpha);
@@ -106,7 +104,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
         map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
 
-        this.scoreBars = new ScoreBar(fullScreenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
+        this.scoreBars = new ScoreBar(screenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
     }
 
     private void initViewports(Player[] players) {
@@ -124,19 +122,16 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                 this.dividerRightColor[i] = new Color(players[i + 1].color);
             }
         }
-
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpInputProcessors();
         setUpUI();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
     }
 
     private void setUpUI() {
-        UIButtonManager uiButtonManager = new UIButtonManager(fullScreenStage, game.getScaleFactor(), usedTextures);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         setUpPauseButton(uiButtonManager);
         setUpZoomButton(uiButtonManager);
     }
@@ -152,10 +147,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void setUpZoomButton(UIButtonManager uiButtonManager) {
-        final HoverImageButton zoomButton = uiButtonManager.addZoomButtonToStage();
-        zoomButton.addListener(new ClickListener() {
+        zoomButton = uiButtonManager.addZoomButtonToStage();
+        zoomButton.addListener(new ChangeListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void changed(ChangeEvent event, Actor actor) {
                 if (targetZoom == Constants.ZOOM_MIN_VALUE) {
                     targetZoom = Constants.ZOOM_MAX_VALUE;
                 } else if (targetZoom == Constants.ZOOM_MAX_VALUE) {
@@ -167,7 +162,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private void setUpInputProcessors() {
         InputMultiplexer inputMultiplexer = new InputMultiplexer();
-        inputMultiplexer.addProcessor(fullScreenStage);
+        inputMultiplexer.addProcessor(screenStage);
         inputMultiplexer.addProcessor(gameManager.playerManager);
         inputMultiplexer.addProcessor(this); // ESC key, Back button etc
         Gdx.input.setInputProcessor(inputMultiplexer);
@@ -176,13 +171,16 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public void resize(int width, int height) {
         for (int i = 0; i < playerViewports.length; i++) {
+            // TODO: Show the same grid view for all players regardless of what their screen resolution/window size is
+            //       Not sure if this is possible nicely though, i.e, without stretching and letterboxing/pillarboxing
+
             playerViewports[i].update(width / playerViewports.length, height);
             updateCamera(playerViewports[i].getCamera(), width / playerViewports.length, height);
             this.playerViewports[i].setScreenX(i * width / playerViewports.length);
         }
 
         scoreBars.resize(width, height);
-        fullScreenStage.resize(width, height);
+        super.resize(width, height);
     }
 
     private void updateCamera(Camera camera, int width, int height) {
@@ -193,9 +191,94 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void render(float delta) {
+        if (profiler != null) {
+            profiler.reset();
+        }
+
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        drawGameBG(delta);
+
+        if (!gameManager.gameOver) {
+            if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
+                gameManager.gameConnectionManager.serverClientCommunicate();
+            } else {                                // We're playing on the same device (Splitscreen)
+                gameManager.playerManager.updatePlayerDirections();
+            }
+        }
+
+        map.update(gameManager.playerManager, delta);
+
+        batch.setProjectionMatrix(screenStage.getCamera().combined);
+        batch.begin();
+        shapeDrawer.setColor(currentBgColor);
+        shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
+        batch.end();
+
+        for (int i = 0; i < this.playerViewports.length; i++) {
+            // Render everything in the i-th player viewport
+            renderMap(i, delta);
+        }
+
+        screenStage.getViewport().apply(true);
+        batch.setProjectionMatrix(screenStage.getCamera().combined);
+        batch.begin();
+
+        if (isSplitscreenMultiplayer() && playerViewports.length >= 2) {
+            // Draw the viewport divider only when playing on the same device with at least 2 splitscreens
+            drawViewportDividers();
+        }
+
+        if (!gameManager.gameOver) {
+            gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
+        }
+
+        BitmapFont smallFont = game.getSmallFont();
+        boolean showFPSCounter = game.showFPSCounter();
+
+        scoreBars.render(shapeDrawer, smallFont, gameManager.playerManager.getTeamData(), delta);
+
+        if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getTeamData())) {
+            gameManager.directionBufferManager.clearBuffer();
+            gameManager.playerManager.stopPlayers(true);
+            gameManager.gameOver = true;
+        }
+
+        if (gameManager.gameOver) {
+            fadeOutScreen(delta);
+        }
+
+        batch.end();
+
+        // Display FPS
+        float textTopYOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
+        int uiTextLineIndex = 0;
+        if (showFPSCounter) {
+            UITextDisplayer.displayFPS(screenStage.getViewport(), screenStage.getBatch(), smallFont,
+                    UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
+            uiTextLineIndex++;
+        }
+
+        // Display Ping
+        if (gameManager.gameConnectionManager.isActive) {
+            UITextDisplayer.displayPing(screenStage.getViewport(), screenStage.getBatch(), smallFont,
+                    gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
+            uiTextLineIndex++;
+        }
+
+        screenStage.act(delta);
+        screenStage.draw();
+
+        // Display GL Profiler Stats
+        if (profiler != null) {
+            UITextDisplayer.displayExtendedGLStatistics(screenStage.getViewport(), screenStage.getBatch(),
+                    smallFont, profiler, UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
+            uiTextLineIndex++;
+        }
+    }
+
+    private void drawGameBG(float delta) {
         int highscore = 0;
         for (TeamData teamData : gameManager.playerManager.getTeamData()) {
             if (teamData.getScore() > highscore) {
@@ -208,78 +291,14 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         }
         currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
         currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
-
-        if (!gameManager.gameOver) {
-            if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
-                gameManager.gameConnectionManager.serverClientCommunicate();
-            } else {                                // We're playing on the same device (Splitscreen)
-                gameManager.playerManager.updatePlayerDirections();
-            }
-        }
-
-        map.update(gameManager.playerManager, delta);
-
-        batch.setProjectionMatrix(fullScreenStage.getCamera().combined);
-        batch.begin();
-        shapeDrawer.setColor(currentBgColor);
-        shapeDrawer.filledRectangle(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
-        batch.end();
-
-        for (int i = 0; i < this.playerViewports.length; i++) {
-            // Render everything in the i-th player viewport
-            renderMap(i, delta);
-        }
-
-        fullScreenStage.getViewport().apply(true);
-        batch.setProjectionMatrix(fullScreenStage.getCamera().combined);
-        batch.begin();
-
-        if (isSplitscreenMultiplayer() && playerViewports.length >= 2) {
-            // Draw the viewport divider only when playing on the same device with at least 2 splitscreens
-            drawViewportDividers();
-        }
-
-        if (!gameManager.gameOver) {
-            gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
-        }
-
-        scoreBars.render(shapeDrawer, font, gameManager.playerManager.getTeamData(), delta);
-
-        if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getTeamData())) {
-            gameManager.directionBufferManager.clearBuffer();
-            gameManager.playerManager.stopPlayers(true);
-            gameManager.gameOver = true;
-        }
-        batch.end();
-        if (gameManager.gameOver) {
-            fadeOutScreen(delta);
-        }
-
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
-                    UITextDisplayer.padding, scoreBars.scoreBarHeight + UITextDisplayer.padding);
-        }
-        if (gameManager.gameConnectionManager.isActive) {
-            float yOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
-            if (!showFPSCounter) {
-                yOffset = -yOffset + scoreBars.scoreBarHeight + UITextDisplayer.padding;
-            }
-            UITextDisplayer.displayPing(fullScreenStage.getViewport(), fullScreenStage.getBatch(), font,
-                    gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, yOffset);
-        }
-
-        fullScreenStage.act(delta);
-        fullScreenStage.draw();
     }
 
     private void fadeOutScreen(float delta) {
         fadeOutOverlay.a += delta * 2f * (2f - fadeOutOverlay.a);
         fadeOutOverlay.a = Math.min(fadeOutOverlay.a, 1f);
 
-        batch.begin();
         shapeDrawer.setColor(fadeOutOverlay);
-        shapeDrawer.filledRectangle(0, 0, fullScreenStage.getWidth(), fullScreenStage.getHeight());
-        batch.end();
+        shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
 
         if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
             gameCompleteFadeOutDone = true;
@@ -300,11 +319,11 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     private void drawViewportDividers() {
         int lineCount = gameManager.playerManager.getPlayers().length - 1;
-        float height = fullScreenStage.getViewport().getWorldHeight();
+        float height = screenStage.getViewport().getWorldHeight();
         float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (playerViewports.length - 1), 3f);
         float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (playerViewports.length - 1), 1f);
         for (int i = 0; i < lineCount; i++) {
-            float startX = (fullScreenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
+            float startX = (screenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
 
             shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
                     dividerSolidWidth * 2, height,
@@ -347,13 +366,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     private void showDisconnectionDialog() {
-        final Array<String> dialogButtonTexts = new Array<>();
-        dialogButtonTexts.add("OK");
-        fullScreenStage.showDialog("Disconnected", dialogButtonTexts,
-                false,
+        screenStage.showOKDialog("Disconnected", false,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
                         gameManager.gameConnectionManager.close();
                         dispose();
                         game.setScreen(new MainMenuScreen(game));
@@ -369,16 +385,15 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
             gameManager.directionBufferManager.clearBuffer();
         }
 
-        final Array<String> dialogButtonTexts = new Array<>();
-        dialogButtonTexts.add("Resume");
         //dialogButtonTexts.add("Restart");
-        dialogButtonTexts.add("Main Menu");
-        fullScreenStage.showDialog("Game Paused", dialogButtonTexts,
+
+        screenStage.showDialog("Game Paused",
+                new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu },
                 true,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
-                        if (buttonText.equals(dialogButtonTexts.get(1))) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
+                        if (button == FocusableStage.DialogButton.MainMenu) {
                             if (gameManager.gameConnectionManager.isActive) {
                                 gameManager.gameConnectionManager.close();
                             } else {
@@ -420,14 +435,10 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
         gameManager.playerManager.stopPlayers(false);
         gameManager.directionBufferManager.ignorePlayer();
         showPlayerDisconnectedDialog(playerName);
-
     }
 
     private void showPlayerDisconnectedDialog(String playerName) {
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("OK");
-
-        fullScreenStage.showDialog(playerName + " got disconnected", buttonTexts,
+        screenStage.showOKDialog(playerName + " got disconnected",
                 false, game.getScaleFactor(),
                 null, game.skin);
     }
@@ -440,7 +451,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
                     gameManager.playerManager.stopPlayers(false);
                     gameManager.directionBufferManager.clearBuffer();
                     showDisconnectionDialog();
-                    Gdx.input.setInputProcessor(fullScreenStage);
+                    Gdx.input.setInputProcessor(screenStage);
                 }
             }
         });
@@ -455,19 +466,17 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void dispose() {
-        fullScreenStage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
         map.dispose();
     }
 
     @Override
     public boolean keyDown(int keycode) {
-        if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
+        if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE || keycode == Input.Keys.P) {
             showPauseDialog();
-
+            return true;
+        } else if (keycode == Input.Keys.Z) {
+            zoomButton.toggle();
             return true;
         }
 
@@ -511,7 +520,7 @@ public class GameScreen extends ScreenAdapter implements InputProcessor {
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }

@@ -1,5 +1,6 @@
 package com.cg.zoned.ui;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -7,8 +8,10 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ActorGestureListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
+import com.cg.zoned.MapSelector;
 
 public class Spinner extends Table {
     private TextButton leftButton;
@@ -31,21 +34,21 @@ public class Spinner extends Table {
     }
 
     private void init(Skin skin) {
-        this.leftButton = new TextButton("+", skin);
+        this.leftButton = new TextButton("-", skin);
         this.stepScrollPane = new StepScrollPane(skin, isVerticalSpinner);
-        this.rightButton = new TextButton("-", skin);
+        this.rightButton = new TextButton("+", skin);
 
         this.leftButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                snapToStep(buttonStepCount);
+                snapToStep(-buttonStepCount);
             }
         });
 
         this.rightButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                snapToStep(-buttonStepCount);
+                snapToStep(buttonStepCount);
             }
         });
 
@@ -97,7 +100,7 @@ public class Spinner extends Table {
 
     private void addAllComponentsToSpinner() {
         add(leftButton).width(buttonWidth).height(buttonHeight);
-        add(stepScrollPane).growX().height(scrollPaneHeight).width(scrollPaneWidth);
+        add(stepScrollPane).height(scrollPaneHeight).width(scrollPaneWidth);
         add(rightButton).width(buttonWidth).height(buttonHeight);
 
         stepScrollPane.setHeight(scrollPaneHeight);
@@ -131,6 +134,11 @@ public class Spinner extends Table {
         stepScrollPane.layout();
     }
 
+    public void replaceContent(int index, Actor actor) {
+        ((Table) stepScrollPane.getActor()).getCells().get(index).setActor(actor);
+        stepScrollPane.layout();
+    }
+
     public void setButtonStepCount(int buttonStepCount) {
         this.buttonStepCount = buttonStepCount;
     }
@@ -140,11 +148,22 @@ public class Spinner extends Table {
     }
 
     public int getPositionIndex() {
-        if (isVerticalSpinner) {
-            return Math.round(stepScrollPane.getDestinationPosition() / scrollPaneHeight);
-        } else {
-            return Math.round(stepScrollPane.getDestinationPosition() / scrollPaneWidth);
-        }
+        return stepScrollPane.getPositionIndex();
+    }
+
+    public void setExtendedListener(final MapSelector.ExtendedMapSelectionListener extendedMapSelectionListener) {
+        stepScrollPane.addListener(new ActorGestureListener() {
+            @Override
+            public void tap(InputEvent event, float x, float y, int count, int button) {
+                if (count >= 2 && button == Input.Buttons.LEFT) {
+                    extendedMapSelectionListener.onExtendedMapSelectorOpened();
+                }
+            }
+        });
+    }
+
+    public void setDestinationPositionListener(StepScrollPane.StepScrollListener stepScrollListener) {
+        stepScrollPane.setStepScrollListener(stepScrollListener);
     }
 
     public TextButton getLeftButton() {

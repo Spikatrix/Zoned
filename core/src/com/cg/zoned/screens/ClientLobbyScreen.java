@@ -4,20 +4,19 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -29,14 +28,13 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
-import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
-import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.MapManager;
@@ -53,22 +51,9 @@ import com.esotericsoftware.kryonet.Client;
 import java.util.Arrays;
 import java.util.Map;
 
-public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConnectionManager.ClientPlayerListener, InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
+public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnectionManager.ClientPlayerListener, InputProcessor {
     private ClientLobbyConnectionManager connectionManager;
     private String clientName;
-
-    private FocusableStage stage;
-    private Viewport viewport;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
-
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
 
     private com.cg.zoned.Map map;
     private MapManager mapManager;
@@ -84,13 +69,12 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     private Array<String> startLocations;
 
     public ClientLobbyScreen(final Zoned game, Client client, String name) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("In the Client lobby");
 
-        viewport = new ScreenViewport();
-        stage = new FocusableStage(viewport);
+        screenViewport = new ScreenViewport();
+        screenStage = new FocusableStage(screenViewport);
         animationManager = new AnimationManager(this.game, this);
-        font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         startLocations = new Array<>();
         this.clientName = name;
@@ -101,8 +85,6 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     public void show() {
         setUpClientLobbyStage();
         setUpMap();
-        setUpBackButton();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         addPlayer(null, null, null, null, null);
         connectionManager.start(clientName);
@@ -111,24 +93,27 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             public void animationEnd(Stage stage) {
                 mapManager.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
                     @Override
-                    public void onExternalMapLoaded(Array<MapEntity> mapList, int externalMapStartIndex) {
+                    public void onExternalMapsLoaded(Array<MapEntity> mapList, int externalMapStartIndex) {
                         connectionManager.sendClientNameToServer(clientName);
                     }
                 });
                 animationManager.setAnimationListener(null);
             }
         });
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpClientLobbyStage() {
         Table clientLobbyTable = new Table();
         clientLobbyTable.setFillParent(true);
-        //clientLobbyTable.setDebug(true);
         clientLobbyTable.center();
+        //clientLobbyTable.setDebug(true);
 
-        Label lobbyTitle = new Label("Lobby", game.skin, "themed");
-        clientLobbyTable.add(lobbyTitle).pad(20);
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
+
+        Label lobbyTitle = new Label("Lobby", game.skin, "themed-rounded-background");
+        float headerPad = uiButtonManager.getHeaderPad(lobbyTitle.getPrefHeight());
+        clientLobbyTable.add(lobbyTitle).pad(headerPad);
 
         clientLobbyTable.row();
 
@@ -146,6 +131,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         clientLobbyTable.row();
 
         readyButton = new TextButton("Ready up", game.skin);
+        readyButton.setTransform(true);
         readyButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -176,27 +162,15 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         });
         clientLobbyTable.add(readyButton).width(200 * game.getScaleFactor()).pad(10 * game.getScaleFactor());
 
-        stage.addFocusableActor(readyButton, 2);
-        stage.row();
+        readyButton.setOrigin(200 * game.getScaleFactor() / 2f, readyButton.getHeight() / 2);
 
-        stage.addActor(clientLobbyTable);
-        stage.setScrollFocus(playerListScrollPane);
-    }
+        screenStage.addFocusableActor(readyButton, 2);
+        screenStage.row();
 
-    private void setUpMap() {
-        this.mapManager = new MapManager();
-        this.batch = new SpriteBatch();
-        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
-        this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
-        this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
-        this.players = new Player[0];
-        // This array size is increased in playerConnected
-        // I know I should use Arrays (libGDX's ArrayLists) instead, but Map works with regular 'ol arrays for now
-    }
+        screenStage.addActor(clientLobbyTable);
+        screenStage.setScrollFocus(playerListScrollPane);
 
-    private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -205,21 +179,22 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         });
     }
 
-    public void performClick(Actor actor) {
-        InputEvent touchDownEvent = new InputEvent();
-        touchDownEvent.setType(InputEvent.Type.touchDown);
-        actor.fire(touchDownEvent);
-
-        InputEvent touchUpEvent = new InputEvent();
-        touchUpEvent.setType(InputEvent.Type.touchUp);
-        actor.fire(touchUpEvent);
+    private void setUpMap() {
+        this.mapManager = new MapManager();
+        this.batch = new SpriteBatch();
+        this.shapeDrawer = new ShapeDrawer(batch, game.skin);
+        this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
+        this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
+        this.players = new Player[0];
+        // This array size is increased in playerConnected
+        // I know I should use Arrays (libGDX's ArrayLists) instead, but Map works with regular 'ol arrays for now
     }
 
     @Override
     public void pause() {
         if (readyButton.getText().toString().equals("Unready")) {
             // Game was minimized in the mobile; so make the player unready
-            performClick(readyButton);
+            readyButton.toggle();
         }
     }
 
@@ -274,6 +249,14 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
                     connectionManager.broadcastClientInfo((Table) playerList.getChild(0));
                 }
             });
+            colorSelector.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    if (colorSelector.isDisabled()) {
+                        nudgeReadyButton();
+                    }
+                }
+            });
             playerItem.add(colorSelector);
 
             final DropDownMenu startPosSelector = new DropDownMenu(game.skin);
@@ -287,13 +270,21 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
                     connectionManager.broadcastClientInfo((Table) playerList.getChild(0));
                 }
             });
+            startPosSelector.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    if (startPosSelector.isDisabled()) {
+                        nudgeReadyButton();
+                    }
+                }
+            });
             playerItem.add(startPosSelector);
 
-            stage.addFocusableActor(colorSelector);
-            stage.addFocusableActor(startPosSelector);
-            stage.row();
+            screenStage.addFocusableActor(colorSelector);
+            screenStage.addFocusableActor(startPosSelector);
+            screenStage.row();
             if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-                stage.setFocusedActor(colorSelector);
+                screenStage.setFocusedActor(colorSelector);
             }
         } else {
             Label colorLabel = new Label(color, game.skin);
@@ -309,6 +300,26 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         playerList.row();
 
         addNewPlayerIntoMap(name, color, startPos);
+    }
+
+    private void nudgeReadyButton() {
+        if (!readyButton.hasActions()) {
+            int nudgeAngle = 10;
+            float nudgeTime = 0.05f;
+            float scaleAmount = 1.2f;
+            int nudgeRepeatCount = 2;
+            Interpolation nudgeInterpolation = Interpolation.fastSlow;
+
+            readyButton.addAction(Actions.sequence(
+                    Actions.scaleTo(scaleAmount, scaleAmount, nudgeTime * 2, nudgeInterpolation),
+                    Actions.repeat(nudgeRepeatCount, Actions.sequence(
+                            Actions.rotateBy(nudgeAngle, nudgeTime, nudgeInterpolation),
+                            Actions.rotateBy(-nudgeAngle * 2, nudgeTime * 2, nudgeInterpolation),
+                            Actions.rotateBy(nudgeAngle, nudgeTime, nudgeInterpolation)
+                    )),
+                    Actions.scaleTo(1f, 1f, nudgeTime * 2, nudgeInterpolation)
+            ));
+        }
     }
 
     @Override
@@ -363,7 +374,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     @Override
     public void mapChanged(final String mapName, final int[] mapExtraParams, final int mapHash, boolean isNewMap) {
         if (readyButton.getText().toString().equals("Unready")) {
-            performClick(readyButton);
+            readyButton.toggle();
         }
 
         if (isNewMap) {
@@ -461,14 +472,10 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     @Override
     public void displayServerError(String errorMsg) {
-        final Array<String> dialogButtonTexts = new Array<>();
-        dialogButtonTexts.add("OK");
-
-        stage.showDialog(errorMsg, dialogButtonTexts,
-                false,
+        screenStage.showOKDialog(errorMsg, false,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
+                    public void dialogResult(FocusableStage.DialogButton button) {
                         disconnected();
                     }
                 }, game.skin);
@@ -531,7 +538,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager));
+                animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager));
             }
         });
     }
@@ -612,7 +619,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                animationManager.fadeOutStage(stage, ClientLobbyScreen.this, new HostJoinScreen(game));
+                animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new HostJoinScreen(game));
             }
         });
     }
@@ -626,17 +633,17 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
             renderMap(delta);
         }
 
-        this.viewport.apply(true);
-        batch.setProjectionMatrix(this.viewport.getCamera().combined);
+        this.screenViewport.apply(true);
+        batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
         drawDarkOverlay();
 
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
-        stage.draw();
-        stage.act(delta);
+        screenStage.draw();
+        screenStage.act(delta);
     }
 
     private void renderMap(float delta) {
@@ -667,7 +674,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     @Override
     public void resize(int width, int height) {
-        stage.resize(width, height);
+        super.resize(width, height);
 
         mapViewport.update(width, height);
         updateCamera(mapViewport.getCamera(), width, height);
@@ -681,8 +688,8 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     }
 
     private void drawDarkOverlay() {
-        float height = stage.getViewport().getWorldHeight();
-        float width = stage.getViewport().getWorldWidth();
+        float height = screenStage.getViewport().getWorldHeight();
+        float width = screenStage.getViewport().getWorldWidth();
         shapeDrawer.setColor(mapDarkOverlayColor);
         batch.begin();
         shapeDrawer.filledRectangle(0, 0, width, height);
@@ -691,26 +698,32 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
 
     @Override
     public void dispose() {
-        stage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
         if (map != null) {
             map.dispose();
             map = null;
         }
     }
 
-    private void onBackPressed() {
+    /**
+     * Actions to do when the back/escape button is pressed
+     *
+     * @return true if the action has been handled from this screen
+     *         false if the action needs to be sent down the inputmultiplexer chain
+     */
+    private boolean onBackPressed() {
+        if (screenStage.dialogIsActive()) {
+            return false;
+        }
+
         disconnected();
+        return true;
     }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -730,8 +743,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -753,7 +765,7 @@ public class ClientLobbyScreen extends ScreenAdapter implements ClientLobbyConne
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }

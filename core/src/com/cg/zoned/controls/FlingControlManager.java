@@ -10,8 +10,8 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveByAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.GameTouchPoint;
 import com.cg.zoned.Player;
+import com.cg.zoned.dataobjects.GameTouchPoint;
 
 public class FlingControlManager extends ControlTypeEntity {
     private Texture arrowTexture;
@@ -26,7 +26,7 @@ public class FlingControlManager extends ControlTypeEntity {
 
         this.clickPoints = new Array<>();
 
-        arrowTexture = new Texture(Gdx.files.internal("icons/control_icons/ic_arrow.png"));
+        arrowTexture = new Texture(Gdx.files.internal("images/control_icons/ic_arrow.png"));
         usedTextures.add(arrowTexture);
     }
 

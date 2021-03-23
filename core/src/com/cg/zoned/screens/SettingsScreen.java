@@ -4,10 +4,7 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -17,10 +14,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.UITextDisplayer;
@@ -33,33 +28,21 @@ import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverCheckBox;
 import com.cg.zoned.ui.HoverImageButton;
 
-public class SettingsScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
-    private FocusableStage stage;
-    private Viewport viewport;
-    private AnimationManager animationManager;
-    private BitmapFont font;
-
-    private boolean showFPSCounter;
-
+public class SettingsScreen extends ScreenObject implements InputProcessor {
     public SettingsScreen(final Zoned game) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Configuring Settings");
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
     }
 
     @Override
     public void show() {
         setUpStage();
         setUpBackButton();
-        animationManager.fadeInStage(stage);
+        animationManager.fadeInStage(screenStage);
     }
 
     private void setUpStage() {
@@ -74,10 +57,12 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
         ScrollPane screenScrollPane = new ScrollPane(table);
         screenScrollPane.setOverscroll(false, true);
 
+        screenStage.setScrollpane(screenScrollPane);
+
         ControlType[] controlTypes = ControlManager.CONTROL_TYPES;
         int currentControl = game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0);
 
-        Label controlSchemeLabel = new Label("Control scheme", game.skin, "themed");
+        Label controlSchemeLabel = new Label("Control setting", game.skin, "themed-rounded-background");
         table.add(controlSchemeLabel).colspan(controlTypes.length).padBottom(10f);
         table.row();
 
@@ -122,31 +107,31 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
 
         for (HoverImageButton controlButton : controlButtons) {
             table.add(controlButton).space(5f);
-            stage.addFocusableActor(controlButton);
+            screenStage.addFocusableActor(controlButton);
         }
         table.row();
-        stage.row();
+        screenStage.row();
         for (Label controlLabel : controlLabels) {
             table.add(controlLabel).space(5f);
         }
         table.row();
 
+        Label miscLabel = new Label("Misc", game.skin, "themed-rounded-background");
+        table.add(miscLabel).colspan(controlTypes.length).padTop(40f);
+        table.row();
 
         final HoverCheckBox showFPS = new HoverCheckBox("Show FPS counter", game.skin);
         showFPS.getImageCell().width(showFPS.getLabel().getPrefHeight()).height(showFPS.getLabel().getPrefHeight());
         showFPS.getImage().setScaling(Scaling.fill);
-        showFPS.setChecked(game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false));
-        showFPSCounter = showFPS.isChecked();
+        showFPS.setChecked(game.showFPSCounter());
         showFPS.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                game.preferences.putBoolean(Preferences.FPS_PREFERENCE, showFPS.isChecked());
-                game.preferences.flush();
-                showFPSCounter = showFPS.isChecked();
+                game.toggleFPSCounter();
             }
         });
 
-        table.add(showFPS).colspan(controlTypes.length).padTop(30f);
+        table.add(showFPS).colspan(controlTypes.length).padTop(20f);
         table.row();
 
         HoverCheckBox discordRPCSwitch = null;
@@ -171,22 +156,22 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
                 }
             });
 
-            table.add(discordRPCSwitch).colspan(controlTypes.length).padTop(30f);
+            table.add(discordRPCSwitch).colspan(controlTypes.length).padTop(20f);
         }
 
         masterTable.add(screenScrollPane).grow();
-        stage.addActor(masterTable);
-        stage.addFocusableActor(showFPS, controlTypes.length);
+        screenStage.addActor(masterTable);
+        screenStage.addFocusableActor(showFPS, controlTypes.length);
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-            stage.row();
-            stage.addFocusableActor(discordRPCSwitch, controlTypes.length);
+            screenStage.row();
+            screenStage.addFocusableActor(discordRPCSwitch, controlTypes.length);
         }
-        stage.setScrollFocus(screenScrollPane);
+        screenStage.setScrollFocus(screenScrollPane);
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -196,42 +181,41 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     }
 
     @Override
-    public void resize(int width, int height) {
-        stage.resize(width, height);
-    }
-
-    @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        super.render(delta);
 
-        viewport.apply(true);
-
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
-        stage.draw();
-        stage.act(delta);
+        screenStage.draw();
+        screenStage.act(delta);
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
     }
 
-    private void onBackPressed() {
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+    /**
+     * Actions to do when the back/escape button is pressed
+     *
+     * @return true if the action has been handled from this screen
+     *         false if the action needs to be sent down the inputmultiplexer chain
+     */
+    private boolean onBackPressed() {
+        if (screenStage.dialogIsActive()) {
+            return false;
+        }
+
+        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
+        return true;
     }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -250,8 +234,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -273,7 +256,7 @@ public class SettingsScreen extends ScreenAdapter implements InputProcessor {
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }

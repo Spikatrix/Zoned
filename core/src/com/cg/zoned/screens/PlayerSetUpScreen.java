@@ -3,11 +3,8 @@ package com.cg.zoned.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -20,7 +17,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
@@ -33,47 +29,36 @@ import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.ButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 
-public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
-    final Zoned game;
-
-    private Array<Texture> usedTextures = new Array<>();
-
-    private FocusableStage stage;
-    private Viewport viewport;
-    private AnimationManager animationManager;
-    private boolean showFPSCounter;
-    private BitmapFont font;
-
-    private ShapeDrawer shapeDrawer;
-    private SpriteBatch batch;
-
+public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     private float bgAlpha = .25f;
     private float bgAnimSpeed = 1.8f;
     private Color[] currentBgColors;
     private Color[] targetBgColors;
 
     private int playerCount;
-    private Table playerList;
+    private FocusableStage mapSelectorStage;
+    private MapSelector mapSelector;
+    private Spinner mapSpinner;
+    private boolean extendedMapSelectorActive;
 
     public PlayerSetUpScreen(final Zoned game) {
-        this.game = game;
+        super(game);
         game.discordRPCManager.updateRPC("Setting up splitscreen multiplayer");
 
-        this.viewport = new ScreenViewport();
-        this.stage = new FocusableStage(this.viewport);
+        this.screenViewport = new ScreenViewport();
+        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
-        this.font = game.skin.getFont(Assets.FontManager.SMALL.getFontName());
 
         this.batch = new SpriteBatch();
-        this.shapeDrawer = new ShapeDrawer(batch, usedTextures);
+        this.shapeDrawer = new ShapeDrawer(batch, game.skin);
 
         this.playerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
-        this.playerList = new Table();
 
         this.currentBgColors = new Color[this.playerCount];
         this.targetBgColors = new Color[this.playerCount];
@@ -85,9 +70,9 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
     @Override
     public void show() {
+        setUpMapSelectorStage();
         setUpStage();
         setUpUIButtons();
-        showFPSCounter = game.preferences.getBoolean(Preferences.FPS_PREFERENCE, false);
 
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
@@ -101,19 +86,55 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
                 }
             }
         });
-        animationManager.fadeInStage(stage);
+        screenStage.getRoot().getColor().a = 0;
+
+        // The screen is faded in once the maps and the extended selector is loaded
+        mapSelector.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+            @Override
+            public void onExternalMapsLoaded(Array<MapEntity> mapList, final int externalMapStartIndex) {
+                // Set up the extended map selector once external maps have been loaded
+                mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
+                    @Override
+                    public void onExtendedMapSelectorOpened() {
+                        openExtendedMapSelector();
+                    }
+
+                    @Override
+                    public void onMapSelect(int mapIndex) {
+                        if (mapIndex != -1) {
+                            mapSpinner.snapToStep(mapIndex - mapSpinner.getPositionIndex());
+                        }
+                        animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+                        extendedMapSelectorActive = false;
+                    }
+                });
+
+                animationManager.fadeInStage(screenStage);
+            }
+        });
+    }
+
+    private void openExtendedMapSelector() {
+        extendedMapSelectorActive = true;
+        animationManager.startExtendedMapSelectorAnimation(screenStage, mapSelectorStage, .15f);
+        mapSpinner.snapToStep(0);
+    }
+
+    private void setUpMapSelectorStage() {
+        mapSelectorStage = new FocusableStage(screenViewport);
+        mapSelectorStage.getRoot().getColor().a = 0f;
     }
 
     private void setUpUIButtons() {
-        UIButtonManager uiButtonManager = new UIButtonManager(stage, game.getScaleFactor(), usedTextures);
-        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getBackButtonTexture());
+        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
+        HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 onBackPressed();
             }
         });
-        HoverImageButton tutorialButton = uiButtonManager.addTutorialButtonToStage(game.assets.getTutorialButtonTexture());
+        HoverImageButton tutorialButton = uiButtonManager.addTutorialButtonToStage(game.assets.getTexture(Assets.TextureObject.TUTORIAL_TEXTURE));
         tutorialButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -128,7 +149,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         Table masterTable = new Table();
         masterTable.setFillParent(true);
-        //masterTable.setDebug(true);
+        // masterTable.setDebug(true);
         masterTable.center();
 
         Table table = new Table();
@@ -142,6 +163,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
         final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];
+        Table playerList = new Table();
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
             playerItem.center();
@@ -160,7 +182,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
                 playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS).height(COLOR_BUTTON_DIMENSIONS);
 
-                stage.addFocusableActor(colorButtons[i][j]);
+                screenStage.addFocusableActor(colorButtons[i][j]);
             }
 
             final int finalI = i;
@@ -174,30 +196,29 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
             colorButtonGroups[i].uncheckAll();
             colorButtons[i][i % NO_OF_COLORS].setChecked(true);
-            stage.row();
+            screenStage.row();
             playerList.add(playerItem).right();
             playerList.row();
         }
         table.add(playerList).colspan(NO_OF_COLORS + 1).expandX();
         table.row();
 
-        final MapSelector mapSelector = new MapSelector(stage, game.getScaleFactor(), game.assets, game.skin);
+        mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         mapSelector.getMapManager().enableExternalMapLogging(true);
-        Spinner mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
+        mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
-        mapSelector.loadExternalMaps();
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
 
-        stage.addFocusableActor(mapSelector.getLeftButton(), 1);
-        stage.addFocusableActor(mapSelector.getRightButton(), NO_OF_COLORS - 1);
-        stage.row();
+        screenStage.addFocusableActor(mapSelector.getLeftButton(), 1);
+        screenStage.addFocusableActor(mapSelector.getRightButton(), NO_OF_COLORS - 1);
+        screenStage.row();
 
         if (playerCount == 2) {
             Table infoTable = new Table();
             infoTable.center();
-            Texture infoIconTexture = new Texture(Gdx.files.internal("icons/ui_icons/ic_info.png"));
+            Texture infoIconTexture = new Texture(Gdx.files.internal("images/ui_icons/ic_info.png"));
             usedTextures.add(infoIconTexture);
             Image infoImage = new Image(infoIconTexture);
             Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
@@ -223,10 +244,10 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
 
         });
         table.add(startButton).width(200 * game.getScaleFactor()).colspan(NO_OF_COLORS + 1).expandX();
-        stage.addFocusableActor(startButton, NO_OF_COLORS);
+        screenStage.addFocusableActor(startButton, NO_OF_COLORS);
         masterTable.add(screenScrollPane).grow();
-        stage.setScrollFocus(screenScrollPane);
-        stage.addActor(masterTable);
+        screenStage.setScrollFocus(screenScrollPane);
+        screenStage.addActor(masterTable);
     }
 
     private void startGame(Array<Color> playerColors, MapManager mapManager) {
@@ -240,78 +261,92 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
         }
 
         int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
-        animationManager.fadeOutStage(stage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount, false));
+        animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount));
     }
 
     private void showTutorialDialog() {
-        Array<String> buttonTexts = new Array<>();
-        buttonTexts.add("Cancel");
-        buttonTexts.add("Yes");
-
-        stage.showDialog("Start the tutorial?", buttonTexts,
+        screenStage.showDialog("Start the tutorial?",
+                new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Yes },
                 false, game.getScaleFactor(),
                 new FocusableStage.DialogResultListener() {
                     @Override
-                    public void dialogResult(String buttonText) {
-                        if (buttonText.equals("Yes")) {
-                            animationManager.fadeOutStage(stage, PlayerSetUpScreen.this, new TutorialScreen(game));
+                    public void dialogResult(FocusableStage.DialogButton button) {
+                        if (button == FocusableStage.DialogButton.Yes) {
+                            animationManager.fadeOutStage(screenStage, PlayerSetUpScreen.this, new TutorialScreen(game));
                         }
                     }
                 }, game.skin);
     }
 
     @Override
-    public void resize(int width, int height) {
-        stage.resize(width, height);
-    }
-
-    @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        super.render(delta);
 
         for (int i = 0; i < currentBgColors.length; i++) {
             currentBgColors[i].lerp(targetBgColors[i], bgAnimSpeed * delta);
-            currentBgColors[i].a = Math.min(targetBgColors[i].a, stage.getRoot().getColor().a / 2.5f);
+            currentBgColors[i].a = Math.min(targetBgColors[i].a, screenStage.getRoot().getColor().a / 2.5f);
         }
 
-        viewport.apply(true);
-
-        batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
         for (int i = 0; i < currentBgColors.length; i++) {
             shapeDrawer.setColor(currentBgColors[i]);
-            shapeDrawer.filledRectangle(i * stage.getWidth() / currentBgColors.length, 0,
-                    stage.getWidth() / currentBgColors.length, stage.getHeight());
+            shapeDrawer.filledRectangle(i * screenStage.getWidth() / currentBgColors.length, 0,
+                    screenStage.getWidth() / currentBgColors.length, screenStage.getHeight());
         }
         batch.end();
 
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(viewport, stage.getBatch(), font);
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
         }
 
-        stage.draw();
-        stage.act(delta);
+        screenStage.act(delta);
+        screenStage.draw();
+
+        mapSelectorStage.act(delta);
+        if (mapSelectorStage.getRoot().getColor().a > 0) {
+            mapSelectorStage.draw();
+        }
     }
 
     @Override
     public void dispose() {
-        stage.dispose();
-        batch.dispose();
-        for (Texture texture : usedTextures) {
-            texture.dispose();
-        }
+        super.dispose();
+        mapSelectorStage.dispose();
     }
 
-    private void onBackPressed() {
-        animationManager.fadeOutStage(stage, this, new MainMenuScreen(game));
+    /**
+     * Actions to do when the back/escape button is pressed
+     *
+     * @return true if the action has been handled from this screen
+     *         false if the action needs to be sent down the inputmultiplexer chain
+     */
+    private boolean onBackPressed() {
+        if (extendedMapSelectorActive) {
+            animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+            extendedMapSelectorActive = false;
+            return true;
+        } else if (screenStage.dialogIsActive()) {
+            return false;
+        }
+
+        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
+        return true;
     }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.BACK || keycode == Input.Keys.ESCAPE) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
+        } else if (!screenStage.dialogIsActive() && !extendedMapSelectorActive) {
+            if (keycode == Input.Keys.E) {
+                openExtendedMapSelector();
+                return true;
+            } else if (keycode == Input.Keys.S) {
+                return mapSelector.extraParamShortcutPressed();
+            } else if (keycode == Input.Keys.T) {
+                showTutorialDialog();
+                return true;
+            }
         }
 
         return false;
@@ -330,8 +365,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
-            onBackPressed();
-            return true;
+            return onBackPressed();
         }
 
         return false;
@@ -353,7 +387,7 @@ public class PlayerSetUpScreen extends ScreenAdapter implements InputProcessor {
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
         return false;
     }
 }

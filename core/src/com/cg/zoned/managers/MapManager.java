@@ -6,8 +6,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
-import com.cg.zoned.Cell;
 import com.cg.zoned.Constants;
+import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.maps.ExternalMapReader;
 import com.cg.zoned.maps.ExternalMapTemplate;
 import com.cg.zoned.maps.InvalidMapCharacter;
@@ -68,7 +68,7 @@ public class MapManager {
                     mapList.add(externalMap);
                 }
 
-                mapLoadListener.onExternalMapLoaded(getMapList(), externalMapStartIndex);
+                mapLoadListener.onExternalMapsLoaded(getMapList(), externalMapStartIndex);
             }
         }).start();
     }
@@ -95,7 +95,7 @@ public class MapManager {
     public Texture getMapPreview(String mapName) {
         // Scan for the map preview in the internal directory
         try {
-            FileHandle fileHandle = Gdx.files.internal("icons/map_icons/" + mapName + ".png");
+            FileHandle fileHandle = Gdx.files.internal("images/map_icons/" + mapName + ".png");
             if (fileHandle.exists()) {
                 return new Texture(fileHandle);
             }
@@ -228,6 +228,6 @@ public class MapManager {
     }
 
     public interface OnExternalMapLoadListener {
-        void onExternalMapLoaded(Array<MapEntity> mapList, int externalMapStartIndex);
+        void onExternalMapsLoaded(Array<MapEntity> mapList, int externalMapStartIndex);
     }
 }

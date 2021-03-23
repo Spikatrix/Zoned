@@ -1,7 +1,7 @@
 package com.cg.zoned.maps.internalmaps;
 
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.SpinnerVars;
+import com.cg.zoned.dataobjects.SpinnerVars;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
 

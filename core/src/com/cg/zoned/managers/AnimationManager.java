@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.ui.FocusableStage;
 
 public class AnimationManager {
     final Zoned game;
@@ -132,6 +133,24 @@ public class AnimationManager {
         stage.addAction(slideAnimation);
     }
 
+    public void startExtendedMapSelectorAnimation(FocusableStage mainStage, FocusableStage mapSelectorStage, float fadeOutAlpha) {
+        masterInputMultiplexer.removeProcessor(mainStage);
+        masterInputMultiplexer.addProcessor(mapSelectorStage);
+        Gdx.input.setInputProcessor(masterInputMultiplexer);
+
+        mainStage.addAction(Actions.alpha(fadeOutAlpha, .25f, Interpolation.fastSlow));
+        mapSelectorStage.addAction(Actions.fadeIn(.25f, Interpolation.fastSlow));
+    }
+
+    public void endExtendedMapSelectorAnimation(FocusableStage mainStage, FocusableStage mapSelectorStage) {
+        masterInputMultiplexer.removeProcessor(mapSelectorStage);
+        masterInputMultiplexer.addProcessor(mainStage);
+        Gdx.input.setInputProcessor(masterInputMultiplexer);
+
+        mapSelectorStage.addAction(Actions.fadeOut(.25f, Interpolation.fastSlow));
+        mainStage.addAction(Actions.fadeIn(.25f, Interpolation.fastSlow));
+    }
+
     public void fadeInStage(final Stage stage) {
         SequenceAction fadeInAnimation = new SequenceAction();
         fadeInAnimation.addAction(Actions.fadeIn(.3f, Interpolation.smooth));
@@ -160,12 +179,17 @@ public class AnimationManager {
         fadeOutAnimation.addAction(Actions.run(new Runnable() {
             @Override
             public void run() {
-                Gdx.input.setInputProcessor(null);
-                fromScreen.dispose();
-                game.setScreen(toScreen);
-                if (animationListener != null) {
-                    animationListener.animationEnd(stage);
-                }
+                Gdx.app.postRunnable(new Runnable() { // Crashes on GWT without this
+                    @Override
+                    public void run() {
+                        Gdx.input.setInputProcessor(null);
+                        fromScreen.dispose();
+                        game.setScreen(toScreen);
+                        if (animationListener != null) {
+                            animationListener.animationEnd(stage);
+                        }
+                    }
+                });
             }
         }));
 

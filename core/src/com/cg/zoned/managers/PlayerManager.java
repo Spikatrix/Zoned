@@ -7,7 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Player;
 import com.cg.zoned.ShapeDrawer;
-import com.cg.zoned.TeamData;
+import com.cg.zoned.dataobjects.TeamData;
 
 public class PlayerManager extends InputMultiplexer {
     private final GameManager gameManager;

@@ -7,18 +7,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class Constants {
-    public static final String GAME_VERSION = "0.0.3-beta";
+    public static final String GAME_VERSION = "0.0.4-dev";
     // Remember to update the versionName in Android's build.gradle
     // And project.setVersion in Desktop's build.gradle
     // And the version in the badge in the README file
     // Or for Linux users, use the versionUpdate.sh script
 
     /**
-     * Enables Discord Rich Presence functionality on Windows and Linux
-     * <p>
-     * Note: When this is enabled, running multiple instances of the game will crash with a SIGSEGV
+     * Enables Discord Rich Presence on Windows and Linux
+     * Overrides in-game RPC setting
      */
     public static final boolean ENABLE_DISCORD_RPC = true;
+
+    /**
+     * Displays extended GL stats in GameScreen including Draw calls, GL calls etc
+     */
+    public static final boolean DISPLAY_EXTENDED_GL_STATS = false;
 
     public static final float WORLD_SIZE = 480.0f;
 
@@ -35,13 +39,6 @@ public final class Constants {
     public static final float VIEWPORT_DIVIDER_FADE_WIDTH = 25f;
     public static final Color VIEWPORT_DIVIDER_FADE_COLOR = new Color(0f, 0f, 0f, 0f);
 
-    /**
-     * The number of players when playing on the same device
-     * <p>
-     * Beware: There may not be enough horizontal space especially on mobile devices to play comfortably
-     */
-    //public static final int NO_OF_PLAYERS = 2; Moved to dev mode settings
-
     public static final Color PLAYER_CIRCLE_COLOR = Color.WHITE;
     public static final float PLAYER_CIRCLE_WIDTH = 2.5f;
 
@@ -57,11 +54,11 @@ public final class Constants {
      */
     public static final Map<String, Color> PLAYER_COLORS = new LinkedHashMap<String, Color>() {
         {
-            put("GREEN",  new Color(0,    0.8f, 0,    1.0f)); // Alpha won't matter
-            put("RED",    new Color(0.8f, 0,    0,    1.0f));
-            put("BLUE",   new Color(0,    0,    0.8f, 1.0f));
-            put("YELLOW", new Color(0.8f, 0.8f, 0,    1.0f));
-            put("PINK",   new Color(0.8f, 0,    0.8f, 1.0f));
+            put("GREEN",  new Color(0,     0.8f,  0,    1.0f)); // Alpha won't matter
+            put("RED",    new Color(0.8f,  0,     0,    1.0f));
+            put("BLUE",   new Color(0.16f, 0.16f, 0.8f, 1.0f)); // A bit of r & g as deep blue is hard to read on a black bg
+            put("YELLOW", new Color(0.8f,  0.8f,  0,    1.0f));
+            put("PINK",   new Color(0.8f,  0,     0.8f, 1.0f));
         }
     };
 
