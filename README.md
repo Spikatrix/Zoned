@@ -1,4 +1,4 @@
-# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.4-dev](https://img.shields.io/badge/version-0.0.4--dev-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.4-dev)
+# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.4-beta](https://img.shields.io/badge/version-0.0.4--beta-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.4-beta)
 
 <img src="https://i.stack.imgur.com/cunrq.png" alt="Zoned Icon" align="left" style="margin: 10px 20px 10px 10px; border-radius: 20%; box-shadow: 0 6px 20px 2px black" height="162px">
 
@@ -19,12 +19,12 @@ It is available to download on the [Google Play Store][play_store_page] (Android
 
 Zoned is multiplayer strategy game. Every game is played on a grid based map where the objective is to capture as many cells in the grid as possible. Currently, it supports splitscreen multiplayer as well as cross-platform local network multiplayer. In addition to the default internal maps, Zoned also supports [custom external maps][custom_external_map_wiki] which you can play on if you get bored of the default ones. The best part is that Zoned is free of ads and will never have ads!
 
-The game is currently in beta. I've made a [list of work][beta_work] to be done before v1.0.0 stable is released. There may be additional changes as well.
+The game is currently in beta. You can track the development progress of the game [here][beta_work]. There may be additional changes as well.
 
 ## Screenshots
 
-<img src="https://lh3.googleusercontent.com/Aa7SU89CHEz5EBsE8erSxLYjmjHGOSpd0a6cvxyQFc4bG4__wnnWehJ3ArAwHm1lSAk=w720-h310-rw" width="46%"> &nbsp; &nbsp;
-<img src="https://lh3.googleusercontent.com/9SUjMfMI1uFCJwppqdDfpXs3o2aO89CP0fXmAQwOWs-cCnU2tXt4_GA3REftqh5IzII=w720-h310-rw" width="46%"> &nbsp; &nbsp;
+<img src="https://user-images.githubusercontent.com/12792882/112144302-0a42bf80-8bff-11eb-8390-aadf9f4bcabf.png" width="46%"> &nbsp; &nbsp;
+<img src="https://user-images.githubusercontent.com/12792882/112144297-07e06580-8bff-11eb-87c9-e9e2f39318f0.png" width="46%"> &nbsp; &nbsp;
 
 More screenshots are available in the [Google Play Store page][play_store_page]
 
@@ -34,8 +34,8 @@ If you wish to build from source, clone the repo and run gradle's `android:assem
 
     $ git clone https://github.com/Spikatrix/Zoned
     $ cd Zoned
-    $ ./gradlew android:assembleDebug // Android
-    $ ./gradlew desktop:dist          // Desktop
+    $ ./gradlew android:assembleDebug # Android
+    $ ./gradlew desktop:dist          # Desktop
 
 (Use `gradlew.bat` if you're on Windows)
 
