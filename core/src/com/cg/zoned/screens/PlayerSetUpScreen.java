@@ -254,9 +254,6 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         final Player[] players = new Player[playerColors.size];
         for (int i = 0; i < players.length; i++) {
             players[i] = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
-        }
-
-        for (int i = 0; i < players.length; i++) {
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 

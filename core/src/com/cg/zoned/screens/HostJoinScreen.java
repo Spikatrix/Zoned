@@ -35,8 +35,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 public class HostJoinScreen extends ScreenObject implements InputProcessor {
-    // Bigger buffer as map preview images, which is bigger than text data, are sent
-    private static final int CONNECTION_BUFFER_SIZE = 131072; // 2^17
+    // Bigger connection buffer size as map preview images, which are bigger than text data, are sent
+    public static final int CONNECTION_BUFFER_SIZE = 131072; // 2^17
+    public static final int SERVER_OBJECT_BUFFER_SIZE = 2048;
+    public static final int CLIENT_WRITE_BUFFER_SIZE = 8192;
 
     public HostJoinScreen(final Zoned game) {
         super(game);
@@ -162,7 +164,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
     }
 
     private void startServerLobby(final String playerName) {
-        final Server server = new Server(CONNECTION_BUFFER_SIZE, 2048);
+        final Server server = new Server(CONNECTION_BUFFER_SIZE, SERVER_OBJECT_BUFFER_SIZE);
 
         Kryo kryo = server.getKryo();
         KryoHelper.registerClasses(kryo);
@@ -181,7 +183,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
     }
 
     private void startClientLobby(final String playerName, final Label searchingLabel) {
-        final Client client = new Client(8192, CONNECTION_BUFFER_SIZE);
+        final Client client = new Client(CLIENT_WRITE_BUFFER_SIZE, CONNECTION_BUFFER_SIZE);
 
         Kryo kryo = client.getKryo();
         KryoHelper.registerClasses(kryo);

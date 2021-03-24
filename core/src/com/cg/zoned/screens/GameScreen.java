@@ -311,7 +311,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                 @Override
                 public void run() {
                     dispose();
-                    game.setScreen(new VictoryScreen(game, gameManager.playerManager));
+                    game.setScreen(new VictoryScreen(game, gameManager.playerManager.getTeamData()));
                 }
             });
         }

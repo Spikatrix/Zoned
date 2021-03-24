@@ -30,7 +30,6 @@ import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.AnimationManager;
-import com.cg.zoned.managers.PlayerManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -48,7 +47,7 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
     private float rowHeightScale = 1.5f;
     private float padding;
 
-    public VictoryScreen(final Zoned game, PlayerManager playerManager) {
+    public VictoryScreen(final Zoned game, Array<TeamData> teamData) {
         super(game);
         game.discordRPCManager.updateRPC("Post match");
 
@@ -58,11 +57,11 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
         this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
 
-        finalizeTeamData(playerManager);
+        this.teamData = teamData;
+        finalizeTeamData();
     }
 
-    private void finalizeTeamData(PlayerManager playerManager) {
-        teamData = playerManager.getTeamData();
+    private void finalizeTeamData() {
         new Sort().sort(teamData, new TeamDataComparator());
 
         DecimalFormat df = new DecimalFormat("#.##");
