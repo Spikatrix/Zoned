@@ -29,8 +29,8 @@ android {
         applicationId "com.cg.zoned"
         minSdkVersion 14
         targetSdkVersion 29
-        versionCode 4
-        versionName "0.0.4-beta"
+        versionCode 5
+        versionName "0.0.5-dev"
         // Remember to update the GAME_VERSION in Constants.java
         // And project.setVersion in Desktop's build.gradle
         // And the version in the badge in the README file
