@@ -42,7 +42,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Upload jar release
-      uses: kittaakos/upload-release-action@GH-26
+      uses: Spikatrix/upload-release-action@master
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: desktop/build/libs/*.jar
@@ -50,11 +50,12 @@ jobs:
         tag: v-dev
         overwrite: true
         prerelease: true
+        target_commit: dev
         release_name: "Zoned Developer Build"
         body: "Latest bleeding edge version of Zoned"
         
     - name: Upload apk release
-      uses: kittaakos/upload-release-action@GH-26
+      uses: Spikatrix/upload-release-action@master
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: android/build/outputs/apk/debug/*.apk
@@ -62,4 +63,5 @@ jobs:
         tag: v-dev
         overwrite: true
         prerelease: true
+        target_commit: dev
 
