@@ -7,23 +7,18 @@ import com.badlogic.gdx.assets.loaders.SkinLoader;
 import com.badlogic.gdx.assets.loaders.TextureLoader;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
-import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
@@ -32,14 +27,11 @@ import com.cg.zoned.Preferences;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.ControlManager;
 import com.cg.zoned.ui.FocusableStage;
-import com.cg.zoned.ui.PixmapFactory;
 
 public class LoadingScreen extends ScreenObject {
     private AssetManager assetManager;
 
-    private Skin tempSkin;
     private Label loadingLabel;
-    private ProgressBar progressBar;
     private boolean finishedLoading;
     private boolean loadedStageTwo;
 
@@ -76,7 +68,6 @@ public class LoadingScreen extends ScreenObject {
 
         screenViewport = new ScreenViewport();
         screenStage = new FocusableStage(screenViewport);
-        tempSkin = createTempSkin();
 
         setUpLoadingUI();
         finishedLoading = loadedStageTwo = false;
@@ -103,23 +94,13 @@ public class LoadingScreen extends ScreenObject {
         table.add(loading);
         table.row();
 
-        progressBar = new ProgressBar(0, 1, .01f, false, tempSkin);
-        progressBar.setAnimateDuration(.68f);
-        progressBar.setAnimateInterpolation(Interpolation.fastSlow);
+        Label.LabelStyle loadingLabelStyle = new Label.LabelStyle(
+                new BitmapFont(Gdx.files.internal("fonts/loading/loading.fnt")), new Color(0, 0.8f, 0, 1f));
+        loadingLabel = new Label("0%", loadingLabelStyle);
+        loadingLabel.setAlignment(Align.center);
+        table.add(loadingLabel).growX().padTop(24f * game.getScaleFactor());
+        table.row();
 
-        table.add(progressBar).growX()
-                .padLeft(100f * game.getScaleFactor()).padRight(100f * game.getScaleFactor())
-                .padTop(16f * game.getScaleFactor());
-
-        Table loadingContainer = new Table();
-        loadingContainer.setFillParent(true);
-        loadingContainer.bottom().right();
-        loadingLabel = new Label("0", tempSkin, "loading-font", Color.WHITE);
-        loadingContainer.add(loadingLabel);
-        loadingContainer.add(new Label("%", tempSkin, "loading-font", Color.WHITE));
-        loadingContainer.pad(16f * game.getScaleFactor());
-
-        screenStage.addActor(loadingContainer);
         screenStage.addActor(table);
     }
 
@@ -159,12 +140,10 @@ public class LoadingScreen extends ScreenObject {
         float progress = assetManager.getProgress();
         progress = 0.5f * progress;
         if (loadedStageTwo) {
-            progressBar.setValue(0.5f + progress);
+            loadingLabel.setText((int) ((0.5f + progress) * 100) + "%");
         } else {
-            progressBar.setValue(progress);
+            loadingLabel.setText((int) (        progress  * 100) + "%");
         }
-
-        loadingLabel.setText((int) (progressBar.getValue() * 100));
 
         screenStage.act(delta);
         screenStage.draw();
@@ -213,31 +192,5 @@ public class LoadingScreen extends ScreenObject {
     @Override
     public void dispose() {
         super.dispose();
-        tempSkin.dispose();
-    }
-
-    /*
-     * Creates a temporary skin with a horizontal progress bar and a limited loading font
-     */
-    private Skin createTempSkin() {
-        Skin tempSkin = new Skin();
-        tempSkin.add("progress-bar", createNinePatchDrawable(14, 14, 6, Color.GREEN), Drawable.class);
-        ProgressBar.ProgressBarStyle progressBarStyle = new ProgressBar.ProgressBarStyle();
-        progressBarStyle.knobBefore = tempSkin.getDrawable("progress-bar");
-        tempSkin.add("default-horizontal", progressBarStyle);
-
-        tempSkin.add("loading-font", new BitmapFont(Gdx.files.internal("fonts/loading/loading.fnt")), BitmapFont.class);
-
-        return tempSkin;
-    }
-
-    private NinePatchDrawable createNinePatchDrawable(int width, int height, int radius, Color color) {
-        Pixmap loadingPixmap = PixmapFactory.getRoundedCornerPixmap(color, width, height, radius);
-
-        Texture loadingTexture = new Texture(loadingPixmap);
-        usedTextures.add(loadingTexture);
-        loadingPixmap.dispose();
-
-        return new NinePatchDrawable(new NinePatch(loadingTexture, radius, radius, radius, radius));
     }
 }
