@@ -111,6 +111,7 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
 
         clickParticleEffect = new ParticleEffect();
         clickParticleEffect.load(Gdx.files.internal("particles/radial_particle_emitter.p"), Gdx.files.internal("particles"));
+        clickParticleEffect.scaleEffect(game.getScaleFactor());
         final ParticleEffectActor particleEffectActor = new ParticleEffectActor(clickParticleEffect);
 
         final Image gameLogoImage = new Image(gameLogo);
