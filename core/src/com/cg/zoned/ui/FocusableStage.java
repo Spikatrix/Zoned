@@ -293,9 +293,9 @@ public class FocusableStage extends Stage {
 
         dialogs.add(dialog);
 
-        dialog.getContentTable().add(content).pad(20f);
+        dialog.getContentTable().add(content).pad(20f * scaleFactor).padBottom(0f * scaleFactor);
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
-        dialog.getButtonTable().padBottom(10f).padLeft(10f).padRight(10f);
+        dialog.getButtonTable().pad(10f * scaleFactor);
         dialog.setScale(0.6f);
         dialog.getColor().a = 0;
 

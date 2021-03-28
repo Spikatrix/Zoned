@@ -81,14 +81,14 @@ public final class Constants {
     public static final float ZOOM_MIN_VALUE = 1f;
     public static final float ZOOM_MAX_VALUE = 1.6f;
 
-    public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
-    // Values from https://developer.android.com/training/multiscreen/screendensities
-    public static final float ANDROID_LDPI_FONT_SCALE_FACTOR    = 0.75f;
-    public static final float ANDROID_MDPI_FONT_SCALE_FACTOR    = 1.0f;
-    public static final float ANDROID_HDPI_FONT_SCALE_FACTOR    = 1.5f;
-    public static final float ANDROID_XHDPI_FONT_SCALE_FACTOR   = 2.0f;
-    public static final float ANDROID_XXHDPI_FONT_SCALE_FACTOR  = 3.0f;
-    public static final float ANDROID_XXXHDPI_FONT_SCALE_FACTOR = 4.0f;
+    public static final float DESKTOP_UI_SCALE_FACTOR = 0.9f;
+    // Values from https://developer.android.com/training/multiscreen/screendensities minus 0.3f
+    public static final float ANDROID_LDPI_UI_SCALE_FACTOR = 0.55f;
+    public static final float ANDROID_MDPI_UI_SCALE_FACTOR = 0.7f;
+    public static final float ANDROID_HDPI_UI_SCALE_FACTOR = 1.2f;
+    public static final float ANDROID_XHDPI_UI_SCALE_FACTOR = 1.7f;
+    public static final float ANDROID_XXHDPI_UI_SCALE_FACTOR = 2.7f;
+    public static final float ANDROID_XXXHDPI_UI_SCALE_FACTOR = 3.7f;
 
     public static final String LOG_TAG = "ZONED";
 

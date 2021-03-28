@@ -140,14 +140,15 @@ public class MapSelector {
 
             Texture texture = assets.getTexture(Assets.TextureObject.SETTINGS_TEXTURE);
 
-            HoverImageButton hoverImageButton = new HoverImageButton(new TextureRegionDrawable(texture));
-            hoverImageButton.getImage().setScaling(Scaling.fit);
-            innerTable.add(hoverImageButton)
+            HoverImageButton extraParamButton = new HoverImageButton(new TextureRegionDrawable(texture));
+            extraParamButton.getImage().setScaling(Scaling.fit);
+            innerTable.add(extraParamButton)
                     .width(mapSpinner.getSpinnerHeight() / 3)
-                    .height(mapSpinner.getSpinnerHeight() / 3);
+                    .height(mapSpinner.getSpinnerHeight() / 3)
+                    .padRight(1f);
             stack.add(innerTable);
 
-            hoverImageButton.addListener(new ClickListener() {
+            extraParamButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     showExtraParamDialog(extraParams, map);

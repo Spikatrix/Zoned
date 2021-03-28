@@ -152,8 +152,8 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
         mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
-        mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
-                game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
+        float spinnerHeight = game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3;
+        mapSpinner = mapSelector.loadMapSelectorSpinner(spinnerHeight * 1.5f, spinnerHeight);
         final Table mapSelectorTable = new Table();
         mapSelectorTable.add(mapSpinner).pad(10f);
 

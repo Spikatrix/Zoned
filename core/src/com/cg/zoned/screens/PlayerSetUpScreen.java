@@ -180,7 +180,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
                 colorButtons[i][j].setColor(PlayerColorHelper.getColorFromIndex(j));
                 colorButtonGroups[i].add(colorButtons[i][j]);
 
-                playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS).height(COLOR_BUTTON_DIMENSIONS);
+                playerItem.add(colorButtons[i][j]).size(promptLabels[i].getPrefHeight() * 1.75f);
 
                 screenStage.addFocusableActor(colorButtons[i][j]);
             }
@@ -206,8 +206,8 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
         mapSelector.getMapManager().enableExternalMapLogging(true);
-        mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
-                game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
+        float spinnerHeight = game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3;
+        mapSpinner = mapSelector.loadMapSelectorSpinner(spinnerHeight * 1.5f, spinnerHeight);
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
 

@@ -41,9 +41,8 @@ public class Assets {
         }
     }
 
-    // TODO: The default font size is way too big (really noticeable on mobile screens)
     public enum FontManager {
-        STYLED_LARGE        ("recharge.otf",  65),
+        STYLED_LARGE        ("recharge.otf",  64),
         STYLED_SMALL        ("recharge.otf",  24),
         REGULAR             ("glametrix.otf", 32), // Default font, required to be named as 'REGULAR'
         SMALL               ("bebasneue.otf", 18),
