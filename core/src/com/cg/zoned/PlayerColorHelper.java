@@ -37,4 +37,16 @@ public final class PlayerColorHelper {
 
         return null;
     }
+
+    public static int getIndexFromColor(Color color) {
+        int index = 0;
+        for (Map.Entry<String, Color> entry : Constants.PLAYER_COLORS.entrySet()) {
+            if (entry.getValue().equals(color)) {
+                return index;
+            }
+            index++;
+        }
+
+        return -1;
+    }
 }

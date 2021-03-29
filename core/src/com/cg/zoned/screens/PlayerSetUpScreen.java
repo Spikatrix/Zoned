@@ -26,10 +26,12 @@ import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.dataobjects.PlayerSetUpParams;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.MapExtraParams;
 import com.cg.zoned.ui.ButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -41,6 +43,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     private Color[] currentBgColors;
     private Color[] targetBgColors;
 
+    private PlayerSetUpParams playerSetUpParams;
     private int playerCount;
     private FocusableStage mapSelectorStage;
     private MapSelector mapSelector;
@@ -66,6 +69,11 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
             this.currentBgColors[i] = new Color(0, 0, 0, bgAlpha);
             this.targetBgColors[i] = new Color(0, 0, 0, bgAlpha);
         }
+    }
+
+    public PlayerSetUpScreen(final Zoned game, PlayerSetUpParams playerSetUpParams) {
+        this(game);
+        this.playerSetUpParams = playerSetUpParams;
     }
 
     @Override
@@ -109,6 +117,26 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
                     }
                 });
 
+                if (playerSetUpParams != null) {
+                    int snapCount = 0;
+                    for (MapEntity map : mapSelector.getMapManager().getMapList()) {
+                        if (map.getName().equals(playerSetUpParams.mapName)) {
+                            mapSpinner.snapToStep(snapCount);
+                            break;
+                        }
+                        snapCount++;
+                    }
+
+                    if (playerSetUpParams.mapExtraParams != null) {
+                        MapEntity map = mapSelector.getMapManager().getMap(playerSetUpParams.mapName);
+                        MapExtraParams mapExtraParams = map.getExtraParams();
+                        mapExtraParams.extraParams = playerSetUpParams.mapExtraParams.extraParams;
+                        mapExtraParams.paramSelectTitle = playerSetUpParams.mapExtraParams.paramSelectTitle;
+                        mapExtraParams.spinnerVars = playerSetUpParams.mapExtraParams.spinnerVars;
+                        map.applyExtraParams();
+                    }
+                }
+
                 animationManager.fadeInStage(screenStage);
             }
         });
@@ -145,7 +173,6 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
 
     private void setUpStage() {
         final int NO_OF_COLORS = Constants.PLAYER_COLORS.size();
-        final float COLOR_BUTTON_DIMENSIONS = 60f * game.getScaleFactor();
 
         Table masterTable = new Table();
         masterTable.setFillParent(true);
@@ -195,7 +222,11 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
             });
 
             colorButtonGroups[i].uncheckAll();
-            colorButtons[i][i % NO_OF_COLORS].setChecked(true);
+            if (playerSetUpParams == null) {
+                colorButtons[i][i % NO_OF_COLORS].setChecked(true);
+            } else {
+                colorButtons[i][PlayerColorHelper.getIndexFromColor(playerSetUpParams.playerColors[i])].setChecked(true);
+            }
             screenStage.row();
             playerList.add(playerItem).right();
             playerList.row();

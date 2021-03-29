@@ -33,9 +33,11 @@ import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.dataobjects.GameTouchPoint;
+import com.cg.zoned.dataobjects.PlayerSetUpParams;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
+import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.ButtonGroup;
 import com.cg.zoned.ui.CheckBox;
 import com.cg.zoned.ui.FocusableStage;
@@ -499,7 +501,14 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
             return false;
         }
 
-        animationManager.fadeOutStage(screenStage, this, new PlayerSetUpScreen(game));
+        MapEntity map = mapManager.getPreparedMap();
+        Color[] playerColors = new Color[players.length];
+        for (int i = 0; i < players.length; i++) {
+            playerColors[i] = new Color(players[i].color);
+        }
+        PlayerSetUpParams playerSetUpParams = new PlayerSetUpParams(map.getName(), map.getExtraParams(), playerColors);
+
+        animationManager.fadeOutStage(screenStage, this, new PlayerSetUpScreen(game, playerSetUpParams));
         return true;
     }
 

@@ -66,7 +66,7 @@ public class ScreenHelper {
         }
 
         // Generic instantiation
-        return (Screen) ClassReflection.getConstructors(targetScreenClass)[0].newInstance(game);
+        return (Screen) ClassReflection.getConstructor(targetScreenClass, Zoned.class).newInstance(game);
     }
 
     private static Screen getServerLobbyScreen(Zoned game) throws ReflectionException {
@@ -118,18 +118,12 @@ public class ScreenHelper {
     private static Screen getMapStartPosScreen(Zoned game) throws ReflectionException {
         // Loads the rectangle map with the specified extra dimensions
         MapManager mapManager = new MapManager();
-        try {
-            mapManager.prepareMap(0);
-        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
-            e.printStackTrace();
-            return null;
-        }
-        MapEntity mapEntity = mapManager.getPreparedMap();
-        MapExtraParams mapExtraParams = mapEntity.getExtraParams();
+        MapEntity map = mapManager.getMapList().first();
+        MapExtraParams mapExtraParams = map.getExtraParams();
         mapExtraParams.extraParams = new int[] {5, 5};
-        mapEntity.applyExtraParams();
+        map.applyExtraParams();
         try {
-            mapManager.prepareMap(0);
+            mapManager.prepareMap(map);
         } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
             e.printStackTrace();
             return null;
@@ -152,18 +146,12 @@ public class ScreenHelper {
     private static Screen getGameScreen(Zoned game) throws ReflectionException {
         // Loads the rectangle map with the specified extra dimensions
         MapManager mapManager = new MapManager();
-        try {
-            mapManager.prepareMap(0);
-        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
-            e.printStackTrace();
-            return null;
-        }
-        MapEntity mapEntity = mapManager.getPreparedMap();
-        MapExtraParams mapExtraParams = mapEntity.getExtraParams();
+        MapEntity map = mapManager.getMapList().first();
+        MapExtraParams mapExtraParams = map.getExtraParams();
         mapExtraParams.extraParams = new int[] {5, 5};
-        mapEntity.applyExtraParams();
+        map.applyExtraParams();
         try {
-            mapManager.prepareMap(0);
+            mapManager.prepareMap(map);
         } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
             e.printStackTrace();
             return null;

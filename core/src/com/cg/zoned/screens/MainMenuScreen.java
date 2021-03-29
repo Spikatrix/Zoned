@@ -290,7 +290,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 public void clicked(InputEvent event, float x, float y) {
                     try {
                         bgAlpha = 0;
-                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) ClassReflection.getConstructors(gameModes[finalI].targetClass)[0].newInstance(game));
+                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) ClassReflection.getConstructor(gameModes[finalI].targetClass, Zoned.class).newInstance(game));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
