@@ -41,8 +41,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false // Don't set this to true because it'll result in a lot of classes missing causing Runtime crashes (Unless you `-keep` them all) TODO: Read wiki page on this
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

@@ -44,4 +44,16 @@
    float   reportRayFixture(long, float, float, float, float, float);
 }
 
+-keep class com.badlogic.gdx.scenes.scene2d.ui.** {
+   **[] $VALUES;
+    *;
+}
+
+-keep class com.badlogic.gdx.graphics.Color
+
+-keep class com.esotericsoftware.kryo.serializers.** {
+   **[] $VALUES;
+    *;
+}
+
 -keepattributes *Annotation*,SourceFile,LineNumberTable
