@@ -14,7 +14,7 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
-public class GameConnectionManager implements IConnectionHandlers {
+public class GameConnectionManager implements GameConnectionHandler {
     public boolean isActive;     // GameConnectionManager will be inactive when playing in splitscreen mode
 
     private GameManager gameManager;
@@ -175,7 +175,7 @@ public class GameConnectionManager implements IConnectionHandlers {
     }
 
     /**
-     * Called in the server any of its clients disconnects
+     * Called in the server when any of its clients disconnects
      */
     @Override
     public void serverDisconnect(final Connection connection) {
