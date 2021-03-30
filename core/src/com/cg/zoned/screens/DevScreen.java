@@ -128,11 +128,11 @@ public class DevScreen extends ScreenObject implements InputProcessor {
         int mapSplitScreenVal = mapSplitScreenSpinner.getPositionIndex() + minSplitScreenCount;
 
         // These conditions are there for performance reasons (I think saving is a bit slow, haven't actually benchmarked this)
-        if (splitScreenVal != game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, splitScreenVal)) {
+        if (splitScreenVal != game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2)) {
             game.preferences.putInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, splitScreenVal);
             prefUpdated = true;
         }
-        if (mapSplitScreenVal != game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, mapSplitScreenVal)) {
+        if (mapSplitScreenVal != game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2)) {
             game.preferences.putInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, mapSplitScreenVal);
             prefUpdated = true;
         }
