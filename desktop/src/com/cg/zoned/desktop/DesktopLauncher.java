@@ -11,6 +11,11 @@ public class DesktopLauncher {
         config.title = "Zoned";
         config.vSyncEnabled = true;
         config.samples = 4;
+        config.forceExit = false;
+
+        // Launch in a 16:9 aspect ratio
+        config.width = 960;
+        config.height = 540;
 
         // Uses the first icon which is supported
         config.addIcon("images/desktop_icons/ic_zoned_desktop_icon_128x128.png", Files.FileType.Internal);

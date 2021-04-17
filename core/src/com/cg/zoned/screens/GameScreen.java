@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -18,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
@@ -45,7 +45,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private GLProfiler profiler;
 
     private Map map;
-    private ExtendViewport[] playerViewports;
+    private Viewport[] playerViewports;
     private Color[] dividerLeftColor, dividerRightColor;
 
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
@@ -109,14 +109,27 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     private void initViewports(Player[] players) {
         int viewportCount = isSplitscreenMultiplayer() ? players.length : 1;
+        float stretchAspectRatio = 16f / 9;
 
-        this.playerViewports = new ExtendViewport[viewportCount];
+        if (isSplitscreenMultiplayer()) {
+            // Extend viewport so that all screen space is used for the game area
+            this.playerViewports = new ExtendViewport[viewportCount];
+        } else {
+            // Stretch viewport so that all players see the same game area regardless of
+            // their screen/game window size. Play on a 16:9 aspect ratio for the best experience
+            this.playerViewports = new StretchViewport[viewportCount];
+        }
         if (viewportCount > 1) {
             this.dividerRightColor = new Color[viewportCount - 1];
             this.dividerLeftColor = new Color[viewportCount - 1];
         }
         for (int i = 0; i < this.playerViewports.length; i++) {
-            this.playerViewports[i] = new ExtendViewport(Constants.WORLD_SIZE / viewportCount, Constants.WORLD_SIZE);
+            if (isSplitscreenMultiplayer()) {
+                this.playerViewports[i] = new ExtendViewport(Constants.WORLD_SIZE / viewportCount, Constants.WORLD_SIZE);
+            } else {
+                this.playerViewports[i] = new StretchViewport(Constants.WORLD_SIZE * stretchAspectRatio, Constants.WORLD_SIZE);
+            }
+
             if (i < viewportCount - 1) {
                 this.dividerLeftColor[i] = new Color(players[i].color);
                 this.dividerRightColor[i] = new Color(players[i + 1].color);
@@ -171,22 +184,12 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     @Override
     public void resize(int width, int height) {
         for (int i = 0; i < playerViewports.length; i++) {
-            // TODO: Show the same grid view for all players regardless of what their screen resolution/window size is
-            //       Not sure if this is possible nicely though, i.e, without stretching and letterboxing/pillarboxing
-
             playerViewports[i].update(width / playerViewports.length, height);
-            updateCamera(playerViewports[i].getCamera(), width / playerViewports.length, height);
             this.playerViewports[i].setScreenX(i * width / playerViewports.length);
         }
 
         scoreBars.resize(width, height);
         super.resize(width, height);
-    }
-
-    private void updateCamera(Camera camera, int width, int height) {
-        camera.viewportHeight = Constants.WORLD_SIZE;
-        camera.viewportWidth = Constants.WORLD_SIZE * height / width;
-        camera.update();
     }
 
     @Override
@@ -388,7 +391,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         //dialogButtonTexts.add("Restart");
 
         screenStage.showDialog("Game Paused",
-                new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu },
+                new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu},
                 true,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {
                     @Override
