@@ -62,7 +62,7 @@ public class ExternalMapReader {
             externalMapDir.mkdirs(); // Create them folders if they don't exist
         } catch (NullPointerException e) {
             e.printStackTrace();
-            Gdx.app.error(Constants.LOG_TAG, "Failed to create external map directory");
+            log("Failed to create external map directory", true);
         }
     }
 
@@ -86,40 +86,29 @@ public class ExternalMapReader {
         Array<FileHandle> mapFiles = new Array<>();
 
         try {
-            if (enableExternalMapLogging) {
-                Gdx.app.log(Constants.LOG_TAG, "Scanning for external maps on "
-                        + Gdx.files.getExternalStoragePath() + externalMapDir.path());
-            }
+            log("Scanning for external maps on " + Gdx.files.getExternalStoragePath() + externalMapDir.path());
 
             for (FileHandle mapFile : externalMapDir.list(".map")) {
                 if (!mapFile.isDirectory()) {
-                    if (enableExternalMapLogging) {
-                        Gdx.app.log(Constants.LOG_TAG, "Map found: " + mapFile.name());
-                    }
+                    log("Map found: " + mapFile.name());
                     mapFiles.add(mapFile);
                 }
             }
-            if (enableExternalMapLogging) {
-                Gdx.app.log(Constants.LOG_TAG, "External map scan complete (" + mapFiles.size + " maps found)");
-            }
+            log("External map scan complete (" + mapFiles.size + " maps found)");
         } catch (NullPointerException e) {
             e.printStackTrace();
-            Gdx.app.error(Constants.LOG_TAG, "NPE during external map scan: " + e.getMessage());
+            log("NPE during external map scan: " + e.getMessage(), true);
         }
 
         return mapFiles;
     }
 
     private void parseScannedMaps(Array<FileHandle> mapFiles) {
-        if (enableExternalMapLogging) {
-            Gdx.app.log(Constants.LOG_TAG, "Preparing to parse the scanned maps");
-        }
+        log("Preparing to parse the scanned maps");
         for (FileHandle mapFile : mapFiles) {
             parseMap(mapFile);
         }
-        if (enableExternalMapLogging) {
-            Gdx.app.log(Constants.LOG_TAG, "Map parsing completed");
-        }
+        log("Map parsing completed");
     }
 
     private void parseMap(FileHandle mapFile) {
@@ -167,12 +156,24 @@ public class ExternalMapReader {
 
         if (!mapGrid.isEmpty() && mapName != null && rowCount > 0 && colCount > 0) {
             loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPosNames, rowCount, colCount));
-            if (enableExternalMapLogging) {
-                Gdx.app.log(Constants.LOG_TAG, "Successfully parsed " + mapFile.name());
-            }
-        } else if (enableExternalMapLogging) {
-            Gdx.app.error(Constants.LOG_TAG, "Failed to parse " + mapFile.name());
+            log("Successfully parsed " + mapFile.name());
+        } else {
+            log("Failed to parse " + mapFile.name(), true);
         }
+    }
+
+    private void log(String message, boolean isError) {
+        if (enableExternalMapLogging) {
+            if (isError) {
+                Gdx.app.error(Constants.LOG_TAG, message);
+            } else {
+                Gdx.app.log(Constants.LOG_TAG, message);
+            }
+        }
+    }
+
+    private void log(String message) {
+        this.log(message, false);
     }
 
     public void enableExternalMapLogging(boolean enableExternalMapLogging) {

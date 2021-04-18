@@ -212,6 +212,8 @@ public class Map {
         // so that every one of them moves together
 
         for (Player player : players) {
+            player.setRoundedPosition();
+
             if (player.direction != null) {
                 if (waitForMovementCompletion && player.targetPosition == null) {
                     continue;
@@ -228,24 +230,23 @@ public class Map {
                 mapColorUpdated = false;
 
                 Player.Direction direction = player.direction;
-                if (direction == Player.Direction.UP && player.position.y < rows - 1 &&
-                        mapGrid[Math.round(player.position.y) + 1][Math.round(player.position.x)].isMovable) {
+                boolean atLeftEdge = player.position.x == 0;
+                boolean atRightEdge = player.position.x == cols - 1;
+                boolean atTopEdge = player.position.y == rows - 1;
+                boolean atBottomEdge = player.position.y == 0;
+                int rPosX = player.roundedPosition.x;
+                int rPosY = player.roundedPosition.y;
 
+                if (direction == Player.Direction.UP && !atTopEdge && mapGrid[rPosY + 1][rPosX].isMovable) {
                     player.moveTo(new Vector2(player.position.x, player.position.y + 1), delta);
 
-                } else if (direction == Player.Direction.RIGHT && player.position.x < cols - 1 &&
-                        mapGrid[Math.round(player.position.y)][Math.round(player.position.x) + 1].isMovable) {
-
+                } else if (direction == Player.Direction.RIGHT && !atRightEdge && mapGrid[rPosY][rPosX + 1].isMovable) {
                     player.moveTo(new Vector2(player.position.x + 1, player.position.y), delta);
 
-                } else if (direction == Player.Direction.DOWN && player.position.y > 0 &&
-                        mapGrid[Math.round(player.position.y) - 1][Math.round(player.position.x)].isMovable) {
-
+                } else if (direction == Player.Direction.DOWN && !atBottomEdge && mapGrid[rPosY - 1][rPosX].isMovable) {
                     player.moveTo(new Vector2(player.position.x, player.position.y - 1), delta);
 
-                } else if (direction == Player.Direction.LEFT && player.position.x > 0 &&
-                        mapGrid[Math.round(player.position.y)][Math.round(player.position.x) - 1].isMovable) {
-
+                } else if (direction == Player.Direction.LEFT && !atLeftEdge && mapGrid[rPosY][rPosX - 1].isMovable) {
                     player.moveTo(new Vector2(player.position.x - 1, player.position.y), delta);
 
                 } else {
@@ -274,10 +275,10 @@ public class Map {
                     player.prevPosition = new Vector2();
                 }
 
-                mapGrid[Math.round(player.position.y)][Math.round(player.position.x)].playerCount++;
+                mapGrid[player.roundedPosition.y][player.roundedPosition.x].playerCount++;
 
-                player.prevPosition.x = Math.round(player.position.x);
-                player.prevPosition.y = Math.round(player.position.y);
+                player.prevPosition.x = player.roundedPosition.x;
+                player.prevPosition.y = player.roundedPosition.y;
             }
         }
 
@@ -285,11 +286,11 @@ public class Map {
 
     private void setMapColors(PlayerManager playerManager, Player[] players) {
         for (Player player : players) {
-            int posX = Math.round(player.position.x);
-            int posY = Math.round(player.position.y);
-            if (mapGrid[posY][posX].cellColor == null && mapGrid[posY][posX].playerCount == 1) {
+            int rPosX = player.roundedPosition.x;
+            int rPosY = player.roundedPosition.y;
+            if (mapGrid[rPosY][rPosX].cellColor == null && mapGrid[rPosY][rPosX].playerCount == 1) {
                 // TODO: Should we allow multiple players of the same team in the same location capture the cell?
-                mapGrid[posY][posX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
+                mapGrid[rPosY][rPosX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
                 if (playerManager != null) {
                     playerManager.incrementScore(player);
                 }
@@ -331,7 +332,6 @@ public class Map {
 
     public void render(Player[] players, int playerIndex, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         Rectangle userViewRect = calcUserViewRect(camera);
-
         Batch batch = shapeDrawer.getBatch();
 
         drawColors(shapeDrawer, batch, playerIndex, userViewRect, delta);

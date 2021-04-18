@@ -19,6 +19,7 @@ public class Player extends InputAdapter {
     public Vector2 position;
     public Vector2 prevPosition;
     public Vector2 targetPosition;
+    public GridPoint2 roundedPosition;
 
     public boolean dummyMoving;
     private Vector2 dummyPosition;
@@ -32,6 +33,7 @@ public class Player extends InputAdapter {
         this.position = new Vector2();
         this.prevPosition = null;
         this.targetPosition = null;
+        this.roundedPosition = new GridPoint2();
 
         this.dummyPosition = new Vector2(0, 0);
         this.dummyMoving = false;
@@ -47,6 +49,11 @@ public class Player extends InputAdapter {
 
     public void setControlIndex(int index) {
         controls = Constants.PLAYER_CONTROLS[index];
+    }
+
+    public void setRoundedPosition() {
+        this.roundedPosition.x = Math.round(this.position.x);
+        this.roundedPosition.y = Math.round(this.position.y);
     }
 
     public void moveTo(Vector2 targetPosition, float delta) {
