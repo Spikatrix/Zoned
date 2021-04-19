@@ -261,7 +261,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
             int randomY = rand.nextInt(rowCount);
             int randomX = rand.nextInt(colCount);
 
-            if (randomX != playerPosX && randomY != playerPosY) {
+            if (!(randomX == playerPosX && randomY == playerPosY)) {
                 mapGrid[randomY][randomX].cellColor = null;
                 mapGrid[randomY][randomX].isMovable = false;
             }
