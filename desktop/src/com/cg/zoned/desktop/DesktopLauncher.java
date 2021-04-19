@@ -11,7 +11,6 @@ public class DesktopLauncher {
         config.title = "Zoned";
         config.vSyncEnabled = true;
         config.samples = 4;
-        config.forceExit = false;
 
         // Launch in a 16:9 aspect ratio
         config.width = 960;

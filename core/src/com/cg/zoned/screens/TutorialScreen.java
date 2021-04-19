@@ -5,7 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -89,6 +88,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         this.players = new Player[1];
         this.players[0] = new Player(PlayerColorHelper.getColorFromString("GREEN"), "Player");
         this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
+        this.players[0].setRoundedPosition();
         this.players[0].setControlIndex(0);
         BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
@@ -204,8 +204,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         tutorialTable.clearActions();
 
         players[0].updatedDirection = players[0].direction = null;
-        players[0].position.x = Math.round(players[0].position.x);
-        players[0].position.y = Math.round(players[0].position.y);
+        players[0].setRoundedPosition();
+        players[0].position.set(players[0].roundedPosition.x, players[0].roundedPosition.y);
 
         if (mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor == null) {
             mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor =
@@ -251,8 +251,9 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         int rowCount = mapGrid.length;
         int colCount = mapGrid[0].length;
 
-        int playerPosX = Math.round(players[0].position.x);
-        int playerPosY = Math.round(players[0].position.y);
+        players[0].setRoundedPosition();
+        int playerPosX = players[0].roundedPosition.x;
+        int playerPosY = players[0].roundedPosition.y;
 
         Random rand = new Random();
 
@@ -301,14 +302,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
 
         tutorialTable.setSize(width, textboxHeight);
         mapViewport.update(width, (int) Math.max(0, height - textboxHeight));
-        updateCamera(mapViewport.getCamera(), width, (int) Math.max(0, height - textboxHeight));
         mapViewport.setScreenPosition(0, (int) textboxHeight);
-    }
-
-    private void updateCamera(Camera camera, int width, int height) {
-        camera.viewportHeight = Constants.WORLD_SIZE;
-        camera.viewportWidth = Constants.WORLD_SIZE * height / width;
-        camera.update();
     }
 
     @Override

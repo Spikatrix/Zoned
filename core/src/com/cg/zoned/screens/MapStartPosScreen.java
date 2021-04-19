@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -415,15 +414,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
 
         for (int i = 0; i < mapViewports.length; i++) {
             mapViewports[i].update(width / mapViewports.length, height);
-            updateCamera(mapViewports[i].getCamera(), width / mapViewports.length, height);
             this.mapViewports[i].setScreenX(i * width / mapViewports.length);
         }
-    }
-
-    private void updateCamera(Camera camera, int width, int height) {
-        camera.viewportHeight = Constants.WORLD_SIZE;
-        camera.viewportWidth = Constants.WORLD_SIZE * height / width;
-        camera.update();
     }
 
     private void drawViewportDividers() {

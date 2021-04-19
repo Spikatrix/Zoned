@@ -28,7 +28,7 @@ public class Map {
     public int cols;
     private int coloredCells = 0;
 
-    private boolean mapColorUpdated = false;
+    private boolean playerMoved = true;
 
     private Rectangle userViewRect;
 
@@ -207,27 +207,18 @@ public class Map {
     }
 
     public void update(PlayerManager playerManager, Player[] players, float delta) {
+        // Used to synchronize movement of all players so that every one of them moves in sync
         boolean waitForMovementCompletion = false;
-        // Used to synchronize movement of all players
-        // so that every one of them moves together
 
         for (Player player : players) {
-            player.setRoundedPosition();
-
             if (player.direction != null) {
-                if (waitForMovementCompletion && player.targetPosition == null) {
+                if (waitForMovementCompletion && !player.isMoving()) {
                     continue;
-                } else if (player.targetPosition != null) {
+                } else if (player.isMoving()) {
                     waitForMovementCompletion = true;
-                    if (player.dummyMoving) {
-                        player.dummyMoveTo(player.targetPosition, delta);
-                    } else {
-                        player.moveTo(player.targetPosition, delta);
-                    }
+                    player.move(delta);
                     continue;
                 }
-
-                mapColorUpdated = false;
 
                 Player.Direction direction = player.direction;
                 boolean atLeftEdge = player.position.x == 0;
@@ -236,6 +227,8 @@ public class Map {
                 boolean atBottomEdge = player.position.y == 0;
                 int rPosX = player.roundedPosition.x;
                 int rPosY = player.roundedPosition.y;
+
+                playerMoved = true;
 
                 if (direction == Player.Direction.UP && !atTopEdge && mapGrid[rPosY + 1][rPosX].isMovable) {
                     player.moveTo(new Vector2(player.position.x, player.position.y + 1), delta);
@@ -250,14 +243,15 @@ public class Map {
                     player.moveTo(new Vector2(player.position.x - 1, player.position.y), delta);
 
                 } else {
-                    player.dummyMoveTo(new Vector2(1, 0), delta);
+                    // Simulate a fake movement
+                    player.move(delta);
                 }
             }
         }
 
         if (!waitForMovementCompletion) { // If movement(s) are completed
-            if (!mapColorUpdated) {
-                mapColorUpdated = true;
+            if (playerMoved) { // Update map grid if at least one player moved
+                playerMoved = false;
 
                 setMapWeights(players);
                 setMapColors(playerManager, players);

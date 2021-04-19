@@ -14,7 +14,7 @@ public class Preferences {
     public static final String SHOW_TUTORIAL_PREFERENCE = "Show_Tutorial_Preference";
     // Player count in splitscreen multiplayer mode (Developer options)
     public static final String SPLITSCREEN_PLAYER_COUNT_PREFERENCE = "Splitscreen_Player_Count_Preference";
-    // Splitscreen count in the Map start pos screen (Developer option)
+    // Splitscreen count in the Map start pos screen (Developer options)
     public static final String MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE = "Map_Start_Pos_Splitscreen_Count_Preference";
     // Developer mode unlocked or not
     public static final String DEV_MODE_PREFERENCE = "Dev_Mode_Preference";

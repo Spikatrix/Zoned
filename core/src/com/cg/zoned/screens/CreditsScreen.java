@@ -75,12 +75,12 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
                 "Original Neon-UI Skin", "Raymond \"Raeleus\" Buckley");
 
         addCreditItem(table,
-                "Powered By",
+                "Powered by",
                 Gdx.files.internal("images/credits_icons/ic_libgdx.png"), null,
                 "https://libgdx.com");
 
         addCreditItem(table,
-                "Inspired By",
+                "Inspired by",
                 Gdx.files.internal("images/credits_icons/ic_codingame.png"), "Back to the Code",
                 "https://www.codingame.com/multiplayer/bot-programming/back-to-the-code");
 
@@ -193,7 +193,7 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
         Table contentTable = new Table();
         if (content != null) {
             contentTable.add(image).height(contentLabel.getPrefHeight()).width(contentLabel.getPrefHeight());
-            contentTable.add(contentLabel).padLeft(20f);
+            contentTable.add(contentLabel).padLeft(12f * game.getScaleFactor());
         } else {
             contentTable.add(image).height(contentLabel.getPrefHeight() * 4 / 3).width(3 * screenStage.getWidth() / 4);
         }

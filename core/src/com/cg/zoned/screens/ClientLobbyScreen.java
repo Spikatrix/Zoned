@@ -5,7 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -677,14 +676,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         super.resize(width, height);
 
         mapViewport.update(width, height);
-        updateCamera(mapViewport.getCamera(), width, height);
         this.mapViewport.setScreenX(0);
-    }
-
-    private void updateCamera(Camera camera, int width, int height) {
-        camera.viewportHeight = Constants.WORLD_SIZE;
-        camera.viewportWidth = Constants.WORLD_SIZE * height / width;
-        camera.update();
     }
 
     private void drawDarkOverlay() {
