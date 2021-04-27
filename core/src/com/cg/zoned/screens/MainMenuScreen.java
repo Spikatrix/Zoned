@@ -26,10 +26,8 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.reflect.ClassReflection;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Preferences;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.GameMode;
 import com.cg.zoned.managers.AnimationManager;
@@ -52,11 +50,10 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         super(game);
         this.game.discordRPCManager.updateRPC("Main Menu");
 
-        screenViewport = new ScreenViewport();
-        screenStage = new FocusableStage(screenViewport);
         mainStage = screenStage;
         playModeStage = new FocusableStage(screenViewport);
         animationManager = new AnimationManager(this.game, this);
+        uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures); // This is the one for playModeStage
         batch = new SpriteBatch();
         batch.setColor(1, 1, 1, bgAlpha);
     }
@@ -197,7 +194,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 }
 
                 if (!playModeStage.getRoot().hasChildren()) {
-                    // Causes a bit of noticeable lag on my mobile
+                    // Causes a bit of noticeable lag on my old mobile
                     setUpPlayMenu();
                 }
 
@@ -223,8 +220,6 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 new GameMode("Splitscreen\nMultiplayer", "images/multiplayer_icons/ic_splitscreen_multiplayer.png", PlayerSetUpScreen.class),
                 new GameMode("Local\nNetwork\nMultiplayer", "images/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
         };
-
-        UIButtonManager uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures);
 
         Label chooseMode = new Label("Choose the game mode", game.skin, "themed-rounded-background");
         float headerPad = uiButtonManager.getHeaderPad(chooseMode.getPrefHeight());
@@ -343,10 +338,6 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         drawBG(batch, delta);
         batch.end();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, batch, game.getSmallFont());
-        }
-
         mainStage.act(delta);
         if (mainStage.getRoot().getColor().a > 0) {
             mainStage.draw();
@@ -356,6 +347,8 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         if (playModeStage.getRoot().getColor().a > 0) {
             playModeStage.draw();
         }
+
+        displayFPS();
     }
 
     private void drawBG(Batch batch, float delta) {

@@ -7,14 +7,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Preferences;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 
@@ -28,9 +25,8 @@ public class DevScreen extends ScreenObject implements InputProcessor {
         super(game);
         game.discordRPCManager.updateRPC("Exploring secrets");
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
     }
 
     @Override
@@ -44,8 +40,6 @@ public class DevScreen extends ScreenObject implements InputProcessor {
         Table table = new Table();
         table.center();
         table.setFillParent(true);
-
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         Label devOptions = new Label("Developer Options", game.skin, "themed-rounded-background");
         float headerPad = uiButtonManager.getHeaderPad(devOptions.getPrefHeight());
@@ -113,12 +107,10 @@ public class DevScreen extends ScreenObject implements InputProcessor {
     public void render(float delta) {
         super.render(delta);
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.act(delta);
         screenStage.draw();
+
+        displayFPS();
     }
 
     private void saveData() {

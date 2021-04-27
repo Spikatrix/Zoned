@@ -20,13 +20,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ObjectMap;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.ControlManager;
-import com.cg.zoned.ui.FocusableStage;
 
 public class LoadingScreen extends ScreenObject {
     private AssetManager assetManager;
@@ -65,9 +63,6 @@ public class LoadingScreen extends ScreenObject {
     public void show() {
         assetManager = new AssetManager();
         game.setAssetManager(assetManager); // For disposing
-
-        screenViewport = new ScreenViewport();
-        screenStage = new FocusableStage(screenViewport);
 
         setUpLoadingUI();
         finishedLoading = loadedStageTwo = false;

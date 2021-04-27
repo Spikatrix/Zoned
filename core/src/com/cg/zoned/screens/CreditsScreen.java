@@ -19,15 +19,12 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Scaling;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Preferences;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.ParticleEffectActor;
 
@@ -39,9 +36,8 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
         super(game);
         game.discordRPCManager.updateRPC("Viewing credits");
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
     }
 
     @Override
@@ -273,7 +269,6 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
@@ -287,12 +282,10 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
     public void render(float delta) {
         super.render(delta);
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.act(delta);
         screenStage.draw();
+
+        displayFPS();
     }
 
     @Override

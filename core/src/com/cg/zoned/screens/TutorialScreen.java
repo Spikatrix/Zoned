@@ -22,7 +22,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
@@ -31,14 +30,12 @@ import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.dataobjects.TutorialItem;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ControlManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
 import java.util.Random;
@@ -66,9 +63,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         super(game);
         game.discordRPCManager.updateRPC("Playing the Tutorial");
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
@@ -286,7 +282,6 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
@@ -324,12 +319,10 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         shapeDrawer.filledRectangle(0, textboxHeight, screenStage.getWidth(), 2f, Color.WHITE);
         batch.end();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.act(delta);
         screenStage.draw();
+
+        displayFPS();
     }
 
     private void renderMap(float delta) {

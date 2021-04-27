@@ -23,15 +23,12 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.Sort;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.PlayerColorHelper;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
 import java.text.DecimalFormat;
@@ -53,9 +50,8 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
 
         this.padding = 16f * game.getScaleFactor();
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         this.teamData = teamData;
         finalizeTeamData();
@@ -237,7 +233,6 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpNextButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton nextButton = uiButtonManager.addNextButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         nextButton.addListener(new ClickListener() {
             @Override
@@ -262,12 +257,10 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
         trailEffect.draw(screenStage.getBatch(), delta);
         screenStage.getBatch().end();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.draw();
         screenStage.act(delta);
+
+        displayFPS();
     }
 
     @Override

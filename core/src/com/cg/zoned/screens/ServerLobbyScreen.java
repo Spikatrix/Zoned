@@ -22,7 +22,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.SnapshotArray;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
@@ -30,7 +29,6 @@ import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.ShapeDrawer;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.managers.AnimationManager;
@@ -69,9 +67,8 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         super(game);
         game.discordRPCManager.updateRPC("In the Server Lobby");
 
-        screenViewport = new ScreenViewport();
-        screenStage = new FocusableStage(screenViewport);
         animationManager = new AnimationManager(this.game, this);
+        uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         startLocations = new Array<>();
         this.serverName = name;
@@ -131,8 +128,6 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         serverLobbyTable.setFillParent(true);
         serverLobbyTable.center();
         //serverLobbyTable.setDebug(true);
-
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         Label lobbyTitle = new Label("Lobby", game.skin, "themed-rounded-background");
         float headerPad = uiButtonManager.getHeaderPad(lobbyTitle.getPrefHeight());
@@ -540,10 +535,6 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
         drawDarkOverlay();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.act(delta);
         if (screenStage.getRoot().getColor().a > 0) {
             screenStage.draw();
@@ -553,6 +544,8 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         if (mapSelectorStage.getRoot().getColor().a > 0) {
             mapSelectorStage.draw();
         }
+
+        displayFPS();
     }
 
     private void renderMap(float delta) {

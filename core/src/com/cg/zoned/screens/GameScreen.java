@@ -16,7 +16,6 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
@@ -76,9 +75,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
         super(game);
         game.discordRPCManager.updateRPC("Playing a match", mapManager.getPreparedMap().getName(), players.length - 1);
-
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
 
         this.gameManager = new GameManager(this);
         this.gameManager.setUpConnectionManager(server, client);
@@ -144,7 +140,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpUI() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
+        uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         setUpPauseButton(uiButtonManager);
         setUpZoomButton(uiButtonManager);
     }
@@ -237,10 +233,8 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
         }
 
-        BitmapFont smallFont = game.getSmallFont();
-        boolean showFPSCounter = game.showFPSCounter();
 
-        scoreBars.render(shapeDrawer, smallFont, gameManager.playerManager.getTeamData(), delta);
+        scoreBars.render(shapeDrawer, game.getSmallFont(), gameManager.playerManager.getTeamData(), delta);
 
         if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getTeamData())) {
             gameManager.directionBufferManager.clearBuffer();
@@ -254,29 +248,38 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         batch.end();
 
-        // Display FPS
-        float textTopYOffset = scoreBars.scoreBarHeight + UITextDisplayer.padding;
-        int uiTextLineIndex = 0;
-        if (showFPSCounter) {
-            UITextDisplayer.displayFPS(screenStage.getViewport(), screenStage.getBatch(), smallFont,
-                    UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
-            uiTextLineIndex++;
-        }
-
-        // Display Ping
-        if (gameManager.gameConnectionManager.isActive) {
-            UITextDisplayer.displayPing(screenStage.getViewport(), screenStage.getBatch(), smallFont,
-                    gameManager.gameConnectionManager.getPing(), UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
-            uiTextLineIndex++;
-        }
-
         screenStage.act(delta);
         screenStage.draw();
 
-        // Display GL Profiler Stats
+        displayUIText();
+    }
+
+    private void displayUIText() {
+        BitmapFont smallFont = game.getSmallFont();
+
+        float textYOffset = scoreBars.scoreBarHeight + (UITextDisplayer.padding * 2);
+        float textXOffset = UITextDisplayer.padding * 3 * game.getScaleFactor();
+        float fontHeight = smallFont.getLineHeight();
+        int uiTextLineIndex = 0;
+
+        // Display FPS if enabled from the game settings
+        if (game.showFPSCounter()) {
+            UITextDisplayer.displayFPS(screenStage.getViewport(), screenStage.getBatch(), smallFont,
+                    textXOffset, textYOffset);
+            uiTextLineIndex++;
+        }
+
+        // Display ping if in networked multiplayer mode
+        if (gameManager.gameConnectionManager.isActive) {
+            UITextDisplayer.displayPing(screenStage.getViewport(), screenStage.getBatch(), smallFont,
+                    gameManager.gameConnectionManager.getPing(), textXOffset, textYOffset + (fontHeight * uiTextLineIndex));
+            uiTextLineIndex++;
+        }
+
+        // Display GL profiler stats if enabled when building the game
         if (profiler != null) {
             UITextDisplayer.displayExtendedGLStatistics(screenStage.getViewport(), screenStage.getBatch(),
-                    smallFont, profiler, UITextDisplayer.padding, textTopYOffset, uiTextLineIndex);
+                    smallFont, profiler, textXOffset, textYOffset + (fontHeight * uiTextLineIndex));
             uiTextLineIndex++;
         }
     }

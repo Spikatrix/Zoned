@@ -16,16 +16,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.KryoHelper;
 import com.cg.zoned.Preferences;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
@@ -45,9 +42,8 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
 
         game.discordRPCManager.updateRPC("Setting up local multiplayer");
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
     }
 
     @Override
@@ -153,7 +149,6 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
@@ -275,12 +270,10 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
     public void render(float delta) {
         super.render(delta);
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.draw();
         screenStage.act(delta);
+
+        displayFPS();
     }
 
     @Override

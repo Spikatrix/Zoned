@@ -24,14 +24,12 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.ShapeDrawer;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.managers.AnimationManager;
@@ -71,9 +69,8 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         super(game);
         game.discordRPCManager.updateRPC("In the Client lobby");
 
-        screenViewport = new ScreenViewport();
-        screenStage = new FocusableStage(screenViewport);
         animationManager = new AnimationManager(this.game, this);
+        uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         startLocations = new Array<>();
         this.clientName = name;
@@ -107,8 +104,6 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         clientLobbyTable.setFillParent(true);
         clientLobbyTable.center();
         //clientLobbyTable.setDebug(true);
-
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         Label lobbyTitle = new Label("Lobby", game.skin, "themed-rounded-background");
         float headerPad = uiButtonManager.getHeaderPad(lobbyTitle.getPrefHeight());
@@ -637,12 +632,10 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
 
         drawDarkOverlay();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.draw();
         screenStage.act(delta);
+
+        displayFPS();
     }
 
     private void renderMap(float delta) {

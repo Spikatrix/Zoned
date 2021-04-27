@@ -18,10 +18,8 @@ public class UIButtonManager {
 
     private Array<Table> buttonPositionTables;
 
-    private final float buttonHeight = 64f;
-    private final float buttonWidth = 64f;
-
-    private final float buttonPadding = 24f;
+    public final float buttonSize = 64f;
+    public final float buttonPadding = 16f;
 
     public UIButtonManager(Stage stage, float scaleFactor, Array<Texture> usedTextures) {
         this.stage = stage;
@@ -119,7 +117,7 @@ public class UIButtonManager {
         }
 
         Image buttonImage = button.getImage();
-        buttonImage.setOrigin(buttonWidth * scaleFactor / 2, buttonHeight * scaleFactor / 2);
+        buttonImage.setOrigin(buttonSize * scaleFactor / 2, buttonSize * scaleFactor / 2);
         buttonImage.rotateBy(rotateDegrees);
         button.setNormalAlpha(normalAlpha);
         button.setHoverAlpha(hoverAlpha);
@@ -127,8 +125,7 @@ public class UIButtonManager {
 
         Cell<HoverImageButton> cell = table.add(button)
                 .padLeft(buttonPadding).padRight(buttonPadding)
-                .width(buttonWidth * scaleFactor)
-                .height(buttonHeight * scaleFactor);
+                .size(buttonSize * scaleFactor);
         if (position.name().startsWith("TOP")) {
             cell.padTop(buttonPadding * scaleFactor);
         } else if (position.name().startsWith("BOTTOM")) {
@@ -142,7 +139,7 @@ public class UIButtonManager {
     }
 
     public float getHeaderPad(float givenHeight) {
-        return (buttonPadding * scaleFactor) + (((buttonHeight * scaleFactor) - givenHeight) / 2);
+        return (buttonPadding * scaleFactor) + (((buttonSize * scaleFactor) - givenHeight) / 2);
     }
 
     private enum Position {
