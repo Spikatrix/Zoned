@@ -386,14 +386,15 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private void showPauseDialog() {
         gamePaused = true;
 
-        gameManager.playerManager.stopPlayers(false);
-        if (!gameManager.gameConnectionManager.isActive) {
+        if (isSplitscreenMultiplayer()) {
+            // Stop players when in splitscreen multiplayer only
+            gameManager.playerManager.stopPlayers(false);
             gameManager.directionBufferManager.clearBuffer();
         }
 
         //dialogButtonTexts.add("Restart");
 
-        screenStage.showDialog("Game Paused",
+        screenStage.showDialog("Pause Menu",
                 new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu},
                 true,
                 game.getScaleFactor(), new FocusableStage.DialogResultListener() {

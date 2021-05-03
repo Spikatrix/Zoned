@@ -343,6 +343,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                             screenStage.row();
                         }
                         screenStage.addFocusableActor(doneButton, splitScreenCount - excessCount);
+                        screenStage.setFocusedActor(doneButton);
                     }
                 }
 
