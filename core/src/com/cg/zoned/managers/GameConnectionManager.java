@@ -126,7 +126,7 @@ public class GameConnectionManager implements GameConnectionHandler {
     }
 
     /**
-     * Called from the game screen's render loop. Sets and broadcasts the direction of the server/client
+     * Called from the game screen's render loop. Sets and broadcasts the direction of the player in the server/client
      */
     public void serverClientCommunicate() {
         Player[] players = gameManager.playerManager.getPlayers();
@@ -200,7 +200,7 @@ public class GameConnectionManager implements GameConnectionHandler {
     }
 
     /**
-     * Called in the client when the client disconnects
+     * Called in the client when it disconnects
      */
     @Override
     public void clientDisconnect(final Connection connection) {
@@ -219,7 +219,7 @@ public class GameConnectionManager implements GameConnectionHandler {
 
     /**
      * Called in the server when a new client connects when in the GameScreen
-     * Server rejects incoming connections when a match is already underway
+     * Server rejects incoming connections when a match is underway
      *
      * @param connection The client's connection
      */
