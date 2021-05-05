@@ -7,9 +7,6 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants;
 import com.cg.zoned.managers.MapManager;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * ExternalMapReader scans and parses external maps for the MapManager to handle
  * <p>
@@ -123,11 +120,6 @@ public class ExternalMapReader {
         String rowCountPrompt = "Row count:";
         String colCountPrompt = "Col count:";
 
-        Pattern startPosPattern = Pattern.compile(
-                "(^[" + MapManager.VALID_START_POSITIONS.charAt(0) + "-" + MapManager.VALID_START_POSITIONS.charAt(MapManager.VALID_START_POSITIONS.length() - 1) + "])" +
-                        ":(.*)",
-                Pattern.MULTILINE);
-
         String[] fileLines = fileContents.split("\r?\n");
         for (String fileLine : fileLines) {
             if (fileLine.startsWith(rowCountPrompt)) {
@@ -135,10 +127,11 @@ public class ExternalMapReader {
             } else if (fileLine.startsWith(colCountPrompt)) {
                 colCount = Integer.parseInt(fileLine.substring(colCountPrompt.length()).trim());
             } else {
-                Matcher matcher = startPosPattern.matcher(fileLine);
-                if (matcher.matches()) {
-                    char startPosChar = matcher.group(1).trim().charAt(0);
-                    String startPosName = matcher.group(2).trim();
+                if (fileLine.trim().length() >= 3 &&
+                        MapManager.VALID_START_POSITIONS.indexOf(fileLine.charAt(0)) != -1 &&
+                        fileLine.charAt(1) == ':') {
+                    char startPosChar = fileLine.charAt(0);
+                    String startPosName = fileLine.substring(2).trim();
 
                     int index = startPosChar - MapManager.VALID_START_POSITIONS.charAt(0);
                     for (int j = startPosNames.size; j <= index; j++) {

@@ -223,7 +223,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
             }
 
             com.badlogic.gdx.scenes.scene2d.ui.Cell<Table> cell = masterTable.add(table)
-                    .expand().uniformX().padLeft(20f * game.getScaleFactor()).padRight(10f * game.getScaleFactor());
+                    .expand().uniformX().padLeft(20f * game.getScaleFactor()).padRight(20f * game.getScaleFactor());
             if (alignLeft) {
                 cell.left();
             } else {
