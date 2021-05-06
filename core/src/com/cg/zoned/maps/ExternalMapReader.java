@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.managers.MapManager;
 
 /**
@@ -112,7 +113,7 @@ public class ExternalMapReader {
         String fileContents = mapFile.readString();
 
         String mapGrid = null, mapName = mapFile.nameWithoutExtension();
-        Array<String> startPosNames = new Array<>();
+        Array<StartPosition> startPositions = new Array<>();
         int rowCount = 0, colCount = 0;
 
         StringBuilder mapGridBuilder = new StringBuilder();
@@ -133,12 +134,7 @@ public class ExternalMapReader {
                     char startPosChar = fileLine.charAt(0);
                     String startPosName = fileLine.substring(2).trim();
 
-                    int index = startPosChar - MapManager.VALID_START_POSITIONS.charAt(0);
-                    for (int j = startPosNames.size; j <= index; j++) {
-                        startPosNames.add(null);
-                    }
-
-                    startPosNames.set(index, startPosName);
+                    startPositions.add(new StartPosition(startPosName, startPosChar));
                 } else {
                     mapGridBuilder.append(fileLine).append('\n');
                 }
@@ -148,7 +144,7 @@ public class ExternalMapReader {
         mapGrid = mapGridBuilder.toString();
 
         if (!mapGrid.isEmpty() && mapName != null && rowCount > 0 && colCount > 0) {
-            loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPosNames, rowCount, colCount));
+            loadedMaps.add(new ExternalMapTemplate(mapName, mapGrid, startPositions, rowCount, colCount));
             log("Successfully parsed " + mapFile.name());
         } else {
             log("Failed to parse " + mapFile.name(), true);

@@ -32,6 +32,7 @@ import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.MapManager;
@@ -391,16 +392,12 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
 
         this.mapGrid = mapManager.getPreparedMapGrid();
         this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
-        Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
-        Array<String> startPosNames = mapManager.getPreparedStartPosNames();
-        for (int j = 0; j < startPositions.size; j++) {
-            String startPosName;
-            try {
-                startPosName = startPosNames.get(j);
-            } catch (IndexOutOfBoundsException | NullPointerException ignored) {
-                startPosName = Character.toString((char) (j + MapManager.VALID_START_POSITIONS.charAt(0)));
-            }
-            startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
+
+        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
+        for (StartPosition startPosition : startPositions) {
+            String startPosName = startPosition.getName();
+            GridPoint2 startLocation = startPosition.getLocation();
+            startPosName += (" (" + (mapGrid.length - startLocation.y - 1) + ", " + (startLocation.x) + ")");
 
             startLocations.add(startPosName);
         }
@@ -518,8 +515,8 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
 
             position = position.substring(0, position.lastIndexOf('(')).trim();
-            int startPosIndex = mapManager.getPreparedStartPosNames().indexOf(position, false);
-            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex));
+            int startPosIndex = getStartPosIndex(mapManager.getPreparedStartPositions(), position);
+            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex).getLocation());
         }
 
         return players;
@@ -535,6 +532,16 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
                 animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager));
             }
         });
+    }
+
+    private int getStartPosIndex(Array<StartPosition> startPositions, String startPos) {
+        for (int i = 0; i < startPositions.size; i++) {
+            if (startPos.equals(startPositions.get(i).getName())) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private void clearMapGrid() {
@@ -553,9 +560,9 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     }
 
     private void updateMapColor(Player player, String color, String startPos) {
-        Array<String> startPositionsNames = mapManager.getPreparedStartPosNames();
+        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
         startPos = startPos.substring(0, startPos.lastIndexOf('(')).trim();
-        int startPosIndex = startPositionsNames.indexOf(startPos, false);
+        int startPosIndex = getStartPosIndex(startPositions, startPos);
 
         updateMapColor(player, PlayerColorHelper.getColorFromString(color), startPosIndex);
     }
@@ -573,7 +580,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
 
         if (startPosIndex != -1) {
             player.setStartPos(
-                    mapManager.getPreparedStartPositions().get(startPosIndex));
+                    mapManager.getPreparedStartPositions().get(startPosIndex).getLocation());
             mapGrid[(int) player.position.y][(int) player.position.x].cellColor = player.color;
         }
 

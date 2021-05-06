@@ -2,6 +2,7 @@ package com.cg.zoned.maps.internalmaps;
 
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.dataobjects.SpinnerVars;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
 
@@ -18,7 +19,7 @@ public class RectangleMap implements MapEntity {
             "..........\n" +
             "D........B\n";
 
-    private Array<String> startPosNames = new Array<>();
+    private Array<StartPosition> startPositions = new Array<>();
 
     private int rowCount = 10;
     private int colCount = 10;
@@ -26,6 +27,12 @@ public class RectangleMap implements MapEntity {
     private MapExtraParams mapExtraParams = null;
 
     public RectangleMap() {
+        startPositions.addAll(
+                new StartPosition("Top Left",     'A'),
+                new StartPosition("Bottom Right", 'B'),
+                new StartPosition("Top Right",    'C'),
+                new StartPosition("Bottom Left",  'D')
+        );
     }
 
     @Override
@@ -71,17 +78,8 @@ public class RectangleMap implements MapEntity {
     }
 
     @Override
-    public Array<String> getStartPosNames() {
-        if (startPosNames.isEmpty()) {
-            startPosNames.addAll(
-                    "Top Left",        // A
-                    "Bottom Right",    // B
-                    "Top Right",       // C
-                    "Bottom Left"      // D
-            );
-        }
-
-        return startPosNames;
+    public Array<StartPosition> getStartPositions() {
+        return startPositions;
     }
 
     @Override

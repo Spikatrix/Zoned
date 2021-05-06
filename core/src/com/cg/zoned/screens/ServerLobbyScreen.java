@@ -31,6 +31,7 @@ import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
@@ -169,8 +170,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
                         new FocusableStage.DialogResultListener() {
                             @Override
                             public void dialogResult(FocusableStage.DialogButton button) {
-                                if (button == FocusableStage.DialogButton.SetMap) {
-                                    mapSelector.loadSelectedMap();
+                                if (button == FocusableStage.DialogButton.SetMap && mapSelector.loadSelectedMap()) {
                                     mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
                                     mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
                                     map = new com.cg.zoned.Map(mapGrid, 0, shapeDrawer);
@@ -330,7 +330,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         this.players[index] = new Player(
                 PlayerColorHelper.getColorFromString(Constants.PLAYER_COLORS.keySet().iterator().next()),
                 ipAddress == null ? serverName : ipAddress);
-        this.players[index].setStartPos(mapSelector.getMapManager().getPreparedStartPositions().first());
+        this.players[index].setStartPos(mapSelector.getMapManager().getPreparedStartPositions().first().getLocation());
         this.mapGrid[(int) players[index].position.y][(int) players[index].position.x].cellColor = players[index].color;
     }
 
@@ -381,16 +381,11 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         MapManager mapManager = mapSelector.getMapManager();
 
         Cell[][] mapGrid = mapManager.getPreparedMapGrid();
-        Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
-        Array<String> startPosNames = mapManager.getPreparedStartPosNames();
-        for (int j = 0; j < startPositions.size; j++) {
-            String startPosName;
-            try {
-                startPosName = startPosNames.get(j);
-            } catch (IndexOutOfBoundsException | NullPointerException ignored) {
-                startPosName = Character.toString((char) (j + MapManager.VALID_START_POSITIONS.charAt(0)));
-            }
-            startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
+        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
+        for (StartPosition startPosition : startPositions) {
+            String startPosName = startPosition.getName();
+            GridPoint2 startLocation = startPosition.getLocation();
+            startPosName += (" (" + (mapGrid.length - startLocation.y - 1) + ", " + (startLocation.x) + ")");
 
             startLocations.add(startPosName);
         }
@@ -452,11 +447,21 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
 
             position = position.substring(0, position.lastIndexOf('(')).trim();
-            int startPosIndex = mapManager.getPreparedStartPosNames().indexOf(position, false);
-            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex));
+            int startPosIndex = getStartPosIndex(mapManager.getPreparedStartPositions(), position);
+            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex).getLocation());
         }
 
         return players;
+    }
+
+    private int getStartPosIndex(Array<StartPosition> startPositions, String startPos) {
+        for (int i = 0; i < startPositions.size; i++) {
+            if (startPos.equals(startPositions.get(i).getName())) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private void clearMapGrid() {
@@ -466,9 +471,9 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
     }
 
     private void updateMapColor(Player player, String color, String startPos) {
-        Array<String> startPositionsNames = mapSelector.getMapManager().getPreparedStartPosNames();
+        Array<StartPosition> startPositionsNames = mapSelector.getMapManager().getPreparedStartPositions();
         startPos = startPos.substring(0, startPos.lastIndexOf('(')).trim();
-        int startPosIndex = startPositionsNames.indexOf(startPos, false);
+        int startPosIndex = getStartPosIndex(startPositionsNames, startPos);
 
         updateMapColor(player, PlayerColorHelper.getColorFromString(color), startPosIndex);
     }
@@ -486,7 +491,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
         if (startPosIndex != -1) {
             player.setStartPos(
-                    mapSelector.getMapManager().getPreparedStartPositions().get(startPosIndex));
+                    mapSelector.getMapManager().getPreparedStartPositions().get(startPosIndex).getLocation());
             mapGrid[(int) player.position.y][(int) player.position.x].cellColor = player.color;
         }
 
@@ -577,9 +582,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
     @Override
     public void resize(int width, int height) {
         super.resize(width, height);
-
         mapViewport.update(width, height);
-        this.mapViewport.setScreenX(0);
     }
 
     private void drawDarkOverlay() {

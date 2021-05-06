@@ -1,6 +1,7 @@
 package com.cg.zoned.maps.internalmaps;
 
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
 
@@ -22,12 +23,18 @@ public class XMap implements MapEntity {
             ".#...........#.\n" +
             "D.............B\n";
 
-    private Array<String> startPosNames = new Array<>();
+    private Array<StartPosition> startPositions = new Array<>();
 
     private int rowCount = 15;
     private int colCount = 15;
 
     public XMap() {
+        startPositions.addAll(
+                new StartPosition("Top Left",     'A'),
+                new StartPosition("Bottom Right", 'B'),
+                new StartPosition("Top Right",    'C'),
+                new StartPosition("Bottom Left",  'D')
+        );
     }
 
     @Override
@@ -40,17 +47,8 @@ public class XMap implements MapEntity {
     }
 
     @Override
-    public Array<String> getStartPosNames() {
-        if (startPosNames.isEmpty()) {
-            startPosNames.addAll(
-                    "Top Left",        // A
-                    "Bottom Right",    // B
-                    "Top Right",       // C
-                    "Bottom Left"      // D
-            );
-        }
-
-        return startPosNames;
+    public Array<StartPosition> getStartPositions() {
+        return startPositions;
     }
 
     @Override

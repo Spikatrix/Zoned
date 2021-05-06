@@ -1,23 +1,23 @@
 package com.cg.zoned.maps;
 
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.dataobjects.StartPosition;
 
 public class ExternalMapTemplate implements MapEntity {
     private String mapName;
     private String mapGrid;
 
-    private Array<String> startPosNames;
+    private Array<StartPosition> startPositions;
 
     private int rowCount;
     private int colCount;
 
-    public ExternalMapTemplate(String mapName, String mapGrid, Array<String> startPosNames, int rowCount, int colCount) {
+    public ExternalMapTemplate(String mapName, String mapGrid, Array<StartPosition> startPositions, int rowCount, int colCount) {
         this.mapName = mapName;
         this.mapGrid = mapGrid;
         this.rowCount = rowCount;
         this.colCount = colCount;
-
-        this.startPosNames = startPosNames;
+        this.startPositions = startPositions;
     }
 
     @Override
@@ -25,6 +25,7 @@ public class ExternalMapTemplate implements MapEntity {
         return mapName;
     }
 
+    // External maps do not support extra params
     @Override
     public MapExtraParams getExtraParams() {
         return null;
@@ -35,8 +36,8 @@ public class ExternalMapTemplate implements MapEntity {
     }
 
     @Override
-    public Array<String> getStartPosNames() {
-        return startPosNames;
+    public Array<StartPosition> getStartPositions() {
+        return startPositions;
     }
 
     @Override

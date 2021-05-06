@@ -1,6 +1,7 @@
 package com.cg.zoned.maps;
 
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.maps.internalmaps.RectangleMap;
 
 /**
@@ -41,7 +42,7 @@ public interface MapEntity {
      * @return An Array of Strings containing the names of each start position in order
      * null if you don't want the map start position names to be specified (It'll display A, B, C, etc instead)
      */
-    Array<String> getStartPosNames();
+    Array<StartPosition> getStartPositions();
 
     /**
      * Gets the row count of the map

@@ -31,6 +31,7 @@ import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.dataobjects.GameTouchPoint;
 import com.cg.zoned.dataobjects.PlayerSetUpParams;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
@@ -41,8 +42,7 @@ import com.cg.zoned.ui.HoverImageButton;
 
 public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private Cell[][] mapGrid;
-    private Array<GridPoint2> startPositions;
-    private Array<String> startPosNames;
+    private Array<StartPosition> startPositions;
 
     private MapManager mapManager;
     private Map map;
@@ -65,7 +65,6 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         this.mapManager = mapManager;
         this.mapGrid = mapManager.getPreparedMapGrid();
         this.startPositions = mapManager.getPreparedStartPositions();
-        this.startPosNames = mapManager.getPreparedStartPosNames();
         this.players = players;
         this.splitScreenCount = splitScreenCount;
 
@@ -89,7 +88,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
         for (int i = 0; i < players.length; i++) {
-            players[i].setStartPos(startPositions.get(i % startPositions.size));
+            players[i].setStartPos(startPositions.get(i % startPositions.size).getLocation());
             mapGrid[(int) players[i].position.y][(int) players[i].position.x].cellColor = players[i].color;
         }
         for (int i = 0; i < splitScreenCount; i++) {
@@ -165,13 +164,9 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                 buttonGroup[i].setMinCheckCount(1);
                 buttonGroup[i].setMaxCheckCount(1);
                 for (int j = 0; j < startPositions.size; j++) {
-                    String startPosName;
-                    try {
-                        startPosName = startPosNames.get(j);
-                    } catch (IndexOutOfBoundsException | NullPointerException ignored) {
-                        startPosName = Character.toString((char) (j + MapManager.VALID_START_POSITIONS.charAt(0)));
-                    }
-                    startPosName += (" (" + (mapGrid.length - startPositions.get(j).y - 1) + ", " + (startPositions.get(j).x) + ")");
+                    String startPosName = startPositions.get(j).getName();
+                    GridPoint2 startLocation = startPositions.get(j).getLocation();
+                    startPosName += (" (" + (mapGrid.length - startLocation.y - 1) + ", " + (startLocation.x) + ")");
 
                     radioButtons[i][j] = new CheckBox(startPosName, game.skin, "radio", !alignLeft);
                     radioButtons[i][j].getImageCell().width(radioButtons[i][j].getLabel().getPrefHeight()).height(radioButtons[i][j].getLabel().getPrefHeight());
@@ -206,8 +201,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                         int oldPosX = (int) players[index].position.x;
                         int oldPosY = (int) players[index].position.y;
 
-                        players[index].position.y = startPositions.get(startPosIndex).y;
-                        players[index].position.x = startPositions.get(startPosIndex).x;
+                        players[index].position.y = startPositions.get(startPosIndex).getLocation().y;
+                        players[index].position.x = startPositions.get(startPosIndex).getLocation().x;
 
                         mapGrid[oldPosY][oldPosX].cellColor = null;
                         for (Player player : players) {
@@ -298,7 +293,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
             public void clicked(InputEvent event, float x, float y) {
                 for (int i = 0; i < splitScreenCount; i++) {
                     if (i + playerIndex < players.length) {
-                        players[i + playerIndex].setStartPos(startPositions.get(buttonGroup[i].getCheckedIndex()));
+                        players[i + playerIndex].setStartPos(startPositions.get(buttonGroup[i].getCheckedIndex()).getLocation());
                     }
                 }
 

@@ -3,10 +3,10 @@ package com.cg.zoned;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.reflect.ClassReflection;
 import com.badlogic.gdx.utils.reflect.ReflectionException;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.maps.InvalidMapCharacter;
@@ -129,14 +129,14 @@ public class ScreenHelper {
             return null;
         }
 
-        Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
+        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
         int playerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         final Player[] players = new Player[playerCount];
         for (int i = 0; i < players.length; i++) {
             Color playerColor = PlayerColorHelper.getColorFromIndex(i % Constants.PLAYER_COLORS.size());
             players[i] = new Player(playerColor, PlayerColorHelper.getStringFromColor(playerColor));
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
-            players[i].setStartPos(startPositions.get(i % startPositions.size));
+            players[i].setStartPos(startPositions.get(i % startPositions.size).getLocation());
         }
 
         int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
@@ -157,14 +157,14 @@ public class ScreenHelper {
             return null;
         }
 
-        Array<GridPoint2> startPositions = mapManager.getPreparedStartPositions();
+        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
         int playerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         final Player[] players = new Player[playerCount];
         for (int i = 0; i < players.length; i++) {
             Color playerColor = PlayerColorHelper.getColorFromIndex(i % Constants.PLAYER_COLORS.size());
             players[i] = new Player(playerColor, PlayerColorHelper.getStringFromColor(playerColor));
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
-            players[i].setStartPos(startPositions.get(i % startPositions.size));
+            players[i].setStartPos(startPositions.get(i % startPositions.size).getLocation());
         }
 
         return (Screen) ClassReflection.getConstructor(GameScreen.class, Zoned.class, MapManager.class, Player[].class).newInstance(game, mapManager, players);

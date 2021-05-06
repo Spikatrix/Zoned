@@ -8,6 +8,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Constants;
 import com.cg.zoned.dataobjects.Cell;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.maps.ExternalMapReader;
 import com.cg.zoned.maps.ExternalMapTemplate;
 import com.cg.zoned.maps.InvalidMapCharacter;
@@ -18,17 +19,20 @@ import com.cg.zoned.maps.internalmaps.HoloMap;
 import com.cg.zoned.maps.internalmaps.RectangleMap;
 import com.cg.zoned.maps.internalmaps.XMap;
 
+import java.util.Comparator;
+
 public class MapManager {
     public static final char EMPTY_CHAR = '.';
     public static final char WALL_CHAR = '#';
+
+    // Each character in this string is treated as a valid start position indicator in maps
     public static final String VALID_START_POSITIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private Array<MapEntity> mapList;
 
     private MapEntity preparedMap = null;
     private Cell[][] preparedMapGrid = null;
-    private Array<GridPoint2> preparedStartPositions = null;
-    private Array<String> preparedStartPosNames = null;
+    private Array<StartPosition> preparedStartPositions = null;
     private int wallCount = 0;
     private int internalMapCount = 0;
 
@@ -136,6 +140,7 @@ public class MapManager {
     public void prepareMap(int mapIndex) throws InvalidMapCharacter, NoStartPositionsFound, InvalidMapDimensions {
         MapEntity selectedMap = mapList.get(mapIndex);
         String mapData = selectedMap.getMapData();
+        Array<StartPosition> startPositions = selectedMap.getStartPositions();
 
         String[] mapRows = mapData.split("\n");
         if (mapRows.length != selectedMap.getRowCount()) {
@@ -149,12 +154,10 @@ public class MapManager {
         }
 
         this.preparedMap = selectedMap;
-        this.preparedStartPosNames = selectedMap.getStartPosNames();
-        parseMapData(mapData);
+        parseMapData(mapData, startPositions);
     }
 
-    private void parseMapData(String mapData) throws InvalidMapCharacter, NoStartPositionsFound {
-        Array<GridPoint2> startPositions = new Array<>();
+    private void parseMapData(String mapData, Array<StartPosition> startPositions) throws InvalidMapCharacter, NoStartPositionsFound {
         String[] mapRows = mapData.split("\n");
         Cell[][] mapGrid = new Cell[mapRows.length][];
         int wallCount = 0;
@@ -171,32 +174,54 @@ public class MapManager {
                     mapGrid[mirroredIndex][j].isMovable = false;
                     wallCount++;
                 } else if (VALID_START_POSITIONS.indexOf(c) != -1) {
-                    int index = c - VALID_START_POSITIONS.charAt(0);
-                    for (int k = startPositions.size; k <= index; k++) {
-                        startPositions.add(null);
+                    boolean foundStartPosName = false;
+                    GridPoint2 startPosLocation = new GridPoint2(j, mirroredIndex);
+                    for (int k = 0; k < startPositions.size; k++) {
+                        if (startPositions.get(k).getAltName() == c) {
+                            startPositions.get(k).setLocation(startPosLocation);
+                            foundStartPosName = true;
+                            break;
+                        }
                     }
-                    startPositions.set(index, new GridPoint2(j, mirroredIndex));
+                    if (!foundStartPosName) {
+                        startPositions.add(new StartPosition(null, c, startPosLocation));
+                    }
                 } else {
-                    preparedMap = null;
-                    preparedMapGrid = null;
-                    preparedStartPositions = null;
-                    preparedStartPosNames = null;
+                    resetMapParseParams();
                     throw new InvalidMapCharacter("Unknown character '" + c + "' found when parsing the map");
                 }
             }
         }
 
+        // Remove start positions with an unknown location
+        for (int i = 0; i < startPositions.size; i++) {
+            if (startPositions.get(i).getLocation() == null) {
+                startPositions.removeIndex(i--);
+            }
+        }
+
         if (startPositions.size == 0) {
-            preparedMap = null;
-            preparedMapGrid = null;
-            preparedStartPositions = null;
-            preparedStartPosNames = null;
+            resetMapParseParams();
             throw new NoStartPositionsFound("No start positions found in the map");
         }
+
+        // Sort all start positions based on its alt name
+        startPositions.sort(new Comparator<StartPosition>() {
+            @Override
+            public int compare(StartPosition sp1, StartPosition sp2) {
+                return sp1.getAltName() - sp2.getAltName();
+            }
+        });
 
         this.preparedMapGrid = mapGrid;
         this.preparedStartPositions = startPositions;
         this.wallCount = wallCount;
+    }
+
+    private void resetMapParseParams() {
+        this.preparedMap = null;
+        this.preparedMapGrid = null;
+        this.preparedStartPositions = null;
     }
 
     public void enableExternalMapLogging(boolean enableExternalMapLogging) {
@@ -211,11 +236,7 @@ public class MapManager {
         return preparedMapGrid;
     }
 
-    public Array<String> getPreparedStartPosNames() {
-        return preparedStartPosNames;
-    }
-
-    public Array<GridPoint2> getPreparedStartPositions() {
+    public Array<StartPosition> getPreparedStartPositions() {
         return preparedStartPositions;
     }
 
