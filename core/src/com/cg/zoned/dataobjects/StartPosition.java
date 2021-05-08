@@ -1,7 +1,7 @@
 package com.cg.zoned.dataobjects;
 
 import com.badlogic.gdx.math.GridPoint2;
-import com.cg.zoned.managers.MapManager;
+import com.cg.zoned.maps.MapLoader;
 
 /**
  * Used to handle map start position name and location
@@ -22,7 +22,7 @@ public class StartPosition {
 
         if (this.altName == null) {
             throw new NullPointerException("Start position alt name must not be null");
-        } else if (MapManager.VALID_START_POSITIONS.indexOf(this.altName) == -1) {
+        } else if (MapLoader.VALID_START_POSITIONS.indexOf(this.altName) == -1) {
             throw new IllegalArgumentException("Map alt name must be a valid start position character");
         }
     }

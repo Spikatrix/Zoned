@@ -5,9 +5,9 @@ import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.maps.internalmaps.RectangleMap;
 
 /**
- * All maps are required to implement this interface
+ * All maps are required to extend this class
  */
-public interface MapEntity {
+public abstract class MapEntity {
 
     /**
      * Used to display the Map's name.
@@ -18,23 +18,27 @@ public interface MapEntity {
      *
      * @return The map's name
      */
-    String getName();
+    abstract public String getName();
 
     /**
      * Used to get extra param prompts and values if the map supports them
      * (See {@link RectangleMap}.java for an example)
+     * Custom external maps do not support extra params
      *
      * @return The {@link MapExtraParams} object containing the title and prompt strings
      * null if the map does not support extra params
      */
-    MapExtraParams getExtraParams();
+    public MapExtraParams getExtraParams() {
+        return null;
+    };
 
     /**
      * Used to apply the user selected params if the map supports extra params. The param values
      * set by the user is accessible in the {@link MapExtraParams} object
      * returned by {@link #getExtraParams()}
      */
-    void applyExtraParams();
+    public void applyExtraParams() {
+    };
 
     /**
      * Returns the names of each start position in the map. This is optional but recommended
@@ -42,26 +46,26 @@ public interface MapEntity {
      * @return An Array of Strings containing the names of each start position in order
      * null if you don't want the map start position names to be specified (It'll display A, B, C, etc instead)
      */
-    Array<StartPosition> getStartPositions();
+    abstract public Array<StartPosition> getStartPositions();
 
     /**
      * Gets the row count of the map
      *
      * @return The row count of the map
      */
-    int getRowCount();
+    abstract public int getRowCount();
 
     /**
      * Gets the col count of the map
      *
      * @return The col count of the map
      */
-    int getColCount();
+    abstract public int getColCount();
 
     /**
      * Gets the map grid data
      *
      * @return The map grid data as a string
      */
-    String getMapData();
+    abstract public String getMapData();
 }

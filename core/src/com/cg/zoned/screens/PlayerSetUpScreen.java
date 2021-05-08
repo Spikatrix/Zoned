@@ -94,9 +94,9 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         screenStage.getRoot().getColor().a = 0;
 
         // The screen is faded in once the maps and the extended selector is loaded
-        mapSelector.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+        mapSelector.loadExternalMaps(new MapManager.ExternalMapScanListener() {
             @Override
-            public void onExternalMapsLoaded(Array<MapEntity> mapList, final int externalMapStartIndex) {
+            public void onExternalMapScanComplete(Array<MapEntity> mapList, final int externalMapStartIndex) {
                 // Set up the extended map selector once external maps have been loaded
                 mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
                     @Override
@@ -232,7 +232,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
 
         mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
-        mapSelector.getMapManager().enableExternalMapLogging(true);
+        mapSelector.getMapManager().enableExternalMapScanLogging(true);
         float spinnerHeight = game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3;
         mapSpinner = mapSelector.loadMapSelectorSpinner(spinnerHeight * 1.5f, spinnerHeight);
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();

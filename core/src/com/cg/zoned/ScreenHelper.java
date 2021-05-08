@@ -13,7 +13,8 @@ import com.cg.zoned.maps.InvalidMapCharacter;
 import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
-import com.cg.zoned.maps.NoStartPositionsFound;
+import com.cg.zoned.maps.MapGridMissing;
+import com.cg.zoned.maps.StartPositionsMissing;
 import com.cg.zoned.screens.ClientLobbyScreen;
 import com.cg.zoned.screens.GameScreen;
 import com.cg.zoned.screens.HostJoinScreen;
@@ -25,6 +26,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Server;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Random;
@@ -123,8 +125,9 @@ public class ScreenHelper {
         mapExtraParams.extraParams = new int[] {5, 5};
         map.applyExtraParams();
         try {
-            mapManager.prepareMap(map);
-        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
+            mapManager.loadMap(map);
+        } catch (InvalidMapCharacter | StartPositionsMissing | InvalidMapDimensions | MapGridMissing |
+                FileNotFoundException | IndexOutOfBoundsException e) {
             e.printStackTrace();
             return null;
         }
@@ -151,8 +154,9 @@ public class ScreenHelper {
         mapExtraParams.extraParams = new int[] {5, 5};
         map.applyExtraParams();
         try {
-            mapManager.prepareMap(map);
-        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
+            mapManager.loadMap(map);
+        }catch (InvalidMapCharacter | StartPositionsMissing | InvalidMapDimensions | MapGridMissing |
+                FileNotFoundException | IndexOutOfBoundsException e) {
             e.printStackTrace();
             return null;
         }

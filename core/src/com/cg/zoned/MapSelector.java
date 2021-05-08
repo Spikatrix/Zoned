@@ -24,11 +24,14 @@ import com.cg.zoned.maps.InvalidMapCharacter;
 import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
-import com.cg.zoned.maps.NoStartPositionsFound;
+import com.cg.zoned.maps.MapGridMissing;
+import com.cg.zoned.maps.StartPositionsMissing;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 import com.cg.zoned.ui.StepScrollPane;
+
+import java.io.FileNotFoundException;
 
 public class MapSelector {
     private MapManager mapManager;
@@ -159,10 +162,10 @@ public class MapSelector {
         return stack;
     }
 
-    public void loadExternalMaps(final MapManager.OnExternalMapLoadListener externalMapLoadListener) {
-        mapManager.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+    public void loadExternalMaps(final MapManager.ExternalMapScanListener externalMapLoadListener) {
+        mapManager.loadExternalMaps(new MapManager.ExternalMapScanListener() {
             @Override
-            public void onExternalMapsLoaded(final Array<MapEntity> mapList, final int externalMapStartIndex) {
+            public void onExternalMapScanComplete(final Array<MapEntity> mapList, final int externalMapStartIndex) {
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
@@ -173,7 +176,7 @@ public class MapSelector {
                         }
 
                         if (externalMapLoadListener != null) {
-                            externalMapLoadListener.onExternalMapsLoaded(mapList, externalMapStartIndex);
+                            externalMapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
                         }
                     }
                 });
@@ -240,8 +243,9 @@ public class MapSelector {
         int mapIndex = mapSpinner.getPositionIndex();
 
         try {
-            mapManager.prepareMap(mapIndex);
-        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
+            mapManager.loadMap(mapIndex);
+        } catch (InvalidMapCharacter | StartPositionsMissing | InvalidMapDimensions | MapGridMissing |
+                FileNotFoundException | IndexOutOfBoundsException e) {
             stage.showOKDialog("Error: " + e.getMessage(), false, scaleFactor, null, skin);
             e.printStackTrace();
             return false;

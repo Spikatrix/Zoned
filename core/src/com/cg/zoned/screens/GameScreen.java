@@ -84,7 +84,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
-        this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getWallCount(), this.shapeDrawer);
+        this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getPreparedMapWallCount(), this.shapeDrawer);
         this.map.initFloodFillVars();
 
         if (Constants.DISPLAY_EXTENDED_GL_STATS) {

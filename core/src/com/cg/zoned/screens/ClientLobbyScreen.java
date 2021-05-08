@@ -40,12 +40,14 @@ import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.InvalidMapCharacter;
 import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
-import com.cg.zoned.maps.NoStartPositionsFound;
+import com.cg.zoned.maps.MapGridMissing;
+import com.cg.zoned.maps.StartPositionsMissing;
 import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
 
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -88,9 +90,9 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
             @Override
             public void animationEnd(Stage stage) {
-                mapManager.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+                mapManager.loadExternalMaps(new MapManager.ExternalMapScanListener() {
                     @Override
-                    public void onExternalMapsLoaded(Array<MapEntity> mapList, int externalMapStartIndex) {
+                    public void onExternalMapScanComplete(Array<MapEntity> mapList, int externalMapStartIndex) {
                         connectionManager.sendClientNameToServer(clientName);
                     }
                 });
@@ -374,8 +376,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
 
         if (isNewMap) {
             // If true, a new external map was just downloaded from the server
-
-            this.mapManager.loadExternalMap(mapName);
+            this.mapManager.addNewExternalMap(mapName);
             this.mapLabel.setText("");
         }
 
@@ -440,21 +441,22 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
             map.applyExtraParams();
         }
 
+        try {
+            mapManager.loadMap(map);
+        } catch (InvalidMapCharacter | StartPositionsMissing | InvalidMapDimensions | MapGridMissing |
+                FileNotFoundException | IndexOutOfBoundsException e) {
+            // Should never happen cause the server does this check before sending to all the clients
+            e.printStackTrace();
+            displayServerError("Error: " + e.getMessage());
+            return false;
+        }
+
         int clientMapHash = map.getMapData().hashCode();
         if (clientMapHash != serverMapHash) {
             // Map in the server and client have the same name, but different contents
             displayServerError("Server client map content mismatch!\n" +
-                    "Looks like the map content for the map '" + mapName + "'\n is different for you and the server\n" +
+                    "The map content for the map '" + mapName + "'\n is different for you and the server\n" +
                     "(Server: " + serverMapHash + ", Client: " + clientMapHash + ")");
-            return false;
-        }
-
-        try {
-            mapManager.prepareMap(map);
-        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
-            // Should never happen cause the server does this check before sending to all the clients
-            e.printStackTrace();
-            displayServerError("Error: " + e.getMessage());
             return false;
         }
 

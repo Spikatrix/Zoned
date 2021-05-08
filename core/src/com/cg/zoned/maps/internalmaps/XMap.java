@@ -3,9 +3,8 @@ package com.cg.zoned.maps.internalmaps;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.maps.MapEntity;
-import com.cg.zoned.maps.MapExtraParams;
 
-public class XMap implements MapEntity {
+public class XMap extends MapEntity {
     private String mapGridString = "" + // Added this line as the auto-code formatter messes up the arrangement
             "A.............C\n" +
             ".#...........#.\n" +
@@ -35,15 +34,6 @@ public class XMap implements MapEntity {
                 new StartPosition("Top Right",    'C'),
                 new StartPosition("Bottom Left",  'D')
         );
-    }
-
-    @Override
-    public MapExtraParams getExtraParams() {
-        return null;
-    }
-
-    @Override
-    public void applyExtraParams() {
     }
 
     @Override

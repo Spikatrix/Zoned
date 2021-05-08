@@ -88,9 +88,9 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         screenStage.getRoot().getColor().a = 0;
 
         // The screen is faded in once the maps and the extended selector is loaded
-        mapSelector.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
+        mapSelector.loadExternalMaps(new MapManager.ExternalMapScanListener() {
             @Override
-            public void onExternalMapsLoaded(Array<MapEntity> mapList, final int externalMapStartIndex) {
+            public void onExternalMapScanComplete(Array<MapEntity> mapList, final int externalMapStartIndex) {
                 // Set up the extended map selector once external maps have been loaded
                 mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
                     @Override
