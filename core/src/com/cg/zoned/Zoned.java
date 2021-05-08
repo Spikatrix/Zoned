@@ -76,7 +76,10 @@ public class Zoned extends Game {
         assets.setAssetManager(assetManager);
     }
 
-    // Called from LoadingScreen when the skin and preferences have been loaded to load FPS font and preference
+    /**
+     * Initializes the small font used to display the FPS along with FPS display preference
+     * Called from {@link LoadingScreen} once the skin and preferences have been loaded
+     */
     public void initFPSUtils() {
         this.smallFont = skin.getFont(Assets.FontManager.SMALL.getFontName());
         this.showFPSCounter = preferences.getBoolean(com.cg.zoned.Preferences.FPS_PREFERENCE, false);
