@@ -201,7 +201,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         if (!gameManager.gameOver) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
-                gameManager.gameConnectionManager.serverClientCommunicate();
+                gameManager.gameConnectionManager.serverClientCommunicate(map);
             } else {                                // We're playing on the same device (Splitscreen)
                 gameManager.playerManager.updatePlayerDirections();
             }
@@ -233,7 +233,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
         }
 
-
         scoreBars.render(shapeDrawer, game.getSmallFont(), gameManager.playerManager.getTeamData(), delta);
 
         if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getTeamData())) {
@@ -257,8 +256,8 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private void displayUIText() {
         BitmapFont smallFont = game.getSmallFont();
 
-        float textYOffset = scoreBars.scoreBarHeight + (UITextDisplayer.padding * 2);
         float textXOffset = UITextDisplayer.padding * 3 * game.getScaleFactor();
+        float textYOffset = scoreBars.scoreBarHeight + textXOffset;
         float fontHeight = smallFont.getLineHeight();
         int uiTextLineIndex = 0;
 
@@ -392,7 +391,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             gameManager.directionBufferManager.clearBuffer();
         }
 
-        //dialogButtonTexts.add("Restart");
+        //dialogButtonTexts.add("Restart"); Coming soon
 
         screenStage.showDialog("Pause Menu",
                 new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu},
@@ -426,8 +425,15 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                     return;
                 }
 
+                // TODO: Connection ID is not always the connIndex, don't use getID for the index
                 int connIndex = connection.getID();
-                String playerName = gameManager.playerManager.getPlayer(connIndex).name;
+                String playerName = "A player"; // A generic name for now xD
+
+                try {
+                    playerName = gameManager.playerManager.getPlayer(connIndex).name;
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    Gdx.app.error(Constants.LOG_TAG, "Failed to fetch the name of the disconnected client");
+                }
 
                 gameManager.playerManager.stopPlayers(false);
 

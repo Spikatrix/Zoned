@@ -249,15 +249,18 @@ public class Map {
             }
         }
 
-        if (!waitForMovementCompletion) { // If movement(s) are completed
-            if (playerMoved) { // Update map grid if at least one player moved
-                playerMoved = false;
-
-                setMapWeights(players);
-                setMapColors(playerManager, players);
-                updateCapturePercentage(playerManager);
-            }
+        if (!waitForMovementCompletion && playerMoved) {
+            // If movement(s) are completed and
+            // If at least one player moved, update the map grid
+            playerMoved = false;
+            updateMap(players, playerManager);
         }
+    }
+
+    public void updateMap(Player[] players, PlayerManager playerManager) {
+        setMapWeights(players);
+        setMapColors(playerManager, players);
+        updateCapturePercentage(playerManager);
     }
 
     private void setMapWeights(Player[] players) {

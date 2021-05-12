@@ -93,8 +93,24 @@ public class PlayerManager extends InputMultiplexer {
         }
     }
 
+    public void forceEndTurn() {
+        for (Player player : players) {
+            player.completeMovement();
+        }
+    }
+
     public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
         controlManager.renderPlayerControlPrompt(shapeDrawer, delta);
+    }
+
+    public int getPlayerIndex(String name) {
+        for (int i = 0; i < players.length; i++) {
+            if (players[i].name.equals(name)) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     public Player getPlayer(int index) {

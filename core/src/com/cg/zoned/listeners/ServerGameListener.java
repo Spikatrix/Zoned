@@ -18,7 +18,7 @@ public class ServerGameListener extends Listener {
         if (object instanceof BufferDirections) {
             BufferDirections bd = (BufferDirections) object;
             connection.updateReturnTripTime();
-            gameConnectionManager.serverUpdateDirections(bd, connection.getReturnTripTime());
+            gameConnectionManager.serverUpdateDirections(bd);
         } else if (object instanceof BufferClientConnect) {
             gameConnectionManager.rejectNewConnection(connection);
         }

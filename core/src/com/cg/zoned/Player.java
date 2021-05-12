@@ -76,15 +76,24 @@ public class Player extends InputAdapter {
         }
 
         if (timeElapsed >= Constants.PLAYER_MOVEMENT_MAX_TIME) {
-            if (!fakeMovement) {
-                this.position.x = Math.round(this.targetPosition.x);
-                this.position.y = Math.round(this.targetPosition.y);
-                setRoundedPosition();
-            }
-            timeElapsed = 0;
-            this.targetPosition = null;
-            this.direction = null;
+            completeMovement();
         }
+    }
+
+    public void completeMovement() {
+        if (!isMoving()) {
+            return;
+        }
+
+        boolean fakeMovement = targetPosition.x < 0 || targetPosition.y < 0;
+        if (!fakeMovement) {
+            this.position.x = Math.round(this.targetPosition.x);
+            this.position.y = Math.round(this.targetPosition.y);
+            setRoundedPosition();
+        }
+        timeElapsed = 0;
+        this.targetPosition = null;
+        this.direction = null;
     }
 
     public boolean isMoving() {

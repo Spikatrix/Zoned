@@ -2,6 +2,8 @@ package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.Constants;
+import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.Player.Direction;
 import com.cg.zoned.buffers.BufferDirections;
@@ -15,21 +17,32 @@ import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
 public class GameConnectionManager implements GameConnectionHandler {
-    public boolean isActive;     // GameConnectionManager will be inactive when playing in splitscreen mode
+    // GameConnectionManager will be inactive when playing in splitscreen mode
+    public boolean isActive;
 
     private GameManager gameManager;
 
-    private Server server;       // One of these two will be null (or both)
+    // At least one of these two will be null
+    private Server server;
     private Client client;
 
-    private Listener connListener; // Kryonet to this manager
+    // Kryonet to this manager
+    private Listener connListener;
 
-    private Array<Connection> discardConnections; // Used to store client connections that came in when in-game
+    // Used by the server and the  client to store the previously sent direction
+    private Direction previousDirection;
 
+    // Used by the server to store client connections that came in when a match is already underway
+    private Array<Connection> discardConnections;
+
+    // Used by clients to store directions received from the server for processing later
+    private Array<BufferDirections> clientDirectionBacklog;
+
+    // Used by clients to display their ping to the server. On the server, this is always zero
     private int ping;
-    private boolean sentResponse;
 
-    // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
+    // Gdx.app.postRunnables are required in several methods below running on the kryonet thread
+    // in order to properly sync multiple requests
 
     public GameConnectionManager(GameManager gameManager, Server server, Client client) {
         isActive = server != null || client != null;
@@ -41,57 +54,43 @@ public class GameConnectionManager implements GameConnectionHandler {
 
         this.server = server;
         this.client = client;
-        this.sentResponse = false;
-
-        this.discardConnections = new Array<>();
 
         if (server != null) {
             connListener = new ServerGameListener(this);
+            discardConnections = new Array<>();
             server.addListener(connListener);
         } else if (client != null) {
             connListener = new ClientGameListener(this);
+            clientDirectionBacklog = new Array<>();
             client.addListener(connListener);
         }
     }
 
     /**
      * Called when the server receives direction information from a client
-     * The server then updates its buffer after finding the proper index of the buffer
+     * The server then updates its internal direction buffer with the received client directions
      *
-     * @param bd             BufferDirection object containing client player's name and direction
-     * @param returnTripTime The return trip time a.k.a ping of the packet received
+     * @param bd BufferDirection object containing client player's name and direction
      */
     @Override
-    public void serverUpdateDirections(final BufferDirections bd, final int returnTripTime) {
+    public void serverUpdateDirections(final BufferDirections bd) {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
                 Player[] players = gameManager.playerManager.getPlayers();
-                for (int i = 0; i < players.length; i++) {
-                    if (players[i].name.equals(bd.playerNames[0])) {
-                        players[i].updatedDirection = bd.directions[0];
-                        gameManager.directionBufferManager.updateDirection(bd.directions[0], i);
-                        break;
-                    }
-                }
 
-                /* Check if the server got all directions for the next turn.
-                   If so, set the player directions and broadcast information to all clients */
-                if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
-                    gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
-                    broadcastDirections();
-                    gameManager.directionBufferManager.clearBuffer();
-                    sentResponse = false;
+                int playerIndex = gameManager.playerManager.getPlayerIndex(bd.playerNames[0]);
+                if (playerIndex != -1) {
+                    players[playerIndex].updatedDirection = bd.directions[0];
+                    gameManager.directionBufferManager.updateDirection(bd.directions[0], playerIndex);
                 }
-
-                ping = returnTripTime;
             }
         });
     }
 
     /**
-     * Called when the client receives direction information from a server
-     * The client then updates its buffer after finding the proper index of the buffer
+     * Called when the client receives direction information from a server.
+     * The client then adds the received packet to the client backlog for processing.
      *
      * @param bd             BufferDirection object containing each player's name and direction
      * @param returnTripTime The return trip time a.k.a ping of the packet received
@@ -101,50 +100,124 @@ public class GameConnectionManager implements GameConnectionHandler {
         Gdx.app.postRunnable(new Runnable() {
             @Override
             public void run() {
-                Player[] players = gameManager.playerManager.getPlayers();
-                for (int i = 0; i < bd.playerNames.length; i++) {
-                    for (int j = 0; j < players.length; j++) {
-                        if (players[j].name.equals(bd.playerNames[i])) {
-                            if (gameManager.directionBufferManager.getDirection(j) == null && bd.directions[i] != null) {
-                                gameManager.directionBufferManager.updateDirection(bd.directions[i], j);
-                                players[j].updatedDirection = bd.directions[i];
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
-                    gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
-                    gameManager.directionBufferManager.clearBuffer();
-                    sentResponse = false;
-                }
-
+                clientDirectionBacklog.add(bd);
                 ping = returnTripTime;
             }
         });
     }
 
     /**
-     * Called from the game screen's render loop. Sets and broadcasts the direction of the player in the server/client
+     * Called in  every frame of the client for processing the direction backlog for applying turns.
+     * The backlog is filled from {@link #clientUpdateDirections(BufferDirections, int)} when receiving
+     * direction information from the server
+     *
+     * @param map The map object used to fast forward turns in case multiple packets are available for processing
      */
-    public void serverClientCommunicate() {
+    private void processClientBacklog(Map map) {
+        if (client == null || clientDirectionBacklog.size == 0) {
+            return;
+        }
+
+        // Force end the current turn, sets all players to their target position
+        gameManager.playerManager.forceEndTurn();
+
+        Player[] players = gameManager.playerManager.getPlayers();
+        boolean fastForwardTurns = clientDirectionBacklog.size > 1;
+
+        if (fastForwardTurns) {
+            // Update the map data for the previous turn
+            map.updateMap(players, gameManager.playerManager);
+        }
+
+        for (int i = 0; i < clientDirectionBacklog.size; i++) {
+            BufferDirections bd = clientDirectionBacklog.get(i);
+
+            for (int j = 0; j < bd.playerNames.length; j++) {
+                int playerIndex = gameManager.playerManager.getPlayerIndex(bd.playerNames[j]);
+                gameManager.directionBufferManager.updateDirection(bd.directions[j], playerIndex);
+            }
+
+            gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
+
+            if (fastForwardTurns) {
+                // Fast forward player movement and update map data
+                map.update(gameManager.playerManager, Constants.PLAYER_MOVEMENT_MAX_TIME);
+            }
+        }
+
+        gameManager.directionBufferManager.clearBuffer(); // Not really required to clear
+        clientDirectionBacklog.clear();
+    }
+
+    /**
+     * Called from the game screen's render loop.
+     * Sets and broadcasts the direction of the player in the server/client
+     *
+     * @param map Used by the client to fast forward turns in case it missed a couple
+     */
+    public void serverClientCommunicate(Map map) {
+        if (server != null) {
+            serverCommunicate();
+        } else if (client != null) {
+            processClientBacklog(map);
+            clientCommunicate();
+        }
+    }
+
+    /**
+     * Called in the server every render frame to process turns in the server
+     */
+    private void serverCommunicate() {
         Player[] players = gameManager.playerManager.getPlayers();
 
-        if (!sentResponse && players[0].direction == null && players[0].updatedDirection != null) {
+        if (previousDirection == null && players[0].direction == null && players[0].updatedDirection != null) {
             gameManager.directionBufferManager.updateDirection(players[0].updatedDirection, 0);
             if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
-                gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
-            }
-
-            broadcastDirections();
-
-            if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
-                gameManager.directionBufferManager.clearBuffer();
-                sentResponse = false;
+                serverProcessTurn();
             } else {
-                sentResponse = true;
+                previousDirection = players[0].updatedDirection;
             }
+        } else if (previousDirection != null) {
+            applyClientDirections();
+            if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
+                serverProcessTurn();
+            }
+        }
+    }
+
+    /**
+     * Used by the server to apply clients' previous direction as its direction for the current turn
+     * in case they did not send its direction information
+     */
+    private void applyClientDirections() {
+        Direction[] directions = gameManager.directionBufferManager.getDirectionBuffer();
+        for (int i = 1; i < directions.length; i++) {
+            if (directions[i] == null) {
+                // Use the client's previous direction as the direction for the current turn
+                gameManager.directionBufferManager.updateDirection(
+                        gameManager.playerManager.getPlayer(i).updatedDirection, i);
+            }
+        }
+    }
+
+    private void serverProcessTurn() {
+        gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
+        broadcastDirections();
+        gameManager.directionBufferManager.clearBuffer();
+        previousDirection = null;
+    }
+
+    /**
+     * Called in the client every render frame to send its direction information
+     */
+    private void clientCommunicate() {
+        Player player = gameManager.playerManager.getPlayer(0);
+
+        // No need to waste bandwidth sending the same direction over and over again, send only when it changes
+        if (previousDirection != player.updatedDirection) {
+            previousDirection = player.updatedDirection;
+            gameManager.directionBufferManager.updateDirection(player.updatedDirection, 0);
+            broadcastDirections();
         }
     }
 
@@ -154,7 +227,7 @@ public class GameConnectionManager implements GameConnectionHandler {
      * In case of the server, it will send information about all players to all clients
      * In cast of a   client, it will send information about itself to the server
      */
-    private void broadcastDirections() {
+    public void broadcastDirections() {
         Player[] players = gameManager.playerManager.getPlayers();
         Direction[] directions = gameManager.directionBufferManager.getDirectionBuffer();
         int size = server != null ? players.length : 1;
@@ -169,7 +242,7 @@ public class GameConnectionManager implements GameConnectionHandler {
 
         if (server != null) {
             server.sendToAllTCP(bd);
-        } else {
+        } else if (client != null) {
             client.sendTCP(bd);
         }
     }
@@ -189,9 +262,9 @@ public class GameConnectionManager implements GameConnectionHandler {
             public void run() {
                 if (server != null) {
                     gameManager.serverPlayerDisconnected(connection);
-                    sentResponse = false;
-                    Player player1 = gameManager.playerManager.getPlayers()[0];
-                    player1.updatedDirection = player1.direction = null;
+                    previousDirection = null;
+                    Player player = gameManager.playerManager.getPlayers()[0];
+                    player.updatedDirection = player.direction = null;
                 } else {
                     endGame();
                 }
@@ -218,7 +291,7 @@ public class GameConnectionManager implements GameConnectionHandler {
     }
 
     /**
-     * Called in the server when a new client connects when in the GameScreen
+     * Called in the server when a new client connects when the server already started a match.
      * Server rejects incoming connections when a match is underway
      *
      * @param connection The client's connection
@@ -239,9 +312,9 @@ public class GameConnectionManager implements GameConnectionHandler {
 
     public void clientPlayerDisconnected(String playerName) {
         gameManager.clientPlayerDisconnected(playerName);
-        sentResponse = false;
-        Player player1 = gameManager.playerManager.getPlayers()[0];
-        player1.updatedDirection = player1.direction = null;
+        previousDirection = null;
+        Player player = gameManager.playerManager.getPlayers()[0];
+        player.updatedDirection = player.direction = null;
     }
 
     public int getPing() {
@@ -254,6 +327,7 @@ public class GameConnectionManager implements GameConnectionHandler {
             server.close();
             connListener = null;
             server = null;
+            isActive = false;
 
             endGame();
         } else if (client != null) {
@@ -261,6 +335,7 @@ public class GameConnectionManager implements GameConnectionHandler {
             client.close();
             connListener = null;
             client = null;
+            isActive = false;
 
             endGame();
         }

@@ -4,7 +4,7 @@ import com.cg.zoned.buffers.BufferDirections;
 import com.esotericsoftware.kryonet.Connection;
 
 public interface GameConnectionHandler {
-    void serverUpdateDirections(BufferDirections bd, int returnTripTime);
+    void serverUpdateDirections(BufferDirections bd);
 
     void clientUpdateDirections(BufferDirections bd, int returnTripTime);
 
