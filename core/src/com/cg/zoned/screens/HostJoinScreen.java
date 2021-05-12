@@ -193,6 +193,11 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
+                        if (screenStage == null) {
+                            // User probably navigated to another screen before discoverHost completed
+                            return;
+                        }
+
                         checkAndStartClientScreen(client, playerName, addr, searchingLabel);
                     }
                 });
