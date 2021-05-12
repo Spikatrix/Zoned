@@ -214,20 +214,22 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
             }
             client.connect(4000, addr, Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
-            screenStage.showOKDialog("Error connecting to the server\n" + e.getMessage(), false,
-                    game.getScaleFactor(), null, game.skin);
-            searchingLabel.addAction(Actions.fadeOut(.2f));
+            showConnectionError("Error connecting to the server\n" + e.getMessage(), searchingLabel);
             return;
         }
 
         if (!client.isConnected()) {
-            screenStage.showOKDialog("Failed to connect to the server", false,
-                    game.getScaleFactor(), null, game.skin);
-            searchingLabel.addAction(Actions.fadeOut(.2f));
+            showConnectionError("Failed to connect to the server", searchingLabel);
             return;
         }
 
         animationManager.fadeOutStage(screenStage, this, new ClientLobbyScreen(game, client, playerName));
+    }
+
+    private void showConnectionError(String errorMessage, Label searchingLabel) {
+        screenStage.showOKDialog(errorMessage, false,
+                game.getScaleFactor(), null, game.skin);
+        searchingLabel.addAction(Actions.fadeOut(.2f));
     }
 
     private void restoreScreen() {

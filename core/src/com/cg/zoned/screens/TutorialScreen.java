@@ -199,13 +199,15 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
     private void showNextTutorialItem() {
         tutorialTable.clearActions();
 
-        players[0].updatedDirection = players[0].direction = null;
-        players[0].setRoundedPosition();
-        players[0].position.set(players[0].roundedPosition.x, players[0].roundedPosition.y);
+        Player player = players[0];
+        player.completeMovement();
+        player.updatedDirection = player.direction = null;
+        player.position.set(player.roundedPosition.x, player.roundedPosition.y);
 
-        if (mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor == null) {
-            mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor =
-                    new Color(players[0].color.r, players[0].color.g, players[0].color.b, 0.1f);
+        Cell playerCell = mapGrid[player.roundedPosition.y][player.roundedPosition.x];
+        if (playerCell.cellColor == null) {
+            playerCell.cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
+            map.updateMap(players, null);
         }
 
         if (tutorialPromptIndex == tutorialPrompts.size) {
@@ -247,9 +249,10 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         int rowCount = mapGrid.length;
         int colCount = mapGrid[0].length;
 
-        players[0].setRoundedPosition();
-        int playerPosX = players[0].roundedPosition.x;
-        int playerPosY = players[0].roundedPosition.y;
+        Player player = players[0];
+        player.setRoundedPosition();
+        int playerPosX = player.roundedPosition.x;
+        int playerPosY = player.roundedPosition.y;
 
         Random rand = new Random();
 
@@ -327,9 +330,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
 
     private void renderMap(float delta) {
         Viewport viewport = mapViewport;
-        Player player = players[0];
 
-        focusCameraOnPlayer(viewport, player, delta);
+        focusCameraOnPlayer(viewport, players[0], delta);
         viewport.apply();
 
         batch.setProjectionMatrix(viewport.getCamera().combined);

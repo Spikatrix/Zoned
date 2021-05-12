@@ -138,9 +138,11 @@ public class MapLoader {
             int mirroredIndex = mapRows.length - i - 1;
             // Mirrored because reading starts from the top left but rendering starts from the bottom left
             mapGrid[mirroredIndex] = new Cell[mapRows[i].length()];
+
             for (int j = 0; j < mapRows[i].length(); j++) {
                 char c = mapRows[i].charAt(j);
                 mapGrid[mirroredIndex][j] = new Cell();
+
                 if (c == EMPTY_CHAR) {
                     continue;
                 } else if (c == WALL_CHAR) {

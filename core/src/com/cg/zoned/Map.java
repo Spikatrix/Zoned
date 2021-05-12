@@ -26,7 +26,7 @@ public class Map {
 
     public int rows;
     public int cols;
-    private int coloredCells = 0;
+    private int coloredCellCount = 0;
 
     private boolean playerMoved = true;
 
@@ -291,12 +291,12 @@ public class Map {
                 if (playerManager != null) {
                     playerManager.incrementScore(player);
                 }
-                coloredCells++;
+                coloredCellCount++;
             }
         }
 
         if (floodfiller != null) {
-            coloredCells += floodfiller.fillSurroundedCells(mapGrid, playerManager, players);
+            coloredCellCount += floodfiller.fillSurroundedCells(mapGrid, playerManager, players);
         }
     }
 
@@ -307,7 +307,7 @@ public class Map {
 
         Array<TeamData> teamData = playerManager.getTeamData();
         for (TeamData td : teamData) {
-            td.setCapturePercentage((this.rows * this.cols) - this.wallCount);
+            td.setCapturePercentage(getMovableCellCount());
         }
     }
 
@@ -403,7 +403,7 @@ public class Map {
                 }
             }
         }
-        return ((this.rows * this.cols) - this.wallCount) == this.coloredCells;
+        return getMovableCellCount() == this.coloredCellCount;
     }
 
     public void dispose() {
@@ -419,6 +419,15 @@ public class Map {
             mapFbo.dispose();
             mapFbo = null;
         }
+    }
+
+    /**
+     * Returns the total number of cells in the map excluding cells with walls
+     *
+     * @return The count of cells that players can move into
+     */
+    private int getMovableCellCount() {
+        return (this.rows * this.cols) - this.wallCount;
     }
 
     /**

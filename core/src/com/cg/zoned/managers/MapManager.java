@@ -27,8 +27,8 @@ public class MapManager {
     private final Array<MapEntity> mapList;
     private int internalMapCount = 0;
 
-    private ExternalMapScanner externalMapScanner;
-    private MapLoader mapLoader;
+    private final ExternalMapScanner externalMapScanner;
+    private final MapLoader mapLoader;
 
     private PreparedMapData preparedMapData;
 
@@ -129,7 +129,7 @@ public class MapManager {
     public void loadMap(int index) throws InvalidMapCharacter, InvalidMapDimensions, StartPositionsMissing, MapGridMissing,
             FileNotFoundException, IndexOutOfBoundsException {
         if (index >= mapList.size || index < 0) {
-            throw new IndexOutOfBoundsException("Cannot load a non-existent map. Invalid map index");
+            throw new IndexOutOfBoundsException("Cannot load a non-existent map. Invalid map index " + index);
         }
 
         mapLoader.loadMap(mapList.get(index));
@@ -161,7 +161,7 @@ public class MapManager {
     }
 
     public Array<MapEntity> getMapList() {
-        return mapList;
+        return this.mapList;
     }
 
     public MapEntity getPreparedMap() {

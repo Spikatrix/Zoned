@@ -533,8 +533,7 @@ public class FocusableStage extends Stage {
                 }
 
                 // Collapse the SelectBox as some other key was pressed
-                triggerTouchDown();
-                triggerTouchUp();
+                selectBox.hideList();
             }
         }
 

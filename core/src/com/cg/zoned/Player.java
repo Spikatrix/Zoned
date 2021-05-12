@@ -91,6 +91,7 @@ public class Player extends InputAdapter {
             this.position.y = Math.round(this.targetPosition.y);
             setRoundedPosition();
         }
+
         timeElapsed = 0;
         this.targetPosition = null;
         this.direction = null;

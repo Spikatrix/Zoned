@@ -82,10 +82,12 @@ public class ScreenHelper {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException | IllegalArgumentException e) {
             e.printStackTrace();
-            return null;
+
+            // Fallback to HostJoinScreen in case of failure
+            return (Screen) ClassReflection.getConstructor(HostJoinScreen.class, Zoned.class).newInstance(game);
         }
 
-        return (Screen) ClassReflection.getConstructors(ServerLobbyScreen.class)[0].newInstance(game, server, "Boss #" + random.nextInt(100));
+        return (Screen) ClassReflection.getConstructors(ServerLobbyScreen.class)[0].newInstance(game, server, "Boss#" + random.nextInt(100));
     }
 
     private static Screen getClientLobbyScreen(Zoned game) throws ReflectionException {
@@ -97,7 +99,7 @@ public class ScreenHelper {
         client.start();
 
         // Discover host blocks, but it's fine for testing purposes
-        final InetAddress addr = client.discoverHost(Constants.SERVER_PORT, 4000);
+        final InetAddress addr = client.discoverHost(Constants.SERVER_PORT, 2500);
 
         try {
             if (addr == null) {
@@ -106,15 +108,16 @@ public class ScreenHelper {
             client.connect(4000, addr, Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
         }
 
         if (!client.isConnected()) {
-            Gdx.app.error(Constants.LOG_TAG, "Failed to connect for some reason");
-            return null;
+            Gdx.app.error(Constants.LOG_TAG, "Failed to connect to the server");
+
+            // Fallback to ServerLobbyScreen in case of failure
+            return getServerLobbyScreen(game);
         }
 
-        return (Screen) ClassReflection.getConstructors(ClientLobbyScreen.class)[0].newInstance(game, client, "Gamer #" + random.nextInt(100));
+        return (Screen) ClassReflection.getConstructors(ClientLobbyScreen.class)[0].newInstance(game, client, "Gamer#" + random.nextInt(100));
     }
 
     private static Screen getMapStartPosScreen(Zoned game) throws ReflectionException {
