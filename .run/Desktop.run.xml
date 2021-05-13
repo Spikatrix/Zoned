@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Desktop" type="Application" factoryName="Application" singleton="false">
+    <option name="MAIN_CLASS_NAME" value="com.cg.zoned.desktop.DesktopLauncher" />
+    <module name="Zoned.desktop" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/android/assets" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
