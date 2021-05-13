@@ -163,25 +163,20 @@ public class MapSelector {
     }
 
     public void loadExternalMaps(final MapManager.ExternalMapScanListener externalMapLoadListener) {
-        mapManager.loadExternalMaps(new MapManager.ExternalMapScanListener() {
+        mapManager.loadExternalMaps((mapList, externalMapStartIndex) -> Gdx.app.postRunnable(new Runnable() {
             @Override
-            public void onExternalMapScanComplete(final Array<MapEntity> mapList, final int externalMapStartIndex) {
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = externalMapStartIndex; i < mapList.size; i++) {
-                            MapEntity map = mapList.get(i);
-                            mapPreviewChecked.add(false);
-                            mapSpinner.addContent(getMapStack(map, null));
-                        }
+            public void run() {
+                for (int i = externalMapStartIndex; i < mapList.size; i++) {
+                    MapEntity map = mapList.get(i);
+                    mapPreviewChecked.add(false);
+                    mapSpinner.addContent(getMapStack(map, null));
+                }
 
-                        if (externalMapLoadListener != null) {
-                            externalMapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
-                        }
-                    }
-                });
+                if (externalMapLoadListener != null) {
+                    externalMapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
+                }
             }
-        });
+        }));
     }
 
     private void showExtraParamDialog(final MapExtraParams prompts, final MapEntity map) {
@@ -224,18 +219,15 @@ public class MapSelector {
         stage.showDialog(contentTable, focusableDialogButtons,
                 new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Set},
                 false, scaleFactor,
-                new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(FocusableStage.DialogButton button) {
-                        if (button == FocusableStage.DialogButton.Set) {
-                            for (int i = 0; i < prompts.spinnerVars.size; i++) {
-                                prompts.extraParams[i] = spinners[i].getPositionIndex() + prompts.spinnerVars.get(i).lowValue;
-                            }
-                            map.applyExtraParams();
+                button -> {
+                    if (button == FocusableStage.DialogButton.Set) {
+                        for (int i = 0; i < prompts.spinnerVars.size; i++) {
+                            prompts.extraParams[i] = spinners[i].getPositionIndex() + prompts.spinnerVars.get(i).lowValue;
                         }
-
-                        extraParamsDialogActive = false;
+                        map.applyExtraParams();
                     }
+
+                    extraParamsDialogActive = false;
                 }, skin);
     }
 

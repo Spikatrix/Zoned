@@ -30,7 +30,7 @@ public abstract class MapEntity {
      */
     public MapExtraParams getExtraParams() {
         return null;
-    };
+    }
 
     /**
      * Used to apply the user selected params if the map supports extra params. The param values
@@ -38,7 +38,7 @@ public abstract class MapEntity {
      * returned by {@link #getExtraParams()}
      */
     public void applyExtraParams() {
-    };
+    }
 
     /**
      * Returns the names of each start position in the map. This is optional but recommended

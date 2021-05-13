@@ -51,12 +51,7 @@ public class ClientLobbyConnectionManager {
      * @param startPosStrings Start positions of all players
      */
     public void receiveServerPlayerData(final String[] nameStrings, final String[] whoStrings, final String[] readyStrings, final String[] colorStrings, final String[] startPosStrings) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                clientPlayerListener.updatePlayers(playerNames, nameStrings, whoStrings, readyStrings, colorStrings, startPosStrings);
-            }
-        });
+        Gdx.app.postRunnable(() -> clientPlayerListener.updatePlayers(playerNames, nameStrings, whoStrings, readyStrings, colorStrings, startPosStrings));
 
     }
 
@@ -66,12 +61,7 @@ public class ClientLobbyConnectionManager {
      * @param errorMsg A String holding the reason why the server rejected the client's connection
      */
     public void connectionRejected(final String errorMsg) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                clientPlayerListener.displayServerError(errorMsg);
-            }
-        });
+        Gdx.app.postRunnable(() -> clientPlayerListener.displayServerError(errorMsg));
     }
 
     /**
@@ -82,12 +72,7 @@ public class ClientLobbyConnectionManager {
      * @param mapHash        The hash of the contents of the map in the server
      */
     public void newMapSet(final String mapName, final int[] mapExtraParams, final int mapHash) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                clientPlayerListener.mapChanged(mapName, mapExtraParams, mapHash, false);
-            }
-        });
+        Gdx.app.postRunnable(() -> clientPlayerListener.mapChanged(mapName, mapExtraParams, mapHash, false));
     }
 
     /**
@@ -105,34 +90,31 @@ public class ClientLobbyConnectionManager {
     }
 
     public void downloadMap(final String mapName, final String mapData, final int mapHash, final byte[] mapPreviewData) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                FileHandle externalMapDir = clientPlayerListener.getExternalMapDir();
+        Gdx.app.postRunnable(() -> {
+            FileHandle externalMapDir = clientPlayerListener.getExternalMapDir();
 
-                try {
-                    FileHandle mapFile = externalMapDir.child(mapName + ".map");
-                    mapFile.writeString(mapData, false);
-                } catch (GdxRuntimeException e) {
-                    clientPlayerListener.displayServerError("Failed to download the map '" + "' (" + e.getMessage() + ")");
-                    return;
-                }
-
-                if (mapPreviewData != null) {
-                    try {
-                        FileHandle mapPreviewDataFile = externalMapDir.child(mapName + ".png");
-                        mapPreviewDataFile.writeBytes(mapPreviewData, false);
-
-                        Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'");
-                    } catch (GdxRuntimeException e) {
-                        Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'. Failed to download preview");
-                    }
-                } else {
-                    Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'. Map preview unavailable");
-                }
-
-                clientPlayerListener.mapChanged(mapName, null, mapHash, true);
+            try {
+                FileHandle mapFile = externalMapDir.child(mapName + ".map");
+                mapFile.writeString(mapData, false);
+            } catch (GdxRuntimeException e) {
+                clientPlayerListener.displayServerError("Failed to download the map '" + "' (" + e.getMessage() + ")");
+                return;
             }
+
+            if (mapPreviewData != null) {
+                try {
+                    FileHandle mapPreviewDataFile = externalMapDir.child(mapName + ".png");
+                    mapPreviewDataFile.writeBytes(mapPreviewData, false);
+
+                    Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'");
+                } catch (GdxRuntimeException e) {
+                    Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'. Failed to download preview");
+                }
+            } else {
+                Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'. Map preview unavailable");
+            }
+
+            clientPlayerListener.mapChanged(mapName, null, mapHash, true);
         });
     }
 

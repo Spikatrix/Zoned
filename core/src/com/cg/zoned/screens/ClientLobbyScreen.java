@@ -14,7 +14,6 @@ import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -43,7 +42,6 @@ import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapGridMissing;
 import com.cg.zoned.maps.StartPositionsMissing;
 import com.cg.zoned.ui.DropDownMenu;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryonet.Client;
 
@@ -87,17 +85,9 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
 
         addPlayer(null, null, null, null, null);
         connectionManager.start(clientName);
-        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
-            @Override
-            public void animationEnd(Stage stage) {
-                mapManager.loadExternalMaps(new MapManager.ExternalMapScanListener() {
-                    @Override
-                    public void onExternalMapScanComplete(Array<MapEntity> mapList, int externalMapStartIndex) {
-                        connectionManager.sendClientNameToServer(clientName);
-                    }
-                });
-                animationManager.setAnimationListener(null);
-            }
+        animationManager.setAnimationListener(stage -> {
+            mapManager.loadExternalMaps((mapList, externalMapStartIndex) -> connectionManager.sendClientNameToServer(clientName));
+            animationManager.setAnimationListener(null);
         });
         animationManager.fadeInStage(screenStage);
     }
@@ -466,12 +456,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     @Override
     public void displayServerError(String errorMsg) {
         screenStage.showOKDialog(errorMsg, false,
-                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(FocusableStage.DialogButton button) {
-                        disconnected();
-                    }
-                }, game.skin);
+                game.getScaleFactor(), button -> disconnected(), game.skin);
     }
 
     private void updatePlayer(String name, String who, String ready, String color, String startPos, int index) {
@@ -528,12 +513,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     public void startGame() {
         final Player[] players = inflatePlayerList();
         clearMapGrid();
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager));
-            }
-        });
+        Gdx.app.postRunnable(() -> animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager)));
     }
 
     private int getStartPosIndex(Array<StartPosition> startPositions, String startPos) {
@@ -619,12 +599,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         playerList.clear();
         connectionManager.closeConnection();
 
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new HostJoinScreen(game));
-            }
-        });
+        Gdx.app.postRunnable(() -> animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new HostJoinScreen(game)));
     }
 
     @Override

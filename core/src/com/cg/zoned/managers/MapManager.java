@@ -56,26 +56,23 @@ public class MapManager {
      * @param mapLoadListener Listener which fires when
      */
     public void loadExternalMaps(final ExternalMapScanListener mapLoadListener) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (mapList.size > internalMapCount) {
-                    // Remove all external maps
-                    mapList.removeRange(internalMapCount, mapList.size - 1);
-                }
-
-                // Rescan for external map files
-                Array<FileHandle> externalMapFileList = externalMapScanner.scanExternalMaps();
-
-                // Create map templates with the scanned external map list and add them into the map list
-                int externalMapStartIndex = mapList.size;
-                for (FileHandle externalMapFile : externalMapFileList) {
-                    addNewExternalMap(externalMapFile.nameWithoutExtension());
-                }
-
-                // Pass external map load complete information to listeners
-                mapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
+        new Thread(() -> {
+            if (mapList.size > internalMapCount) {
+                // Remove all external maps
+                mapList.removeRange(internalMapCount, mapList.size - 1);
             }
+
+            // Rescan for external map files
+            Array<FileHandle> externalMapFileList = externalMapScanner.scanExternalMaps();
+
+            // Create map templates with the scanned external map list and add them into the map list
+            int externalMapStartIndex = mapList.size;
+            for (FileHandle externalMapFile : externalMapFileList) {
+                addNewExternalMap(externalMapFile.nameWithoutExtension());
+            }
+
+            // Pass external map load complete information to listeners
+            mapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
         }).start();
     }
 

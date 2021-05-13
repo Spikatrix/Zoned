@@ -74,9 +74,7 @@ public class GameConnectionManager implements GameConnectionHandler {
      */
     @Override
     public void serverUpdateDirections(final BufferDirections bd) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
+        Gdx.app.postRunnable(() -> {
                 Player[] players = gameManager.playerManager.getPlayers();
 
                 int playerIndex = gameManager.playerManager.getPlayerIndex(bd.playerNames[0]);
@@ -84,7 +82,6 @@ public class GameConnectionManager implements GameConnectionHandler {
                     players[playerIndex].updatedDirection = bd.directions[0];
                     gameManager.directionBufferManager.updateDirection(bd.directions[0], playerIndex);
                 }
-            }
         });
     }
 
@@ -97,12 +94,9 @@ public class GameConnectionManager implements GameConnectionHandler {
      */
     @Override
     public void clientUpdateDirections(final BufferDirections bd, final int returnTripTime) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                clientDirectionBacklog.add(bd);
-                ping = returnTripTime;
-            }
+        Gdx.app.postRunnable(() -> {
+            clientDirectionBacklog.add(bd);
+            ping = returnTripTime;
         });
     }
 
@@ -257,17 +251,14 @@ public class GameConnectionManager implements GameConnectionHandler {
             return;
         }
 
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                if (server != null) {
-                    gameManager.serverPlayerDisconnected(connection);
-                    previousDirection = null;
-                    Player player = gameManager.playerManager.getPlayers()[0];
-                    player.updatedDirection = player.direction = null;
-                } else {
-                    endGame();
-                }
+        Gdx.app.postRunnable(() -> {
+            if (server != null) {
+                gameManager.serverPlayerDisconnected(connection);
+                previousDirection = null;
+                Player player = gameManager.playerManager.getPlayers()[0];
+                player.updatedDirection = player.direction = null;
+            } else {
+                endGame();
             }
         });
     }
@@ -277,12 +268,7 @@ public class GameConnectionManager implements GameConnectionHandler {
      */
     @Override
     public void clientDisconnect(final Connection connection) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                endGame();
-            }
-        });
+        Gdx.app.postRunnable(this::endGame);
     }
 
     private void endGame() {

@@ -12,7 +12,6 @@ import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -188,32 +187,29 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                 table.add(startPosScrollPane).grow();
 
                 final int finalI = i;
-                buttonGroup[i].setOnCheckChangeListener(new ButtonGroup.OnCheckChangeListener() {
-                    @Override
-                    public void buttonPressed(Button button) {
-                        int startPosIndex = buttonGroup[finalI].getCheckedIndex();
+                buttonGroup[i].setOnCheckChangeListener(button -> {
+                    int startPosIndex = buttonGroup[finalI].getCheckedIndex();
 
-                        int index = finalI + playerIndex;
-                        if (index >= players.length) {
-                            return;
-                        }
-
-                        int oldPosX = (int) players[index].position.x;
-                        int oldPosY = (int) players[index].position.y;
-
-                        players[index].position.y = startPositions.get(startPosIndex).getLocation().y;
-                        players[index].position.x = startPositions.get(startPosIndex).getLocation().x;
-
-                        mapGrid[oldPosY][oldPosX].cellColor = null;
-                        for (Player player : players) {
-                            if (player.position.x == oldPosX && player.position.y == oldPosY) {
-                                mapGrid[oldPosY][oldPosX].cellColor = player.color;
-                                break;
-                            }
-                        }
-
-                        mapGrid[(int) players[index].position.y][(int) players[index].position.x].cellColor = players[index].color;
+                    int index = finalI + playerIndex;
+                    if (index >= players.length) {
+                        return;
                     }
+
+                    int oldPosX = (int) players[index].position.x;
+                    int oldPosY = (int) players[index].position.y;
+
+                    players[index].position.y = startPositions.get(startPosIndex).getLocation().y;
+                    players[index].position.x = startPositions.get(startPosIndex).getLocation().x;
+
+                    mapGrid[oldPosY][oldPosX].cellColor = null;
+                    for (Player player : players) {
+                        if (player.position.x == oldPosX && player.position.y == oldPosY) {
+                            mapGrid[oldPosY][oldPosX].cellColor = player.color;
+                            break;
+                        }
+                    }
+
+                    mapGrid[(int) players[index].position.y][(int) players[index].position.x].cellColor = players[index].color;
                 });
             }
 

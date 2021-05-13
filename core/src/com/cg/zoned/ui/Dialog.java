@@ -254,12 +254,10 @@ public class Dialog extends Window {
             public boolean keyDown (InputEvent event, int keycode2) {
                 if (keycode == keycode2) {
                     // Delay a frame to eat the keyTyped event.
-                    Gdx.app.postRunnable(new Runnable() {
-                        public void run () {
-                            result(object);
-                            if (!cancelHide) hide();
-                            cancelHide = false;
-                        }
+                    Gdx.app.postRunnable(() -> {
+                        result(object);
+                        if (!cancelHide) hide();
+                        cancelHide = false;
                     });
                 }
                 return false;
@@ -275,12 +273,10 @@ public class Dialog extends Window {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button2) {
                 if (button == button2) {
-                    Gdx.app.postRunnable(new Runnable() {
-                        public void run () {
-                            result(object);
-                            if (!cancelHide) hide();
-                            cancelHide = false;
-                        }
+                    Gdx.app.postRunnable(() -> {
+                        result(object);
+                        if (!cancelHide) hide();
+                        cancelHide = false;
                     });
                 }
 

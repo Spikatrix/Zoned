@@ -226,20 +226,17 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
 
         tutorialTable.addAction(Actions.sequence(
                 Actions.fadeOut(.2f, Interpolation.fastSlow),
-                Actions.run(new Runnable() {
-                    @Override
-                    public void run() {
-                        String mainText = tutorialPrompts.get(tutorialPromptIndex).mainItem;
-                        if (mainText.contains("Walls")) {
-                            generateRandomWalls();
-                            map.createMapTexture(shapeDrawer);
-                        }
-
-                        displayNextTutorialText(mainLabel, subLabel, mainText, tutorialPrompts.get(tutorialPromptIndex).subItem);
-                        togglePlayerInteractable(tutorialPrompts.get(tutorialPromptIndex).enablePlayerInteraction);
-
-                        tutorialPromptIndex++;
+                Actions.run(() -> {
+                    String mainText = tutorialPrompts.get(tutorialPromptIndex).mainItem;
+                    if (mainText.contains("Walls")) {
+                        generateRandomWalls();
+                        map.createMapTexture(shapeDrawer);
                     }
+
+                    displayNextTutorialText(mainLabel, subLabel, mainText, tutorialPrompts.get(tutorialPromptIndex).subItem);
+                    togglePlayerInteractable(tutorialPrompts.get(tutorialPromptIndex).enablePlayerInteraction);
+
+                    tutorialPromptIndex++;
                 }),
                 Actions.fadeIn(.2f, Interpolation.fastSlow)
         ));

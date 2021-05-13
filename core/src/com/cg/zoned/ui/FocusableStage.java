@@ -142,16 +142,13 @@ public class FocusableStage extends Stage {
                  */
                 ((TextField) actor).setFocusTraversal(false);
                 ((TextField) actor).setOnlyFontChars(true);
-                ((TextField) actor).setTextFieldListener(new TextField.TextFieldListener() {
-                    @Override
-                    public void keyTyped(TextField textField, char c) {
-                        /*
-                         * Gets rid of those pesky tabs that get inserted into the TextField
-                         * when tab navigating through them
-                         */
-                        if (c == TAB) {
-                            textField.setText(textField.getText().replaceAll("\t", ""));
-                        }
+                ((TextField) actor).setTextFieldListener((textField, typedChar) -> {
+                    /*
+                     * Gets rid of those pesky tabs that get inserted into the TextField
+                     * when tab navigating through them
+                     */
+                    if (typedChar == TAB) {
+                        textField.setText(textField.getText().replaceAll("\t", ""));
                     }
                 });
             }

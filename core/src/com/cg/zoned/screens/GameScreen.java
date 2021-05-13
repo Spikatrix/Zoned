@@ -312,12 +312,9 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             }
 
             // Transition to VictoryScreen after completing rendering the current frame to avoid SIGSEGV crashes
-            Gdx.app.postRunnable(new Runnable() {
-                @Override
-                public void run() {
-                    dispose();
-                    game.setScreen(new VictoryScreen(game, gameManager.playerManager.getTeamData()));
-                }
+            Gdx.app.postRunnable(() -> {
+                dispose();
+                game.setScreen(new VictoryScreen(game, gameManager.playerManager.getTeamData()));
             });
         }
     }
@@ -372,13 +369,10 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     private void showDisconnectionDialog() {
         screenStage.showOKDialog("Disconnected", false,
-                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(FocusableStage.DialogButton button) {
-                        gameManager.gameConnectionManager.close();
-                        dispose();
-                        game.setScreen(new MainMenuScreen(game));
-                    }
+                game.getScaleFactor(), button -> {
+                    gameManager.gameConnectionManager.close();
+                    dispose();
+                    game.setScreen(new MainMenuScreen(game));
                 }, game.skin);
     }
 
@@ -396,20 +390,17 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         screenStage.showDialog("Pause Menu",
                 new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu},
                 true,
-                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(FocusableStage.DialogButton button) {
-                        if (button == FocusableStage.DialogButton.MainMenu) {
-                            if (gameManager.gameConnectionManager.isActive) {
-                                gameManager.gameConnectionManager.close();
-                            } else {
-                                dispose();
-                                game.setScreen(new MainMenuScreen(game));
-                            }
+                game.getScaleFactor(), button -> {
+                    if (button == FocusableStage.DialogButton.MainMenu) {
+                        if (gameManager.gameConnectionManager.isActive) {
+                            gameManager.gameConnectionManager.close();
+                        } else {
+                            dispose();
+                            game.setScreen(new MainMenuScreen(game));
                         }
-
-                        gamePaused = false;
                     }
+
+                    gamePaused = false;
                 }, game.skin);
     }
 
@@ -418,29 +409,26 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     public void serverPlayerDisconnected(final Connection connection) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                if (gameManager.gameOver) {
-                    return;
-                }
-
-                // TODO: Connection ID is not always the connIndex, don't use getID for the index
-                int connIndex = connection.getID();
-                String playerName = "A player"; // A generic name for now xD
-
-                try {
-                    playerName = gameManager.playerManager.getPlayer(connIndex).name;
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    Gdx.app.error(Constants.LOG_TAG, "Failed to fetch the name of the disconnected client");
-                }
-
-                gameManager.playerManager.stopPlayers(false);
-
-                gameManager.directionBufferManager.ignorePlayer();
-                gameManager.gameConnectionManager.sendPlayerDisconnectedBroadcast(playerName);
-                showPlayerDisconnectedDialog(playerName);
+        Gdx.app.postRunnable(() -> {
+            if (gameManager.gameOver) {
+                return;
             }
+
+            // TODO: Connection ID is not always the connIndex, don't use getID for the index
+            int connIndex = connection.getID();
+            String playerName = "A player"; // A generic name for now xD
+
+            try {
+                playerName = gameManager.playerManager.getPlayer(connIndex).name;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                Gdx.app.error(Constants.LOG_TAG, "Failed to fetch the name of the disconnected client");
+            }
+
+            gameManager.playerManager.stopPlayers(false);
+
+            gameManager.directionBufferManager.ignorePlayer();
+            gameManager.gameConnectionManager.sendPlayerDisconnectedBroadcast(playerName);
+            showPlayerDisconnectedDialog(playerName);
         });
     }
 
@@ -457,15 +445,12 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     public void disconnected() {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                if (!gameManager.gameOver) {
-                    gameManager.playerManager.stopPlayers(false);
-                    gameManager.directionBufferManager.clearBuffer();
-                    showDisconnectionDialog();
-                    Gdx.input.setInputProcessor(screenStage);
-                }
+        Gdx.app.postRunnable(() -> {
+            if (!gameManager.gameOver) {
+                gameManager.playerManager.stopPlayers(false);
+                gameManager.directionBufferManager.clearBuffer();
+                showDisconnectionDialog();
+                Gdx.input.setInputProcessor(screenStage);
             }
         });
     }

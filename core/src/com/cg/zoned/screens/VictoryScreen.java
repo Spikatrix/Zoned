@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -75,15 +74,12 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
         trailEffect.load(Gdx.files.internal("particles/trails.p"), Gdx.files.internal("particles"));
 
         animationManager.startGameOverAnimation(screenStage, trailEffect);
-        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
-            @Override
-            public void animationEnd(Stage stage) {
-                stage.clear();
-                setUpVictoryUI();
-                stage.getRoot().setPosition(0, 0);
-                animationManager.setAnimationListener(null);
-                animationManager.startScoreBoardAnimation(stage, scoreBoardTitleContainer, scoreboardActors, rowHeightScale, padding);
-            }
+        animationManager.setAnimationListener(stage -> {
+            stage.clear();
+            setUpVictoryUI();
+            stage.getRoot().setPosition(0, 0);
+            animationManager.setAnimationListener(null);
+            animationManager.startScoreBoardAnimation(stage, scoreBoardTitleContainer, scoreboardActors, rowHeightScale, padding);
         });
     }
 

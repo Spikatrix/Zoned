@@ -88,28 +88,25 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         screenStage.getRoot().getColor().a = 0;
 
         // The screen is faded in once the maps and the extended selector is loaded
-        mapSelector.loadExternalMaps(new MapManager.ExternalMapScanListener() {
-            @Override
-            public void onExternalMapScanComplete(Array<MapEntity> mapList, final int externalMapStartIndex) {
-                // Set up the extended map selector once external maps have been loaded
-                mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
-                    @Override
-                    public void onExtendedMapSelectorOpened() {
-                        openExtendedMapSelector();
-                    }
+        mapSelector.loadExternalMaps((mapList, externalMapStartIndex) -> {
+            // Set up the extended map selector once external maps have been loaded
+            mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
+                @Override
+                public void onExtendedMapSelectorOpened() {
+                    openExtendedMapSelector();
+                }
 
-                    @Override
-                    public void onMapSelect(int mapIndex) {
-                        if (mapIndex != -1) {
-                            mapSpinner.snapToStep(mapIndex - mapSpinner.getPositionIndex());
-                        }
-                        animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
-                        extendedMapSelectorActive = false;
+                @Override
+                public void onMapSelect(int mapIndex) {
+                    if (mapIndex != -1) {
+                        mapSpinner.snapToStep(mapIndex - mapSpinner.getPositionIndex());
                     }
-                });
+                    animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+                    extendedMapSelectorActive = false;
+                }
+            });
 
-                animationManager.fadeInStage(screenStage);
-            }
+            animationManager.fadeInStage(screenStage);
         });
     }
 
@@ -167,23 +164,20 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
                 screenStage.showDialog(mapSelectorTable, focusableDialogButtons,
                         new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.SetMap },
                         false, game.getScaleFactor(),
-                        new FocusableStage.DialogResultListener() {
-                            @Override
-                            public void dialogResult(FocusableStage.DialogButton button) {
-                                if (button == FocusableStage.DialogButton.SetMap && mapSelector.loadSelectedMap()) {
-                                    mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
-                                    mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
-                                    map = new com.cg.zoned.Map(mapGrid, 0, shapeDrawer);
+                        button -> {
+                            if (button == FocusableStage.DialogButton.SetMap && mapSelector.loadSelectedMap()) {
+                                mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
+                                mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
+                                map = new com.cg.zoned.Map(mapGrid, 0, shapeDrawer);
 
-                                    repopulateMapStartPosLocations();
-                                    updateMapColor(players[0], players[0].color, 0);
-                                } else {
-                                    // Cancelled; restore the spinner pos
-                                    mapSpinner.snapToStep(prevIndex - mapSpinner.getPositionIndex());
-                                }
-
-                                mapSelectorActive = false;
+                                repopulateMapStartPosLocations();
+                                updateMapColor(players[0], players[0].color, 0);
+                            } else {
+                                // Cancelled; restore the spinner pos
+                                mapSpinner.snapToStep(prevIndex - mapSpinner.getPositionIndex());
                             }
+
+                            mapSelectorActive = false;
                         }, game.skin);
             }
         });

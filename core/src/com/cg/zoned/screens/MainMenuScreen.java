@@ -15,7 +15,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -62,31 +61,22 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
     public void show() {
         setUpMainMenu();
         animationManager.startMainMenuAnimation(mainStage, mainMenuUIButtons);
-        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
-            @Override
-            public void animationEnd(Stage stage) {
-                bgTexture = game.assets.getTexture(Assets.TextureObject.DIAMOND_TEXTURE);
-                bgTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+        animationManager.setAnimationListener(stage -> {
+            bgTexture = game.assets.getTexture(Assets.TextureObject.DIAMOND_TEXTURE);
+            bgTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
-                bgAlpha = 1;
-            }
+            bgAlpha = 1;
         });
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final int radius = 40;
-                final Pixmap pixmap = PixmapFactory.getRoundedCornerPixmap(Color.GREEN, radius);
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        Texture roundedCornerBgColorTexture = new Texture(pixmap);
-                        usedTextures.add(roundedCornerBgColorTexture);
-                        roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
-                        pixmap.dispose();
-                    }
-                });
-            }
+        new Thread(() -> {
+            final int radius = 40;
+            final Pixmap pixmap = PixmapFactory.getRoundedCornerPixmap(Color.GREEN, radius);
+            Gdx.app.postRunnable(() -> {
+                Texture roundedCornerBgColorTexture = new Texture(pixmap);
+                usedTextures.add(roundedCornerBgColorTexture);
+                roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
+                pixmap.dispose();
+            });
         }).start();
     }
 
@@ -178,10 +168,9 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
 
         Animation playButtonAnimation = new Animation<>(1 / 15f, playFrames);
 
-        float buttonWidth = 144f;
-        float buttonHeight = 144f;
+        float buttonSize = 144f;
 
-        final HoverImageButton playButton = new HoverImageButton(new AnimatedDrawable(playButtonAnimation, buttonWidth, buttonHeight, game.getScaleFactor()));
+        final HoverImageButton playButton = new HoverImageButton(new AnimatedDrawable(playButtonAnimation, buttonSize, buttonSize, game.getScaleFactor()));
         playButton.setTransform(true);
         playButton.setHoverAlpha(.75f);
         playButton.setClickAlpha(.6f);
@@ -203,9 +192,8 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 animationManager.startPlayModeAnimation(mainStage, playModeStage, playButton);
             }
         });
-        mainTable.add(playButton).pad(10f * game.getScaleFactor())
-                .width(buttonWidth * game.getScaleFactor())
-                .height(buttonHeight * game.getScaleFactor());
+
+        mainTable.add(playButton).pad(10f * game.getScaleFactor()).size(buttonSize * game.getScaleFactor());
         mainTable.row();
 
         return playButton;
@@ -399,12 +387,9 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         mainStage.showDialog("Are you sure that you want to exit?",
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Exit },
                 false,
-                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(FocusableStage.DialogButton button) {
-                        if (button == FocusableStage.DialogButton.Exit) {
-                            Gdx.app.exit();
-                        }
+                game.getScaleFactor(), button -> {
+                    if (button == FocusableStage.DialogButton.Exit) {
+                        Gdx.app.exit();
                     }
                 }, game.skin);
     }

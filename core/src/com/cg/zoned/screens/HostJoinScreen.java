@@ -186,22 +186,16 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         client.start();
         searchingLabel.addAction(Actions.fadeIn(.2f));
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final InetAddress addr = client.discoverHost(Constants.SERVER_PORT, 4000);
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (screenStage == null) {
-                            // User probably navigated to another screen before discoverHost completed
-                            return;
-                        }
+        new Thread(() -> {
+            final InetAddress addr = client.discoverHost(Constants.SERVER_PORT, 4000);
+            Gdx.app.postRunnable(() -> {
+                if (screenStage == null) {
+                    // User probably navigated to another screen before discoverHost completed
+                    return;
+                }
 
-                        checkAndStartClientScreen(client, playerName, addr, searchingLabel);
-                    }
-                });
-            }
+                checkAndStartClientScreen(client, playerName, addr, searchingLabel);
+            });
         }).start();
     }
 

@@ -166,20 +166,13 @@ public class LoadingScreen extends ScreenObject {
     private void endLoading() {
         SequenceAction sequenceAction = new SequenceAction();
         sequenceAction.addAction(Actions.fadeOut(1f));
-        sequenceAction.addAction(Actions.run(new Runnable() {
-            @Override
-            public void run() {
-                Gdx.app.postRunnable(new Runnable() { // Crashes on GWT without this
-                    @Override
-                    public void run() {
-                        game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);
-                        game.initFPSUtils();
-                        dispose();
-                        game.setScreen(new MainMenuScreen(game));
-                    }
-                });
-            }
-        }));
+        // Crashes on GWT without the postRunnable
+        sequenceAction.addAction(Actions.run(() -> Gdx.app.postRunnable(() -> {
+            game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);
+            game.initFPSUtils();
+            dispose();
+            game.setScreen(new MainMenuScreen(game));
+        })));
 
         screenStage.addAction(sequenceAction);
     }
