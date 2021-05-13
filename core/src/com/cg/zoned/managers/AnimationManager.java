@@ -41,24 +41,18 @@ public class AnimationManager {
 
         SequenceAction fallFromAboveAnimation = new SequenceAction();
         fallFromAboveAnimation.addAction(Actions.moveTo(0f, 0f, .7f, Interpolation.swingOut));
-        fallFromAboveAnimation.addAction(Actions.run(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 0; i < mainMenuUIButtons.size; i++) {
-                    mainMenuUIButtons.get(i).addAction(
-                            Actions.delay(((i > 0) ? (.3f) : (0)), Actions.fadeIn(0.3f, Interpolation.smooth)));
-                }
+        fallFromAboveAnimation.addAction(Actions.run(() -> {
+            for (int i = 0; i < mainMenuUIButtons.size; i++) {
+                mainMenuUIButtons.get(i).addAction(
+                        Actions.delay(((i > 0) ? (.3f) : (0)), Actions.fadeIn(0.3f, Interpolation.smooth)));
             }
         }));
-        fallFromAboveAnimation.addAction(Actions.run(new Runnable() {
-            @Override
-            public void run() {
-                masterInputMultiplexer.addProcessor(stage);
-                Gdx.input.setInputProcessor(masterInputMultiplexer);
+        fallFromAboveAnimation.addAction(Actions.run(() -> {
+            masterInputMultiplexer.addProcessor(stage);
+            Gdx.input.setInputProcessor(masterInputMultiplexer);
 
-                if (animationListener != null) {
-                    animationListener.animationEnd(stage);
-                }
+            if (animationListener != null) {
+                animationListener.animationEnd(stage);
             }
         }));
 
@@ -102,31 +96,20 @@ public class AnimationManager {
         stage.getRoot().setPosition(screenWidth, 0);
 
         SequenceAction slideAnimation = new SequenceAction();
-        slideAnimation.addAction(Actions.run(new Runnable() {
-            @Override
-            public void run() {
-                trailEffect.start();
-            }
-        }));
+        slideAnimation.addAction(Actions.run(() -> trailEffect.start()));
         slideAnimation.addAction(Actions.delay(.4f));
-        slideAnimation.addAction(Actions.run(new Runnable() {
-            @Override
-            public void run() {
-                trailEffect.allowCompletion(); // Completion takes time which is why it's done before the move actions
-            }
+        slideAnimation.addAction(Actions.run(() -> {
+            trailEffect.allowCompletion(); // Completion takes time which is why it's done before the move actions
         }));
         slideAnimation.addAction(Actions.moveTo(screenWidth / 8, 0f, .25f, Interpolation.pow2));
         slideAnimation.addAction(Actions.moveTo(-screenWidth / 8, 0f, 1.6f, Interpolation.linear));
         slideAnimation.addAction(Actions.moveTo(-screenWidth, 0f, .25f, Interpolation.pow2));
-        slideAnimation.addAction(Actions.run(new Runnable() {
-            @Override
-            public void run() {
-                masterInputMultiplexer.addProcessor(stage);
-                Gdx.input.setInputProcessor(masterInputMultiplexer);
+        slideAnimation.addAction(Actions.run(() -> {
+            masterInputMultiplexer.addProcessor(stage);
+            Gdx.input.setInputProcessor(masterInputMultiplexer);
 
-                if (animationListener != null) {
-                    animationListener.animationEnd(stage);
-                }
+            if (animationListener != null) {
+                animationListener.animationEnd(stage);
             }
         }));
 
@@ -154,15 +137,12 @@ public class AnimationManager {
     public void fadeInStage(final Stage stage) {
         SequenceAction fadeInAnimation = new SequenceAction();
         fadeInAnimation.addAction(Actions.fadeIn(.3f, Interpolation.smooth));
-        fadeInAnimation.addAction(Actions.run(new Runnable() {
-            @Override
-            public void run() {
-                masterInputMultiplexer.addProcessor(stage);
-                Gdx.input.setInputProcessor(masterInputMultiplexer);
+        fadeInAnimation.addAction(Actions.run(() -> {
+            masterInputMultiplexer.addProcessor(stage);
+            Gdx.input.setInputProcessor(masterInputMultiplexer);
 
-                if (animationListener != null) {
-                    animationListener.animationEnd(stage);
-                }
+            if (animationListener != null) {
+                animationListener.animationEnd(stage);
             }
         }));
 
@@ -176,22 +156,15 @@ public class AnimationManager {
 
         SequenceAction fadeOutAnimation = new SequenceAction();
         fadeOutAnimation.addAction(Actions.alpha(0f, .45f, Interpolation.smooth));
-        fadeOutAnimation.addAction(Actions.run(new Runnable() {
-            @Override
-            public void run() {
-                Gdx.app.postRunnable(new Runnable() { // Crashes on GWT without this
-                    @Override
-                    public void run() {
-                        Gdx.input.setInputProcessor(null);
-                        fromScreen.dispose();
-                        game.setScreen(toScreen);
-                        if (animationListener != null) {
-                            animationListener.animationEnd(stage);
-                        }
-                    }
-                });
+        // Crashes on GWT without the postRunnable
+        fadeOutAnimation.addAction(Actions.run(() -> Gdx.app.postRunnable(() -> {
+            Gdx.input.setInputProcessor(null);
+            fromScreen.dispose();
+            game.setScreen(toScreen);
+            if (animationListener != null) {
+                animationListener.animationEnd(stage);
             }
-        }));
+        })));
 
         stage.addAction(fadeOutAnimation);
     }
@@ -210,35 +183,29 @@ public class AnimationManager {
                 Actions.moveBy(0, -moveAmount, .1f, Interpolation.exp10),
                 Actions.fadeIn(.7f, Interpolation.smoother),
                 Actions.moveBy(0, moveAmount, .2f * actors.length, Interpolation.smoother),
-                Actions.run(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < actors.length; i++) {
-                            for (int j = 0; j < actors[i].length; j++) {
-                                float moveAmount = actors[i][j].getHeight();
+                Actions.run(() -> {
+                    for (int i = 0; i < actors.length; i++) {
+                        for (int j = 0; j < actors[i].length; j++) {
+                            float moveAmount1 = actors[i][j].getHeight();
 
-                                actors[i][j].addAction(Actions.moveBy(0, moveAmount, .1f, Interpolation.exp10));
+                            actors[i][j].addAction(Actions.moveBy(0, moveAmount1, .1f, Interpolation.exp10));
 
-                                ParallelAction fadeFallInAnimation = new ParallelAction();
-                                fadeFallInAnimation.addAction(Actions.fadeIn((i + 1) * .2f, Interpolation.smooth));
-                                fadeFallInAnimation.addAction(Actions.moveBy(0, -moveAmount, (i + 1) * .1f, Interpolation.smooth));
+                            ParallelAction fadeFallInAnimation = new ParallelAction();
+                            fadeFallInAnimation.addAction(Actions.fadeIn((i + 1) * .2f, Interpolation.smooth));
+                            fadeFallInAnimation.addAction(Actions.moveBy(0, -moveAmount1, (i + 1) * .1f, Interpolation.smooth));
 
-                                if (i == actors.length - 1 && j == actors[i].length - 1) {
-                                    SequenceAction finalFadeZoomOutAnimation = new SequenceAction();
-                                    finalFadeZoomOutAnimation.addAction(fadeFallInAnimation);
-                                    finalFadeZoomOutAnimation.addAction(Actions.run(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            if (animationListener != null) {
-                                                animationListener.animationEnd(stage);
-                                            }
-                                        }
-                                    }));
+                            if (i == actors.length - 1 && j == actors[i].length - 1) {
+                                SequenceAction finalFadeZoomOutAnimation = new SequenceAction();
+                                finalFadeZoomOutAnimation.addAction(fadeFallInAnimation);
+                                finalFadeZoomOutAnimation.addAction(Actions.run(() -> {
+                                    if (animationListener != null) {
+                                        animationListener.animationEnd(stage);
+                                    }
+                                }));
 
-                                    actors[i][j].addAction(finalFadeZoomOutAnimation);
-                                } else {
-                                    actors[i][j].addAction(fadeFallInAnimation);
-                                }
+                                actors[i][j].addAction(finalFadeZoomOutAnimation);
+                            } else {
+                                actors[i][j].addAction(fadeFallInAnimation);
                             }
                         }
                     }
