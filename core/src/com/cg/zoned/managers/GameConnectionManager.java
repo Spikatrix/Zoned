@@ -26,10 +26,10 @@ public class GameConnectionManager implements GameConnectionHandler {
     private Server server;
     private Client client;
 
-    // Kryonet to this manager
+    // Bridges the Kryonet thread to this manager methods
     private Listener connListener;
 
-    // Used by the server and the  client to store the previously sent direction
+    // Used by the client to store the previously sent direction
     private Direction previousDirection;
 
     // Used by the server to store client connections that came in when a match is already underway
@@ -68,7 +68,8 @@ public class GameConnectionManager implements GameConnectionHandler {
 
     /**
      * Called when the server receives direction information from a client
-     * The server then updates its internal direction buffer with the received client directions
+     * The server then updates the client's `updatedDirection` which is used
+     * in {@link PlayerManager#updatePlayerDirectionBuffer()} called from {@link #serverCommunicate()}
      *
      * @param bd BufferDirection object containing client player's name and direction
      */
@@ -80,7 +81,6 @@ public class GameConnectionManager implements GameConnectionHandler {
                 int playerIndex = gameManager.playerManager.getPlayerIndex(bd.playerNames[0]);
                 if (playerIndex != -1) {
                     players[playerIndex].updatedDirection = bd.directions[0];
-                    gameManager.directionBufferManager.updateDirection(bd.directions[0], playerIndex);
                 }
         });
     }
@@ -128,7 +128,7 @@ public class GameConnectionManager implements GameConnectionHandler {
 
             for (int j = 0; j < bd.playerNames.length; j++) {
                 int playerIndex = gameManager.playerManager.getPlayerIndex(bd.playerNames[j]);
-                gameManager.directionBufferManager.updateDirection(bd.directions[j], playerIndex);
+                gameManager.directionBufferManager.updateDirectionBuffer(bd.directions[j], playerIndex);
             }
 
             gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
@@ -163,34 +163,10 @@ public class GameConnectionManager implements GameConnectionHandler {
      */
     private void serverCommunicate() {
         Player[] players = gameManager.playerManager.getPlayers();
+        gameManager.playerManager.updatePlayerDirectionBuffer();
 
-        if (previousDirection == null && players[0].direction == null && players[0].updatedDirection != null) {
-            gameManager.directionBufferManager.updateDirection(players[0].updatedDirection, 0);
-            if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
-                serverProcessTurn();
-            } else {
-                previousDirection = players[0].updatedDirection;
-            }
-        } else if (previousDirection != null) {
-            applyClientDirections();
-            if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
-                serverProcessTurn();
-            }
-        }
-    }
-
-    /**
-     * Used by the server to apply clients' previous direction as its direction for the current turn
-     * in case they did not send its direction information
-     */
-    private void applyClientDirections() {
-        Direction[] directions = gameManager.directionBufferManager.getDirectionBuffer();
-        for (int i = 1; i < directions.length; i++) {
-            if (directions[i] == null) {
-                // Use the client's previous direction as the direction for the current turn
-                gameManager.directionBufferManager.updateDirection(
-                        gameManager.playerManager.getPlayer(i).updatedDirection, i);
-            }
+        if (players[0].direction == null && gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
+            serverProcessTurn();
         }
     }
 
@@ -198,7 +174,6 @@ public class GameConnectionManager implements GameConnectionHandler {
         gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
         broadcastDirections();
         gameManager.directionBufferManager.clearBuffer();
-        previousDirection = null;
     }
 
     /**
@@ -210,7 +185,7 @@ public class GameConnectionManager implements GameConnectionHandler {
         // No need to waste bandwidth sending the same direction over and over again, send only when it changes
         if (previousDirection != player.updatedDirection) {
             previousDirection = player.updatedDirection;
-            gameManager.directionBufferManager.updateDirection(player.updatedDirection, 0);
+            gameManager.directionBufferManager.updateDirectionBuffer(player.updatedDirection, 0);
             broadcastDirections();
         }
     }
@@ -221,7 +196,7 @@ public class GameConnectionManager implements GameConnectionHandler {
      * In case of the server, it will send information about all players to all clients
      * In cast of a   client, it will send information about itself to the server
      */
-    public void broadcastDirections() {
+    private void broadcastDirections() {
         Player[] players = gameManager.playerManager.getPlayers();
         Direction[] directions = gameManager.directionBufferManager.getDirectionBuffer();
         int size = server != null ? players.length : 1;
@@ -254,7 +229,6 @@ public class GameConnectionManager implements GameConnectionHandler {
         Gdx.app.postRunnable(() -> {
             if (server != null) {
                 gameManager.serverPlayerDisconnected(connection);
-                previousDirection = null;
                 Player player = gameManager.playerManager.getPlayers()[0];
                 player.updatedDirection = player.direction = null;
             } else {
@@ -296,6 +270,12 @@ public class GameConnectionManager implements GameConnectionHandler {
         server.sendToAllTCP(bpd);
     }
 
+    /**
+     * Called in the client when it receives the information that
+     * a player has been disconnected from the server
+     *
+     * @param playerName The name of the player that got disconnected
+     */
     public void clientPlayerDisconnected(String playerName) {
         gameManager.clientPlayerDisconnected(playerName);
         previousDirection = null;

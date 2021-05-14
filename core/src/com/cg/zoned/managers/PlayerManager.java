@@ -15,7 +15,6 @@ public class PlayerManager extends InputMultiplexer {
     private ControlManager controlManager;
 
     private Player[] players;
-
     private Array<TeamData> teamData;
 
     public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controlIndex, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
@@ -24,7 +23,8 @@ public class PlayerManager extends InputMultiplexer {
         this.players = players;
         initTeamData();
 
-        if (gameManager.gameConnectionManager.isActive) { // Not split screen; only add first player's inputs
+        if (gameManager.gameConnectionManager.isActive) {
+            // Not in splitscreen mode; add only the first player's inputs
             this.addProcessor(players[0]);
         } else {
             for (Player player : players) {
@@ -72,15 +72,19 @@ public class PlayerManager extends InputMultiplexer {
     }
 
     public void updatePlayerDirections() {
+        updatePlayerDirectionBuffer();
+
+        // Apply directions only if all players have set a direction
         if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
             for (Player player : players) {
                 player.direction = player.updatedDirection;
             }
-            return;
         }
+    }
 
+    public void updatePlayerDirectionBuffer() {
         for (int i = 0; i < players.length; i++) {
-            gameManager.directionBufferManager.updateDirection(players[i].updatedDirection, i);
+            gameManager.directionBufferManager.updateDirectionBuffer(players[i].updatedDirection, i);
         }
     }
 
