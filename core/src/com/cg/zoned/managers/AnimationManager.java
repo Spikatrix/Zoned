@@ -96,11 +96,10 @@ public class AnimationManager {
         stage.getRoot().setPosition(screenWidth, 0);
 
         SequenceAction slideAnimation = new SequenceAction();
-        slideAnimation.addAction(Actions.run(() -> trailEffect.start()));
+        slideAnimation.addAction(Actions.run(trailEffect::start));
         slideAnimation.addAction(Actions.delay(.4f));
-        slideAnimation.addAction(Actions.run(() -> {
-            trailEffect.allowCompletion(); // Completion takes time which is why it's done before the move actions
-        }));
+        // Completion takes time which is why it's done before the move actions
+        slideAnimation.addAction(Actions.run(trailEffect::allowCompletion));
         slideAnimation.addAction(Actions.moveTo(screenWidth / 8, 0f, .25f, Interpolation.pow2));
         slideAnimation.addAction(Actions.moveTo(-screenWidth / 8, 0f, 1.6f, Interpolation.linear));
         slideAnimation.addAction(Actions.moveTo(-screenWidth, 0f, .25f, Interpolation.pow2));
@@ -155,7 +154,7 @@ public class AnimationManager {
         Gdx.input.setInputProcessor(masterInputMultiplexer);
 
         SequenceAction fadeOutAnimation = new SequenceAction();
-        fadeOutAnimation.addAction(Actions.alpha(0f, .45f, Interpolation.smooth));
+        fadeOutAnimation.addAction(Actions.alpha(0f, .3f, Interpolation.smooth));
         // Crashes on GWT without the postRunnable
         fadeOutAnimation.addAction(Actions.run(() -> Gdx.app.postRunnable(() -> {
             Gdx.input.setInputProcessor(null);
