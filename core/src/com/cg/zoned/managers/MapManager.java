@@ -6,9 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Constants;
-import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.dataobjects.PreparedMapData;
-import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.maps.ExternalMapScanner;
 import com.cg.zoned.maps.ExternalMapTemplate;
 import com.cg.zoned.maps.InvalidMapCharacter;
@@ -161,20 +159,8 @@ public class MapManager {
         return this.mapList;
     }
 
-    public MapEntity getPreparedMap() {
-        return this.preparedMapData.map;
-    }
-
-    public Cell[][] getPreparedMapGrid() {
-        return this.preparedMapData.mapGrid;
-    }
-
-    public Array<StartPosition> getPreparedStartPositions() {
-        return this.preparedMapData.startPositions;
-    }
-
-    public int getPreparedMapWallCount() {
-        return this.preparedMapData.wallCount;
+    public PreparedMapData getPreparedMapData() {
+        return preparedMapData;
     }
 
     public FileHandle getExternalMapDir() {

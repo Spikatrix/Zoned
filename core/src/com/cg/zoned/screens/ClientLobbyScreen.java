@@ -31,6 +31,7 @@ import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
+import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
@@ -388,11 +389,12 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
             return;
         }
 
-        this.mapGrid = mapManager.getPreparedMapGrid();
+        PreparedMapData preparedMapData = mapManager.getPreparedMapData();
+        this.mapGrid = preparedMapData.mapGrid;
         this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
         setCameraPosition();
 
-        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
+        Array<StartPosition> startPositions = preparedMapData.startPositions;
         for (StartPosition startPosition : startPositions) {
             String startPosName = startPosition.getName();
             GridPoint2 startLocation = startPosition.getLocation();
@@ -406,7 +408,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         }
 
         resetStartPosLabels(startLocations);
-        this.mapLabel.setText(mapManager.getPreparedMap().getName());
+        this.mapLabel.setText(mapManager.getPreparedMapData().map.getName());
         readyButton.setDisabled(false);
     }
 
@@ -510,8 +512,8 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
             players[i] = new Player(PlayerColorHelper.getColorFromString(color), name);
 
             position = position.substring(0, position.lastIndexOf('(')).trim();
-            int startPosIndex = getStartPosIndex(mapManager.getPreparedStartPositions(), position);
-            players[i].setStartPos(mapManager.getPreparedStartPositions().get(startPosIndex).getLocation());
+            int startPosIndex = getStartPosIndex(mapManager.getPreparedMapData().startPositions, position);
+            players[i].setStartPos(mapManager.getPreparedMapData().startPositions.get(startPosIndex).getLocation());
         }
 
         return players;
@@ -521,7 +523,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     public void startGame() {
         final Player[] players = inflatePlayerList();
         clearMapGrid();
-        Gdx.app.postRunnable(() -> animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new GameScreen(game, mapManager, players, connectionManager)));
+        Gdx.app.postRunnable(() -> animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new GameScreen(game, mapManager.getPreparedMapData(), players, connectionManager)));
     }
 
     private int getStartPosIndex(Array<StartPosition> startPositions, String startPos) {
@@ -550,7 +552,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     }
 
     private void updateMapColor(Player player, String color, String startPos) {
-        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
+        Array<StartPosition> startPositions = mapManager.getPreparedMapData().startPositions;
         startPos = startPos.substring(0, startPos.lastIndexOf('(')).trim();
         int startPosIndex = getStartPosIndex(startPositions, startPos);
 
@@ -570,7 +572,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
 
         if (startPosIndex != -1) {
             player.setStartPos(
-                    mapManager.getPreparedStartPositions().get(startPosIndex).getLocation());
+                    mapManager.getPreparedMapData().startPositions.get(startPosIndex).getLocation());
             mapGrid[(int) player.position.y][(int) player.position.x].cellColor = player.color;
         }
 

@@ -26,10 +26,10 @@ import com.cg.zoned.Preferences;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.GameManager;
-import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
@@ -60,21 +60,21 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private HoverImageButton zoomButton;
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
-    public GameScreen(final Zoned game, MapManager mapManager, Player[] players) {
-        this(game, mapManager, players, null, null);
+    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players) {
+        this(game, mapData, players, null, null);
     }
 
-    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, ServerLobbyConnectionManager connectionManager) {
-        this(game, mapManager, players, connectionManager.getServer(), null);
+    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players, ServerLobbyConnectionManager connectionManager) {
+        this(game, mapData, players, connectionManager.getServer(), null);
     }
 
-    public GameScreen(final Zoned game, MapManager mapManager, Player[] players, ClientLobbyConnectionManager connectionManager) {
-        this(game, mapManager, players, null, connectionManager.getClient());
+    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players, ClientLobbyConnectionManager connectionManager) {
+        this(game, mapData, players, null, connectionManager.getClient());
     }
 
-    private GameScreen(final Zoned game, MapManager mapManager, Player[] players, Server server, Client client) {
+    private GameScreen(final Zoned game, PreparedMapData mapData, Player[] players, Server server, Client client) {
         super(game);
-        game.discordRPCManager.updateRPC("Playing a match", mapManager.getPreparedMap().getName(), players.length - 1);
+        game.discordRPCManager.updateRPC("Playing a match", mapData.map.getName(), players.length - 1);
 
         this.gameManager = new GameManager(this);
         this.gameManager.setUpConnectionManager(server, client);
@@ -84,7 +84,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
-        this.map = new Map(mapManager.getPreparedMapGrid(), mapManager.getPreparedMapWallCount(), this.shapeDrawer);
+        this.map = new Map(mapData.mapGrid, mapData.wallCount, this.shapeDrawer);
         this.map.initFloodFillVars();
 
         if (Constants.DISPLAY_EXTENDED_GL_STATS) {

@@ -46,7 +46,7 @@ public class ExternalMapScanner {
                 externalMapDir = Gdx.files.external("Documents/Zoned/" + mapDirName);
             } else {
                 // Mac (I don't own a mac, so I can't test this)
-                externalMapDir = Gdx.files.external("Library/Application Support/Zoned/");
+                externalMapDir = Gdx.files.external("Library/Application Support/Zoned/" + mapDirName);
             }
         }
 

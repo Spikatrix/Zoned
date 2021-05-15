@@ -8,15 +8,14 @@ import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.dataobjects.StartPosition;
 
 import java.io.FileNotFoundException;
-import java.util.Comparator;
 
 /**
  * MapLoader helps parse and prepare maps for the MapManager to handle.
  * Throws corresponding exceptions in case of issues during map loading.
  */
 public class MapLoader {
-    public static final char EMPTY_CHAR = '.';
-    public static final char WALL_CHAR = '#';
+    private static final char EMPTY_CHAR = '.';
+    private static final char WALL_CHAR = '#';
 
     // Each character in this string is treated as a valid start position indicator in maps
     public static final String VALID_START_POSITIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -179,12 +178,7 @@ public class MapLoader {
         }
 
         // Sort all start positions based on its alt name
-        startPositions.sort(new Comparator<StartPosition>() {
-            @Override
-            public int compare(StartPosition sp1, StartPosition sp2) {
-                return sp1.getAltName() - sp2.getAltName();
-            }
-        });
+        startPositions.sort((sp1, sp2) -> sp1.getAltName() - sp2.getAltName());
 
         preparedMapData.map = map;
         preparedMapData.mapGrid = mapGrid;

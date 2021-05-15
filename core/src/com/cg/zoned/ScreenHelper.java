@@ -135,7 +135,7 @@ public class ScreenHelper {
             return null;
         }
 
-        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
+        Array<StartPosition> startPositions = mapManager.getPreparedMapData().startPositions;
         int playerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         final Player[] players = new Player[playerCount];
         for (int i = 0; i < players.length; i++) {
@@ -164,7 +164,7 @@ public class ScreenHelper {
             return null;
         }
 
-        Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
+        Array<StartPosition> startPositions = mapManager.getPreparedMapData().startPositions;
         int playerCount = game.preferences.getInteger(Preferences.SPLITSCREEN_PLAYER_COUNT_PREFERENCE, 2);
         final Player[] players = new Player[playerCount];
         for (int i = 0; i < players.length; i++) {

@@ -25,14 +25,15 @@ import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.dataobjects.GameTouchPoint;
 import com.cg.zoned.dataobjects.PlayerSetUpParams;
+import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.managers.AnimationManager;
-import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.ButtonGroup;
@@ -40,11 +41,11 @@ import com.cg.zoned.ui.CheckBox;
 import com.cg.zoned.ui.HoverImageButton;
 
 public class MapStartPosScreen extends ScreenObject implements InputProcessor {
+    private PreparedMapData mapData;
+    private Map map;
     private Cell[][] mapGrid;
     private Array<StartPosition> startPositions;
 
-    private MapManager mapManager;
-    private Map map;
     private Vector2[] dragOffset;
     private Color mapDarkOverlayColor;
     private ExtendViewport[] mapViewports;
@@ -57,15 +58,16 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private Label[] playerLabels;
     private int playerIndex;
 
-    public MapStartPosScreen(final Zoned game, MapManager mapManager, Player[] players, int splitScreenCount) {
+    public MapStartPosScreen(final Zoned game, PreparedMapData preparedMapData, Player[] players) {
         super(game);
         game.discordRPCManager.updateRPC("Choosing start positions");
 
-        this.mapManager = mapManager;
-        this.mapGrid = mapManager.getPreparedMapGrid();
-        this.startPositions = mapManager.getPreparedStartPositions();
+        this.mapData = preparedMapData;
+        this.mapGrid = preparedMapData.mapGrid;
+        this.startPositions = preparedMapData.startPositions;
+
         this.players = players;
-        this.splitScreenCount = splitScreenCount;
+        this.splitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
 
         this.animationManager = new AnimationManager(this.game, this);
         this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
@@ -307,7 +309,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                     for (Player player : players) {
                         mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
                     }
-                    animationManager.fadeOutStage(screenStage, thisScreen, new GameScreen(game, mapManager, players));
+                    animationManager.fadeOutStage(screenStage, thisScreen, new GameScreen(game, mapData, players));
                 } else {
                     // Some more players are remaining
                     playerIndex += splitScreenCount;
@@ -487,7 +489,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
             return false;
         }
 
-        MapEntity map = mapManager.getPreparedMap();
+        MapEntity map = mapData.map;
         Color[] playerColors = new Color[players.length];
         for (int i = 0; i < players.length; i++) {
             playerColors[i] = new Color(players[i].color);

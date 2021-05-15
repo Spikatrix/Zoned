@@ -24,8 +24,8 @@ import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PlayerSetUpParams;
+import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.managers.AnimationManager;
-import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
@@ -255,7 +255,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
                 }
 
                 if (mapSelector.loadSelectedMap()) {
-                    startGame(playerColors, mapSelector.getMapManager());
+                    startGame(playerColors, mapSelector.getMapManager().getPreparedMapData());
                 }
             }
 
@@ -267,15 +267,14 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         screenStage.addActor(masterTable);
     }
 
-    private void startGame(Array<Color> playerColors, MapManager mapManager) {
+    private void startGame(Array<Color> playerColors, PreparedMapData mapData) {
         final Player[] players = new Player[playerColors.size];
         for (int i = 0; i < players.length; i++) {
             players[i] = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
         }
 
-        int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
-        animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount));
+        animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapData, players));
     }
 
     private void showTutorialDialog() {

@@ -31,7 +31,6 @@ import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.HoverImageButton;
 
 import java.text.DecimalFormat;
-import java.util.Comparator;
 
 public class VictoryScreen extends ScreenObject implements InputProcessor {
     private ParticleEffect trailEffect;
@@ -57,7 +56,7 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
     }
 
     private void finalizeTeamData() {
-        new Sort().sort(teamData, new TeamDataComparator());
+        new Sort().sort(teamData, (t1, t2) -> t2.getScore() - t1.getScore());
 
         DecimalFormat df = new DecimalFormat("#.##");
         for (TeamData td : teamData) {
@@ -278,13 +277,6 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
 
         animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
         return true;
-    }
-
-    private static class TeamDataComparator implements Comparator<TeamData> {
-        @Override
-        public int compare(TeamData t1, TeamData t2) {
-            return t2.getScore() - t1.getScore();
-        }
     }
 
     private static class ScoreboardHeaderData {

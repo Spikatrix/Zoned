@@ -13,6 +13,7 @@ import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferServerRejectedConnection;
+import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.listeners.ServerLobbyListener;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
@@ -256,12 +257,13 @@ public class ServerLobbyConnectionManager {
      * @param mapManager  MapManager object used to fetch map related info to send
      */
     public void sendMapDetails(int playerIndex, MapManager mapManager) {
-        MapExtraParams extraParams = mapManager.getPreparedMap().getExtraParams();
+        PreparedMapData preparedMapData = mapManager.getPreparedMapData();
+        MapExtraParams extraParams = preparedMapData.map.getExtraParams();
 
         // Send map details to the client
         BufferNewMap bnm = new BufferNewMap();
-        bnm.mapName = mapManager.getPreparedMap().getName();
-        bnm.mapHash = mapManager.getMap(bnm.mapName).getMapData().hashCode();
+        bnm.mapName = preparedMapData.map.getName();
+        bnm.mapHash = preparedMapData.map.getMapData().hashCode();
         bnm.mapExtraParams = extraParams != null ? extraParams.extraParams : null;
 
         if (playerIndex > -1 && playerNameResolved.get(playerIndex)) {
