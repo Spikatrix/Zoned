@@ -54,7 +54,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private boolean gamePaused = false;
 
     private Color currentBgColor, targetBgColor;
-    private float bgAnimSpeed = 1.8f;
+    private float bgAnimSpeed = 2.0f;
     private float bgAlpha = .25f;
 
     private HoverImageButton zoomButton;
@@ -96,16 +96,19 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         targetBgColor = new Color(0, 0, 0, bgAlpha);
 
         BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
-        initViewports(players);
+        initViewports(players, map);
 
         map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
 
         this.scoreBars = new ScoreBar(screenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
     }
 
-    private void initViewports(Player[] players) {
+    private void initViewports(Player[] players, Map map) {
         int viewportCount = isSplitscreenMultiplayer() ? players.length : 1;
         float stretchAspectRatio = 16f / 9;
+
+        float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
+        float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
 
         if (isSplitscreenMultiplayer()) {
             // Extend viewport so that all screen space is used for the game area
@@ -125,6 +128,9 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             } else {
                 this.playerViewports[i] = new StretchViewport(Constants.WORLD_SIZE * stretchAspectRatio, Constants.WORLD_SIZE);
             }
+
+            Vector3 cameraPos = this.playerViewports[i].getCamera().position;
+            cameraPos.set(centerX, centerY, cameraPos.z);
 
             if (i < viewportCount - 1) {
                 this.dividerLeftColor[i] = new Color(players[i].color);
@@ -197,8 +203,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        drawGameBG(delta);
-
         if (!gameManager.gameOver) {
             if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
                 gameManager.gameConnectionManager.serverClientCommunicate(map);
@@ -209,11 +213,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         map.update(gameManager.playerManager, delta);
 
-        batch.setProjectionMatrix(screenStage.getCamera().combined);
-        batch.begin();
-        shapeDrawer.setColor(currentBgColor);
-        shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
-        batch.end();
+        drawGameBG(delta);
 
         for (int i = 0; i < this.playerViewports.length; i++) {
             // Render everything in the i-th player viewport
@@ -224,7 +224,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         batch.setProjectionMatrix(screenStage.getCamera().combined);
         batch.begin();
 
-        if (isSplitscreenMultiplayer() && playerViewports.length >= 2) {
+        if (playerViewports.length >= 2) {
             // Draw the viewport divider only when playing on the same device with at least 2 splitscreens
             drawViewportDividers();
         }
@@ -296,6 +296,12 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         }
         currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
         currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
+
+        batch.setProjectionMatrix(screenStage.getCamera().combined);
+        batch.begin();
+        shapeDrawer.setColor(currentBgColor);
+        shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
+        batch.end();
     }
 
     private void fadeOutScreen(float delta) {

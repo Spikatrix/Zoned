@@ -84,15 +84,24 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private void setUpMap() {
         map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
         map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName()));
+
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
         mapViewports = new ExtendViewport[splitScreenCount];
+
         for (int i = 0; i < players.length; i++) {
             players[i].setStartPos(startPositions.get(i % startPositions.size).getLocation());
             mapGrid[(int) players[i].position.y][(int) players[i].position.x].cellColor = players[i].color;
         }
+
+        float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
+        float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
         for (int i = 0; i < splitScreenCount; i++) {
             mapViewports[i] = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
+
+            Vector3 cameraPos = mapViewports[i].getCamera().position;
+            cameraPos.set(centerX, centerY, cameraPos.z);
         }
+
         playerIndex = 0;
         if (splitScreenCount > 1) {
             dividerLeftColor = new Color[splitScreenCount - 1];

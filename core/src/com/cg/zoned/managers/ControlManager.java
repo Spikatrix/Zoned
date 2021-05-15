@@ -40,6 +40,7 @@ public class ControlManager {
     private Player[] players;
     private Stage stage;
     private Color[] overlayColors;
+    private float overlayAlpha = 0.8f;
     private Table[] controlTables;
 
     public ControlManager(Player[] players, Stage stage) {
@@ -74,7 +75,7 @@ public class ControlManager {
 
         float splitScreenWidth = stage.getWidth() / overlayColors.length;
         for (int i = 0; i < overlayColors.length; i++) {
-            overlayColors[i] = new Color(0, 0, 0, 0);
+            overlayColors[i] = new Color(0, 0, 0, overlayAlpha);
             controlImages[i] = new Image(controlImageTexture);
             controlImages[i].setScaling(Scaling.fit);
             controlImages[i].setOrigin(controlImages[i].getWidth() / 2, controlImages[i].getHeight() / 2);
@@ -124,7 +125,7 @@ public class ControlManager {
 
             if (players[i].updatedDirection == null) {
                 overlayColors[i].a += delta * 2.5f * (2f - overlayColors[i].a);
-                overlayColors[i].a = Math.min(overlayColors[i].a, .8f);
+                overlayColors[i].a = Math.min(overlayColors[i].a, overlayAlpha);
             } else {
                 overlayColors[i].a -= delta * 2.5f * (2f - overlayColors[i].a);
                 overlayColors[i].a = Math.max(overlayColors[i].a, 0f);

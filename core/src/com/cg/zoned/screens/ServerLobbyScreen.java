@@ -169,6 +169,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
                                 mapButton.setText(mapSelector.getMapManager().getPreparedMap().getName());
                                 mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
                                 map = new com.cg.zoned.Map(mapGrid, 0, shapeDrawer);
+                                setCameraPosition();
 
                                 repopulateMapStartPosLocations();
                                 updateMapColor(players[0], players[0].color, 0);
@@ -229,9 +230,18 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
         this.mapGrid = mapSelector.getMapManager().getPreparedMapGrid();
         this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
-        this.players = new Player[0];
+        setCameraPosition();
+
         // This array size is increased in playerConnected
         // I know I should use Arrays (libGDX's ArrayLists) instead but Map works with regular 'ol arrays for now
+        this.players = new Player[0];
+    }
+
+    private void setCameraPosition() {
+        float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
+        float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
+        Vector3 cameraPos = this.mapViewport.getCamera().position;
+        cameraPos.set(centerX, centerY, cameraPos.z);
     }
 
     @Override

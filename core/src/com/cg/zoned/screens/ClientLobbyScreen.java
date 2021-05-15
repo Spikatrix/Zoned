@@ -177,6 +177,13 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         // I know I should use Arrays (libGDX's ArrayLists) instead, but Map works with regular 'ol arrays for now
     }
 
+    private void setCameraPosition() {
+        float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
+        float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
+        Vector3 cameraPos = this.mapViewport.getCamera().position;
+        cameraPos.set(centerX, centerY, cameraPos.z);
+    }
+
     @Override
     public void pause() {
         if (readyButton.getText().toString().equals("Unready")) {
@@ -383,6 +390,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
 
         this.mapGrid = mapManager.getPreparedMapGrid();
         this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
+        setCameraPosition();
 
         Array<StartPosition> startPositions = mapManager.getPreparedStartPositions();
         for (StartPosition startPosition : startPositions) {
