@@ -57,8 +57,7 @@ public class DevScreen extends ScreenObject implements InputProcessor {
         Label splitscreenPlayerCountLabel = new Label("Splitscreen player count", game.skin);
         splitscreenSpinner = new Spinner(game.skin,
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
-                64f * game.getScaleFactor(),
-                true);
+                64f * game.getScaleFactor(), true);
         splitscreenSpinner.generateValueRange(minPlayerCount, maxPlayerCount, game.skin);
         splitscreenSpinner.snapToStep(currentPlayerCount - minPlayerCount);
 
@@ -67,8 +66,7 @@ public class DevScreen extends ScreenObject implements InputProcessor {
         Label mapStartPosSplitscreenCountLabel = new Label("Map start position splitscreen count", game.skin);
         mapSplitScreenSpinner = new Spinner(game.skin,
                 game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
-                64f * game.getScaleFactor(),
-                true);
+                64f * game.getScaleFactor(), true);
         mapSplitScreenSpinner.generateValueRange(minSplitScreenCount, maxSplitScreenCount, game.skin);
         mapSplitScreenSpinner.snapToStep(currentSplitScreenCount - minSplitScreenCount);
 

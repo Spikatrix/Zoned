@@ -92,8 +92,8 @@ public class MapSelector {
             }
         });
 
-        mapSpinner.getLeftButton().setText(" < ");
-        mapSpinner.getRightButton().setText(" > ");
+        mapSpinner.getLeftButton().setText("  <  ");
+        mapSpinner.getRightButton().setText("  >  ");
         mapSpinner.setButtonStepCount(1);
 
         return mapSpinner;
@@ -163,18 +163,15 @@ public class MapSelector {
     }
 
     public void loadExternalMaps(final MapManager.ExternalMapScanListener externalMapLoadListener) {
-        mapManager.loadExternalMaps((mapList, externalMapStartIndex) -> Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = externalMapStartIndex; i < mapList.size; i++) {
-                    MapEntity map = mapList.get(i);
-                    mapPreviewChecked.add(false);
-                    mapSpinner.addContent(getMapStack(map, null));
-                }
+        mapManager.loadExternalMaps((mapList, externalMapStartIndex) -> Gdx.app.postRunnable(() -> {
+            for (int i = externalMapStartIndex; i < mapList.size; i++) {
+                MapEntity map = mapList.get(i);
+                mapPreviewChecked.add(false);
+                mapSpinner.addContent(getMapStack(map, null));
+            }
 
-                if (externalMapLoadListener != null) {
-                    externalMapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
-                }
+            if (externalMapLoadListener != null) {
+                externalMapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
             }
         }));
     }
