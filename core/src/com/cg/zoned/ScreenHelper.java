@@ -142,7 +142,7 @@ public class ScreenHelper {
             Color playerColor = PlayerColorHelper.getColorFromIndex(i % Constants.PLAYER_COLORS.size());
             players[i] = new Player(playerColor, PlayerColorHelper.getStringFromColor(playerColor));
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
-            players[i].setStartPos(startPositions.get(i % startPositions.size).getLocation());
+            players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
         }
 
         int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
@@ -171,7 +171,7 @@ public class ScreenHelper {
             Color playerColor = PlayerColorHelper.getColorFromIndex(i % Constants.PLAYER_COLORS.size());
             players[i] = new Player(playerColor, PlayerColorHelper.getStringFromColor(playerColor));
             players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
-            players[i].setStartPos(startPositions.get(i % startPositions.size).getLocation());
+            players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
         }
 
         return (Screen) ClassReflection.getConstructor(GameScreen.class, Zoned.class, MapManager.class, Player[].class).newInstance(game, mapManager, players);

@@ -38,7 +38,7 @@ public class Player extends InputAdapter {
         this.controls = Constants.PLAYER_CONTROLS[0]; // Default is the first control scheme
     }
 
-    public void setStartPos(GridPoint2 pos) {
+    public void setPosition(GridPoint2 pos) {
         position = new Vector2(pos.x, pos.y);
         setRoundedPosition();
     }

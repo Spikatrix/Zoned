@@ -239,7 +239,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
                     }
 
                     players[0].color = PlayerColorHelper.getColorFromString(colorSelector.getSelected());
-                    mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor = players[0].color;
+                    mapGrid[players[0].roundedPosition.y][players[0].roundedPosition.x].cellColor = players[0].color;
 
                     connectionManager.broadcastClientInfo((Table) playerList.getChild(0));
                 }
@@ -513,7 +513,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
 
             position = position.substring(0, position.lastIndexOf('(')).trim();
             int startPosIndex = getStartPosIndex(mapManager.getPreparedMapData().startPositions, position);
-            players[i].setStartPos(mapManager.getPreparedMapData().startPositions.get(startPosIndex).getLocation());
+            players[i].setPosition(mapManager.getPreparedMapData().startPositions.get(startPosIndex).getLocation());
         }
 
         return players;
@@ -522,7 +522,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     @Override
     public void startGame() {
         final Player[] players = inflatePlayerList();
-        clearMapGrid();
+        map.clearGrid();
         Gdx.app.postRunnable(() -> animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this, new GameScreen(game, mapManager.getPreparedMapData(), players, connectionManager)));
     }
 
@@ -534,12 +534,6 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         }
 
         return -1;
-    }
-
-    private void clearMapGrid() {
-        for (Player player : players) {
-            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
-        }
     }
 
     private void updatePlayerDetails(int index, String color, String startPos) {
@@ -562,23 +556,23 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     private void updateMapColor(Player player, Color color, int startPosIndex) {
         boolean outOfBounds = false;
         try {
-            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
+            mapGrid[player.roundedPosition.y][player.roundedPosition.x].cellColor = null;
         } catch (ArrayIndexOutOfBoundsException e) {
             outOfBounds = true;
         }
 
-        GridPoint2 prevLoc = new GridPoint2((int) player.position.x, (int) player.position.y);
+        GridPoint2 prevLoc = new GridPoint2(player.roundedPosition.x, player.roundedPosition.y);
         player.color = color;
 
         if (startPosIndex != -1) {
-            player.setStartPos(
+            player.setPosition(
                     mapManager.getPreparedMapData().startPositions.get(startPosIndex).getLocation());
-            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = player.color;
+            mapGrid[player.roundedPosition.y][player.roundedPosition.x].cellColor = player.color;
         }
 
         if (!outOfBounds) { // Huh? Excuse me, lint? Always true? Nope.
             for (Player p : players) {
-                if ((int) p.position.x == prevLoc.x && (int) p.position.y == prevLoc.y && p.color != Color.BLACK) {
+                if (p.roundedPosition.x == prevLoc.x && p.roundedPosition.y == prevLoc.y && p.color != Color.BLACK) {
                     mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
                     break;
                 }

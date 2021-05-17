@@ -88,12 +88,26 @@ public class PlayerManager extends InputMultiplexer {
         }
     }
 
+    /**
+     * Increments the score of the team the player belongs to
+     *
+     * @param player The player whose team's score is to be incremented
+     */
     public void incrementScore(Player player) {
         for (TeamData teamData : this.teamData) {
             if (player.color.equals(teamData.getColor())) {
                 teamData.incrementScore();
                 return;
             }
+        }
+    }
+
+    /**
+     * Resets the score of every team
+     */
+    public void resetScores() {
+        for (TeamData teamData : this.teamData) {
+            teamData.resetScore();
         }
     }
 

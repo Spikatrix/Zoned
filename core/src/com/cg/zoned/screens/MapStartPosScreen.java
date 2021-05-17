@@ -91,8 +91,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         mapViewports = new ExtendViewport[splitScreenCount];
 
         for (int i = 0; i < players.length; i++) {
-            players[i].setStartPos(startPositions.get(i % startPositions.size).getLocation());
-            mapGrid[(int) players[i].position.y][(int) players[i].position.x].cellColor = players[i].color;
+            players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
+            mapGrid[players[i].roundedPosition.y][players[i].roundedPosition.x].cellColor = players[i].color;
         }
 
         float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
@@ -206,21 +206,19 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                         return;
                     }
 
-                    int oldPosX = (int) players[index].position.x;
-                    int oldPosY = (int) players[index].position.y;
+                    GridPoint2 oldPos = new GridPoint2(players[index].roundedPosition);
+                    players[index].setPosition(startPositions.get(startPosIndex).getLocation());
+                    GridPoint2 newPos = players[index].roundedPosition;
 
-                    players[index].position.y = startPositions.get(startPosIndex).getLocation().y;
-                    players[index].position.x = startPositions.get(startPosIndex).getLocation().x;
-
-                    mapGrid[oldPosY][oldPosX].cellColor = null;
+                    mapGrid[oldPos.y][oldPos.x].cellColor = null;
                     for (Player player : players) {
-                        if (player.position.x == oldPosX && player.position.y == oldPosY) {
-                            mapGrid[oldPosY][oldPosX].cellColor = player.color;
+                        if (player.position.x == oldPos.x && player.position.y == oldPos.y) {
+                            mapGrid[oldPos.y][oldPos.x].cellColor = player.color;
                             break;
                         }
                     }
 
-                    mapGrid[(int) players[index].position.y][(int) players[index].position.x].cellColor = players[index].color;
+                    mapGrid[newPos.y][newPos.x].cellColor = players[index].color;
                 });
             }
 
@@ -300,15 +298,13 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
             public void clicked(InputEvent event, float x, float y) {
                 for (int i = 0; i < splitScreenCount; i++) {
                     if (i + playerIndex < players.length) {
-                        players[i + playerIndex].setStartPos(startPositions.get(buttonGroup[i].getCheckedIndex()).getLocation());
+                        players[i + playerIndex].setPosition(startPositions.get(buttonGroup[i].getCheckedIndex()).getLocation());
                     }
                 }
 
                 if (playerIndex >= players.length - splitScreenCount) {
                     // Done with all players
-                    for (Player player : players) {
-                        mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
-                    }
+                    map.clearGrid(players);
                     animationManager.fadeOutStage(screenStage, thisScreen, new GameScreen(game, mapData, players));
                 } else {
                     // Some more players are remaining

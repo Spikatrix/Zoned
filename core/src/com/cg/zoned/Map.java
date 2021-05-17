@@ -221,12 +221,13 @@ public class Map {
                 }
 
                 Player.Direction direction = player.direction;
-                boolean atLeftEdge = player.position.x == 0;
-                boolean atRightEdge = player.position.x == cols - 1;
-                boolean atTopEdge = player.position.y == rows - 1;
-                boolean atBottomEdge = player.position.y == 0;
                 int rPosX = player.roundedPosition.x;
                 int rPosY = player.roundedPosition.y;
+
+                boolean atLeftEdge = rPosX == 0;
+                boolean atRightEdge = rPosX == cols - 1;
+                boolean atTopEdge = rPosY == rows - 1;
+                boolean atBottomEdge = rPosY == 0;
 
                 playerMoved = true;
 
@@ -393,6 +394,26 @@ public class Map {
         }
     }
 
+    public void clearGrid() {
+        this.coloredCellCount = 0;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                resetCell(i, j);
+            }
+        }
+    }
+
+    public void clearGrid(Player[] players) {
+        this.coloredCellCount = 0;
+        for (Player player : players) {
+            resetCell(player.roundedPosition.y, player.roundedPosition.x);
+        }
+    }
+
+    private void resetCell(int i, int j) {
+        mapGrid[i][j].cellColor = null;
+        mapGrid[i][j].playerCount = 0;
+    }
 
     public boolean gameComplete(Array<TeamData> teamData) {
         if (teamData.size == 2) {

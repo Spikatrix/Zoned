@@ -281,7 +281,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
                     players[0].color = PlayerColorHelper.getColorFromString(colorSelector.getSelected());
-                    mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor = players[0].color;
+                    mapGrid[players[0].roundedPosition.y][players[0].roundedPosition.x].cellColor = players[0].color;
 
                     connectionManager.broadcastPlayerInfo(playerList.getChildren(), 0);
                 }
@@ -336,8 +336,8 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         this.players[index] = new Player(
                 PlayerColorHelper.getColorFromString(Constants.PLAYER_COLORS.keySet().iterator().next()),
                 ipAddress == null ? serverName : ipAddress);
-        this.players[index].setStartPos(mapSelector.getMapManager().getPreparedMapData().startPositions.first().getLocation());
-        this.mapGrid[(int) players[index].position.y][(int) players[index].position.x].cellColor = players[index].color;
+        this.players[index].setPosition(mapSelector.getMapManager().getPreparedMapData().startPositions.first().getLocation());
+        this.mapGrid[players[index].roundedPosition.y][players[index].roundedPosition.x].cellColor = players[index].color;
     }
 
     public void updatePlayerDetails(int playerIndex, String clientName) {
@@ -427,7 +427,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
     private void startGame(MapManager mapManager) {
         Player[] players = inflatePlayerList(mapManager);
-        clearMapGrid();
+        map.clearGrid();
         animationManager.fadeOutStage(screenStage, this, new GameScreen(game, mapManager.getPreparedMapData(), players, connectionManager));
     }
 
@@ -453,7 +453,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
             position = position.substring(0, position.lastIndexOf('(')).trim();
             int startPosIndex = getStartPosIndex(mapManager.getPreparedMapData().startPositions, position);
-            players[i].setStartPos(mapManager.getPreparedMapData().startPositions.get(startPosIndex).getLocation());
+            players[i].setPosition(mapManager.getPreparedMapData().startPositions.get(startPosIndex).getLocation());
         }
 
         return players;
@@ -469,12 +469,6 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         return -1;
     }
 
-    private void clearMapGrid() {
-        for (Player player : players) {
-            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
-        }
-    }
-
     private void updateMapColor(Player player, String color, String startPos) {
         Array<StartPosition> startPositionsNames = mapSelector.getMapManager().getPreparedMapData().startPositions;
         startPos = startPos.substring(0, startPos.lastIndexOf('(')).trim();
@@ -486,23 +480,23 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
     private void updateMapColor(Player player, Color color, int startPosIndex) {
         boolean outOfBounds = false;
         try {
-            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = null;
+            mapGrid[player.roundedPosition.y][player.roundedPosition.x].cellColor = null;
         } catch (ArrayIndexOutOfBoundsException e) {
             outOfBounds = true; // Probably the map changed
         }
 
-        GridPoint2 prevLoc = new GridPoint2((int) player.position.x, (int) player.position.y);
+        GridPoint2 prevLoc = new GridPoint2(player.roundedPosition.x, player.roundedPosition.y);
         player.color = color;
 
         if (startPosIndex != -1) {
-            player.setStartPos(
+            player.setPosition(
                     mapSelector.getMapManager().getPreparedMapData().startPositions.get(startPosIndex).getLocation());
-            mapGrid[(int) player.position.y][(int) player.position.x].cellColor = player.color;
+            mapGrid[player.roundedPosition.y][player.roundedPosition.x].cellColor = player.color;
         }
 
         if (!outOfBounds) { // Huh? Excuse me, lint? Always true? Nope.
             for (Player p : players) {
-                if ((int) p.position.x == prevLoc.x && (int) p.position.y == prevLoc.y && p.color != Color.BLACK) {
+                if (p.roundedPosition.x == prevLoc.x && p.roundedPosition.y == prevLoc.y && p.color != Color.BLACK) {
                     mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
                     break;
                 }

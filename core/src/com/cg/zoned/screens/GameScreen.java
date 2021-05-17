@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -60,6 +61,8 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private HoverImageButton zoomButton;
     private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
+    private GridPoint2[] playerStartPositions;
+
     public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players) {
         this(game, mapData, players, null, null);
     }
@@ -97,8 +100,12 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         initViewports(players, map);
-
         map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
+
+        playerStartPositions = new GridPoint2[players.length];
+        for (int i = 0; i < players.length; i++) {
+            playerStartPositions[i] = new GridPoint2(players[i].roundedPosition.x, players[i].roundedPosition.y);
+        }
 
         this.scoreBars = new ScoreBar(screenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
     }
@@ -375,39 +382,60 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     private void showDisconnectionDialog() {
         screenStage.showOKDialog("Disconnected", false,
-                game.getScaleFactor(), button -> {
-                    gameManager.gameConnectionManager.close();
-                    dispose();
-                    game.setScreen(new MainMenuScreen(game));
-                }, game.skin);
+                game.getScaleFactor(), button -> endGame(), game.skin);
     }
 
     private void showPauseDialog() {
         gamePaused = true;
 
+        FocusableStage.DialogButton[] dialogButtons;
+
         if (isSplitscreenMultiplayer()) {
             // Stop players when in splitscreen multiplayer only
             gameManager.playerManager.stopPlayers(false);
             gameManager.directionBufferManager.clearBuffer();
+
+            dialogButtons = new FocusableStage.DialogButton[] {
+                    FocusableStage.DialogButton.Resume,
+                    FocusableStage.DialogButton.Restart,
+                    FocusableStage.DialogButton.MainMenu,
+            };
+        } else {
+            dialogButtons = new FocusableStage.DialogButton[] {
+                    FocusableStage.DialogButton.Resume,
+                    FocusableStage.DialogButton.MainMenu,
+            };
         }
 
-        //dialogButtonTexts.add("Restart"); Coming soon
-
         screenStage.showDialog("Pause Menu",
-                new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Resume, FocusableStage.DialogButton.MainMenu},
-                true,
+                dialogButtons, true,
                 game.getScaleFactor(), button -> {
                     if (button == FocusableStage.DialogButton.MainMenu) {
-                        if (gameManager.gameConnectionManager.isActive) {
-                            gameManager.gameConnectionManager.close();
-                        } else {
-                            dispose();
-                            game.setScreen(new MainMenuScreen(game));
-                        }
+                        endGame();
+                    } else if (button == FocusableStage.DialogButton.Restart) {
+                        restartGame();
                     }
 
                     gamePaused = false;
                 }, game.skin);
+    }
+
+    /**
+     * Restarts the match (Supported only in splitscreen multiplayer mode for now)
+     */
+    private void restartGame() {
+        gameManager.playerManager.stopPlayers(true);
+        gameManager.directionBufferManager.clearBuffer();
+
+        Player[] players = gameManager.playerManager.getPlayers();
+        for (int i = 0; i < players.length; i++) {
+            players[i].prevPosition = null;
+            players[i].setPosition(playerStartPositions[i]);
+        }
+
+        gameManager.playerManager.resetScores();
+        map.clearGrid();
+        map.updateMap(players, gameManager.playerManager);
     }
 
     private boolean isSplitscreenMultiplayer() {
@@ -459,6 +487,15 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                 Gdx.input.setInputProcessor(screenStage);
             }
         });
+    }
+
+    private void endGame() {
+        if (gameManager.gameConnectionManager.isActive) {
+            gameManager.gameConnectionManager.close();
+        } else {
+            dispose();
+            game.setScreen(new MainMenuScreen(game));
+        }
     }
 
     @Override
