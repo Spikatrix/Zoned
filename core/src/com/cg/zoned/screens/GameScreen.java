@@ -26,6 +26,7 @@ import com.cg.zoned.Player;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.ShapeDrawer;
+import com.cg.zoned.ViewportDividers;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.dataobjects.TeamData;
@@ -46,7 +47,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     private Map map;
     private Viewport[] playerViewports;
-    private Color[] dividerLeftColor, dividerRightColor;
+    private ViewportDividers viewportDividers;
 
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
     private boolean gameCompleteFadeOutDone = false;
@@ -125,10 +126,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             // their screen/game window size. Play on a 16:9 aspect ratio for the best experience
             this.playerViewports = new StretchViewport[viewportCount];
         }
-        if (viewportCount > 1) {
-            this.dividerRightColor = new Color[viewportCount - 1];
-            this.dividerLeftColor = new Color[viewportCount - 1];
-        }
         for (int i = 0; i < this.playerViewports.length; i++) {
             if (isSplitscreenMultiplayer()) {
                 this.playerViewports[i] = new ExtendViewport(Constants.WORLD_SIZE / viewportCount, Constants.WORLD_SIZE);
@@ -138,12 +135,9 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
             Vector3 cameraPos = this.playerViewports[i].getCamera().position;
             cameraPos.set(centerX, centerY, cameraPos.z);
-
-            if (i < viewportCount - 1) {
-                this.dividerLeftColor[i] = new Color(players[i].color);
-                this.dividerRightColor[i] = new Color(players[i + 1].color);
-            }
         }
+
+        viewportDividers = new ViewportDividers(playerViewports, players);
     }
 
     @Override
@@ -231,10 +225,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         batch.setProjectionMatrix(screenStage.getCamera().combined);
         batch.begin();
 
-        if (playerViewports.length >= 2) {
-            // Draw the viewport divider only when playing on the same device with at least 2 splitscreens
-            drawViewportDividers();
-        }
+        viewportDividers.render(shapeDrawer, screenStage);
 
         if (!gameManager.gameOver) {
             gameManager.playerManager.renderPlayerControlPrompt(shapeDrawer, delta);
@@ -329,26 +320,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                 dispose();
                 game.setScreen(new VictoryScreen(game, gameManager.playerManager.getTeamData()));
             });
-        }
-    }
-
-    private void drawViewportDividers() {
-        int lineCount = gameManager.playerManager.getPlayers().length - 1;
-        float height = screenStage.getViewport().getWorldHeight();
-        float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (playerViewports.length - 1), 3f);
-        float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (playerViewports.length - 1), 1f);
-        for (int i = 0; i < lineCount; i++) {
-            float startX = (screenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
-
-            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
-                    dividerSolidWidth * 2, height,
-                    dividerRightColor[i], dividerLeftColor[i], dividerLeftColor[i], dividerRightColor[i]);
-            shapeDrawer.filledRectangle(startX + dividerSolidWidth, 0,
-                    dividerFadeWidth, height,
-                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i], dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
-            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
-                    -dividerFadeWidth, height,
-                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i], dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
         }
     }
 

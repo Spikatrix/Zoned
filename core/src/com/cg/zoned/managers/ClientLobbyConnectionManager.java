@@ -101,18 +101,18 @@ public class ClientLobbyConnectionManager {
                 return;
             }
 
+            String mapDownloadLogMsg = "Downloaded map '" + mapName + "'";
             if (mapPreviewData != null) {
                 try {
                     FileHandle mapPreviewDataFile = externalMapDir.child(mapName + ".png");
                     mapPreviewDataFile.writeBytes(mapPreviewData, false);
-
-                    Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'");
                 } catch (GdxRuntimeException e) {
-                    Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'. Failed to download preview");
+                    mapDownloadLogMsg += ". Failed to download preview";
                 }
             } else {
-                Gdx.app.log(Constants.LOG_TAG, "Downloaded map '" + mapName + "'. Map preview unavailable");
+                mapDownloadLogMsg += ". Map preview unavailable";
             }
+            Gdx.app.log(Constants.LOG_TAG, mapDownloadLogMsg);
 
             clientPlayerListener.mapChanged(mapName, null, mapHash, true);
         });

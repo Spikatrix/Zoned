@@ -27,6 +27,7 @@ import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
+import com.cg.zoned.ViewportDividers;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.dataobjects.GameTouchPoint;
@@ -49,7 +50,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private Vector2[] dragOffset;
     private Color mapDarkOverlayColor;
     private ExtendViewport[] mapViewports;
-    private Color[] dividerLeftColor, dividerRightColor;
+    private ViewportDividers viewportDividers;
     private int splitScreenCount;
 
     private Player[] players;
@@ -105,27 +106,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         }
 
         playerIndex = 0;
-        if (splitScreenCount > 1) {
-            dividerLeftColor = new Color[splitScreenCount - 1];
-            dividerRightColor = new Color[splitScreenCount - 1];
-            updateDividerColors(playerIndex);
-        }
-    }
-
-    private void updateDividerColors(int playerIndex) {
-        for (int i = 0; i < splitScreenCount - 1; i++) {
-            if (i + playerIndex < players.length) {
-                dividerLeftColor[i] = new Color(players[i + playerIndex].color);
-            } else {
-                dividerLeftColor[i] = Color.BLACK;
-            }
-
-            if (i + playerIndex + 1 < players.length) {
-                dividerRightColor[i] = new Color(players[i + playerIndex + 1].color);
-            } else {
-                dividerRightColor[i] = Color.BLACK;
-            }
-        }
+        viewportDividers = new ViewportDividers(mapViewports, players);
     }
 
     private void setUpStage() {
@@ -312,7 +293,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                     if (playerIndex >= players.length) {
                         playerIndex = players.length - 1;
                     }
-                    updateDividerColors(playerIndex);
+                    viewportDividers.updateDividerColors(players, playerIndex);
+
                     int excessCount = 0;
                     for (int i = 0; i < splitScreenCount; i++) {
                         if (i + playerIndex >= players.length) {
@@ -412,35 +394,11 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         }
     }
 
-    private void drawViewportDividers() {
-        batch.begin();
-        int lineCount = splitScreenCount - 1;
-        float dividerFadeWidth = Math.max(Constants.VIEWPORT_DIVIDER_FADE_WIDTH / (mapViewports.length - 1), 3f);
-        float dividerSolidWidth = Math.max(Constants.VIEWPORT_DIVIDER_SOLID_WIDTH / (mapViewports.length - 1), 1f);
-        float height = screenStage.getViewport().getWorldHeight();
-        for (int i = 0; i < lineCount; i++) {
-            float startX = (screenStage.getViewport().getWorldWidth() / (float) (lineCount + 1)) * (i + 1);
-
-            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
-                    dividerSolidWidth * 2, height,
-                    dividerRightColor[i], dividerLeftColor[i], dividerLeftColor[i], dividerRightColor[i]);
-            shapeDrawer.filledRectangle(startX + dividerSolidWidth, 0,
-                    dividerFadeWidth, height,
-                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerRightColor[i], dividerRightColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
-            shapeDrawer.filledRectangle(startX - dividerSolidWidth, 0,
-                    -dividerFadeWidth, height,
-                    Constants.VIEWPORT_DIVIDER_FADE_COLOR, dividerLeftColor[i], dividerLeftColor[i], Constants.VIEWPORT_DIVIDER_FADE_COLOR);
-        }
-        batch.end();
-    }
-
     private void drawDarkOverlay() {
         float height = screenStage.getViewport().getWorldHeight();
         float width = screenStage.getViewport().getWorldWidth();
         shapeDrawer.setColor(mapDarkOverlayColor);
-        batch.begin();
         shapeDrawer.filledRectangle(0, 0, width, height);
-        batch.end();
     }
 
     @Override
@@ -457,10 +415,10 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         this.screenViewport.apply(true);
         batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
-        if (splitScreenCount > 1 && mapViewports.length >= 2) {
-            drawViewportDividers();
-        }
+        batch.begin();
+        viewportDividers.render(shapeDrawer, screenStage);
         drawDarkOverlay();
+        batch.end();
 
         screenStage.act(delta);
         screenStage.draw();
