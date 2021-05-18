@@ -10,7 +10,11 @@ public class ViewportDividers {
     private Color[] rightDividerColors;
 
     public ViewportDividers(Viewport[] playerViewports, Player[] players) {
-        this.dividerCount = playerViewports.length - 1;
+        this(playerViewports.length, players);
+    }
+
+    public ViewportDividers(int viewportCount, Player[] players) {
+        this.dividerCount = viewportCount - 1;
         if (this.dividerCount < 1) {
             // No dividers needed since there's only one player viewport (Networked multiplayer)
             return;

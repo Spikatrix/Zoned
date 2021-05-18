@@ -6,19 +6,15 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.GridPoint2;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
@@ -33,6 +29,7 @@ import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.GameManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
+import com.cg.zoned.managers.SplitViewportManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -46,7 +43,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private GLProfiler profiler;
 
     private Map map;
-    private Viewport[] playerViewports;
+    private SplitViewportManager splitViewportManager;
     private ViewportDividers viewportDividers;
 
     private Color fadeOutOverlay = new Color(0, 0, 0, 0);
@@ -60,7 +57,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private float bgAlpha = .25f;
 
     private HoverImageButton zoomButton;
-    private float targetZoom = Constants.ZOOM_MIN_VALUE;
 
     private GridPoint2[] playerStartPositions;
 
@@ -119,25 +115,16 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
 
         if (isSplitscreenMultiplayer()) {
-            // Extend viewport so that all screen space is used for the game area
-            this.playerViewports = new ExtendViewport[viewportCount];
+            // Uses extend viewports for each player so that all screen space is used for the game area
+            this.splitViewportManager = new SplitViewportManager(viewportCount, Constants.WORLD_SIZE, new Vector2(centerX, centerY));
         } else {
-            // Stretch viewport so that all players see the same game area regardless of
+            // Uses stretch viewports for all players on all devices so that all of them see the same game area regardless of
             // their screen/game window size. Play on a 16:9 aspect ratio for the best experience
-            this.playerViewports = new StretchViewport[viewportCount];
+            this.splitViewportManager = new SplitViewportManager(viewportCount, Constants.WORLD_SIZE, stretchAspectRatio, new Vector2(centerX, centerY));
         }
-        for (int i = 0; i < this.playerViewports.length; i++) {
-            if (isSplitscreenMultiplayer()) {
-                this.playerViewports[i] = new ExtendViewport(Constants.WORLD_SIZE / viewportCount, Constants.WORLD_SIZE);
-            } else {
-                this.playerViewports[i] = new StretchViewport(Constants.WORLD_SIZE * stretchAspectRatio, Constants.WORLD_SIZE);
-            }
+        splitViewportManager.setCameraPosLerpVal(1.8f);
 
-            Vector3 cameraPos = this.playerViewports[i].getCamera().position;
-            cameraPos.set(centerX, centerY, cameraPos.z);
-        }
-
-        viewportDividers = new ViewportDividers(playerViewports, players);
+        viewportDividers = new ViewportDividers(viewportCount, players);
     }
 
     @Override
@@ -167,11 +154,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         zoomButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if (targetZoom == Constants.ZOOM_MIN_VALUE) {
-                    targetZoom = Constants.ZOOM_MAX_VALUE;
-                } else if (targetZoom == Constants.ZOOM_MAX_VALUE) {
-                    targetZoom = Constants.ZOOM_MIN_VALUE;
-                }
+                splitViewportManager.toggleZoom();
             }
         });
     }
@@ -186,13 +169,9 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     @Override
     public void resize(int width, int height) {
-        for (int i = 0; i < playerViewports.length; i++) {
-            playerViewports[i].update(width / playerViewports.length, height);
-            this.playerViewports[i].setScreenX(i * width / playerViewports.length);
-        }
-
-        scoreBars.resize(width, height);
         super.resize(width, height);
+        scoreBars.resize(width, height);
+        splitViewportManager.resize(width, height);
     }
 
     @Override
@@ -216,10 +195,8 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         drawGameBG(delta);
 
-        for (int i = 0; i < this.playerViewports.length; i++) {
-            // Render everything in the i-th player viewport
-            renderMap(i, delta);
-        }
+        // Renders each split player viewport
+        splitViewportManager.render(shapeDrawer, batch, map, gameManager.playerManager.getPlayers(), delta);
 
         screenStage.getViewport().apply(true);
         batch.setProjectionMatrix(screenStage.getCamera().combined);
@@ -321,34 +298,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                 game.setScreen(new VictoryScreen(game, gameManager.playerManager.getTeamData()));
             });
         }
-    }
-
-    private void renderMap(int index, float delta) {
-        Viewport viewport = playerViewports[index];
-        Player[] players = gameManager.playerManager.getPlayers();
-
-        focusCameraOnPlayer(viewport, players[index], delta);
-        viewport.apply();
-
-        batch.setProjectionMatrix(viewport.getCamera().combined);
-        batch.begin();
-        map.render(players, index, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
-        batch.end();
-    }
-
-    private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
-        OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
-
-        float lerp = 1.8f;
-        Vector3 position = camera.position;
-
-        float posX = (player.position.x * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-
-        position.x += (posX - position.x) * lerp * delta;
-        position.y += (posY - position.y) * lerp * delta;
-
-        camera.zoom += (targetZoom - camera.zoom) * lerp * 3 * delta;
     }
 
     private void showDisconnectionDialog() {

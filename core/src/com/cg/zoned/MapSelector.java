@@ -292,9 +292,7 @@ public class MapSelector {
                 }
             });
 
-            scrollTable.add(stack)
-                    .growX()
-                    .height(mapLabel.getPrefHeight() * 2);
+            scrollTable.add(stack).growX().height(mapLabel.getPrefHeight() * 2);
             scrollTable.row();
 
             mapSelectorStage.addFocusableActor(stack);

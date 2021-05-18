@@ -6,11 +6,9 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -19,8 +17,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
@@ -30,11 +26,11 @@ import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.ViewportDividers;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
-import com.cg.zoned.dataobjects.GameTouchPoint;
 import com.cg.zoned.dataobjects.PlayerSetUpParams;
 import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.SplitViewportManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.ButtonGroup;
@@ -47,9 +43,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private Cell[][] mapGrid;
     private Array<StartPosition> startPositions;
 
-    private Vector2[] dragOffset;
     private Color mapDarkOverlayColor;
-    private ExtendViewport[] mapViewports;
+    private SplitViewportManager splitViewportManager;
     private ViewportDividers viewportDividers;
     private int splitScreenCount;
 
@@ -57,7 +52,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private CheckBox[][] radioButtons;
     private ButtonGroup[] buttonGroup;
     private Label[] playerLabels;
-    private int playerIndex;
+    private int playerStartIndex;
 
     public MapStartPosScreen(final Zoned game, PreparedMapData preparedMapData, Player[] players) {
         super(game);
@@ -89,24 +84,18 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName()));
 
         mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
-        mapViewports = new ExtendViewport[splitScreenCount];
+
+        float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
+        float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
+        splitViewportManager = new SplitViewportManager(splitScreenCount, Constants.WORLD_SIZE, new Vector2(centerX, centerY));
 
         for (int i = 0; i < players.length; i++) {
             players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
             mapGrid[players[i].roundedPosition.y][players[i].roundedPosition.x].cellColor = players[i].color;
         }
 
-        float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
-        float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
-        for (int i = 0; i < splitScreenCount; i++) {
-            mapViewports[i] = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
-
-            Vector3 cameraPos = mapViewports[i].getCamera().position;
-            cameraPos.set(centerX, centerY, cameraPos.z);
-        }
-
-        playerIndex = 0;
-        viewportDividers = new ViewportDividers(mapViewports, players);
+        playerStartIndex = 0;
+        viewportDividers = new ViewportDividers(splitScreenCount, players);
     }
 
     private void setUpStage() {
@@ -182,7 +171,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                 buttonGroup[i].setOnCheckChangeListener(button -> {
                     int startPosIndex = buttonGroup[finalI].getCheckedIndex();
 
-                    int index = finalI + playerIndex;
+                    int index = finalI + playerStartIndex;
                     if (index >= players.length) {
                         return;
                     }
@@ -219,56 +208,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         }
         masterTable.row();
 
-        final GameTouchPoint[] touchPoint = new GameTouchPoint[splitScreenCount];
-        dragOffset = new Vector2[splitScreenCount];
-        for (int i = 0; i < splitScreenCount; i++) {
-            dragOffset[i] = new Vector2(0, 0);
-            touchPoint[i] = new GameTouchPoint(0, 0, -1, null, -1);
-        }
-        screenStage.addListener(new ClickListener() {
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                int splitPaneIndex = 0;
-                float width = screenStage.getViewport().getWorldWidth();
-                for (int i = 1; i < splitScreenCount; i++) {
-                    if (x > ((width / splitScreenCount) * i)) {
-                        splitPaneIndex++;
-                    } else {
-                        break;
-                    }
-                }
-
-                if (touchPoint[splitPaneIndex].pointer == -1) {
-                    touchPoint[splitPaneIndex].pointer = pointer;
-                    touchPoint[splitPaneIndex].point.x = (int) x;
-                    touchPoint[splitPaneIndex].point.y = (int) y;
-                }
-
-                return true;
-            }
-
-            @Override
-            public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                for (int i = 0; i < splitScreenCount; i++) {
-                    if (touchPoint[i].pointer == pointer) {
-                        dragOffset[i].x = touchPoint[i].point.x - x;
-                        dragOffset[i].y = touchPoint[i].point.y - y;
-                        break;
-                    }
-                }
-            }
-
-            @Override
-            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
-                for (int i = 0; i < splitScreenCount; i++) {
-                    if (touchPoint[i].pointer == pointer) {
-                        dragOffset[i].set(0, 0);
-                        touchPoint[i].pointer = -1;
-                        break;
-                    }
-                }
-            }
-        });
+        splitViewportManager.setUpDragOffset(screenStage);
 
         final TextButton doneButton = new TextButton("Next", game.skin);
         setDoneButtonText(doneButton);
@@ -278,37 +218,37 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 for (int i = 0; i < splitScreenCount; i++) {
-                    if (i + playerIndex < players.length) {
-                        players[i + playerIndex].setPosition(startPositions.get(buttonGroup[i].getCheckedIndex()).getLocation());
+                    if (i + playerStartIndex < players.length) {
+                        players[i + playerStartIndex].setPosition(startPositions.get(buttonGroup[i].getCheckedIndex()).getLocation());
                     }
                 }
 
-                if (playerIndex >= players.length - splitScreenCount) {
+                if (playerStartIndex >= players.length - splitScreenCount) {
                     // Done with all players
                     map.clearGrid(players);
                     animationManager.fadeOutStage(screenStage, thisScreen, new GameScreen(game, mapData, players));
                 } else {
                     // Some more players are remaining
-                    playerIndex += splitScreenCount;
-                    if (playerIndex >= players.length) {
-                        playerIndex = players.length - 1;
+                    playerStartIndex += splitScreenCount;
+                    if (playerStartIndex >= players.length) {
+                        playerStartIndex = players.length - 1;
                     }
-                    viewportDividers.updateDividerColors(players, playerIndex);
+                    viewportDividers.updateDividerColors(players, playerStartIndex);
 
                     int excessCount = 0;
                     for (int i = 0; i < splitScreenCount; i++) {
-                        if (i + playerIndex >= players.length) {
+                        if (i + playerStartIndex >= players.length) {
                             // Excess splitscreens
                             excessCount++;
                             masterTable.removeActor(masterTable.getChild(masterTable.getChildren().size - 2));
                             continue;
                         }
 
-                        playerLabels[i].setText("Player " + (i + playerIndex + 1));
-                        Color labelColor = new Color(players[i + playerIndex].color);
+                        playerLabels[i].setText("Player " + (i + playerStartIndex + 1));
+                        Color labelColor = new Color(players[i + playerStartIndex].color);
                         playerLabels[i].setColor(labelColor);
 
-                        radioButtons[i][(i + playerIndex) % radioButtons[i].length].setChecked(true);
+                        radioButtons[i][(i + playerStartIndex) % radioButtons[i].length].setChecked(true);
                     }
 
                     if (excessCount > 0) {
@@ -349,49 +289,16 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setDoneButtonText(TextButton doneButton) {
-        if (playerIndex >= players.length - splitScreenCount) {
+        if (playerStartIndex >= players.length - splitScreenCount) {
             doneButton.setText("Start Game");
         }
         // By default it's "Next"
     }
 
-    private void renderMap(int playerIndex, float delta) {
-        int mapViewportIndex = playerIndex - this.playerIndex;
-        Viewport viewport = mapViewports[mapViewportIndex];
-
-        focusCameraOnPlayer(viewport, players[playerIndex], dragOffset[mapViewportIndex], delta);
-        viewport.apply();
-
-        batch.setProjectionMatrix(viewport.getCamera().combined);
-        batch.begin();
-        map.render(players, playerIndex, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
-        batch.end();
-    }
-
-    private void focusCameraOnPlayer(Viewport viewport, Player player, Vector2 vel, float delta) {
-        OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
-
-        float lerp = 2.5f;
-        Vector3 position = camera.position;
-
-        float posX = (player.position.x * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-
-        posX += vel.x;
-        posY += vel.y;
-
-        position.x += (posX - position.x) * lerp * delta;
-        position.y += (posY - position.y) * lerp * delta;
-    }
-
     @Override
     public void resize(int width, int height) {
         super.resize(width, height);
-
-        for (int i = 0; i < mapViewports.length; i++) {
-            mapViewports[i].update(width / mapViewports.length, height);
-            this.mapViewports[i].setScreenX(i * width / mapViewports.length);
-        }
+        splitViewportManager.resize(width, height);
     }
 
     private void drawDarkOverlay() {
@@ -406,11 +313,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        for (int i = 0; i < mapViewports.length; i++) {
-            if (playerIndex + i < players.length) {
-                renderMap(playerIndex + i, delta);
-            }
-        }
+        // Renders each split map viewport
+        splitViewportManager.render(shapeDrawer, batch, map, players, playerStartIndex, delta);
 
         this.screenViewport.apply(true);
         batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
