@@ -7,10 +7,9 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -21,8 +20,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.SnapshotArray;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
@@ -36,6 +33,7 @@ import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
+import com.cg.zoned.managers.SplitViewportManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.DropDownMenu;
@@ -53,7 +51,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
 
     private com.cg.zoned.Map map;
     private Cell[][] mapGrid;
-    private ExtendViewport mapViewport;
+    private SplitViewportManager splitViewportManager;
     private Color mapDarkOverlayColor;
     private Player[] players;
 
@@ -228,10 +226,11 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         mapSelector.loadSelectedMap();
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
-        this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
         this.mapGrid = mapSelector.getMapManager().getPreparedMapData().mapGrid;
         this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
+        this.splitViewportManager = new SplitViewportManager(1, Constants.WORLD_SIZE, null);
+        this.splitViewportManager.setUpDragOffset(screenStage);
         setCameraPosition();
 
         // This array size is increased in playerConnected
@@ -242,8 +241,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
     private void setCameraPosition() {
         float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
         float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
-        Vector3 cameraPos = this.mapViewport.getCamera().position;
-        cameraPos.set(centerX, centerY, cameraPos.z);
+        splitViewportManager.setViewportCameraPosition(new Vector2(centerX, centerY));
     }
 
     @Override
@@ -532,7 +530,8 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        renderMap(delta);
+        // Renders the map in the background of the lobby
+        splitViewportManager.render(shapeDrawer, batch, map, players, delta);
 
         this.screenViewport.apply(true);
         batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
@@ -552,36 +551,10 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         displayFPS();
     }
 
-    private void renderMap(float delta) {
-        Viewport viewport = mapViewport;
-        Player player = players[0];
-
-        focusCameraOnPlayer(viewport, player, delta);
-        viewport.apply();
-
-        batch.setProjectionMatrix(viewport.getCamera().combined);
-        batch.begin();
-        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
-        batch.end();
-    }
-
-    private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
-        OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
-
-        float lerp = 2.5f;
-        Vector3 position = camera.position;
-
-        float posX = (player.position.x * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-
-        position.x += (posX - position.x) * lerp * delta;
-        position.y += (posY - position.y) * lerp * delta;
-    }
-
     @Override
     public void resize(int width, int height) {
         super.resize(width, height);
-        mapViewport.update(width, height);
+        splitViewportManager.resize(width, height);
     }
 
     private void drawDarkOverlay() {

@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
@@ -16,6 +15,7 @@ import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.dataobjects.GameTouchPoint;
+import com.cg.zoned.ui.FocusableStage;
 
 public class SplitViewportManager {
     private Viewport[] splitViewports;
@@ -29,26 +29,30 @@ public class SplitViewportManager {
         splitViewports = new ExtendViewport[splitCount];
         for (int i = 0; i < splitCount; i++) {
             splitViewports[i] = new ExtendViewport(worldSize / splitCount, worldSize);
-            setViewportCameraPosition(splitViewports[i], centerPos);
         }
+        setViewportCameraPosition(centerPos);
     }
 
     public SplitViewportManager(int splitCount, float worldSize, float stretchAspectRatio, Vector2 centerPos) {
         splitViewports = new StretchViewport[splitCount];
         for (int i = 0; i < splitCount; i++) {
             splitViewports[i] = new StretchViewport(worldSize * stretchAspectRatio, worldSize);
-            setViewportCameraPosition(splitViewports[i], centerPos);
         }
+        setViewportCameraPosition(centerPos);
     }
 
-    private void setViewportCameraPosition(Viewport viewport, Vector2 centerPos) {
-        if (centerPos != null) {
-            Vector3 cameraPos = viewport.getCamera().position;
+    public void setViewportCameraPosition(Vector2 centerPos) {
+        if (centerPos == null) {
+            return;
+        }
+
+        for (Viewport splitViewport : splitViewports) {
+            Vector3 cameraPos = splitViewport.getCamera().position;
             cameraPos.set(centerPos.x, centerPos.y, cameraPos.z);
         }
     }
 
-    public void setUpDragOffset(Stage screenStage) {
+    public void setUpDragOffset(FocusableStage screenStage) {
         int splitCount = splitViewports.length;
 
         final GameTouchPoint[] touchPoint = new GameTouchPoint[splitCount];
@@ -61,6 +65,10 @@ public class SplitViewportManager {
         screenStage.addListener(new ClickListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                if (screenStage.dialogIsActive()) {
+                    return false;
+                }
+
                 int splitPaneIndex = 0;
                 float width = screenStage.getViewport().getWorldWidth();
                 for (int i = 1; i < splitCount; i++) {
@@ -114,6 +122,10 @@ public class SplitViewportManager {
 
     public void setCameraPosLerpVal(float cameraPosLerpVal) {
         this.cameraPosLerpVal = cameraPosLerpVal;
+    }
+
+    public void setCameraZoomLerpVal(float cameraZoomLerpVal) {
+        this.cameraZoomLerpVal = cameraZoomLerpVal;
     }
 
     public void resize(int width, int height) {

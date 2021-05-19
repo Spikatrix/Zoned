@@ -65,15 +65,12 @@ public class ServerLobbyConnectionManager {
      * @param connection The newly connected client connection
      */
     public void clientConnected(final Connection connection) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                final String clientIpAddress = connection.getRemoteAddressTCP().getAddress().getHostAddress();
-                if (serverPlayerListener != null) {
-                    addNewPlayer(connection, clientIpAddress);
-                } else {
-                    rejectConnection(connection, "No listener configured in the host (server) for incoming clients");
-                }
+        Gdx.app.postRunnable(() -> {
+            final String clientIpAddress = connection.getRemoteAddressTCP().getAddress().getHostAddress();
+            if (serverPlayerListener != null) {
+                addNewPlayer(connection, clientIpAddress);
+            } else {
+                rejectConnection(connection, "No listener configured in the host (server) for incoming clients");
             }
         });
     }
@@ -95,22 +92,19 @@ public class ServerLobbyConnectionManager {
      * @param clientGameVersion The game version of the client
      */
     public void receiveClientName(final Connection connection, final String clientName, final String clientGameVersion) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                if (!Constants.GAME_VERSION.equals(clientGameVersion)) {
-                    rejectConnection(connection, "Server client version mismatch!\n" +
-                            "Server game version: " + Constants.GAME_VERSION + "\nYour game version: " + clientGameVersion);
-                    return;
-                }
-
-                int index = getConnectionIndex(connection);
-                if (index == -1) { // Client joined way too fast
-                    addNewPlayer(connection, connection.getRemoteAddressTCP().getAddress().getHostAddress());
-                    index = getConnectionIndex(connection);
-                }
-                serverPlayerListener.updatePlayerDetails(index, clientName);
+        Gdx.app.postRunnable(() -> {
+            if (!Constants.GAME_VERSION.equals(clientGameVersion)) {
+                rejectConnection(connection, "Server client version mismatch!\n" +
+                        "Server game version: " + Constants.GAME_VERSION + "\nYour game version: " + clientGameVersion);
+                return;
             }
+
+            int index = getConnectionIndex(connection);
+            if (index == -1) { // Client joined way too fast
+                addNewPlayer(connection, connection.getRemoteAddressTCP().getAddress().getHostAddress());
+                index = getConnectionIndex(connection);
+            }
+            serverPlayerListener.updatePlayerDetails(index, clientName);
         });
     }
 
@@ -203,17 +197,14 @@ public class ServerLobbyConnectionManager {
      * @param startPos   Client's start position
      */
     public void receiveClientData(final Connection connection, final String name, final String who, final String ready, final String color, final String startPos) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                int index = getConnectionIndex(connection);
-                if (!playerNameResolved.get(index)) {
-                    // Happens in edge cases like when the map is changed right when a player joins
-                    return;
-                }
-
-                serverPlayerListener.updatePlayerDetails(index, name, who, ready, color, startPos);
+        Gdx.app.postRunnable(() -> {
+            int index = getConnectionIndex(connection);
+            if (!playerNameResolved.get(index)) {
+                // Happens in edge cases like when the map is changed right when a player joins
+                return;
             }
+
+            serverPlayerListener.updatePlayerDetails(index, name, who, ready, color, startPos);
         });
     }
 
@@ -223,21 +214,18 @@ public class ServerLobbyConnectionManager {
      * @param connection The connection of the client that disconnected
      */
     public void clientDisconnected(final Connection connection) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                int index = getConnectionIndex(connection);
+        Gdx.app.postRunnable(() -> {
+            int index = getConnectionIndex(connection);
 
-                if (index == -1) {
-                    return; // Some error occurred or server is shutting down
-                }
-
-                serverPlayerListener.playerDisconnected(index);
-
-                playerNameResolved.removeIndex(index);
-                playerConnections.removeIndex(index);
-
+            if (index == -1) {
+                return; // Some error occurred or server is shutting down
             }
+
+            serverPlayerListener.playerDisconnected(index);
+
+            playerNameResolved.removeIndex(index);
+            playerConnections.removeIndex(index);
+
         });
     }
 
@@ -282,36 +270,33 @@ public class ServerLobbyConnectionManager {
      * @param mapName    The name of the map requested by the client
      */
     public void serveMap(final Connection connection, final String mapName) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                FileHandle externalMapDir = serverPlayerListener.getExternalMapDir();
-                FileHandle mapFile = Gdx.files.external(externalMapDir + "/" + mapName + ".map");
-                FileHandle mapPreviewFile = Gdx.files.external(externalMapDir + "/" + mapName + ".png");
+        Gdx.app.postRunnable(() -> {
+            FileHandle externalMapDir = serverPlayerListener.getExternalMapDir();
+            FileHandle mapFile = Gdx.files.external(externalMapDir + "/" + mapName + ".map");
+            FileHandle mapPreviewFile = Gdx.files.external(externalMapDir + "/" + mapName + ".png");
 
-                MapEntity map = serverPlayerListener.fetchMap(mapName);
+            MapEntity map = serverPlayerListener.fetchMap(mapName);
 
-                BufferMapData bmd = new BufferMapData();
-                bmd.mapName = mapName;
-                bmd.mapData = mapFile.readString();
-                bmd.mapHash = map.getMapData().hashCode();
-                if (mapPreviewFile.exists()) {
-                    bmd.mapPreviewData = mapPreviewFile.readBytes();
-                } else {
-                    bmd.mapPreviewData = null;
-                }
+            BufferMapData bmd = new BufferMapData();
+            bmd.mapName = mapName;
+            bmd.mapData = mapFile.readString();
+            bmd.mapHash = map.getMapData().hashCode();
+            if (mapPreviewFile.exists()) {
+                bmd.mapPreviewData = mapPreviewFile.readBytes();
+            } else {
+                bmd.mapPreviewData = null;
+            }
 
-                try {
-                    connection.sendTCP(bmd);
-                } catch (KryoException e) {
-                    // Probably a buffer overflow due to the map preview image being too big
-                    Gdx.app.log(Constants.LOG_TAG, "Failed to serve map data (Is the map preview too large?): " + e.getMessage());
-                    Gdx.app.log(Constants.LOG_TAG, "Retrying to server without the map preview image...");
+            try {
+                connection.sendTCP(bmd);
+            } catch (KryoException e) {
+                // Probably a buffer overflow due to the map preview image being too big
+                Gdx.app.log(Constants.LOG_TAG, "Failed to serve map data (Is the map preview too large?): " + e.getMessage());
+                Gdx.app.log(Constants.LOG_TAG, "Retrying to server without the map preview image...");
 
-                    // Resend map data without the preview
-                    bmd.mapPreviewData = null;
-                    connection.sendTCP(bmd);
-                }
+                // Resend map data without the preview
+                bmd.mapPreviewData = null;
+                connection.sendTCP(bmd);
             }
         });
     }
