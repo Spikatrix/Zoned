@@ -1,3 +1,4 @@
+
 package com.cg.zoned.screens;
 
 import com.badlogic.gdx.Gdx;
@@ -165,7 +166,7 @@ public class LoadingScreen extends ScreenObject {
 
     private void endLoading() {
         SequenceAction sequenceAction = new SequenceAction();
-        sequenceAction.addAction(Actions.fadeOut(1f));
+        sequenceAction.addAction(Actions.fadeOut(.4f));
         // Crashes on GWT without the postRunnable
         sequenceAction.addAction(Actions.run(() -> Gdx.app.postRunnable(() -> {
             game.skin = assetManager.get("neon-skin/neon-ui.json", Skin.class);

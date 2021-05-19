@@ -7,12 +7,10 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -21,8 +19,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
@@ -35,6 +31,7 @@ import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.dataobjects.TutorialItem;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ControlManager;
+import com.cg.zoned.managers.SplitViewportManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.HoverImageButton;
 
@@ -43,7 +40,7 @@ import java.util.Random;
 public class TutorialScreen extends ScreenObject implements InputProcessor {
     private Map map;
     private Cell[][] mapGrid;
-    private ExtendViewport mapViewport;
+    private SplitViewportManager splitViewportManager;
     private Color mapOverlayColor;
     private Color mapDarkOverlayColor;
     private Color mapNoOverlayColor;
@@ -76,16 +73,16 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         populateMapGrid();
         this.map = new Map(mapGrid, 0, shapeDrawer);
         this.map.initFloodFillVars();
-        this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
         this.mapOverlayColor = new Color(0, 0, 0, .8f);
         this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
         this.mapNoOverlayColor = new Color(0, 0, 0, 0f);
         this.drawOverlay = true;
         this.players = new Player[1];
-        this.players[0] = new Player(PlayerColorHelper.getColorFromString("GREEN"), "Player");
+        this.players[0] = new Player(PlayerColorHelper.getColorFromIndex(0), "Player");
         this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
         this.players[0].setRoundedPosition();
         this.players[0].setControlIndex(0);
+        this.splitViewportManager = new SplitViewportManager(1, Constants.WORLD_SIZE, this.players[0].position);
         BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
         this.controlManager = new ControlManager(players, screenStage);
@@ -296,8 +293,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         super.resize(width, height);
 
         tutorialTable.setSize(width, textboxHeight);
-        mapViewport.update(width, (int) Math.max(0, height - textboxHeight));
-        mapViewport.setScreenPosition(0, (int) textboxHeight);
+        splitViewportManager.resize(width, (int) Math.max(0, height - textboxHeight));
+        splitViewportManager.setScreenPosition(0, (int) textboxHeight);
     }
 
     @Override
@@ -308,7 +305,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         players[0].direction = players[0].updatedDirection;
         map.update(null, players, delta);
 
-        renderMap(delta);
+        splitViewportManager.render(shapeDrawer, batch, map, players, delta);
 
         this.screenViewport.apply(true);
         batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
@@ -323,31 +320,6 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         screenStage.draw();
 
         displayFPS();
-    }
-
-    private void renderMap(float delta) {
-        Viewport viewport = mapViewport;
-
-        focusCameraOnPlayer(viewport, players[0], delta);
-        viewport.apply();
-
-        batch.setProjectionMatrix(viewport.getCamera().combined);
-        batch.begin();
-        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
-        batch.end();
-    }
-
-    private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
-        OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
-
-        float lerp = 2.5f;
-        Vector3 position = camera.position;
-
-        float posX = (player.position.x * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-
-        position.x += (posX - position.x) * lerp * delta;
-        position.y += (posY - position.y) * lerp * delta;
     }
 
     private void drawDarkOverlay(float delta) {

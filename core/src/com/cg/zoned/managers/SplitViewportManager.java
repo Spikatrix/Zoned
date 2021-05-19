@@ -136,6 +136,12 @@ public class SplitViewportManager {
         }
     }
 
+    public void setScreenPosition(int screenX, int screenY) {
+        for (Viewport viewport : splitViewports) {
+            viewport.setScreenPosition(screenX, screenY);
+        }
+    }
+
     public void render(ShapeDrawer shapeDrawer, SpriteBatch batch, Map map, Player[] players, float delta) {
         render(shapeDrawer, batch, map, players, 0, delta);
     }
