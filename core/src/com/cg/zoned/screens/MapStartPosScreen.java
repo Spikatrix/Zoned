@@ -3,7 +3,6 @@ package com.cg.zoned.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -167,29 +166,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
 
                 table.add(startPosScrollPane).grow();
 
-                final int finalI = i;
-                buttonGroup[i].setOnCheckChangeListener(button -> {
-                    int startPosIndex = buttonGroup[finalI].getCheckedIndex();
-
-                    int index = finalI + playerStartIndex;
-                    if (index >= players.length) {
-                        return;
-                    }
-
-                    GridPoint2 oldPos = new GridPoint2(players[index].roundedPosition);
-                    players[index].setPosition(startPositions.get(startPosIndex).getLocation());
-                    GridPoint2 newPos = players[index].roundedPosition;
-
-                    mapGrid[oldPos.y][oldPos.x].cellColor = null;
-                    for (Player player : players) {
-                        if (player.position.x == oldPos.x && player.position.y == oldPos.y) {
-                            mapGrid[oldPos.y][oldPos.x].cellColor = player.color;
-                            break;
-                        }
-                    }
-
-                    mapGrid[newPos.y][newPos.x].cellColor = players[index].color;
-                });
+                final int splitScreenIndex = i;
+                buttonGroup[i].setOnCheckChangeListener(button -> updatePlayerPosition(splitScreenIndex));
             }
 
             com.badlogic.gdx.scenes.scene2d.ui.Cell<Table> cell = masterTable.add(table)
@@ -213,79 +191,104 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         final TextButton doneButton = new TextButton("Next", game.skin);
         setDoneButtonText(doneButton);
 
-        final Screen thisScreen = this;
         doneButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                for (int i = 0; i < splitScreenCount; i++) {
-                    if (i + playerStartIndex < players.length) {
-                        players[i + playerStartIndex].setPosition(startPositions.get(buttonGroup[i].getCheckedIndex()).getLocation());
-                    }
-                }
-
-                if (playerStartIndex >= players.length - splitScreenCount) {
-                    // Done with all players
-                    map.clearGrid(players);
-                    animationManager.fadeOutStage(screenStage, thisScreen, new GameScreen(game, mapData, players));
-                } else {
-                    // Some more players are remaining
-                    playerStartIndex += splitScreenCount;
-                    if (playerStartIndex >= players.length) {
-                        playerStartIndex = players.length - 1;
-                    }
-                    viewportDividers.updateDividerColors(players, playerStartIndex);
-
-                    int excessCount = 0;
-                    for (int i = 0; i < splitScreenCount; i++) {
-                        if (i + playerStartIndex >= players.length) {
-                            // Excess splitscreens
-                            excessCount++;
-                            masterTable.removeActor(masterTable.getChild(masterTable.getChildren().size - 2));
-                            continue;
-                        }
-
-                        playerLabels[i].setText("Player " + (i + playerStartIndex + 1));
-                        Color labelColor = new Color(players[i + playerStartIndex].color);
-                        playerLabels[i].setColor(labelColor);
-
-                        radioButtons[i][(i + playerStartIndex) % radioButtons[i].length].setChecked(true);
-                    }
-
-                    if (excessCount > 0) {
-                        screenStage.clearFocusableArray();
-                        for (int i = 0; i < radioButtons[0].length; i++) {
-                            for (int j = 0; j < radioButtons.length; j++) {
-                                if (j >= excessCount) {
-                                    break;
-                                }
-                                screenStage.addFocusableActor(radioButtons[j][i]);
-                            }
-                            screenStage.row();
-                        }
-                        screenStage.addFocusableActor(doneButton, splitScreenCount - excessCount);
-                        screenStage.setFocusedActor(doneButton);
-                    }
-                }
-
-                setDoneButtonText(doneButton);
+                proceedToNext(masterTable, doneButton);
             }
         });
         masterTable.add(doneButton).expandX().colspan(splitScreenCount).width(200f * game.getScaleFactor()).pad(20f * game.getScaleFactor());
 
-        int excess = 0;
+        setUpFocus(doneButton, false);
+
+        screenStage.addActor(masterTable);
+    }
+
+    private void updatePlayerPosition(int splitScreenIndex) {
+        int startPosIndex = buttonGroup[splitScreenIndex].getCheckedIndex();
+
+        int index = splitScreenIndex + playerStartIndex;
+        if (index >= players.length) {
+            return;
+        }
+
+        GridPoint2 oldPos = new GridPoint2(players[index].roundedPosition);
+        players[index].setPosition(startPositions.get(startPosIndex).getLocation());
+        GridPoint2 newPos = players[index].roundedPosition;
+
+        mapGrid[oldPos.y][oldPos.x].cellColor = null;
+        for (Player player : players) {
+            if (player.position.x == oldPos.x && player.position.y == oldPos.y) {
+                mapGrid[oldPos.y][oldPos.x].cellColor = player.color;
+                break;
+            }
+        }
+
+        mapGrid[newPos.y][newPos.x].cellColor = players[index].color;
+    }
+
+    private void setUpFocus(TextButton doneButton, boolean focusDoneButton) {
+        int excessSplitCount = Math.max(splitScreenCount + playerStartIndex - players.length, 0);
+
+        screenStage.clearFocusableArray();
+
         for (int i = 0; i < radioButtons[0].length; i++) {
             for (int j = 0; j < radioButtons.length; j++) {
-                if (radioButtons[j] == null) {
-                    excess = j - radioButtons.length;
+                if (excessSplitCount > 0 && j >= splitScreenCount - 1) {
                     break;
                 }
                 screenStage.addFocusableActor(radioButtons[j][i]);
             }
             screenStage.row();
         }
-        screenStage.addFocusableActor(doneButton, splitScreenCount - excess);
 
-        screenStage.addActor(masterTable);
+        screenStage.addFocusableActor(doneButton, splitScreenCount - excessSplitCount);
+        if (focusDoneButton) {
+            screenStage.setFocusedActor(doneButton);
+        }
+    }
+
+    private void proceedToNext(Table masterTable, TextButton doneButton) {
+        for (int i = 0; i < splitScreenCount; i++) {
+            if (i + playerStartIndex >= players.length) {
+                break;
+            }
+            players[i + playerStartIndex].setPosition(startPositions.get(buttonGroup[i].getCheckedIndex()).getLocation());
+        }
+
+        if (playerStartIndex >= players.length - splitScreenCount) {
+            // Done with all players
+            map.clearGrid(players);
+            animationManager.fadeOutStage(screenStage, this, new GameScreen(game, mapData, players));
+        } else {
+            // Some more players are remaining
+            updateNextPlayers(masterTable);
+            setUpFocus(doneButton, true);
+        }
+
+        setDoneButtonText(doneButton);
+    }
+
+    private void updateNextPlayers(Table masterTable) {
+        playerStartIndex += splitScreenCount;
+        if (playerStartIndex >= players.length) {
+            playerStartIndex = players.length - 1;
+        }
+        viewportDividers.updateDividerColors(players, playerStartIndex);
+
+        for (int i = 0; i < splitScreenCount; i++) {
+            if (i + playerStartIndex >= players.length) {
+                // Excess splitscreens
+                masterTable.removeActor(masterTable.getChild(masterTable.getChildren().size - 2));
+                continue;
+            }
+
+            playerLabels[i].setText("Player " + (i + playerStartIndex + 1));
+            Color labelColor = new Color(players[i + playerStartIndex].color);
+            playerLabels[i].setColor(labelColor);
+
+            radioButtons[i][(i + playerStartIndex) % radioButtons[i].length].setChecked(true);
+        }
     }
 
     private void setDoneButtonText(TextButton doneButton) {
