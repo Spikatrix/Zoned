@@ -19,6 +19,7 @@ import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
+import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
@@ -42,7 +43,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private Cell[][] mapGrid;
     private Array<StartPosition> startPositions;
 
-    private Color mapDarkOverlayColor;
+    private Overlay mapOverlay;
     private SplitViewportManager splitViewportManager;
     private ViewportDividers viewportDividers;
     private int splitScreenCount;
@@ -82,7 +83,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
         map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName()));
 
-        mapDarkOverlayColor = new Color(0, 0, 0, 0.8f);
+        mapOverlay = new Overlay(new Color(0, 0, 0, 0.8f));
 
         float centerX = (map.cols * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
         float centerY = (map.rows * (Constants.CELL_SIZE + Constants.MAP_GRID_LINE_WIDTH)) / 2;
@@ -304,13 +305,6 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         splitViewportManager.resize(width, height);
     }
 
-    private void drawDarkOverlay() {
-        float height = screenStage.getViewport().getWorldHeight();
-        float width = screenStage.getViewport().getWorldWidth();
-        shapeDrawer.setColor(mapDarkOverlayColor);
-        shapeDrawer.filledRectangle(0, 0, width, height);
-    }
-
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -324,7 +318,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
 
         batch.begin();
         viewportDividers.render(shapeDrawer, screenStage);
-        drawDarkOverlay();
+        mapOverlay.render(shapeDrawer, screenStage, delta);
         batch.end();
 
         screenStage.act(delta);

@@ -23,6 +23,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
+import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.ShapeDrawer;
@@ -56,7 +57,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     private MapManager mapManager;
     private Cell[][] mapGrid;
     private SplitViewportManager splitViewportManager;
-    private Color mapDarkOverlayColor;
+    private Overlay mapOverlay;
     private Player[] players;
 
     private Table playerList;
@@ -171,7 +172,7 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
         this.splitViewportManager = new SplitViewportManager(1, Constants.WORLD_SIZE, null);
         this.splitViewportManager.setUpDragOffset(screenStage);
-        this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
+        this.mapOverlay = new Overlay(new Color(0, 0, 0, .8f));
         this.players = new Player[0];
         // This array size is increased in playerConnected
         // I know I should use Arrays (libGDX's ArrayLists) instead, but Map works with regular 'ol arrays for now
@@ -616,7 +617,9 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
         this.screenViewport.apply(true);
         batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
-        drawDarkOverlay();
+        batch.begin();
+        mapOverlay.render(shapeDrawer, screenStage, delta);
+        batch.end();
 
         screenStage.draw();
         screenStage.act(delta);
@@ -628,15 +631,6 @@ public class ClientLobbyScreen extends ScreenObject implements ClientLobbyConnec
     public void resize(int width, int height) {
         super.resize(width, height);
         splitViewportManager.resize(width, height);
-    }
-
-    private void drawDarkOverlay() {
-        float height = screenStage.getViewport().getWorldHeight();
-        float width = screenStage.getViewport().getWorldWidth();
-        shapeDrawer.setColor(mapDarkOverlayColor);
-        batch.begin();
-        shapeDrawer.filledRectangle(0, 0, width, height);
-        batch.end();
     }
 
     @Override

@@ -23,6 +23,7 @@ import com.badlogic.gdx.utils.SnapshotArray;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
+import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.ShapeDrawer;
@@ -52,7 +53,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
     private com.cg.zoned.Map map;
     private Cell[][] mapGrid;
     private SplitViewportManager splitViewportManager;
-    private Color mapDarkOverlayColor;
+    private Overlay mapOverlay;
     private Player[] players;
 
     private Table playerList;
@@ -226,7 +227,7 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         mapSelector.loadSelectedMap();
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
-        this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
+        this.mapOverlay = new Overlay(new Color(0, 0, 0, .8f));
         this.mapGrid = mapSelector.getMapManager().getPreparedMapData().mapGrid;
         this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
         this.splitViewportManager = new SplitViewportManager(1, Constants.WORLD_SIZE, null);
@@ -536,7 +537,9 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
         this.screenViewport.apply(true);
         batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
-        drawDarkOverlay();
+        batch.begin();
+        mapOverlay.render(shapeDrawer, screenStage, delta);
+        batch.end();
 
         screenStage.act(delta);
         if (screenStage.getRoot().getColor().a > 0) {
@@ -555,16 +558,6 @@ public class ServerLobbyScreen extends ScreenObject implements ServerLobbyConnec
     public void resize(int width, int height) {
         super.resize(width, height);
         splitViewportManager.resize(width, height);
-    }
-
-    private void drawDarkOverlay() {
-        float height = screenStage.getViewport().getWorldHeight();
-        float width = screenStage.getViewport().getWorldWidth();
-
-        shapeDrawer.setColor(mapDarkOverlayColor);
-        batch.begin();
-        shapeDrawer.filledRectangle(0, 0, width, height);
-        batch.end();
     }
 
     @Override

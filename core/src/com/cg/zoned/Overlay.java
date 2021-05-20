@@ -9,6 +9,10 @@ public class Overlay {
     private float lerpVal;
     private boolean enableOverlay;
 
+    public Overlay(Color overlayColor) {
+        this(overlayColor, 1.8f);
+    }
+
     public Overlay(Color overlayColor, float lerpVal) {
         this(overlayColor, new Color(overlayColor), lerpVal);
     }
@@ -52,18 +56,26 @@ public class Overlay {
     }
 
     public void render(ShapeDrawer shapeDrawer, Stage screenStage, float delta) {
+        float width = screenStage.getViewport().getWorldWidth();
+        float height = screenStage.getViewport().getWorldHeight();
+        render(shapeDrawer, 0, 0, width, height, delta);
+    }
+
+    public void render(ShapeDrawer shapeDrawer, float startX, float startY, float width, float height, float delta) {
         update(delta);
 
         if (overlayColor.a >= 0.04f) {
-            float height = screenStage.getViewport().getWorldHeight();
-            float width = screenStage.getViewport().getWorldWidth();
             shapeDrawer.setColor(overlayColor);
-            shapeDrawer.filledRectangle(0, 0, width, height);
+            shapeDrawer.filledRectangle(startX, startY, width, height);
         }
     }
 
     public void setTargetColor(Color targetColor) {
         this.targetColor = targetColor;
+    }
+
+    public float getOverlayAlpha() {
+        return overlayColor.a;
     }
 
     private Color getTargetColor() {

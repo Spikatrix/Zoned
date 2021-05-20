@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
+import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.controls.ControlType;
@@ -39,8 +40,7 @@ public class ControlManager {
 
     private Player[] players;
     private Stage stage;
-    private Color[] overlayColors;
-    private float overlayAlpha = 0.8f;
+    private Overlay[] overlays;
     private Table[] controlTables;
 
     public ControlManager(Player[] players, Stage stage) {
@@ -63,7 +63,7 @@ public class ControlManager {
 
         int splitScreenCount = isSplitScreen ? players.length : 1;
         Image[] controlImages = new Image[splitScreenCount];
-        overlayColors = new Color[splitScreenCount];
+        overlays = new Overlay[splitScreenCount];
         controlTables = new Table[splitScreenCount];
         Label[] controlLabels = null;
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
@@ -73,9 +73,9 @@ public class ControlManager {
         Texture controlImageTexture = new Texture(controlImagePath);
         usedTextures.add(controlImageTexture);
 
-        float splitScreenWidth = stage.getWidth() / overlayColors.length;
-        for (int i = 0; i < overlayColors.length; i++) {
-            overlayColors[i] = new Color(0, 0, 0, overlayAlpha);
+        float splitScreenWidth = stage.getWidth() / overlays.length;
+        for (int i = 0; i < overlays.length; i++) {
+            overlays[i] = new Overlay(new Color(0, 0, 0, 0.8f), 6.0f);
             controlImages[i] = new Image(controlImageTexture);
             controlImages[i].setScaling(Scaling.fit);
             controlImages[i].setOrigin(controlImages[i].getWidth() / 2, controlImages[i].getHeight() / 2);
@@ -115,23 +115,14 @@ public class ControlManager {
     }
 
     public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
-        float splitScreenWidth = stage.getWidth() / overlayColors.length;
+        float splitScreenWidth = stage.getWidth() / overlays.length;
 
-        for (int i = 0; i < overlayColors.length; i++) {
-            if (overlayColors[i].a > 0) {
-                shapeDrawer.setColor(overlayColors[i]);
-                shapeDrawer.filledRectangle(i * splitScreenWidth, 0, splitScreenWidth, stage.getHeight());
-            }
+        for (int i = 0; i < overlays.length; i++) {
+            overlays[i].render(shapeDrawer,
+                    i * splitScreenWidth, 0, splitScreenWidth, stage.getHeight(), delta);
 
-            if (players[i].updatedDirection == null) {
-                overlayColors[i].a += delta * 2.5f * (2f - overlayColors[i].a);
-                overlayColors[i].a = Math.min(overlayColors[i].a, overlayAlpha);
-            } else {
-                overlayColors[i].a -= delta * 2.5f * (2f - overlayColors[i].a);
-                overlayColors[i].a = Math.max(overlayColors[i].a, 0f);
-            }
-
-            controlTables[i].getColor().a = overlayColors[i].a;
+            overlays[i].drawOverlay(players[i].updatedDirection == null);
+            controlTables[i].getColor().a = overlays[i].getOverlayAlpha();
         }
     }
 
