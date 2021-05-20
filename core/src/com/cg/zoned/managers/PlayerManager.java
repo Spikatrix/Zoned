@@ -1,6 +1,7 @@
 package com.cg.zoned.managers;
 
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -109,6 +110,42 @@ public class PlayerManager extends InputMultiplexer {
         for (TeamData teamData : this.teamData) {
             teamData.resetScore();
         }
+    }
+
+    /**
+     * Gets the color of the team with the highest score
+     *
+     * @return The color of the leading team
+     *         Returns null if two or more teams are leading with the same score
+     */
+    public Color getLeadingTeamColor() {
+        TeamData teamData = getLeadingTeam();
+        if (teamData != null) {
+            return teamData.getColor();
+        }
+        return null;
+    }
+
+    /**
+     * Computes and returns the team with the highest score
+     *
+     * @return The leading team object
+     *         Returns null if two or more teams are leading with the same score
+     */
+    private TeamData getLeadingTeam() {
+        int highscore = 0;
+        TeamData leadingTeam = null;
+
+        for (TeamData teamData : gameManager.playerManager.getTeamData()) {
+            if (teamData.getScore() > highscore) {
+                highscore = teamData.getScore();
+                leadingTeam = teamData;
+            } else if (teamData.getScore() == highscore) {
+                leadingTeam = null;
+            }
+        }
+
+        return leadingTeam;
     }
 
     public void forceEndTurn() {

@@ -74,6 +74,14 @@ public class Overlay {
         this.targetColor = targetColor;
     }
 
+    public void setTargetColor(float r, float g, float b, float a) {
+        if (this.targetColor == null) {
+            setTargetColor(new Color(r, g, b, a));
+        } else {
+            this.targetColor.set(r, g, b, a);
+        }
+    }
+
     public float getOverlayAlpha() {
         return overlayColor.a;
     }

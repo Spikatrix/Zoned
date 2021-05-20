@@ -18,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
+import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ScoreBar;
@@ -25,7 +26,6 @@ import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.ViewportDividers;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PreparedMapData;
-import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.GameManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
@@ -46,17 +46,14 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private SplitViewportManager splitViewportManager;
     private ViewportDividers viewportDividers;
 
-    private Color fadeOutOverlay = new Color(0, 0, 0, 0);
+    private Overlay backgroundColorOverlay;
+    private float bgAlpha = .25f;
+
+    private Overlay screenOverlay;
     private boolean gameCompleteFadeOutDone = false;
 
     private ScoreBar scoreBars;
     private boolean gamePaused = false;
-
-    private Color currentBgColor, targetBgColor;
-    private float bgAnimSpeed = 2.0f;
-    private float bgAlpha = .25f;
-
-    private HoverImageButton zoomButton;
 
     private GridPoint2[] playerStartPositions;
 
@@ -92,8 +89,9 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             profiler.enable();
         }
 
-        currentBgColor = new Color(0, 0, 0, bgAlpha);
-        targetBgColor = new Color(0, 0, 0, bgAlpha);
+        this.backgroundColorOverlay = new Overlay(new Color(0, 0, 0, bgAlpha), 5.0f);
+        this.screenOverlay = new Overlay(new Color(Color.CLEAR), new Color(Color.BLACK), 6.0f);
+        this.screenOverlay.drawOverlay(false);
 
         BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         initViewports(players, map);
@@ -150,11 +148,11 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpZoomButton(UIButtonManager uiButtonManager) {
-        zoomButton = uiButtonManager.addZoomButtonToStage();
+        HoverImageButton zoomButton = uiButtonManager.addZoomButtonToStage();
         zoomButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                splitViewportManager.toggleZoom();
+                toggleZoom();
             }
         });
     }
@@ -259,34 +257,24 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     private void drawGameBG(float delta) {
-        int highscore = 0;
-        for (TeamData teamData : gameManager.playerManager.getTeamData()) {
-            if (teamData.getScore() > highscore) {
-                highscore = teamData.getScore();
-                targetBgColor.set(teamData.getColor());
-                targetBgColor.a = bgAlpha;
-            } else if (teamData.getScore() == highscore) {
-                targetBgColor.set(0, 0, 0, bgAlpha);
-            }
+        // TODO: Could optimize, no need to compute leading team every FRAME. Instead compute it every TURN. Minor optimization tho
+        Color highscoreTeamColor = gameManager.playerManager.getLeadingTeamColor();
+        backgroundColorOverlay.drawOverlay(highscoreTeamColor != null);
+        if (highscoreTeamColor != null) {
+            backgroundColorOverlay.setTargetColor(highscoreTeamColor.r, highscoreTeamColor.g, highscoreTeamColor.b, bgAlpha);
         }
-        currentBgColor.lerp(targetBgColor, bgAnimSpeed * delta);
-        currentBgColor.a = Math.min(targetBgColor.a, 1 - fadeOutOverlay.a);
 
         batch.setProjectionMatrix(screenStage.getCamera().combined);
         batch.begin();
-        shapeDrawer.setColor(currentBgColor);
-        shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
+        backgroundColorOverlay.render(shapeDrawer, screenStage, delta);
         batch.end();
     }
 
     private void fadeOutScreen(float delta) {
-        fadeOutOverlay.a += delta * 2f * (2f - fadeOutOverlay.a);
-        fadeOutOverlay.a = Math.min(fadeOutOverlay.a, 1f);
+        screenOverlay.drawOverlay(true);
+        screenOverlay.render(shapeDrawer, screenStage, delta);
 
-        shapeDrawer.setColor(fadeOutOverlay);
-        shapeDrawer.filledRectangle(0, 0, screenStage.getWidth(), screenStage.getHeight());
-
-        if (fadeOutOverlay.a >= 1f && !gameCompleteFadeOutDone) {
+        if (screenOverlay.getOverlayAlpha() >= 0.96f && !gameCompleteFadeOutDone) {
             gameCompleteFadeOutDone = true;
             if (gameManager.gameConnectionManager.isActive) {
                 gameManager.gameConnectionManager.close();
@@ -418,6 +406,10 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         }
     }
 
+    private void toggleZoom() {
+        splitViewportManager.toggleZoom();
+    }
+
     @Override
     public void pause() {
         if (!gamePaused) {
@@ -437,7 +429,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             showPauseDialog();
             return true;
         } else if (keycode == Input.Keys.Z) {
-            zoomButton.toggle();
+            toggleZoom();
             return true;
         }
 
