@@ -9,8 +9,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -22,6 +22,7 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
+import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Preferences;
@@ -41,10 +42,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
     private Map map;
     private Cell[][] mapGrid;
     private SplitViewportManager splitViewportManager;
-    private Color mapOverlayColor;
-    private Color mapDarkOverlayColor;
-    private Color mapNoOverlayColor;
-    private boolean drawOverlay;
+    private Overlay mapOverlay;
     private Player[] players;
     private ControlManager controlManager;
 
@@ -73,15 +71,13 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         populateMapGrid();
         this.map = new Map(mapGrid, 0, shapeDrawer);
         this.map.initFloodFillVars();
-        this.mapOverlayColor = new Color(0, 0, 0, .8f);
-        this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
-        this.mapNoOverlayColor = new Color(0, 0, 0, 0f);
-        this.drawOverlay = true;
+        this.mapOverlay = new Overlay(new Color(0, 0, 0, 0.7f), 2.5f);
+
         this.players = new Player[1];
         this.players[0] = new Player(PlayerColorHelper.getColorFromIndex(0), "Player");
-        this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
-        this.players[0].setRoundedPosition();
+        this.players[0].setPosition(new GridPoint2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f)));
         this.players[0].setControlIndex(0);
+
         this.splitViewportManager = new SplitViewportManager(1, Constants.WORLD_SIZE, this.players[0].position);
         BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
@@ -113,12 +109,13 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
     private void setUpStage() {
         mainLabel = new Label("Welcome to the tutorial!", game.skin, "themed");
         subLabel = new Label("Tap here to continue >", game.skin);
-        textboxHeight = (mainLabel.getPrefHeight() * 2) + 20f;
+        float tablePad = 16f * game.getScaleFactor();
+        textboxHeight = (mainLabel.getPrefHeight() * 2) + (tablePad * 2);
 
         tutorialTable = new Table();
         tutorialTable.setSize(screenStage.getWidth(), textboxHeight);
         tutorialTable.setPosition(0, 0);
-        tutorialTable.left().bottom().pad(10f);
+        tutorialTable.left().bottom().pad(tablePad);
 
         Table innerTable = new Table();
         tutorialScrollPane = new ScrollPane(innerTable);
@@ -267,7 +264,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
     }
 
     private void togglePlayerInteractable(boolean playerInteractable) {
-        this.drawOverlay = !playerInteractable;
+        this.mapOverlay.drawOverlay(!playerInteractable);
 
         InputMultiplexer inputMultiplexer = new InputMultiplexer(this, screenStage);
         if (playerInteractable) {
@@ -310,9 +307,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         this.screenViewport.apply(true);
         batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
-        drawDarkOverlay(delta);
-
         batch.begin();
+        mapOverlay.render(shapeDrawer, screenStage, delta);
         shapeDrawer.filledRectangle(0, textboxHeight, screenStage.getWidth(), 2f, Color.WHITE);
         batch.end();
 
@@ -320,21 +316,6 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         screenStage.draw();
 
         displayFPS();
-    }
-
-    private void drawDarkOverlay(float delta) {
-        if (drawOverlay) {
-            mapOverlayColor.lerp(mapDarkOverlayColor, 1.8f * delta);
-        } else {
-            mapOverlayColor.lerp(mapNoOverlayColor, 1.8f * delta);
-        }
-
-        float height = screenStage.getViewport().getWorldHeight();
-        float width = screenStage.getViewport().getWorldWidth();
-        batch.begin();
-        shapeDrawer.setColor(mapOverlayColor);
-        shapeDrawer.filledRectangle(0, 0, width, height);
-        batch.end();
     }
 
     @Override
