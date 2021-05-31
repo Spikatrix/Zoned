@@ -7,8 +7,8 @@ import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.Player.Direction;
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferPlayerDisconnected;
-import com.cg.zoned.buffers.BufferServerRejectedConnection;
 import com.cg.zoned.listeners.ClientGameListener;
 import com.cg.zoned.listeners.ServerGameListener;
 import com.esotericsoftware.kryonet.Client;
@@ -259,9 +259,9 @@ public class GameConnectionManager implements GameConnectionHandler {
     public void rejectNewConnection(Connection connection) {
         discardConnections.add(connection);
 
-        BufferServerRejectedConnection bsrc = new BufferServerRejectedConnection();
-        bsrc.errorMsg = "Server is busy playing a match.\nPlease try again later";
-        connection.sendTCP(bsrc);
+        BufferKickClient bkc = new BufferKickClient();
+        bkc.kickReason = "Server is busy playing a match.\nPlease try again later";
+        connection.sendTCP(bkc);
     }
 
     public void sendPlayerDisconnectedBroadcast(String playerName) {

@@ -144,11 +144,9 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                 buttonGroup[i].setMinCheckCount(1);
                 buttonGroup[i].setMaxCheckCount(1);
                 for (int j = 0; j < startPositions.size; j++) {
-                    String startPosName = startPositions.get(j).getName();
-                    GridPoint2 startLocation = startPositions.get(j).getLocation();
-                    startPosName += (" (" + (mapGrid.length - startLocation.y - 1) + ", " + (startLocation.x) + ")");
+                    String startPosViewName = startPositions.get(j).getViewName();
 
-                    radioButtons[i][j] = new CheckBox(startPosName, game.skin, "radio", !alignLeft);
+                    radioButtons[i][j] = new CheckBox(startPosViewName, game.skin, "radio", !alignLeft);
                     radioButtons[i][j].getImageCell().width(radioButtons[i][j].getLabel().getPrefHeight()).height(radioButtons[i][j].getLabel().getPrefHeight());
                     radioButtons[i][j].getImage().setScaling(Scaling.fill);
                     if (alignLeft) {

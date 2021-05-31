@@ -39,7 +39,7 @@ public class ScreenHelper {
     private static final Random random = new Random();
 
     public static Screen initScreen(Class targetScreenClass, Zoned game) {
-        if (!targetScreenClass.getSuperclass().equals(ScreenObject.class)) {
+        if (!ScreenObject.class.isAssignableFrom(targetScreenClass)) {
             throw new ClassCastException("Class to be initialized needs to be a subclass of ScreenObject");
         }
 

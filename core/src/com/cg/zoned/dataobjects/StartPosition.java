@@ -9,7 +9,13 @@ import com.cg.zoned.maps.MapLoader;
 public class StartPosition {
     private String name;
     private Character altName;
+    private String viewName;
+
     private GridPoint2 location;
+
+    public StartPosition(Character altName) {
+        this(null, altName);
+    }
 
     public StartPosition(String name, Character altName) {
         this(name, altName, null);
@@ -18,7 +24,7 @@ public class StartPosition {
     public StartPosition(String name, Character altName, GridPoint2 location) {
         this.name = name;
         this.altName = altName;
-        this.location = location;
+        setLocation(location);
 
         if (this.altName == null) {
             throw new NullPointerException("Start position alt name must not be null");
@@ -29,8 +35,19 @@ public class StartPosition {
 
     public void setLocation(GridPoint2 location) {
         this.location = location;
+
+        if (location == null) {
+            this.viewName = null;
+        } else {
+            this.viewName = getName() + " (" + location.x + ", " + location.y + ")";
+        }
     }
 
+    /**
+     * Fetches the name of the start position, falling back to {@link #getAltName()} if null
+     *
+     * @return The name of the start position
+     */
     public String getName() {
         if (name != null) {
             return name;
@@ -39,8 +56,22 @@ public class StartPosition {
         }
     }
 
+    /**
+     * Fetches the single character alternate start position name. Will always be non-null
+     *
+     * @return The alternate name of the start position
+     */
     public char getAltName() {
         return altName;
+    }
+
+    /**
+     * Fetches the start position name with coordinate information in it
+     *
+     * @return The name with coordinates in parenthesis
+     */
+    public String getViewName() {
+        return viewName;
     }
 
     public GridPoint2 getLocation() {

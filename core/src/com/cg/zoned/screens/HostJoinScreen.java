@@ -76,6 +76,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         final TextField playerNameField = new TextField("", game.skin);
         playerNameField.setText(game.preferences.getString(Preferences.NAME_PREFERENCE, null));
         playerNameField.setCursorPosition(playerNameField.getText().length());
+        playerNameField.setMaxLength(16);
         table.add(playerNameLabel).right();
         table.add(playerNameField).width(playerNameField.getPrefWidth() * game.getScaleFactor()).left();
 

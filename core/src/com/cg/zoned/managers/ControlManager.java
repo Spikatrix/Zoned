@@ -78,7 +78,7 @@ public class ControlManager {
             overlays[i] = new Overlay(new Color(0, 0, 0, 0.8f), 6.0f);
             controlImages[i] = new Image(controlImageTexture);
             controlImages[i].setScaling(Scaling.fit);
-            controlImages[i].setOrigin(controlImages[i].getWidth() / 2, controlImages[i].getHeight() / 2);
+            controlImages[i].setOrigin(Align.center);
             if (splitScreenCount == 2 && Gdx.app.getType() == Application.ApplicationType.Android) {
                 if (i == 0) {
                     controlImages[i].setRotation(-90f);

@@ -20,12 +20,12 @@ public class HoverImageButton extends ImageButton {
     }
 
     public HoverImageButton(Drawable image, Drawable imageChecked) {
-        super(image, image, imageChecked);
+        super(image, null, imageChecked);
         setupImageButton();
     }
 
     public HoverImageButton(Drawable image) {
-        super(image, image, image);
+        super(image, null, null);
         setupImageButton();
     }
 

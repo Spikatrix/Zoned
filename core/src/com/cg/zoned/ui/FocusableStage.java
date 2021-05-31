@@ -338,7 +338,7 @@ public class FocusableStage extends Stage {
                 Actions.fadeIn(.2f, Interpolation.smooth)
         ));
 
-        dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
+        dialog.setOrigin(Align.center);
         dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
     }
 
@@ -700,6 +700,7 @@ public class FocusableStage extends Stage {
         Cancel("Cancel"),
         Set("Set"),
         Yes("Yes"),
+        Kick("Kick"),
         Resume("Resume"),
         MainMenu("Main Menu"),
         Exit("Exit"),

@@ -1,25 +1,22 @@
 package com.cg.zoned;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.dataobjects.PlayerColor;
 
-import java.util.Locale;
-import java.util.Map;
+import static com.cg.zoned.Constants.PLAYER_COLORS;
 
 public final class PlayerColorHelper {
     public static void resetPlayerColorAlpha() {
-        for (Map.Entry<String, Color> entry : Constants.PLAYER_COLORS.entrySet()) {
-            entry.getValue().a = 1f;
+        for (PlayerColor playerColor : PLAYER_COLORS) {
+            playerColor.getColor().a = 1f;
         }
     }
 
-    public static Color getColorFromString(String color) {
-        return Constants.PLAYER_COLORS.get(color.toUpperCase(Locale.ENGLISH));
-    }
-
     public static String getStringFromColor(Color color) {
-        for (Map.Entry<String, Color> entry : Constants.PLAYER_COLORS.entrySet()) {
-            if (entry.getValue().equals(color)) {
-                return entry.getKey();
+        for (PlayerColor playerColor : PLAYER_COLORS) {
+            if (playerColor.getColor().equals(color)) {
+                return playerColor.getName();
             }
         }
 
@@ -27,26 +24,29 @@ public final class PlayerColorHelper {
     }
 
     public static Color getColorFromIndex(int index) {
-        int currentPos = 0;
-        for (String key : Constants.PLAYER_COLORS.keySet()) {
-            if (currentPos == index) {
-                return Constants.PLAYER_COLORS.get(key);
-            }
-            currentPos++;
-        }
-
-        return null;
+        return PLAYER_COLORS.get(index).getColor();
     }
 
     public static int getIndexFromColor(Color color) {
-        int index = 0;
-        for (Map.Entry<String, Color> entry : Constants.PLAYER_COLORS.entrySet()) {
-            if (entry.getValue().equals(color)) {
-                return index;
+        for (int i = 0; i < PLAYER_COLORS.size(); i++) {
+            if (PLAYER_COLORS.get(i).getColor().equals(color)) {
+                return i;
             }
-            index++;
         }
 
         return -1;
+    }
+
+    public static String getStringFromIndex(int index) {
+        return PLAYER_COLORS.get(index).getName();
+    }
+
+    public static Array<String> getNameList() {
+        Array<String> nameList = new Array<>();
+        for (PlayerColor playerColor : PLAYER_COLORS) {
+            nameList.add(playerColor.getName());
+        }
+
+        return nameList;
     }
 }

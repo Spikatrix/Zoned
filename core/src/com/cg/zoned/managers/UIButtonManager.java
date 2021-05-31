@@ -1,6 +1,5 @@
 package com.cg.zoned.managers;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -67,14 +66,14 @@ public class UIButtonManager {
                 Position.TOP_RIGHT, settingsTexture, null);
     }
 
-    public HoverImageButton addPauseButtonToStage() {
+    public HoverImageButton addPauseButtonToStage(Texture pauseTexture) {
         return addButtonToStage(.8f, .65f, .5f, 0,
-                Position.TOP_CENTER, getTexture(Gdx.files.internal("images/ui_icons/ic_pause.png")), null);
+                Position.TOP_CENTER, pauseTexture, null);
     }
 
-    public HoverImageButton addZoomButtonToStage() {
+    public HoverImageButton addZoomButtonToStage(Texture zoomOutTexture, Texture zoomInTexture) {
         return addButtonToStage(.8f, .65f, .5f, 0,
-                Position.TOP_CENTER, getTexture(Gdx.files.internal("images/ui_icons/ic_zoom_out.png")), getTexture(Gdx.files.internal("images/ui_icons/ic_zoom_in.png")));
+                Position.TOP_CENTER, zoomOutTexture, zoomInTexture);
     }
 
     public HoverImageButton addTutorialButtonToStage(Texture tutorialTexture) {
@@ -90,6 +89,12 @@ public class UIButtonManager {
     public HoverImageButton addCreditsButtonToStage(Texture creditsTexture) {
         return addButtonToStage(1f, .65f, .5f, 0,
                 Position.TOP_RIGHT, creditsTexture, null);
+    }
+
+    public HoverImageButton addReadyButtonToStage(Texture readyTexture, Texture unreadyTexture) {
+        return addButtonToStage(1f, .65f, .5f, 0,
+                Position.BOTTOM_RIGHT, readyTexture, unreadyTexture);
+
     }
 
     public HoverImageButton addExitButtonToStage(Texture crossTexture) {

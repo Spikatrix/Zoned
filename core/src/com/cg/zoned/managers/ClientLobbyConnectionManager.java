@@ -2,16 +2,14 @@ package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferPlayerData;
+import com.cg.zoned.dataobjects.PlayerItemAttributes;
 import com.cg.zoned.listeners.ClientLobbyListener;
-import com.cg.zoned.ui.DropDownMenu;
 import com.esotericsoftware.kryonet.Client;
 
 public class ClientLobbyConnectionManager {
@@ -45,23 +43,22 @@ public class ClientLobbyConnectionManager {
      * Called when the client receives broadcast information from the server about players
      *
      * @param nameStrings     Names of players
-     * @param whoStrings      Who strings of players
-     * @param readyStrings    Ready or Not Ready strings of players
-     * @param colorStrings    Colors of players
-     * @param startPosStrings Start positions of all players
+     * @param ready           Ready or not status of players
+     * @param colorIndices    Player color indices
+     * @param startPosIndices Start positions indices of all players
      */
-    public void receiveServerPlayerData(final String[] nameStrings, final String[] whoStrings, final String[] readyStrings, final String[] colorStrings, final String[] startPosStrings) {
-        Gdx.app.postRunnable(() -> clientPlayerListener.updatePlayers(playerNames, nameStrings, whoStrings, readyStrings, colorStrings, startPosStrings));
+    public void receiveServerPlayerData(String[] nameStrings, final boolean[] ready, int[] colorIndices, int[] startPosIndices) {
+        Gdx.app.postRunnable(() -> clientPlayerListener.updatePlayers(playerNames, nameStrings, ready, colorIndices, startPosIndices));
 
     }
 
     /**
-     * Called when the server rejects the client's connection
+     * Called when the server rejects the client's connection (Client was kicked)
      *
      * @param errorMsg A String holding the reason why the server rejected the client's connection
      */
     public void connectionRejected(final String errorMsg) {
-        Gdx.app.postRunnable(() -> clientPlayerListener.displayServerError(errorMsg));
+        Gdx.app.postRunnable(() -> clientPlayerListener.disconnectWithMessage(errorMsg));
     }
 
     /**
@@ -97,7 +94,7 @@ public class ClientLobbyConnectionManager {
                 FileHandle mapFile = externalMapDir.child(mapName + ".map");
                 mapFile.writeString(mapData, false);
             } catch (GdxRuntimeException e) {
-                clientPlayerListener.displayServerError("Failed to download the map '" + "' (" + e.getMessage() + ")");
+                clientPlayerListener.disconnectWithMessage("Failed to download the map '" + "' (" + e.getMessage() + ")");
                 return;
             }
 
@@ -118,23 +115,12 @@ public class ClientLobbyConnectionManager {
         });
     }
 
-    public void broadcastClientInfo(Table playerItem) {
+    public void broadcastClientInfo(PlayerItemAttributes playerAttribute) {
         BufferPlayerData bpd = new BufferPlayerData();
-        bpd.nameStrings = new String[]{
-                ((Label) playerItem.findActor("name-label")).getText().toString()
-        };
-        bpd.whoStrings = new String[]{
-                ((Label) playerItem.findActor("who-label")).getText().toString()
-        };
-        bpd.readyStrings = new String[]{
-                ((Label) playerItem.findActor("ready-label")).getText().toString()
-        };
-        bpd.colorStrings = new String[]{
-                ((DropDownMenu) playerItem.findActor("color-selector")).getSelected()
-        };
-        bpd.startPosStrings = new String[]{
-                ((DropDownMenu) playerItem.findActor("startPos-selector")).getSelected()
-        };
+        bpd.names = new String[]{ playerAttribute.getName() };
+        bpd.readyStatus = new boolean[]{ playerAttribute.isReady() };
+        bpd.colorIndex = new int[]{ playerAttribute.getColorIndex() };
+        bpd.startPosIndex = new int[]{ playerAttribute.getStartPosIndex() };
 
         client.sendTCP(bpd);
     }
@@ -166,7 +152,7 @@ public class ClientLobbyConnectionManager {
     }
 
     public void clientDisconnected() {
-        clientPlayerListener.disconnected();
+        clientPlayerListener.disconnectWithMessage("Lost connection to the server");
     }
 
     public void sendClientNameToServer(String clientName) {
@@ -176,20 +162,36 @@ public class ClientLobbyConnectionManager {
         client.sendTCP(bcc);
     }
 
+    /**
+     * Called when the client receives information from the server that some
+     * other client got disconnected
+     *
+     * @param playerName The name of the client that got disconnected
+     */
+    public void playerDisconnected(String playerName) {
+        // playerIndex should never be -1
+        int playerIndex = playerNames.indexOf(playerName, false);
+
+        playerNames.removeIndex(playerIndex);
+        clientPlayerListener.playerDisconnected(playerIndex);
+    }
+
     public Client getClient() {
         return client;
     }
 
     public interface ClientPlayerListener {
-        void displayServerError(String errorMsg);
+        void disconnectWithMessage(String errorMsg);
 
         void startGame();
 
-        void disconnected();
+        void disconnectClient();
 
         void mapChanged(String mapName, int[] extraParams, int mapHash, boolean reloadExternalMaps);
 
-        void updatePlayers(Array<String> playerNames, String[] nameStrings, String[] whoStrings, String[] readyStrings, String[] colorStrings, String[] startPosStrings);
+        void updatePlayers(Array<String> playerNames, String[] nameStrings, boolean[] readyStrings, int[] colorStrings, int[] startPosStrings);
+
+        void playerDisconnected(int playerIndex);
 
         FileHandle getExternalMapDir();
     }

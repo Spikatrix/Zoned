@@ -2,9 +2,11 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
+import com.cg.zoned.dataobjects.PlayerColor;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public final class Constants {
     public static final String GAME_VERSION = "0.0.5-dev";
@@ -52,15 +54,13 @@ public final class Constants {
     /**
      * Available player colors
      */
-    public static final Map<String, Color> PLAYER_COLORS = new LinkedHashMap<String, Color>() {
-        {
-            put("GREEN",  new Color(0,     0.8f,  0,    1.0f)); // Alpha won't matter
-            put("RED",    new Color(0.8f,  0,     0,    1.0f));
-            put("BLUE",   new Color(0.16f, 0.16f, 0.8f, 1.0f)); // A bit of r & g as deep blue is hard to read on a black bg
-            put("YELLOW", new Color(0.8f,  0.8f,  0,    1.0f));
-            put("PINK",   new Color(0.8f,  0,     0.8f, 1.0f));
-        }
-    };
+    public static final List<PlayerColor> PLAYER_COLORS = Collections.unmodifiableList(Arrays.asList(
+            new PlayerColor("GREEN",  new Color(0,     0.8f,  0,    1.0f)), // Alpha won't matter
+            new PlayerColor("RED",    new Color(0.8f,  0f,    0,    1.0f)),
+            new PlayerColor("BLUE",   new Color(0.16f, 0.16f, 0.8f, 1.0f)), // A bit of r & g as deep blue is hard to read on a black bg
+            new PlayerColor("YELLOW", new Color(0.8f,  0.8f,  0,    1.0f)),
+            new PlayerColor("PINK",   new Color(0.8f,  0,     0.8f, 1.0f))
+    ));
 
     /**
      * Controls for players playing in splitscreen mode. Player one has the first control scheme, two has the second etc

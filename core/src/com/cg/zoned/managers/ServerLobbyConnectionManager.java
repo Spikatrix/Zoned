@@ -2,22 +2,19 @@ package com.cg.zoned.managers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.SnapshotArray;
 import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferGameStart;
+import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
-import com.cg.zoned.buffers.BufferServerRejectedConnection;
+import com.cg.zoned.buffers.BufferPlayerDisconnected;
+import com.cg.zoned.dataobjects.PlayerItemAttributes;
 import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.listeners.ServerLobbyListener;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
-import com.cg.zoned.ui.DropDownMenu;
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
@@ -109,13 +106,13 @@ public class ServerLobbyConnectionManager {
     }
 
     /**
-     * Rejects the index'th client connection
+     * Kicks the client out of the lobby with the specified reason
      *
-     * @param index            The index of the client to send a reject message
-     * @param rejectionMessage The rejection message on why the client was rejected
+     * @param index  The index of the client to send a reject message
+     * @param reason The reason message on why the client was kicked
      */
-    public void rejectConnection(int index, String rejectionMessage) {
-        rejectConnection(playerConnections.get(index), rejectionMessage);
+    public void kickPlayer(int index, String reason) {
+        rejectConnection(playerConnections.get(index), reason);
     }
 
     /**
@@ -125,9 +122,9 @@ public class ServerLobbyConnectionManager {
      * @param rejectionMessage The rejection message on why the client was rejected
      */
     private void rejectConnection(Connection connection, String rejectionMessage) {
-        BufferServerRejectedConnection bsrc = new BufferServerRejectedConnection();
-        bsrc.errorMsg = rejectionMessage;
-        connection.sendTCP(bsrc);
+        BufferKickClient bkc = new BufferKickClient();
+        bkc.kickReason = rejectionMessage;
+        connection.sendTCP(bkc);
     }
 
     /**
@@ -136,7 +133,7 @@ public class ServerLobbyConnectionManager {
      * @param index Index of the player to broadcast
      *              -1 to broadcast information about all clients
      */
-    public void broadcastPlayerInfo(SnapshotArray<Actor> playerItems, int index) {
+    public void broadcastPlayerInfo(Array<PlayerItemAttributes> playerItemsAttributes, int index) {
         int size;
         if (index == -1) { // Broadcast all info
             int resolvedPlayerNameCount = 0;
@@ -151,61 +148,28 @@ public class ServerLobbyConnectionManager {
         }
 
         BufferPlayerData bpd = new BufferPlayerData();
-        bpd.nameStrings = new String[size];
-        bpd.whoStrings = new String[size];
-        bpd.readyStrings = new String[size];
-        bpd.colorStrings = new String[size];
-        bpd.startPosStrings = new String[size];
+        bpd.names = new String[size];
+        bpd.readyStatus = new boolean[size];
+        bpd.colorIndex = new int[size];
+        bpd.startPosIndex = new int[size];
 
         for (int i = 0; i < size; i++) {
             if (!playerNameResolved.get(i)) {
                 continue;
             }
 
-            Table playerItem;
-            if (index == -1) {
-                playerItem = (Table) playerItems.get(i);
-            } else {
-                playerItem = (Table) playerItems.get(index);
+            int attrIndex = index;
+            if (attrIndex == -1) {
+                attrIndex = i;
             }
 
-            bpd.nameStrings[i] = ((Label) playerItem.findActor("name-label")).getText().toString();
-            bpd.whoStrings[i] = ((Label) playerItem.findActor("who-label")).getText().toString();
-            bpd.readyStrings[i] = ((Label) playerItem.findActor("ready-label")).getText().toString();
-
-            if (index == 0 || (i == 0 && index == -1)) {
-                bpd.colorStrings[i] = ((DropDownMenu) playerItem.findActor("color-selector")).getSelected();
-                bpd.startPosStrings[i] = ((DropDownMenu) playerItem.findActor("startPos-selector")).getSelected();
-            } else {
-                bpd.colorStrings[i] = ((Label) playerItem.findActor("color-label")).getText().toString();
-                bpd.startPosStrings[i] = ((Label) playerItem.findActor("startPos-label")).getText().toString();
-            }
+            bpd.names[i] = playerItemsAttributes.get(attrIndex).getName();
+            bpd.readyStatus[i] = playerItemsAttributes.get(attrIndex).isReady();
+            bpd.colorIndex[i] = playerItemsAttributes.get(attrIndex).getColorIndex();
+            bpd.startPosIndex[i] = playerItemsAttributes.get(attrIndex).getStartPosIndex();
         }
 
         sentToAcceptedClients(bpd);
-    }
-
-    /**
-     * Called when the server receives a change in a client's data.
-     * This change is broadcasted to all connected clients so that they can update their UI accordingly
-     *
-     * @param connection Client's connection
-     * @param name       Client's name
-     * @param who        Client's who string. Not really used here tho so nvm.
-     * @param ready      Client's ready or not ready status
-     * @param color      Client's current color
-     * @param startPos   Client's start position
-     */
-    public void receiveClientData(final Connection connection, final String name, final String who, final String ready, final String color, final String startPos) {
-        Gdx.app.postRunnable(() -> {
-            int index = getConnectionIndex(connection);
-            if (!playerNameResolved.get(index)) {
-                // Happens in edge cases like when the map is changed right when a player joins
-                return;
-            }
-
-            serverPlayerListener.updatePlayerDetails(index, name, who, ready, color, startPos);
-        });
     }
 
     /**
@@ -226,6 +190,28 @@ public class ServerLobbyConnectionManager {
             playerNameResolved.removeIndex(index);
             playerConnections.removeIndex(index);
 
+        });
+    }
+
+    /**
+     * Called when the server receives a change in a client's data.
+     * This change is broadcasted to all connected clients so that they can update their UI accordingly
+     *
+     * @param connection    Client's connection
+     * @param name          Client's name
+     * @param ready         Client's ready or not ready status
+     * @param colorIndex    Client's color index
+     * @param startPosIndex Client's start position index
+     */
+    public void receiveClientData(final Connection connection, String name, boolean ready, int colorIndex, int startPosIndex) {
+        Gdx.app.postRunnable(() -> {
+            int index = getConnectionIndex(connection);
+            if (!playerNameResolved.get(index)) {
+                // Happens in edge cases like when the map is changed right when a player joins
+                return;
+            }
+
+            serverPlayerListener.updatePlayerDetails(index, name, ready, colorIndex, startPosIndex);
         });
     }
 
@@ -322,15 +308,13 @@ public class ServerLobbyConnectionManager {
     /**
      * Called to validate all data before starting the match
      *
-     * @param playerItems The array of player data
+     * @param playerAttributes Player attribute data array
      * @return null if no errors, a string showing the error otherwise
      */
-    public String validateServerData(SnapshotArray<Actor> playerItems) {
-        for (int i = 1; i < playerItems.size; i++) {
-            Table playerItem = (Table) playerItems.get(i);
-
-            String ready = ((Label) playerItem.findActor("ready-label")).getText().toString();
-            if (!ready.equals("Ready")) {
+    public String validateServerData(Array<PlayerItemAttributes> playerAttributes) {
+        for (int i = 1; i < playerAttributes.size; i++) {
+            PlayerItemAttributes playerAttribute = playerAttributes.get(i);
+            if (!playerAttribute.isReady()) {
                 return "All players are not ready";
             }
         }
@@ -348,6 +332,15 @@ public class ServerLobbyConnectionManager {
 
     private int getConnectionIndex(Connection connection) {
         return playerConnections.indexOf(connection, true);
+    }
+
+    public void broadcastPlayerDisconnected(int playerIndex, String playerName) {
+        // If not resolved, other clients don't have information about this client
+        if (playerNameResolved.get(playerIndex)) {
+            BufferPlayerDisconnected bpf = new BufferPlayerDisconnected();
+            bpf.playerName = playerName;
+            sentToAcceptedClients(bpf);
+        }
     }
 
     private void emptyBuffers() {
@@ -376,7 +369,7 @@ public class ServerLobbyConnectionManager {
 
         void updatePlayerDetails(int index, String clientName);
 
-        void updatePlayerDetails(int index, String name, String who, String ready, String color, String startPos);
+        void updatePlayerDetails(int index, String name, boolean ready, int colorIndex, int startPosIndex);
 
         void playerDisconnected(int itemIndex);
 

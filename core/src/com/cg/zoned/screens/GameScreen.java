@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
@@ -32,7 +33,6 @@ import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.cg.zoned.managers.SplitViewportManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
-import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.UITextDisplayer;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
@@ -133,23 +133,18 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     private void setUpUI() {
         uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
-        setUpPauseButton(uiButtonManager);
-        setUpZoomButton(uiButtonManager);
-    }
 
-    private void setUpPauseButton(UIButtonManager uiButtonManager) {
-        final HoverImageButton pauseButton = uiButtonManager.addPauseButtonToStage();
-        pauseButton.addListener(new ClickListener() {
+        Texture pauseTexture = game.assets.getTexture(Assets.TextureObject.PAUSE_TEXTURE);
+        uiButtonManager.addPauseButtonToStage(pauseTexture).addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 showPauseDialog();
             }
         });
-    }
 
-    private void setUpZoomButton(UIButtonManager uiButtonManager) {
-        HoverImageButton zoomButton = uiButtonManager.addZoomButtonToStage();
-        zoomButton.addListener(new ChangeListener() {
+        Texture zoomInTexture = game.assets.getTexture(Assets.TextureObject.ZOOM_IN_TEXTURE);
+        Texture zoomOutTexture = game.assets.getTexture(Assets.TextureObject.ZOOM_OUT_TEXTURE);
+        uiButtonManager.addZoomButtonToStage(zoomOutTexture, zoomInTexture).addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 toggleZoom();
@@ -450,7 +445,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.BACK) {
             showPauseDialog();
-
             return true;
         }
 

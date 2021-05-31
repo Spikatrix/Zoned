@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.actions.ParallelAction;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.ui.FocusableStage;
@@ -66,7 +67,7 @@ public class AnimationManager {
 
         mainStage.addAction(Actions.fadeOut(.25f, Interpolation.fastSlow));
         float initScale = playButton.getScaleX();
-        playButton.setOrigin(playButton.getWidth() / 2, playButton.getHeight() / 2);
+        playButton.setOrigin(Align.center);
         playButton.addAction(Actions.sequence(
                 Actions.scaleTo(2.5f, 2.5f, .2f),
                 Actions.scaleTo(initScale, initScale)

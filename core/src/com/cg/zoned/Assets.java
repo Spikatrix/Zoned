@@ -28,7 +28,16 @@ public class Assets {
         CROSS_TEXTURE      ("images/ui_icons/ic_cross.png"),
         DEV_TEXTURE        ("images/ui_icons/ic_dev.png"),
         SETTINGS_TEXTURE   ("images/ui_icons/ic_settings.png"),
-        TUTORIAL_TEXTURE   ("images/ui_icons/ic_tutorial.png");
+        TUTORIAL_TEXTURE   ("images/ui_icons/ic_tutorial.png"),
+        PAUSE_TEXTURE      ("images/ui_icons/ic_pause.png"),
+        ZOOM_OUT_TEXTURE   ("images/ui_icons/ic_zoom_out.png"),
+        ZOOM_IN_TEXTURE    ("images/ui_icons/ic_zoom_in.png"),
+        READY_UP_TEXTURE   ("images/ui_icons/ic_ready_up.png"),
+        UNREADY_UP_TEXTURE ("images/ui_icons/ic_unready_up.png"),
+        READY_TEXTURE      ("images/ui_icons/ic_green_check.png"),
+        NOT_READY_TEXTURE  ("images/ui_icons/ic_red_cross.png"),
+        HOST_TEXTURE       ("images/ui_icons/ic_crown.png"),
+        KICK_TEXTURE       ("images/ui_icons/ic_kick.png");
 
         private final String location;
 

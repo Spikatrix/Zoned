@@ -21,7 +21,7 @@ public class ServerLobbyListener extends Listener {
             serverLobbyConnectionManager.receiveClientName(connection, bcc.playerName, bcc.version);
         } else if (object instanceof BufferPlayerData) {
             BufferPlayerData bpd = (BufferPlayerData) object;
-            serverLobbyConnectionManager.receiveClientData(connection, bpd.nameStrings[0], bpd.whoStrings[0], bpd.readyStrings[0], bpd.colorStrings[0], bpd.startPosStrings[0]);
+            serverLobbyConnectionManager.receiveClientData(connection, bpd.names[0], bpd.readyStatus[0], bpd.colorIndex[0], bpd.startPosIndex[0]);
         } else if (object instanceof BufferMapData) {
             BufferMapData bmd = (BufferMapData) object;
             serverLobbyConnectionManager.serveMap(connection, bmd.mapName);

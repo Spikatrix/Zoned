@@ -65,7 +65,7 @@ public class PieMenuControlManager extends ControlTypeEntity {
                     new Image(arrow),
             };
             for (int j = 0; j < arrowImages[i].length; j++) {
-                arrowImages[i][j].setOrigin(arrowImages[i][j].getWidth() / 2, arrowImages[i][j].getHeight() / 2);
+                arrowImages[i][j].setOrigin(Align.center);
                 arrowImages[i][j].setScaling(Scaling.fit);
                 arrowImages[i][j].setColor(Color.WHITE);
                 if (j == 0) {
