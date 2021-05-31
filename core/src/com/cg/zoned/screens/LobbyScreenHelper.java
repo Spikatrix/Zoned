@@ -270,7 +270,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             colorLabel.setAlignment(Align.center);
             playerItem.add(colorLabel).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
         } else {
-            DropDownMenu colorSelector = new DropDownMenu(game.skin);
+            DropDownMenu colorSelector = new DropDownMenu(game.skin, game.getScaleFactor());
             colorSelector.setItems(PlayerColorHelper.getNameList());
             playerItem.add(colorSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
 
@@ -287,7 +287,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             startPosLabel.setAlignment(Align.center);
             playerItem.add(startPosLabel).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
         } else {
-            final DropDownMenu startPosSelector = new DropDownMenu(game.skin);
+            final DropDownMenu startPosSelector = new DropDownMenu(game.skin, game.getScaleFactor());
             startPosSelector.setItems(getStartPosViewNameList());
             playerItem.add(startPosSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
 

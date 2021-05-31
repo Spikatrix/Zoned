@@ -334,9 +334,9 @@
 	"com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle": {
 		"default": {
 			"font": "regular",
-			"fontColorSelected": "selected",
+			"fontColorSelected": "text",
 			"fontColorUnselected": "text-themed",
-			"selection": "color",
+			"selection": "selected",
 			"background": "list-c"
 		}
 	},

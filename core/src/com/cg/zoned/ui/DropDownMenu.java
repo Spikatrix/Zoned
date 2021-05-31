@@ -9,10 +9,18 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 
 public class DropDownMenu extends SelectBox<String> {
-    private final float moveAmount = 8f;
+    private float moveAmount = 8f;
+    private float padding = 16f;
 
     public DropDownMenu(Skin skin) {
+        this(skin, 1f);
+    }
+
+    public DropDownMenu(Skin skin, float scaleFactor) {
         super(skin);
+
+        this.padding = this.padding * scaleFactor;
+        this.moveAmount = this.moveAmount * scaleFactor;
 
         customSetup();
     }
@@ -36,10 +44,10 @@ public class DropDownMenu extends SelectBox<String> {
     @Override
     protected void onShow(Actor selectBoxList, boolean below) {
         selectBoxList.getColor().a = 0;
-        selectBoxList.moveBy(0, moveAmount * 2);
+        selectBoxList.moveBy(0, moveAmount);
         selectBoxList.addAction(Actions.parallel(
                 Actions.moveBy(0, -moveAmount, .2f, Interpolation.smooth),
-                Actions.fadeIn(.15f, Interpolation.smooth))
+                Actions.fadeIn(.2f, Interpolation.smooth))
         );
     }
 
@@ -49,9 +57,15 @@ public class DropDownMenu extends SelectBox<String> {
         selectBoxList.addAction(Actions.sequence(
                 Actions.parallel(
                     Actions.moveBy(0, moveAmount, .2f, Interpolation.smooth),
-                    Actions.fadeOut(.15f)
+                    Actions.fadeOut(.2f)
                 ),
                 Actions.removeActor())
         );
     }
+
+    @Override
+    public float getPrefWidth() {
+        return super.getPrefWidth() + padding;
+    }
+
 }
