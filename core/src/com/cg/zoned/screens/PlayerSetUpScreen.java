@@ -139,7 +139,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpMapSelectorStage() {
-        mapSelectorStage = new FocusableStage(screenViewport);
+        mapSelectorStage = new FocusableStage(screenViewport, this.game.getScaleFactor(), this.game.skin);
         mapSelectorStage.getRoot().getColor().a = 0f;
     }
 
@@ -271,7 +271,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         final Player[] players = new Player[playerColors.size];
         for (int i = 0; i < players.length; i++) {
             players[i] = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
-            players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
+            players[i].setControlScheme(i % Constants.PLAYER_CONTROLS.length);
         }
 
         animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapData, players));
@@ -280,12 +280,11 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     private void showTutorialDialog() {
         screenStage.showDialog("Start the tutorial?",
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Yes },
-                false, game.getScaleFactor(),
-                button -> {
+                false, button -> {
                     if (button == FocusableStage.DialogButton.Yes) {
                         animationManager.fadeOutStage(screenStage, PlayerSetUpScreen.this, new TutorialScreen(game));
                     }
-                }, game.skin);
+                });
     }
 
     @Override

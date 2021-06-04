@@ -215,8 +215,7 @@ public class MapSelector {
         extraParamsDialogActive = true;
         stage.showDialog(contentTable, focusableDialogButtons,
                 new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Set},
-                false, scaleFactor,
-                button -> {
+                false, button -> {
                     if (button == FocusableStage.DialogButton.Set) {
                         for (int i = 0; i < prompts.spinnerVars.size; i++) {
                             prompts.extraParams[i] = spinners[i].getPositionIndex() + prompts.spinnerVars.get(i).lowValue;
@@ -225,7 +224,7 @@ public class MapSelector {
                     }
 
                     extraParamsDialogActive = false;
-                }, skin);
+                });
     }
 
     public boolean loadSelectedMap() {
@@ -235,7 +234,7 @@ public class MapSelector {
             mapManager.loadMap(mapIndex);
         } catch (InvalidMapCharacter | StartPositionsMissing | InvalidMapDimensions | MapGridMissing |
                 FileNotFoundException | IndexOutOfBoundsException e) {
-            stage.showOKDialog("Error: " + e.getMessage(), false, scaleFactor, null, skin);
+            stage.showOKDialog("Error: " + e.getMessage(), false, null);
             e.printStackTrace();
             return false;
         }

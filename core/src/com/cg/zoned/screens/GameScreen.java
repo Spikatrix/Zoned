@@ -99,6 +99,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         playerStartPositions = new GridPoint2[players.length];
         for (int i = 0; i < players.length; i++) {
+            players[i].resetPrevPosition();
             playerStartPositions[i] = new GridPoint2(players[i].roundedPosition.x, players[i].roundedPosition.y);
         }
 
@@ -284,8 +285,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     private void showDisconnectionDialog() {
-        screenStage.showOKDialog("Disconnected", false,
-                game.getScaleFactor(), button -> endGame(), game.skin);
+        screenStage.showOKDialog("Disconnected", false, button -> endGame());
     }
 
     private void showPauseDialog() {
@@ -310,9 +310,8 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             };
         }
 
-        screenStage.showDialog("Pause Menu",
-                dialogButtons, true,
-                game.getScaleFactor(), button -> {
+        screenStage.showDialog("Pause Menu", dialogButtons,
+                true, button -> {
                     if (button == FocusableStage.DialogButton.MainMenu) {
                         endGame();
                     } else if (button == FocusableStage.DialogButton.Restart) {
@@ -320,7 +319,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                     }
 
                     gamePaused = false;
-                }, game.skin);
+                });
     }
 
     /**
@@ -332,11 +331,12 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         Player[] players = gameManager.playerManager.getPlayers();
         for (int i = 0; i < players.length; i++) {
-            players[i].prevPosition = null;
+            players[i].resetPrevPosition();
             players[i].setPosition(playerStartPositions[i]);
         }
 
         gameManager.playerManager.resetScores();
+        scoreBars.reset();
         map.clearGrid();
         map.updateMap(players, gameManager.playerManager);
     }
@@ -376,9 +376,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     private void showPlayerDisconnectedDialog(String playerName) {
-        screenStage.showOKDialog(playerName + " got disconnected",
-                false, game.getScaleFactor(),
-                null, game.skin);
+        screenStage.showOKDialog(playerName + " got disconnected", false, null);
     }
 
     public void disconnected() {

@@ -264,8 +264,7 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
         game.preferences.flush();
 
         screenStage.showOKDialog("Developer mode " + ((devModeUnlocked) ? ("un") : ("re")) + "locked!",
-                false, game.getScaleFactor(),
-                null, game.skin);
+                false, null);
     }
 
     private void setUpBackButton() {

@@ -69,16 +69,15 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
 
     private void initMap() {
         populateMapGrid();
-        this.map = new Map(mapGrid, 0, shapeDrawer);
+        this.map = new Map(mapGrid, shapeDrawer);
         this.map.initFloodFillVars();
         this.mapOverlay = new Overlay(new Color(0, 0, 0, 0.7f), 2.5f);
 
         this.players = new Player[1];
         this.players[0] = new Player(PlayerColorHelper.getColorFromIndex(0), "Player");
         this.players[0].setPosition(new GridPoint2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f)));
-        this.players[0].setControlIndex(0);
 
-        this.splitViewportManager = new SplitViewportManager(1, Constants.WORLD_SIZE, this.players[0].position);
+        this.splitViewportManager = new SplitViewportManager(1, Constants.WORLD_SIZE, this.players[0].getPosition());
         BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
         this.controlManager = new ControlManager(players, screenStage);
@@ -196,7 +195,6 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         Player player = players[0];
         player.completeMovement();
         player.updatedDirection = player.direction = null;
-        player.position.set(player.roundedPosition.x, player.roundedPosition.y);
 
         Cell playerCell = mapGrid[player.roundedPosition.y][player.roundedPosition.x];
         if (playerCell.cellColor == null) {
@@ -241,7 +239,6 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         int colCount = mapGrid[0].length;
 
         Player player = players[0];
-        player.setRoundedPosition();
         int playerPosX = player.roundedPosition.x;
         int playerPosY = player.roundedPosition.y;
 

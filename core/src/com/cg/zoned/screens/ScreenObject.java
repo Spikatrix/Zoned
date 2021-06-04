@@ -30,7 +30,7 @@ public abstract class ScreenObject extends ScreenAdapter {
         this.game = game;
         this.usedTextures = new Array<>();
         this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
+        this.screenStage = new FocusableStage(this.screenViewport, this.game.getScaleFactor(), this.game.skin);
     }
 
     @Override

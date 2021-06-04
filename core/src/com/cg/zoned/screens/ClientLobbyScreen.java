@@ -247,7 +247,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
 
         this.preparedMapData = mapManager.getPreparedMapData();
         this.mapGrid = preparedMapData.mapGrid;
-        this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
+        this.map = new com.cg.zoned.Map(this.mapGrid, shapeDrawer);
         setCameraPosition();
         resetStartPosLabels();
 
@@ -303,8 +303,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
     @Override
     public void disconnectWithMessage(String errorMsg) {
         disconnectClient();
-        screenStage.showOKDialog(errorMsg, false,
-                game.getScaleFactor(), button -> exitScreen(), game.skin);
+        screenStage.showOKDialog(errorMsg, false, button -> exitScreen());
     }
 
     @Override

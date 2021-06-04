@@ -80,7 +80,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpMap() {
-        map = new Map(mapGrid, 0, shapeDrawer); // Wall count is unnecessary in this case so 0
+        map = new Map(mapGrid, shapeDrawer);
         map.createPlayerLabelTextures(players, shapeDrawer, game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName()));
 
         mapOverlay = new Overlay(new Color(0, 0, 0, 0.8f));
@@ -211,13 +211,13 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
             return;
         }
 
-        GridPoint2 oldPos = new GridPoint2(players[index].roundedPosition);
         players[index].setPosition(startPositions.get(startPosIndex).getLocation());
         GridPoint2 newPos = players[index].roundedPosition;
+        GridPoint2 oldPos = players[index].prevPosition;
 
         mapGrid[oldPos.y][oldPos.x].cellColor = null;
         for (Player player : players) {
-            if (player.position.x == oldPos.x && player.position.y == oldPos.y) {
+            if (player.getPositionX() == oldPos.x && player.getPositionY() == oldPos.y) {
                 mapGrid[oldPos.y][oldPos.x].cellColor = player.color;
                 break;
             }

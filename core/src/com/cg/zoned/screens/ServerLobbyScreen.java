@@ -91,7 +91,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
     }
 
     private void setUpMapSelectorStage() {
-        mapSelectorStage = new FocusableStage(screenViewport);
+        mapSelectorStage = new FocusableStage(screenViewport, this.game.getScaleFactor(), this.game.skin);
         mapSelectorStage.getRoot().getColor().a = 0f;
     }
 
@@ -123,8 +123,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
             public void clicked(InputEvent event, float x, float y) {
                 String errorMsg = connectionManager.validateServerData(playerItemAttributes);
                 if (errorMsg != null) {
-                    screenStage.showOKDialog(errorMsg, false,
-                            game.getScaleFactor(), null, game.skin);
+                    screenStage.showOKDialog(errorMsg, false, null);
                     return;
                 }
 
@@ -162,7 +161,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
     private void updateMap() {
         this.preparedMapData = mapSelector.getMapManager().getPreparedMapData();
         this.mapGrid = this.preparedMapData.mapGrid;
-        this.map = new com.cg.zoned.Map(this.mapGrid, 0, shapeDrawer);
+        this.map = new com.cg.zoned.Map(this.mapGrid, shapeDrawer);
         super.setCameraPosition();
         mapChanged();
     }
@@ -173,8 +172,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
 
         screenStage.showDialog(mapSelectorTable, focusableDialogButtons,
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.SetMap },
-                false, game.getScaleFactor(),
-                button -> {
+                false, button -> {
                     if (button == FocusableStage.DialogButton.SetMap && mapSelector.loadSelectedMap()) {
                         updateMap();
                         mapButton.setText(preparedMapData.map.getName());
@@ -185,7 +183,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
                     }
 
                     mapSelectorActive = false;
-                }, game.skin);
+                });
     }
 
     @Override
@@ -235,9 +233,9 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
             playerName = "... yourself?\nWait, you can do that";
         }
 
-        screenStage.showDialog("Are you sure you want to kick " + playerName + "?", new FocusableStage.DialogButton[]{
-                        FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Kick}, false,
-                game.getScaleFactor(), button -> {
+        screenStage.showDialog("Are you sure you want to kick " + playerName + "?",
+                new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Kick },
+                false, button -> {
                     if (button == FocusableStage.DialogButton.Kick) {
                         int playerIndex = getPlayerIndex(finalPlayerName);
 
@@ -249,7 +247,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
                             connectionManager.kickPlayer(playerIndex, "You were kicked from the lobby");
                         }
                     }
-                }, game.skin);
+                });
     }
 
     private int getPlayerIndex(String name) {

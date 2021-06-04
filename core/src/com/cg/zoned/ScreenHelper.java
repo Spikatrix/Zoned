@@ -141,7 +141,7 @@ public class ScreenHelper {
         for (int i = 0; i < players.length; i++) {
             Color playerColor = PlayerColorHelper.getColorFromIndex(i % Constants.PLAYER_COLORS.size());
             players[i] = new Player(playerColor, PlayerColorHelper.getStringFromColor(playerColor));
-            players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
+            players[i].setControlScheme(i % Constants.PLAYER_CONTROLS.length);
             players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
         }
 
@@ -170,7 +170,7 @@ public class ScreenHelper {
         for (int i = 0; i < players.length; i++) {
             Color playerColor = PlayerColorHelper.getColorFromIndex(i % Constants.PLAYER_COLORS.size());
             players[i] = new Player(playerColor, PlayerColorHelper.getStringFromColor(playerColor));
-            players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
+            players[i].setControlScheme(i % Constants.PLAYER_CONTROLS.length);
             players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
         }
 

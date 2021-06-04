@@ -50,7 +50,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         this.game.discordRPCManager.updateRPC("Main Menu");
 
         mainStage = screenStage;
-        playModeStage = new FocusableStage(screenViewport);
+        playModeStage = new FocusableStage(screenViewport, this.game.getScaleFactor(), this.game.skin);
         animationManager = new AnimationManager(this.game, this);
         uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures); // This is the one for playModeStage
         batch = new SpriteBatch();
@@ -386,12 +386,11 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
     private void showExitDialog() {
         mainStage.showDialog("Are you sure that you want to exit?",
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Exit },
-                false,
-                game.getScaleFactor(), button -> {
+                false, button -> {
                     if (button == FocusableStage.DialogButton.Exit) {
                         Gdx.app.exit();
                     }
-                }, game.skin);
+                });
     }
 
     /**

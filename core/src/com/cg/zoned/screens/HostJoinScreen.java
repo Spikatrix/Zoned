@@ -101,17 +101,9 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         hostButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                restoreScreen();
-
-                String name = playerNameField.getText().trim();
-                if (!name.isEmpty()) {
-                    game.preferences.putString(Preferences.NAME_PREFERENCE, name);
-                    game.preferences.flush();
-
-                    startServerLobby(playerNameField.getText().trim());
-                } else {
-                    screenStage.showOKDialog("Please enter the player name", false,
-                            game.getScaleFactor(), null, game.skin);
+                String name = validateName(playerNameField.getText());
+                if (name != null) {
+                    startServerLobby(name);
                 }
             }
         });
@@ -119,22 +111,14 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         joinButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                restoreScreen();
-
-                String name = playerNameField.getText().trim();
-                if (!name.isEmpty()) {
+                String name = validateName(playerNameField.getText());
+                if (name != null) {
                     if (searchingLabel.getColor().a == 0) {
-                        game.preferences.putString(Preferences.NAME_PREFERENCE, name);
-                        game.preferences.flush();
-
                         searchingLabel.setText("Searching for servers...");
-                        startClientLobby(name, searchingLabel);
+                        prepareClient(name, searchingLabel);
                     } else {
                         searchingLabel.setText("Already searching for servers...");
                     }
-                } else {
-                    screenStage.showOKDialog("Please enter the player name", false,
-                            game.getScaleFactor(), null, game.skin);
                 }
             }
         });
@@ -147,6 +131,20 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
 
         screenStage.addActor(table);
         screenStage.setFocusedActor(playerNameField);
+    }
+
+    private String validateName(String playerName) {
+        restoreScreen();
+
+        playerName = playerName.trim();
+        if (!playerName.isEmpty()) {
+            game.preferences.putString(Preferences.NAME_PREFERENCE, playerName);
+            game.preferences.flush();
+            return playerName;
+        }
+
+        screenStage.showOKDialog("Please enter the player name", false, null);
+        return null;
     }
 
     private void setUpBackButton() {
@@ -169,8 +167,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         try {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException | IllegalArgumentException e) {
-            screenStage.showOKDialog("Server bind error\n" + e.getMessage(), false,
-                    game.getScaleFactor(), null, game.skin);
+            screenStage.showOKDialog("Server bind error\n" + e.getMessage(), false, null);
             e.printStackTrace();
             return;
         }
@@ -178,7 +175,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         animationManager.fadeOutStage(screenStage, this, new ServerLobbyScreen(game, server, playerName));
     }
 
-    private void startClientLobby(final String playerName, final Label searchingLabel) {
+    private void prepareClient(final String playerName, final Label searchingLabel) {
         final Client client = new Client(CLIENT_WRITE_BUFFER_SIZE, CONNECTION_BUFFER_SIZE);
 
         Kryo kryo = client.getKryo();
@@ -195,12 +192,12 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
                     return;
                 }
 
-                checkAndStartClientScreen(client, playerName, addr, searchingLabel);
+                checkAndStartClientLobby(client, playerName, addr, searchingLabel);
             });
         }).start();
     }
 
-    private void checkAndStartClientScreen(Client client, String playerName, InetAddress addr, Label searchingLabel) {
+    private void checkAndStartClientLobby(Client client, String playerName, InetAddress addr, Label searchingLabel) {
         searchingLabel.clearActions();
 
         try {
@@ -222,8 +219,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
     }
 
     private void showConnectionError(String errorMessage, Label searchingLabel) {
-        screenStage.showOKDialog(errorMessage, false,
-                game.getScaleFactor(), null, game.skin);
+        screenStage.showOKDialog(errorMessage, false, null);
         searchingLabel.addAction(Actions.fadeOut(.2f));
     }
 

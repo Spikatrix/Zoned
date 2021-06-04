@@ -4,7 +4,6 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -140,7 +139,6 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             outOfBounds = true; // Probably the map changed
         }
 
-        GridPoint2 prevLoc = new GridPoint2(player.roundedPosition);
         player.color = color;
 
         if (startPosIndex != -1) {
@@ -151,8 +149,8 @@ public abstract class LobbyScreenHelper extends ScreenObject {
 
         if (!outOfBounds) { // Huh? Excuse me, lint? Always true? Nope.
             for (Player p : players) {
-                if (p.roundedPosition.equals(prevLoc) && p.color != Color.BLACK) {
-                    mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
+                if (p.roundedPosition.equals(p.prevPosition) && p.color != Color.BLACK) {
+                    mapGrid[p.prevPosition.y][p.prevPosition.x].cellColor = p.color;
                     break;
                 }
             }

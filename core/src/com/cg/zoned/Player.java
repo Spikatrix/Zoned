@@ -13,14 +13,14 @@ public class Player extends InputAdapter {
     public Color color;
     public String name;
 
-    public int[] controls;
+    private int[] controls;
     public Direction direction;
     public Direction updatedDirection;
 
-    public Vector2 position;
-    public Vector2 prevPosition;
+    private final Vector2 position;
+    public final GridPoint2 roundedPosition;
+    public GridPoint2 prevPosition;
     private Vector2 targetPosition;
-    public GridPoint2 roundedPosition;
 
     private float timeElapsed;
 
@@ -29,40 +29,78 @@ public class Player extends InputAdapter {
         this.name = name;
 
         this.position = new Vector2();
-        this.prevPosition = null;
-        this.targetPosition = null;
         this.roundedPosition = new GridPoint2();
-
-        this.direction = this.updatedDirection = null;
+        initPrevPosition();
 
         this.controls = Constants.PLAYER_CONTROLS[0]; // Default is the first control scheme
     }
 
     public void setPosition(GridPoint2 pos) {
-        position = new Vector2(pos.x, pos.y);
-        setRoundedPosition();
+        setPosition(pos.x, pos.y);
     }
 
-    public void setControlIndex(int index) {
-        controls = Constants.PLAYER_CONTROLS[index];
+    public void setPosition(Vector2 pos) {
+        // Nope, you're not allowed to place the player in between cells
+        setPosition(Math.round(pos.x), Math.round(pos.y));
     }
 
-    public void setRoundedPosition() {
-        this.roundedPosition.x = Math.round(this.position.x);
-        this.roundedPosition.y = Math.round(this.position.y);
+    public void setPosition(int x, int y) {
+        if (prevPosition != null) {
+            prevPosition.set(roundedPosition);
+        }
+        position.set(x, y);
+        roundedPosition.set(x, y);
+    }
+
+    public void initPrevPosition() {
+        this.prevPosition = new GridPoint2(this.roundedPosition);
+    }
+
+    public void resetPrevPosition() {
+        this.prevPosition = null;
+    }
+
+    public void setControlScheme(int index) {
+        this.controls = Constants.PLAYER_CONTROLS[index];
     }
 
     public void move(float delta) {
         if (isMoving()) {
             // Move to the target position if it is available
             this.moveTo(this.targetPosition, delta);
-        } else {
-            // Simulate a fake movement if targetPosition is not available
-            this.moveTo(new Vector2(-1, -1), delta);
         }
     }
 
-    public void moveTo(Vector2 targetPosition, float delta) {
+    public void fakeMove(float delta) {
+        if (isMoving()) {
+            // Not allowed fake a movement when the player is already moving
+            return;
+        }
+
+        this.moveTo(new Vector2(-1, -1), delta);
+    }
+
+    public void moveTo(Direction direction, float delta) {
+        if (isMoving()) {
+            // Not allowed to change direction when the player is already moving
+            return;
+        }
+
+        this.targetPosition = new Vector2(this.position);
+        if (direction == Direction.LEFT) {
+            this.targetPosition.x--;
+        } else if (direction == Direction.RIGHT) {
+            this.targetPosition.x++;
+        } else if (direction == Direction.DOWN) {
+            this.targetPosition.y--;
+        } else if (direction == Direction.UP) {
+            this.targetPosition.y++;
+        }
+
+        this.move(delta);
+    }
+
+    private void moveTo(Vector2 targetPosition, float delta) {
         if (this.targetPosition == null) {
             this.targetPosition = targetPosition;
         }
@@ -85,11 +123,11 @@ public class Player extends InputAdapter {
             return;
         }
 
-        boolean fakeMovement = targetPosition.x < 0 || targetPosition.y < 0;
-        if (!fakeMovement) {
-            this.position.x = Math.round(this.targetPosition.x);
-            this.position.y = Math.round(this.targetPosition.y);
-            setRoundedPosition();
+        boolean fakeMovement = this.targetPosition.x < 0 || this.targetPosition.y < 0;
+        if (fakeMovement) {
+            setPosition(this.position);
+        } else {
+            setPosition(this.targetPosition);
         }
 
         timeElapsed = 0;
@@ -125,6 +163,23 @@ public class Player extends InputAdapter {
         }
 
         return false;
+    }
+
+    public float getPositionX() {
+        return position.x;
+    }
+
+    public float getPositionY() {
+        return position.y;
+    }
+
+    public Vector2 getPosition() {
+        // New object so that the caller can't modify the position object content
+        return new Vector2(this.position);
+    }
+
+    public int[] getControls() {
+        return controls;
     }
 
     public enum Direction {UP, LEFT, DOWN, RIGHT}

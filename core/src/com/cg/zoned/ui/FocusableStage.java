@@ -87,12 +87,29 @@ public class FocusableStage extends Stage {
     private ScrollPane scrollpane;
 
     /**
-     * Constructor for initializing the Stage
-     *
-     * @param viewport Viewport for the super class Stage
+     * The skin used for styling dialog elements
      */
+    private Skin skin;
+
+    /**
+     * Scale factor used for scaling dialog UI elements accordingly
+     */
+    private float scaleFactor;
+
+
     public FocusableStage(Viewport viewport) {
+        this(viewport, 1f);
+    }
+
+    public FocusableStage(Viewport viewport, float scaleFactor) {
+        this(viewport, scaleFactor, null);
+    }
+
+    public FocusableStage(Viewport viewport, float scaleFactor, Skin skin) {
         super(viewport);
+
+        this.scaleFactor = scaleFactor;
+        this.skin = skin;
 
         createDialogBGTexture();
     }
@@ -100,6 +117,7 @@ public class FocusableStage extends Stage {
     public void setScrollpane(ScrollPane scrollPane) {
         this.scrollpane = scrollPane;
     }
+
     /**
      * Creates the dialog background texture
      */
@@ -226,33 +244,27 @@ public class FocusableStage extends Stage {
      * @param msg                   The message to display
      * @param buttons               Buttons to be displayed in the dialog
      * @param useVerticalButtonList Determines whether the dialog buttons are arranged horizontally or vertically
-     * @param scaleFactor           The game's scaleFactor to scale up/down dialog button width
      * @param dialogResultListener  Listener for beaming back the selected dialog option to the caller
-     * @param skin                  The skin to use for the dialog
      */
-    public void showDialog(String msg,
-                           DialogButton[] buttons, boolean useVerticalButtonList,
-                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog(new Label(msg, skin), null, buttons, useVerticalButtonList,
-                scaleFactor, dialogResultListener, skin);
+    public void showDialog(String msg,  DialogButton[] buttons,
+                           boolean useVerticalButtonList, DialogResultListener dialogResultListener) {
+        showDialog(new Label(msg, skin), null, buttons, useVerticalButtonList, dialogResultListener);
     }
 
     public void showDialog(Table contentTable, Array<Actor> dialogFocusableActorArray,
                            DialogButton[] buttons, boolean useVerticalButtonList,
-                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog((Actor) contentTable, dialogFocusableActorArray, buttons, useVerticalButtonList,
-                scaleFactor, dialogResultListener, skin);
+                           DialogResultListener dialogResultListener) {
+        showDialog((Actor) contentTable, dialogFocusableActorArray, buttons,
+                useVerticalButtonList, dialogResultListener);
     }
 
-    public void showOKDialog(String msg, boolean useVerticalButtonList,
-                             float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog(new Label(msg, skin), null, new DialogButton[]{DialogButton.OK}, useVerticalButtonList,
-                scaleFactor, dialogResultListener, skin);
+    public void showOKDialog(String msg, boolean useVerticalButtonList, DialogResultListener dialogResultListener) {
+        showDialog(new Label(msg, skin), null, new DialogButton[]{DialogButton.OK},
+                useVerticalButtonList, dialogResultListener);
     }
 
-    private void showDialog(Actor content, Array<Actor> dialogFocusableActorArray,
-                            DialogButton[] buttons, boolean useVerticalButtonList,
-                            float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
+    private void showDialog(Actor content, Array<Actor> dialogFocusableActorArray, DialogButton[] buttons,
+                            boolean useVerticalButtonList, final DialogResultListener dialogResultListener) {
         final Array<Actor> backupCurrentActorArray = new Array<>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
 

@@ -176,8 +176,8 @@ public class SplitViewportManager {
 
         Vector3 position = camera.position;
 
-        float posX = (player.position.x * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
+        float posX = (player.getPositionX() * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
+        float posY = (player.getPositionY() * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
 
         if (vel != null) {
             posX += vel.x;

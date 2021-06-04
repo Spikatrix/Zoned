@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.dataobjects.Cell;
@@ -48,9 +47,9 @@ public class Map {
      * Creates the map object with features like processing each turn and managing score, rendering
      * the grid and more
      *
-     * @param mapGrid     Array of {@link Cell}s of the map grid
-     * @param wallCount   Amount of walls in the grid; used for determining winner early in 2 player games
-     * @param shapeDrawer Used to prepare grid and player textures for rendering
+     * @param mapGrid     2D array of {@link Cell}s of the map grid
+     * @param wallCount   Amount of walls in the grid; used for determining the winner early in 2 player games
+     * @param shapeDrawer Used to prepare the grid and player textures for rendering
      */
     public Map(Cell[][] mapGrid, int wallCount, ShapeDrawer shapeDrawer) {
         this.rows = mapGrid.length;
@@ -62,6 +61,10 @@ public class Map {
 
         createPlayerTexture(shapeDrawer);
         createMapTexture(shapeDrawer);
+    }
+
+    public Map(Cell[][] mapGrid, ShapeDrawer shapeDrawer) {
+        this(mapGrid, 0, shapeDrawer);
     }
 
     public void initFloodFillVars() {
@@ -231,21 +234,15 @@ public class Map {
 
                 playerMoved = true;
 
-                if (direction == Player.Direction.UP && !atTopEdge && mapGrid[rPosY + 1][rPosX].isMovable) {
-                    player.moveTo(new Vector2(player.position.x, player.position.y + 1), delta);
+                if ((direction == Player.Direction.UP    && !atTopEdge    && mapGrid[rPosY + 1][rPosX].isMovable) ||
+                    (direction == Player.Direction.RIGHT && !atRightEdge  && mapGrid[rPosY][rPosX + 1].isMovable) ||
+                    (direction == Player.Direction.DOWN  && !atBottomEdge && mapGrid[rPosY - 1][rPosX].isMovable) ||
+                    (direction == Player.Direction.LEFT  && !atLeftEdge   && mapGrid[rPosY][rPosX - 1].isMovable)) {
 
-                } else if (direction == Player.Direction.RIGHT && !atRightEdge && mapGrid[rPosY][rPosX + 1].isMovable) {
-                    player.moveTo(new Vector2(player.position.x + 1, player.position.y), delta);
-
-                } else if (direction == Player.Direction.DOWN && !atBottomEdge && mapGrid[rPosY - 1][rPosX].isMovable) {
-                    player.moveTo(new Vector2(player.position.x, player.position.y - 1), delta);
-
-                } else if (direction == Player.Direction.LEFT && !atLeftEdge && mapGrid[rPosY][rPosX - 1].isMovable) {
-                    player.moveTo(new Vector2(player.position.x - 1, player.position.y), delta);
-
+                    player.moveTo(direction, delta);
                 } else {
                     // Simulate a fake movement
-                    player.move(delta);
+                    player.fakeMove(delta);
                 }
             }
         }
@@ -266,20 +263,14 @@ public class Map {
 
     private void setMapWeights(Player[] players) {
         for (Player player : players) {
-            if (player.prevPosition != player.position) {
-                if (player.prevPosition != null) {
-                    mapGrid[Math.round(player.prevPosition.y)][Math.round(player.prevPosition.x)].playerCount--;
-                } else {
-                    player.prevPosition = new Vector2();
-                }
+            mapGrid[player.roundedPosition.y][player.roundedPosition.x].playerCount++;
 
-                mapGrid[player.roundedPosition.y][player.roundedPosition.x].playerCount++;
-
-                player.prevPosition.x = player.roundedPosition.x;
-                player.prevPosition.y = player.roundedPosition.y;
+            if (player.prevPosition != null) {
+                mapGrid[player.prevPosition.y][player.prevPosition.x].playerCount--;
+            } else {
+                player.initPrevPosition();
             }
         }
-
     }
 
     private void setMapColors(PlayerManager playerManager, Player[] players) {
@@ -385,8 +376,8 @@ public class Map {
     }
 
     private void renderPlayerLabel(Player player, TextureRegion playerLabel, Rectangle userViewRect, Batch batch) {
-        float posX = (player.position.x * Constants.CELL_SIZE) - (playerLabel.getRegionWidth() / (playerLabelRegionScale * 2f)) + (Constants.CELL_SIZE / 2);
-        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
+        float posX = (player.getPositionX() * Constants.CELL_SIZE) - (playerLabel.getRegionWidth() / (playerLabelRegionScale * 2f)) + (Constants.CELL_SIZE / 2);
+        float posY = (player.getPositionY() * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
         if (userViewRect.contains(posX + playerLabel.getRegionWidth(), posY - (Constants.CELL_SIZE / 2)) ||
                 userViewRect.contains(posX, posY - (Constants.CELL_SIZE / 2))) {
             batch.draw(playerLabel, posX, posY,

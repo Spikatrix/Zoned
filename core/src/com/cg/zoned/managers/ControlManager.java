@@ -87,12 +87,13 @@ public class ControlManager {
                 }
             }
             if (controlLabels != null) {
-                String controlString = Input.Keys.toString(players[i].controls[0]) + '\n' +
-                        Input.Keys.toString(players[i].controls[1]) +
+                int[] playerControls = players[i].getControls();
+                String controlString = Input.Keys.toString(playerControls[0]) + '\n' +
+                        Input.Keys.toString(playerControls[1]) +
                         "  " +
-                        Input.Keys.toString(players[i].controls[2]) +
+                        Input.Keys.toString(playerControls[2]) +
                         "  " +
-                        Input.Keys.toString(players[i].controls[3]);
+                        Input.Keys.toString(playerControls[3]);
                 controlLabels[i] = new Label(controlString, skin);
                 Color labelColor = new Color(players[i].color);
                 controlLabels[i].setColor(labelColor);
