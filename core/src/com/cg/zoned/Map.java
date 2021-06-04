@@ -224,8 +224,8 @@ public class Map {
                 }
 
                 Player.Direction direction = player.direction;
-                int rPosX = player.roundedPosition.x;
-                int rPosY = player.roundedPosition.y;
+                int rPosX = player.getRoundedPositionX();
+                int rPosY = player.getRoundedPositionY();
 
                 boolean atLeftEdge = rPosX == 0;
                 boolean atRightEdge = rPosX == cols - 1;
@@ -263,10 +263,10 @@ public class Map {
 
     private void setMapWeights(Player[] players) {
         for (Player player : players) {
-            mapGrid[player.roundedPosition.y][player.roundedPosition.x].playerCount++;
+            mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()].playerCount++;
 
-            if (player.prevPosition != null) {
-                mapGrid[player.prevPosition.y][player.prevPosition.x].playerCount--;
+            if (player.previousPositionAvailable()) {
+                mapGrid[player.getPreviousPositionY()][player.getPreviousPositionX()].playerCount--;
             } else {
                 player.initPrevPosition();
             }
@@ -275,8 +275,8 @@ public class Map {
 
     private void setMapColors(PlayerManager playerManager, Player[] players) {
         for (Player player : players) {
-            int rPosX = player.roundedPosition.x;
-            int rPosY = player.roundedPosition.y;
+            int rPosX = player.getRoundedPositionX();
+            int rPosY = player.getRoundedPositionY();
             if (mapGrid[rPosY][rPosX].cellColor == null && mapGrid[rPosY][rPosX].playerCount == 1) {
                 // TODO: Should we allow multiple players of the same team in the same location capture the cell?
                 mapGrid[rPosY][rPosX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
@@ -397,7 +397,7 @@ public class Map {
     public void clearGrid(Player[] players) {
         this.coloredCellCount = 0;
         for (Player player : players) {
-            resetCell(player.roundedPosition.y, player.roundedPosition.x);
+            resetCell(player.getRoundedPositionY(), player.getRoundedPositionX());
         }
     }
 

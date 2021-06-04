@@ -17,10 +17,10 @@ public class Player extends InputAdapter {
     public Direction direction;
     public Direction updatedDirection;
 
-    private final Vector2 position;
-    public final GridPoint2 roundedPosition;
-    public GridPoint2 prevPosition;
+    private Vector2 position;
     private Vector2 targetPosition;
+    private GridPoint2 prevPosition;
+    private GridPoint2 roundedPosition;
 
     private float timeElapsed;
 
@@ -176,6 +176,36 @@ public class Player extends InputAdapter {
     public Vector2 getPosition() {
         // New object so that the caller can't modify the position object content
         return new Vector2(this.position);
+    }
+
+    public int getRoundedPositionX() {
+        return roundedPosition.x;
+    }
+
+    public int getRoundedPositionY() {
+        return roundedPosition.y;
+    }
+
+    public GridPoint2 getRoundedPosition() {
+        // New object so that the caller can't modify the roundedPosition object content
+        return new GridPoint2(this.roundedPosition);
+    }
+
+    public int getPreviousPositionX() {
+        return prevPosition.x;
+    }
+
+    public int getPreviousPositionY() {
+        return prevPosition.y;
+    }
+
+    public GridPoint2 getPreviousPosition() {
+        // New object so that the caller can't modify the previousPosition object content
+        return new GridPoint2(this.prevPosition);
+    }
+
+    public boolean previousPositionAvailable() {
+        return this.prevPosition != null;
     }
 
     public int[] getControls() {

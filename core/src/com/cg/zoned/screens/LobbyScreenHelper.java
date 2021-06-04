@@ -4,6 +4,7 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -63,7 +64,6 @@ public abstract class LobbyScreenHelper extends ScreenObject {
 
         playerList = new Table();
         playerList.center();
-        //playerList.setFillParent(true);
         ScrollPane playerListScrollPane = new ScrollPane(playerList, game.skin);
         playerListScrollPane.setOverscroll(false, true);
 
@@ -134,23 +134,24 @@ public abstract class LobbyScreenHelper extends ScreenObject {
 
         boolean outOfBounds = false;
         try {
-            mapGrid[player.roundedPosition.y][player.roundedPosition.x].cellColor = null;
+            mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()].cellColor = null;
         } catch (ArrayIndexOutOfBoundsException e) {
             outOfBounds = true; // Probably the map changed
         }
 
-        player.color = color;
 
         if (startPosIndex != -1) {
-            //player.setPosition(preparedMapData.startPositions.get(startPosIndex).getLocation());
             updatePlayerStartPosAttr(playerIndex, startPosIndex);
-            mapGrid[player.roundedPosition.y][player.roundedPosition.x].cellColor = player.color;
+            mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()].cellColor = color;
         }
+
+        player.color = color;
+        GridPoint2 prevLoc = player.getPreviousPosition();
 
         if (!outOfBounds) { // Huh? Excuse me, lint? Always true? Nope.
             for (Player p : players) {
-                if (p.roundedPosition.equals(p.prevPosition) && p.color != Color.BLACK) {
-                    mapGrid[p.prevPosition.y][p.prevPosition.x].cellColor = p.color;
+                if (p.getRoundedPositionX() == prevLoc.x && p.getRoundedPositionY() == prevLoc.y && p.color != Color.BLACK) {
+                    mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
                     break;
                 }
             }

@@ -91,7 +91,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
 
         for (int i = 0; i < players.length; i++) {
             players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
-            mapGrid[players[i].roundedPosition.y][players[i].roundedPosition.x].cellColor = players[i].color;
+            mapGrid[players[i].getRoundedPositionY()][players[i].getRoundedPositionX()].cellColor = players[i].color;
         }
 
         playerStartIndex = 0;
@@ -212,8 +212,8 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         }
 
         players[index].setPosition(startPositions.get(startPosIndex).getLocation());
-        GridPoint2 newPos = players[index].roundedPosition;
-        GridPoint2 oldPos = players[index].prevPosition;
+        GridPoint2 newPos = players[index].getRoundedPosition();
+        GridPoint2 oldPos = players[index].getPreviousPosition();
 
         mapGrid[oldPos.y][oldPos.x].cellColor = null;
         for (Player player : players) {

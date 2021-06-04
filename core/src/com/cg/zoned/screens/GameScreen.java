@@ -100,7 +100,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         playerStartPositions = new GridPoint2[players.length];
         for (int i = 0; i < players.length; i++) {
             players[i].resetPrevPosition();
-            playerStartPositions[i] = new GridPoint2(players[i].roundedPosition.x, players[i].roundedPosition.y);
+            playerStartPositions[i] = players[i].getRoundedPosition();
         }
 
         this.scoreBars = new ScoreBar(screenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());

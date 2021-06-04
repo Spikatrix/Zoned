@@ -68,15 +68,7 @@ public class PieMenuControlManager extends ControlTypeEntity {
                 arrowImages[i][j].setOrigin(Align.center);
                 arrowImages[i][j].setScaling(Scaling.fit);
                 arrowImages[i][j].setColor(Color.WHITE);
-                if (j == 0) {
-                    arrowImages[i][j].setRotation(-45f);
-                } else if (j == 1) {
-                    arrowImages[i][j].setRotation(45f);
-                } else if (j == 2) {
-                    arrowImages[i][j].setRotation(135f);
-                } else if (j == 3) {
-                    arrowImages[i][j].setRotation(-135f);
-                }
+                arrowImages[i][j].setRotation(-45f + (j * 90));
                 menus[i].addActor(arrowImages[i][j]);
             }
 

@@ -196,7 +196,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         player.completeMovement();
         player.updatedDirection = player.direction = null;
 
-        Cell playerCell = mapGrid[player.roundedPosition.y][player.roundedPosition.x];
+        Cell playerCell = mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()];
         if (playerCell.cellColor == null) {
             playerCell.cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
             map.updateMap(players, null);
@@ -239,8 +239,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         int colCount = mapGrid[0].length;
 
         Player player = players[0];
-        int playerPosX = player.roundedPosition.x;
-        int playerPosY = player.roundedPosition.y;
+        int playerPosX = player.getRoundedPositionX();
+        int playerPosY = player.getRoundedPositionY();
 
         Random rand = new Random();
 
@@ -265,8 +265,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
 
         InputMultiplexer inputMultiplexer = new InputMultiplexer(this, screenStage);
         if (playerInteractable) {
-            inputMultiplexer.addProcessor(players[0]);
-            inputMultiplexer.addProcessor(controlManager.getControls());
+            inputMultiplexer.addProcessor(players[0]);                   // Enables Keyboard controls for the player
+            inputMultiplexer.addProcessor(controlManager.getControls()); // Enables on-screen touch controls for players
         }
 
         Gdx.input.setInputProcessor(inputMultiplexer);

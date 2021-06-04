@@ -35,7 +35,7 @@ public class PlayerManager extends InputMultiplexer {
 
         controlManager = new ControlManager(players, stage);
         controlManager.setUpOverlay(!gameManager.gameConnectionManager.isActive, controlIndex, skin, scaleFactor, usedTextures);
-        this.addProcessor(controlManager.getControls());
+        this.addProcessor(controlManager.getControls()); // Enables on-screen touch controls for players
     }
 
     private void initTeamData() {
