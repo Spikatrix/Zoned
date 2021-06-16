@@ -139,11 +139,8 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             outOfBounds = true; // Probably the map changed
         }
 
-
-        if (startPosIndex != -1) {
-            updatePlayerStartPosAttr(playerIndex, startPosIndex);
-            mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()].cellColor = color;
-        }
+        updatePlayerStartPosAttr(playerIndex, startPosIndex);
+        mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()].cellColor = color;
 
         player.color = color;
         GridPoint2 prevLoc = player.getPreviousPosition();
@@ -269,7 +266,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             colorLabel.setAlignment(Align.center);
             playerItem.add(colorLabel).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
         } else {
-            DropDownMenu colorSelector = new DropDownMenu(game.skin, game.getScaleFactor());
+            DropDownMenu<String> colorSelector = new DropDownMenu<>(game.skin, game.getScaleFactor());
             colorSelector.setItems(PlayerColorHelper.getNameList());
             playerItem.add(colorSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
 
@@ -286,7 +283,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             startPosLabel.setAlignment(Align.center);
             playerItem.add(startPosLabel).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
         } else {
-            final DropDownMenu startPosSelector = new DropDownMenu(game.skin, game.getScaleFactor());
+            final DropDownMenu<String> startPosSelector = new DropDownMenu<>(game.skin, game.getScaleFactor());
             startPosSelector.setItems(getStartPosViewNameList());
             playerItem.add(startPosSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
 
@@ -316,11 +313,11 @@ public abstract class LobbyScreenHelper extends ScreenObject {
         return player;
     }
 
-    void updatePlayerAttrs(int playerIndex, boolean readyStatus, int colorIndex, int startPosIndex) {
-        // Not called anywhere as updating the start pos here means we would lose the player previous position needed to update map colors
+    void updatePlayerAttrsAndMap(int playerIndex, String name, boolean readyStatus, int colorIndex, int startPosIndex) {
+        updatePlayerName(playerIndex, name);
         updatePlayerReadyAttr(playerIndex, readyStatus);
         updatePlayerColorAttr(playerIndex, colorIndex);
-        updatePlayerStartPosAttr(playerIndex, startPosIndex);
+        updateMapColor(playerIndex, startPosIndex);
     }
 
     void updatePlayerReadyAttr(int playerIndex, boolean readyStatus) {
@@ -344,7 +341,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             Label colorLabel = ((Label) playerItem.getChild(PlayerItemType.COLOR.ordinal()));
             colorLabel.setText(PlayerColorHelper.getStringFromIndex(colorIndex));
         } else {
-            DropDownMenu colorSelector = ((DropDownMenu) playerItem.getChild(PlayerItemType.COLOR.ordinal()));
+            DropDownMenu<?> colorSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.COLOR.ordinal());
             colorSelector.setSelectedIndex(colorIndex);
         }
     }
@@ -363,7 +360,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             Label startPosLabel = ((Label) playerItem.getChild(PlayerItemType.STARTPOS.ordinal()));
             startPosLabel.setText(startPosition.getViewName());
         } else {
-            DropDownMenu startPosSelector = ((DropDownMenu) playerItem.getChild(PlayerItemType.STARTPOS.ordinal()));
+            DropDownMenu<?> startPosSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.STARTPOS.ordinal());
             startPosSelector.setSelectedIndex(startPosIndex);
         }
     }
@@ -381,11 +378,11 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             return;
         }
 
-        DropDownMenu startPosSelector = (DropDownMenu) ((Table) playerList.getChild(0)).getChild(PlayerItemType.STARTPOS.ordinal());
+        DropDownMenu<String> startPosSelector = (DropDownMenu<String>) ((Table) playerList.getChild(0)).getChild(PlayerItemType.STARTPOS.ordinal());
         startPosSelector.setItems(getStartPosViewNameList());
 
         for (int i = 0; i < playerItemAttributes.size; i++) {
-            updatePlayerStartPosAttr(i, 0);
+            updateMapColor(i, 0);
         }
     }
 

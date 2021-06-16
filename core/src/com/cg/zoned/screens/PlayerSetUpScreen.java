@@ -178,7 +178,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
 
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
-        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];
+        final ButtonGroup<Button>[] colorButtonGroups = new ButtonGroup[playerCount];
         Table playerList = new Table();
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
@@ -187,7 +187,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
             playerItem.add(promptLabels[i]);
 
             colorButtons[i] = new Button[NO_OF_COLORS];
-            colorButtonGroups[i] = new ButtonGroup();
+            colorButtonGroups[i] = new ButtonGroup<>();
             colorButtonGroups[i].setMinCheckCount(1);
             colorButtonGroups[i].setMaxCheckCount(1);
 
@@ -250,7 +250,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 Array<Color> playerColors = new Array<>();
-                for (ButtonGroup buttonGroup : colorButtonGroups) {
+                for (ButtonGroup<Button> buttonGroup : colorButtonGroups) {
                     playerColors.add(buttonGroup.getChecked().getColor());
                 }
 

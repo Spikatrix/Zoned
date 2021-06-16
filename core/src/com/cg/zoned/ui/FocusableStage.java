@@ -531,8 +531,8 @@ public class FocusableStage extends Stage {
             } else if (keyCode == Input.Keys.RIGHT) {
                 return textField.getCursorPosition() == textField.getText().length() && textField.getSelection().isEmpty();
             }
-        } else if (currentFocusedActor instanceof DropDownMenu) {
-            DropDownMenu selectBox = (DropDownMenu) currentFocusedActor;
+        } else if (currentFocusedActor instanceof DropDownMenu<?>) {
+            DropDownMenu<?> selectBox = (DropDownMenu<?>) currentFocusedActor;
             boolean isExpanded = selectBox.isExpanded();
 
             if (isExpanded) {

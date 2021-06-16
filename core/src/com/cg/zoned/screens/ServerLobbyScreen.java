@@ -191,7 +191,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
         Table playerItem = super.newPlayerItem(ipAddress, this);
 
         if (ipAddress == null) {
-            DropDownMenu colorSelector = (DropDownMenu) playerItem.getChild(PlayerItemType.COLOR.ordinal());
+            DropDownMenu<?> colorSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.COLOR.ordinal());
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
@@ -202,14 +202,11 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
                 }
             });
 
-            DropDownMenu startPosSelector = (DropDownMenu) playerItem.getChild(PlayerItemType.STARTPOS.ordinal());
+            DropDownMenu<?> startPosSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.STARTPOS.ordinal());
             startPosSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    int startPosIndex = startPosSelector.getSelectedIndex();
-
-                    /*super.*/updateMapColor(0, startPosIndex);
-
+                    /*super.*/updateMapColor(0, startPosSelector.getSelectedIndex());
                     connectionManager.broadcastPlayerInfo(playerItemAttributes, 0);
                 }
             });

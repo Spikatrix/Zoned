@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -50,7 +51,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
 
     private Player[] players;
     private CheckBox[][] radioButtons;
-    private ButtonGroup[] buttonGroup;
+    private ButtonGroup<Button>[] buttonGroup;
     private Label[] playerLabels;
     private int playerStartIndex;
 
@@ -140,7 +141,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
                 startPosScrollPane.setOverscroll(false, true);
 
                 radioButtons[i] = new CheckBox[startPositions.size];
-                buttonGroup[i] = new ButtonGroup();
+                buttonGroup[i] = new ButtonGroup<>();
                 buttonGroup[i].setMinCheckCount(1);
                 buttonGroup[i].setMaxCheckCount(1);
                 for (int j = 0; j < startPositions.size; j++) {

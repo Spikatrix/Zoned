@@ -89,8 +89,8 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
                 /*super.*/updatePlayerReadyAttr(0, playerIsNotReady);
 
                 Table playerItem = (Table) playerList.getChild(0);
-                DropDownMenu colorSelector = (DropDownMenu) playerItem.getChild(PlayerItemType.COLOR.ordinal());
-                DropDownMenu startPosSelector = (DropDownMenu) playerItem.getChild(PlayerItemType.STARTPOS.ordinal());
+                DropDownMenu<?> colorSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.COLOR.ordinal());
+                DropDownMenu<?> startPosSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.STARTPOS.ordinal());
 
                 colorSelector.setDisabled(playerIsNotReady);
                 startPosSelector.setDisabled(playerIsNotReady);
@@ -128,7 +128,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
         Table playerItem = super.newPlayerItem(name, ready, colorIndex, startPosIndex, this);
 
         if (name == null) {
-            DropDownMenu colorSelector = (DropDownMenu) playerItem.getChild(PlayerItemType.COLOR.ordinal());
+            DropDownMenu<?> colorSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.COLOR.ordinal());
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
@@ -151,7 +151,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
                 }
             });
 
-            DropDownMenu startPosSelector = (DropDownMenu) playerItem.getChild(PlayerItemType.STARTPOS.ordinal());
+            DropDownMenu<?> startPosSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.STARTPOS.ordinal());
             startPosSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
@@ -159,11 +159,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
                         return;
                     }
 
-                    int startPosIndex = startPosSelector.getSelectedIndex();
-
-                    /*super.*/updateMapColor(0, startPosIndex);
-                    /*super.*/updatePlayerStartPosAttr(0, startPosIndex);
-
+                    /*super.*/updateMapColor(0, startPosSelector.getSelectedIndex());
                     connectionManager.broadcastClientInfo(playerItemAttributes.first());
                 }
             });
@@ -203,10 +199,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
         for (int i = 0; i < nameStrings.length; i++) {
             int playerIndex = playerNames.indexOf(nameStrings[i], false);
             if (playerIndex != -1) {
-                super.updatePlayerName(playerIndex, nameStrings[i]); // Name won't be updated so this is not really needed
-                super.updatePlayerColorAttr(playerIndex, colorIndices[i]);
-                super.updatePlayerReadyAttr(playerIndex, ready[i]);
-                super.updateMapColor(playerIndex, startPosIndices[i]);
+                super.updatePlayerAttrsAndMap(playerIndex, nameStrings[i], ready[i], colorIndices[i], startPosIndices[i]);
             } else {
                 addPlayer(nameStrings[i], ready[i], colorIndices[i], startPosIndices[i]);
                 playerNames.add(nameStrings[i]);
@@ -250,10 +243,6 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
         this.map = new com.cg.zoned.Map(this.mapGrid, shapeDrawer);
         setCameraPosition();
         resetStartPosLabels();
-
-        for (int i = 0; i < players.length; i++) {
-            updateMapColor(i, 0);
-        }
 
         this.mapLabel.setText(preparedMapData.map.getName());
         readyButton.setDisabled(false);
