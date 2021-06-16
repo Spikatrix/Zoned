@@ -8,7 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 
-public class DropDownMenu extends SelectBox<String> {
+public class DropDownMenu<T> extends SelectBox<T> {
     private float moveAmount = 8f;
     private float padding = 16f;
 
@@ -30,8 +30,8 @@ public class DropDownMenu extends SelectBox<String> {
         this.setAlignment(Align.center);
     }
 
-    public void append(String s) {
-        Array<String> itemList = getItems();
+    public void append(T s) {
+        Array<T> itemList = getItems();
         itemList.add(s);
         setItems(itemList);
     }
@@ -65,6 +65,7 @@ public class DropDownMenu extends SelectBox<String> {
 
     @Override
     public float getPrefWidth() {
+        // A bit of horizontal padding between the dropdown list edge and its contents
         return super.getPrefWidth() + padding;
     }
 
