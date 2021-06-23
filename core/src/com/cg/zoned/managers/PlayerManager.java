@@ -148,17 +148,32 @@ public class PlayerManager extends InputMultiplexer {
         return leadingTeam;
     }
 
-    public void forceEndTurn() {
+    /**
+     * Used to check if at least one player is/was moving.
+     * Sets all players to their target position if completeMovement is set.
+     *
+     * @param completeMovement Used to complete all player's movements
+     * @return true if a player is/was moving, false if all players were done moving already
+     */
+    public boolean movementInProgress(boolean completeMovement) {
+        boolean movementStatus = false;
         for (Player player : players) {
-            player.completeMovement();
+            if (player.isMoving()) {
+                movementStatus = true;
+                if (completeMovement) {
+                    player.completeMovement();
+                }
+            }
         }
+
+        return movementStatus;
     }
 
     public void renderPlayerControlPrompt(ShapeDrawer shapeDrawer, float delta) {
         controlManager.renderPlayerControlPrompt(shapeDrawer, delta);
     }
 
-    public int getPlayerIndex(String name) {
+    public static int getPlayerIndex(Player[] players, String name) {
         for (int i = 0; i < players.length; i++) {
             if (players[i].name.equals(name)) {
                 return i;

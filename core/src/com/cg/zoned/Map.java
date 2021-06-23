@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Align;
@@ -27,7 +28,7 @@ public class Map {
     public int cols;
     private int coloredCellCount = 0;
 
-    private boolean playerMoved = true;
+    private boolean playerMoved;
 
     private Rectangle userViewRect;
 
@@ -210,73 +211,145 @@ public class Map {
     }
 
     public void update(PlayerManager playerManager, Player[] players, float delta) {
-        // Used to synchronize movement of all players so that every one of them moves in sync
-        boolean waitForMovementCompletion = false;
-
-        for (Player player : players) {
-            if (player.direction != null) {
-                if (waitForMovementCompletion && !player.isMoving()) {
-                    continue;
-                } else if (player.isMoving()) {
-                    waitForMovementCompletion = true;
-                    player.move(delta);
-                    continue;
-                }
-
-                Player.Direction direction = player.direction;
-                int rPosX = player.getRoundedPositionX();
-                int rPosY = player.getRoundedPositionY();
-
-                boolean atLeftEdge = rPosX == 0;
-                boolean atRightEdge = rPosX == cols - 1;
-                boolean atTopEdge = rPosY == rows - 1;
-                boolean atBottomEdge = rPosY == 0;
-
-                playerMoved = true;
-
-                if ((direction == Player.Direction.UP    && !atTopEdge    && mapGrid[rPosY + 1][rPosX].isMovable) ||
-                    (direction == Player.Direction.RIGHT && !atRightEdge  && mapGrid[rPosY][rPosX + 1].isMovable) ||
-                    (direction == Player.Direction.DOWN  && !atBottomEdge && mapGrid[rPosY - 1][rPosX].isMovable) ||
-                    (direction == Player.Direction.LEFT  && !atLeftEdge   && mapGrid[rPosY][rPosX - 1].isMovable)) {
-
-                    player.moveTo(direction, delta);
-                } else {
-                    // Simulate a fake movement
-                    player.fakeMove(delta);
-                }
-            }
-        }
-
-        if (!waitForMovementCompletion && playerMoved) {
-            // If movement(s) are completed and
-            // If at least one player moved, update the map grid
+        // If movement(s) have been completed and at least one player moved
+        boolean test = updatePlayerPositions(players, delta);
+        //Gdx.app.log(Constants.LOG_TAG, "test: " + test + " pMoved: " + playerMoved);
+        if (test && playerMoved) {
             playerMoved = false;
+            // Update the map grid data
             updateMap(players, playerManager);
         }
     }
 
-    public void updateMap(Player[] players, PlayerManager playerManager) {
-        setMapWeights(players);
-        setMapColors(playerManager, players);
-        updateCapturePercentage(playerManager);
+    /**
+     * Starts and continues player movements
+     *
+     * @param players The list of players
+     * @param delta   The time passed between two successive frames
+     * @return        true if all player movements have been completed, false if not
+     */
+    public boolean updatePlayerPositions(Player[] players, float delta) {
+        boolean completedMovement = false;
+        for (Player player : players) {
+            // If true, the player is in the middle of a movement
+            if (player.isMoving()) {
+                // Continue the current movement
+                player.move(delta);
+            } else {
+                // Start a new movement with the player's set direction
+                if (beginPlayerMovement(player, delta)) {
+                    playerMoved = true;
+                }
+            }
+
+            // True if the current movement has been completed
+            if (!player.isMoving()) {
+                completedMovement = true;
+            }
+        }
+
+        return completedMovement;
     }
 
-    private void setMapWeights(Player[] players) {
-        for (Player player : players) {
-            mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()].playerCount++;
-
-            if (player.previousPositionAvailable()) {
-                mapGrid[player.getPreviousPositionY()][player.getPreviousPositionX()].playerCount--;
-            } else {
-                player.initPrevPosition();
-            }
+    /**
+     * Starts the player movement based on their set direction
+     *
+     * @param player The player to start movement
+     * @param delta  The time passed between two successive frames
+     * @return true if the movement was not a fake one, false otherwise
+     */
+    private boolean beginPlayerMovement(Player player, float delta) {
+        if (isValidMovement(player, player.direction)) {
+            player.moveTo(player.direction, delta);
+            return true;
+        } else {
+            // Simulate a fake movement
+            player.moveTo(null, delta);
+            return false;
         }
     }
 
-    private void setMapColors(PlayerManager playerManager, Player[] players) {
-        for (Player player : players) {
-            int rPosX = player.getRoundedPositionX();
-            int rPosY = player.getRoundedPositionY();
+    public boolean isValidMovement(Player player, Player.Direction direction) {
+        return isValidMovement(player.getRoundedPositionX(), player.getRoundedPositionY(), direction);
+    }
+
+    public boolean isValidMovement(GridPoint2 pos, Player.Direction direction) {
+        return isValidMovement(pos.x, pos.y, direction);
+    }
+
+    private boolean isValidMovement(int posX, int posY, Player.Direction direction) {
+        boolean atLeftEdge = posX == 0;
+        boolean atRightEdge = posX == cols - 1;
+        boolean atTopEdge = posY == rows - 1;
+        boolean atBottomEdge = posY == 0;
+
+        return (direction == Player.Direction.UP    && !atTopEdge    && mapGrid[posY + 1][posX].isMovable) ||
+               (direction == Player.Direction.RIGHT && !atRightEdge  && mapGrid[posY][posX + 1].isMovable) ||
+               (direction == Player.Direction.DOWN  && !atBottomEdge && mapGrid[posY - 1][posX].isMovable) ||
+               (direction == Player.Direction.LEFT  && !atLeftEdge   && mapGrid[posY][posX - 1].isMovable);
+    }
+
+    public void updateMap(PlayerManager playerManager) {
+        updateMap(playerManager.getPlayers(), playerManager);
+    }
+
+    public void updateMap(Player[] players, PlayerManager playerManager) {
+        // This method exists because `playerManager` can be null (Like in the tutorial)
+        updateMap(players, playerManager, null, null);
+    }
+
+    public void updateMap(Player[] players, PlayerManager playerManager, GridPoint2[] prevPos, GridPoint2[] currPos) {
+        Gdx.app.log(Constants.LOG_TAG, "Update map called at " + System.currentTimeMillis());
+        setMapWeights(players, prevPos, currPos);
+        setMapColors(playerManager, players, currPos);
+        updateCapturePercentage(playerManager);
+    }
+
+    private void setMapWeights(Player[] players, GridPoint2[] prevPos, GridPoint2[] currPos) {
+        for (int i = 0; i < players.length; i++) {
+            int rPosY, rPosX, pPosY, pPosX;
+            if (prevPos == null || currPos == null) {
+                rPosX = players[i].getRoundedPositionX();
+                rPosY = players[i].getRoundedPositionY();
+                pPosX = players[i].getPreviousPositionX();
+                pPosY = players[i].getPreviousPositionY();
+            } else {
+                rPosX = currPos[i].x;
+                rPosY = currPos[i].y;
+                pPosX = prevPos[i].x;
+                pPosY = prevPos[i].y;
+            }
+
+            // If false, previous position is unavailable (Should be the very first turn)
+            if (pPosX >= 0 && pPosY >= 0) {
+                mapGrid[pPosY][pPosX].playerCount--;
+            }
+
+            mapGrid[rPosY][rPosX].playerCount++;
+        }
+
+        for (int i = rows - 1; i >= 0; i--) {
+            StringBuilder line = new StringBuilder();
+            for (int j = 0; j < cols; j++) {
+                line.append(mapGrid[i][j].playerCount).append(" ");
+            }
+            Gdx.app.log(Constants.LOG_TAG, line.toString());
+        }
+    }
+
+    private void setMapColors(PlayerManager playerManager, Player[] players, GridPoint2[] currPos) {
+        for (int i = 0; i < players.length; i++) {
+            Player player = players[i];
+
+            int rPosY, rPosX;
+            if (currPos == null) {
+                rPosX = players[i].getRoundedPositionX();
+                rPosY = players[i].getRoundedPositionY();
+            } else {
+                rPosX = currPos[i].x;
+                rPosY = currPos[i].y;
+            }
+
             if (mapGrid[rPosY][rPosX].cellColor == null && mapGrid[rPosY][rPosX].playerCount == 1) {
                 // TODO: Should we allow multiple players of the same team in the same location capture the cell?
                 mapGrid[rPosY][rPosX].cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);

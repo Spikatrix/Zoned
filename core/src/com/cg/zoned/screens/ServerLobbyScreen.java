@@ -18,6 +18,7 @@ import com.cg.zoned.MapSelector;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
 import com.cg.zoned.managers.AnimationManager;
+import com.cg.zoned.managers.PlayerManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.ui.DropDownMenu;
@@ -234,7 +235,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Kick },
                 false, button -> {
                     if (button == FocusableStage.DialogButton.Kick) {
-                        int playerIndex = getPlayerIndex(finalPlayerName);
+                        int playerIndex = PlayerManager.getPlayerIndex(players, finalPlayerName);
 
                         if (playerIndex == 0) {
                             // Close the server and go back because the server kicked itself
@@ -245,16 +246,6 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
                         }
                     }
                 });
-    }
-
-    private int getPlayerIndex(String name) {
-        for (int i = 0; i < players.length; i++) {
-            if (players[i].name.equals(name)) {
-                return i;
-            }
-        }
-
-        return -1;
     }
 
     public void updatePlayerDetails(int playerIndex, String clientName) {

@@ -38,11 +38,14 @@ public class GameConnectionManager implements GameConnectionHandler {
     // Used by clients to store directions received from the server for processing later
     private Array<BufferDirections> clientDirectionBacklog;
 
+    // Used by clients to handle player position predictions
+    private ClientPredictionHandler clientPredictionHandler;
+
     // Used by clients to display their ping to the server. On the server, this is always zero
     private int ping;
 
-    // Gdx.app.postRunnables are required in several methods below running on the kryonet thread
-    // in order to properly sync multiple requests
+    // Gdx.app.postRunnables are required in several methods below that run on the kryonet thread
+    // in order to properly sync multiple requests with the main GDX thread
 
     public GameConnectionManager(GameManager gameManager, Server server, Client client) {
         isActive = server != null || client != null;
@@ -67,6 +70,15 @@ public class GameConnectionManager implements GameConnectionHandler {
     }
 
     /**
+     * Used to enable client side predictions, called from the client
+     */
+    public void initClientPrediction() {
+        Player[] players = gameManager.playerManager.getPlayers();
+        clientPredictionHandler = new ClientPredictionHandler(players,
+                gameManager.directionBufferManager, gameManager.playerManager);
+    }
+
+    /**
      * Called when the server receives direction information from a client
      * The server then updates the client's `updatedDirection` which is used
      * in {@link PlayerManager#updatePlayerDirectionBuffer()} called from {@link #serverCommunicate()}
@@ -78,7 +90,7 @@ public class GameConnectionManager implements GameConnectionHandler {
         Gdx.app.postRunnable(() -> {
                 Player[] players = gameManager.playerManager.getPlayers();
 
-                int playerIndex = gameManager.playerManager.getPlayerIndex(bd.playerNames[0]);
+                int playerIndex = PlayerManager.getPlayerIndex(players, bd.playerNames[0]);
                 if (playerIndex != -1) {
                     players[playerIndex].updatedDirection = bd.directions[0];
                 }
@@ -95,51 +107,73 @@ public class GameConnectionManager implements GameConnectionHandler {
     @Override
     public void clientUpdateDirections(final BufferDirections bd, final int returnTripTime) {
         Gdx.app.postRunnable(() -> {
+            Gdx.app.log(Constants.LOG_TAG, "Incoming package");
             clientDirectionBacklog.add(bd);
             ping = returnTripTime;
         });
     }
 
     /**
-     * Called in  every frame of the client for processing the direction backlog for applying turns.
+     * Called in every frame of the client for processing the direction backlog for applying turns.
      * The backlog is filled from {@link #clientUpdateDirections(BufferDirections, int)} when receiving
      * direction information from the server
      *
+     * The client predicted positions are also checked and applied accordingly from here if it was initialized from
+     * {@link #initClientPrediction()}. The predicted positions are filled from {@link #clientCommunicate()}
+     *
      * @param map The map object used to fast forward turns in case multiple packets are available for processing
      */
+    private void processClientLogs(Map map) {
+        if (clientPredictionHandler != null) {
+            clientPredictionHandler.verifyClientPredictions(clientDirectionBacklog, map);
+        }
+
+        if (clientDirectionBacklog.notEmpty()) {
+            processClientBacklog(map);
+        }
+    }
+
     private void processClientBacklog(Map map) {
-        if (client == null || clientDirectionBacklog.size == 0) {
-            return;
-        }
-
-        // Force end the current turn, sets all players to their target position
-        gameManager.playerManager.forceEndTurn();
-
         Player[] players = gameManager.playerManager.getPlayers();
-        boolean fastForwardTurns = clientDirectionBacklog.size > 1;
 
-        if (fastForwardTurns) {
+        if (clientPredictionHandler == null && gameManager.playerManager.movementInProgress(true)) {
             // Update the map data for the previous turn
-            map.updateMap(players, gameManager.playerManager);
+            Gdx.app.log(Constants.LOG_TAG, "Calling updateMap from backlog");
+            map.updateMap(gameManager.playerManager);
         }
 
+        Gdx.app.log(Constants.LOG_TAG, "Processing " + clientDirectionBacklog.size + " turns...");
         for (int i = 0; i < clientDirectionBacklog.size; i++) {
             BufferDirections bd = clientDirectionBacklog.get(i);
+            Gdx.app.log(Constants.LOG_TAG, "Handling backlog [" + bd.directions[0] + " " + bd.directions[1] + "] (server, client)");
 
             for (int j = 0; j < bd.playerNames.length; j++) {
-                int playerIndex = gameManager.playerManager.getPlayerIndex(bd.playerNames[j]);
+                int playerIndex = PlayerManager.getPlayerIndex(players, bd.playerNames[j]);
                 gameManager.directionBufferManager.updateDirectionBuffer(bd.directions[j], playerIndex);
+                /*if (clientPredictionHandler != null) {
+                    clientPredictionHandler.updateVerifiedPlayerPosition(playerIndex, bd.directions[j], map);
+                }*/
             }
 
+            Gdx.app.log(Constants.LOG_TAG, "Setting dirs [" + gameManager.directionBufferManager.getDirection(0) + ", " + gameManager.directionBufferManager.getDirection(1) + "]");
             gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
 
-            if (fastForwardTurns) {
-                // Fast forward player movement and update map data
-                map.update(gameManager.playerManager, Constants.PLAYER_MOVEMENT_MAX_TIME);
+            if (clientPredictionHandler != null) {
+                clientPredictionHandler.updateMapColors(map, gameManager.directionBufferManager.getDirectionBuffer());
+            }
+
+            if (i != clientDirectionBacklog.size - 1) {
+                // Fast forward player movement and update map data for the
+                // current turn as there are more turns left to process
+                Gdx.app.log(Constants.LOG_TAG, "Fast forwarding turn");
+                if (clientPredictionHandler == null) {
+                    map.update(gameManager.playerManager, Constants.PLAYER_MOVEMENT_MAX_TIME);
+                } else {
+                    map.updatePlayerPositions(players, Constants.PLAYER_MOVEMENT_MAX_TIME);
+                }
             }
         }
 
-        gameManager.directionBufferManager.clearBuffer(); // Not really required to clear
         clientDirectionBacklog.clear();
     }
 
@@ -148,13 +182,24 @@ public class GameConnectionManager implements GameConnectionHandler {
      * Sets and broadcasts the direction of the player in the server/client
      *
      * @param map Used by the client to fast forward turns in case it missed a couple
+     * @param delta
      */
-    public void serverClientCommunicate(Map map) {
+    public void serverClientCommunicate(Map map, float delta) {
         if (server != null) {
             serverCommunicate();
         } else if (client != null) {
-            processClientBacklog(map);
+            processClientLogs(map);
+
             clientCommunicate();
+            performClientPredictions();
+        }
+
+        if (server != null || (client != null && clientPredictionHandler == null)) {
+            // Update the map for the server and the client if prediction is not enabled
+            map.update(gameManager.playerManager, delta);
+        } else if (client != null) {
+            // Move players in the client without updating the map as prediction is enabled
+            map.updatePlayerPositions(gameManager.playerManager.getPlayers(), delta);
         }
     }
 
@@ -162,16 +207,16 @@ public class GameConnectionManager implements GameConnectionHandler {
      * Called in the server every render frame to process turns in the server
      */
     private void serverCommunicate() {
-        Player[] players = gameManager.playerManager.getPlayers();
         gameManager.playerManager.updatePlayerDirectionBuffer();
 
-        if (players[0].direction == null && gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
+        if (readyForNextTurn()) {
             serverProcessTurn();
         }
     }
 
     private void serverProcessTurn() {
         gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
+        Gdx.app.log(Constants.LOG_TAG, "Server broadcastin' [" + gameManager.directionBufferManager.getDirection(0) + " " + gameManager.directionBufferManager.getDirection(1) + "]");
         broadcastDirections();
         gameManager.directionBufferManager.clearBuffer();
     }
@@ -182,11 +227,22 @@ public class GameConnectionManager implements GameConnectionHandler {
     private void clientCommunicate() {
         Player player = gameManager.playerManager.getPlayer(0);
 
-        // No need to waste bandwidth sending the same direction over and over again, send only when it changes
+        // Sends the direction only when it changes instead of wasting bandwidth sending the same direction
         if (previousDirection != player.updatedDirection) {
             previousDirection = player.updatedDirection;
             gameManager.directionBufferManager.updateDirectionBuffer(player.updatedDirection, 0);
             broadcastDirections();
+        }
+    }
+
+    private void performClientPredictions() {
+        if (clientPredictionHandler != null && readyForNextTurn() && !clientPredictionHandler.reachedPredictionLimit()) {
+            // It's time for the next turn, but the client hasn't received the next turn info from the server
+            // So the client predicts and interpolates player position in the mean time instead of waiting
+            Direction[] directions = gameManager.directionBufferManager.getDirectionBuffer();
+            Gdx.app.log(Constants.LOG_TAG, "Performing prediction with [" + directions[0] + ", " + directions[1] + "]");
+            clientPredictionHandler.applyPrediction();
+            Gdx.app.log(Constants.LOG_TAG, "Prediction size: " + clientPredictionHandler.getSize() + " Backlog size: " + clientDirectionBacklog.size);
         }
     }
 
@@ -214,6 +270,12 @@ public class GameConnectionManager implements GameConnectionHandler {
         } else if (client != null) {
             client.sendTCP(bd);
         }
+    }
+
+    private boolean readyForNextTurn() {
+        Player[] players = gameManager.playerManager.getPlayers();
+        return (!gameManager.playerManager.movementInProgress(false) &&
+                gameManager.directionBufferManager.getBufferUsedCount() == players.length);
     }
 
     /**
@@ -246,7 +308,7 @@ public class GameConnectionManager implements GameConnectionHandler {
     }
 
     private void endGame() {
-        gameManager.gameConnectionManager.close();
+        this.close();
         gameManager.endGame();
     }
 

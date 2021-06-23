@@ -50,10 +50,11 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private float bgAlpha = .25f;
 
     private Overlay screenOverlay;
-    private boolean gameCompleteFadeOutDone = false;
+    private boolean gameCompleteFadeOutDone;
 
     private ScoreBar scoreBars;
-    private boolean gamePaused = false;
+    private boolean gamePaused;
+    private boolean gameDisconnected;
 
     private GridPoint2[] playerStartPositions;
 
@@ -84,18 +85,10 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         this.map = new Map(mapData.mapGrid, mapData.wallCount, this.shapeDrawer);
         this.map.initFloodFillVars();
 
-        if (Constants.DISPLAY_EXTENDED_GL_STATS) {
-            profiler = new GLProfiler(Gdx.graphics);
-            profiler.enable();
-        }
-
         this.backgroundColorOverlay = new Overlay(new Color(0, 0, 0, bgAlpha), 5.0f);
         this.screenOverlay = new Overlay(new Color(Color.CLEAR), new Color(Color.BLACK), 6.0f);
         this.screenOverlay.drawOverlay(false);
-
-        BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
-        initViewports(players, map);
-        map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
+        this.scoreBars = new ScoreBar(screenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
 
         playerStartPositions = new GridPoint2[players.length];
         for (int i = 0; i < players.length; i++) {
@@ -103,7 +96,20 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             playerStartPositions[i] = players[i].getRoundedPosition();
         }
 
-        this.scoreBars = new ScoreBar(screenStage.getViewport(), this.gameManager.playerManager.getTeamData().size, game.getScaleFactor());
+        if (client != null) {
+            // Enables client side prediction
+            gameManager.gameConnectionManager.initClientPrediction();
+        }
+
+        if (Constants.DISPLAY_EXTENDED_GL_STATS) {
+            profiler = new GLProfiler(Gdx.graphics);
+            profiler.enable();
+        }
+
+        BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
+        initViewports(players, map);
+        map.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
+        map.updateMap(gameManager.playerManager);
     }
 
     private void initViewports(Player[] players, Map map) {
@@ -178,14 +184,15 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if (!gameManager.gameOver) {
-            if (!isSplitscreenMultiplayer()) {      // We're playing on multiple devices (Server-client)
-                gameManager.gameConnectionManager.serverClientCommunicate(map);
-            } else {                                // We're playing on the same device (Splitscreen)
+            if (!isSplitscreenMultiplayer()) {
+                // We're playing on multiple devices (Server-client)
+                gameManager.gameConnectionManager.serverClientCommunicate(map, delta);
+            } else if (!gameDisconnected) {
+                // We're playing on the same device (Splitscreen)
                 gameManager.playerManager.updatePlayerDirections();
+                map.update(gameManager.playerManager, delta);
             }
         }
-
-        map.update(gameManager.playerManager, delta);
 
         drawGameBG(delta);
 
@@ -331,14 +338,14 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         Player[] players = gameManager.playerManager.getPlayers();
         for (int i = 0; i < players.length; i++) {
-            players[i].resetPrevPosition();
             players[i].setPosition(playerStartPositions[i]);
+            players[i].resetPrevPosition();
         }
 
         gameManager.playerManager.resetScores();
         scoreBars.reset();
         map.clearGrid();
-        map.updateMap(players, gameManager.playerManager);
+        map.updateMap(gameManager.playerManager);
     }
 
     private boolean isSplitscreenMultiplayer() {
@@ -381,8 +388,8 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     public void disconnected() {
         Gdx.app.postRunnable(() -> {
+            gameDisconnected = true;
             if (!gameManager.gameOver) {
-                gameManager.playerManager.stopPlayers(false);
                 gameManager.directionBufferManager.clearBuffer();
                 showDisconnectionDialog();
                 Gdx.input.setInputProcessor(screenStage);
