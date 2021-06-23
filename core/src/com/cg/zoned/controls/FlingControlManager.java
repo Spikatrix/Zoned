@@ -130,12 +130,7 @@ public class FlingControlManager extends ControlTypeEntity {
                 clickImage.addAction(
                         Actions.sequence(
                                 Actions.parallel(moveAction, Actions.fadeOut(.2f)),
-                                Actions.run(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        stage.getRoot().removeActor(clickImage);
-                                    }
-                                })
+                                Actions.run(() -> stage.getRoot().removeActor(clickImage))
                         )
                 );
                 clickPoints.removeValue(gameTouchPoint, true);

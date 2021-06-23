@@ -145,8 +145,7 @@ public class ScreenHelper {
             players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
         }
 
-        int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
-        return (Screen) ClassReflection.getConstructors(MapStartPosScreen.class)[0].newInstance(game, mapManager, players, startPosSplitScreenCount);
+        return (Screen) ClassReflection.getConstructors(MapStartPosScreen.class)[0].newInstance(game, mapManager.getPreparedMapData(), players);
     }
 
     private static Screen getGameScreen(Zoned game) throws ReflectionException {

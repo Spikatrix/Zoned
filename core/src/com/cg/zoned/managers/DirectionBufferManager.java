@@ -9,8 +9,8 @@ public class DirectionBufferManager {
     private int directionBufferUsed;
     private int ignoredPlayerCount;
 
-    public DirectionBufferManager(int noOfPlayers) {
-        directionBuffer = new Direction[noOfPlayers];
+    public DirectionBufferManager(int playerCount) {
+        directionBuffer = new Direction[playerCount];
         directionBufferUsed = 0;
         ignoredPlayerCount = 0;
     }

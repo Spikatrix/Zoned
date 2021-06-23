@@ -48,8 +48,10 @@ public final class Constants {
      * Values for smooth player movement among cells in the map
      * Also, this animation speed is what determines each turn time
      */
-    public static final float PLAYER_MOVEMENT_LERP_VALUE = .5f;  // Best value IMO: .5f
-    public static final float PLAYER_MOVEMENT_MAX_TIME   = .25f; // Best value IMO: .25f
+    // Best values (0.5f, 0.25f)
+    // Slow values (1.0f, 0.50f)
+    public static final float PLAYER_MOVEMENT_LERP_VALUE = 0.50f;
+    public static final float PLAYER_MOVEMENT_MAX_TIME   = 0.25f;
 
     /**
      * Available player colors
