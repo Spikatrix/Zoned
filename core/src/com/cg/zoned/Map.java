@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
-import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Align;
@@ -268,14 +267,9 @@ public class Map {
     }
 
     public boolean isValidMovement(Player player, Player.Direction direction) {
-        return isValidMovement(player.getRoundedPositionX(), player.getRoundedPositionY(), direction);
-    }
+        int posX = player.getRoundedPositionX();
+        int posY = player.getRoundedPositionY();
 
-    public boolean isValidMovement(GridPoint2 pos, Player.Direction direction) {
-        return isValidMovement(pos.x, pos.y, direction);
-    }
-
-    private boolean isValidMovement(int posX, int posY, Player.Direction direction) {
         boolean atLeftEdge = posX == 0;
         boolean atRightEdge = posX == cols - 1;
         boolean atTopEdge = posY == rows - 1;
@@ -292,52 +286,27 @@ public class Map {
     }
 
     public void updateMap(Player[] players, PlayerManager playerManager) {
-        // This method exists because `playerManager` can be null (Like in the tutorial)
-        updateMap(players, playerManager, null, null);
-    }
-
-    public void updateMap(Player[] players, PlayerManager playerManager, GridPoint2[] prevPos, GridPoint2[] currPos) {
-        setMapWeights(players, prevPos, currPos);
-        setMapColors(playerManager, players, currPos);
+        // `playerManager` can be null (Like in the tutorial)
+        setMapWeights(players);
+        setMapColors(playerManager, players);
         updateCapturePercentage(playerManager);
     }
 
-    private void setMapWeights(Player[] players, GridPoint2[] prevPos, GridPoint2[] currPos) {
-        for (int i = 0; i < players.length; i++) {
-            int rPosY, rPosX, pPosY, pPosX;
-            if (prevPos == null || currPos == null) {
-                rPosX = players[i].getRoundedPositionX();
-                rPosY = players[i].getRoundedPositionY();
-                pPosX = players[i].getPreviousPositionX();
-                pPosY = players[i].getPreviousPositionY();
-            } else {
-                rPosX = currPos[i].x;
-                rPosY = currPos[i].y;
-                pPosX = prevPos[i].x;
-                pPosY = prevPos[i].y;
-            }
-
+    private void setMapWeights(Player[] players) {
+        for (Player player : players) {
             // If false, previous position is unavailable (Should be the very first turn)
-            if (pPosX >= 0 && pPosY >= 0) {
-                mapGrid[pPosY][pPosX].playerCount--;
+            if (player.hasPreviousPosition()) {
+                mapGrid[player.getPreviousPositionY()][player.getPreviousPositionX()].playerCount--;
             }
 
-            mapGrid[rPosY][rPosX].playerCount++;
+            mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()].playerCount++;
         }
     }
 
-    private void setMapColors(PlayerManager playerManager, Player[] players, GridPoint2[] currPos) {
-        for (int i = 0; i < players.length; i++) {
-            Player player = players[i];
-
-            int rPosY, rPosX;
-            if (currPos == null) {
-                rPosX = players[i].getRoundedPositionX();
-                rPosY = players[i].getRoundedPositionY();
-            } else {
-                rPosX = currPos[i].x;
-                rPosY = currPos[i].y;
-            }
+    private void setMapColors(PlayerManager playerManager, Player[] players) {
+        for (Player player : players) {
+            int rPosX = player.getRoundedPositionX();
+            int rPosY = player.getRoundedPositionY();
 
             if (mapGrid[rPosY][rPosX].cellColor == null && mapGrid[rPosY][rPosX].playerCount == 1) {
                 // TODO: Should we allow multiple players of the same team in the same location capture the cell?

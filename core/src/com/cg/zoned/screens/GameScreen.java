@@ -96,11 +96,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             playerStartPositions[i] = players[i].getRoundedPosition();
         }
 
-        if (client != null) {
-            // Enables client side prediction
-            gameManager.gameConnectionManager.initClientPrediction();
-        }
-
         if (Constants.DISPLAY_EXTENDED_GL_STATS) {
             profiler = new GLProfiler(Gdx.graphics);
             profiler.enable();
@@ -186,10 +181,13 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         if (!gameManager.gameOver) {
             if (!isSplitscreenMultiplayer()) {
                 // We're playing on multiple devices (Server-client)
-                gameManager.gameConnectionManager.serverClientCommunicate(map, delta);
-            } else if (!gameDisconnected) {
+                gameManager.gameConnectionManager.serverClientCommunicate(map);
+            } else {
                 // We're playing on the same device (Splitscreen)
                 gameManager.playerManager.updatePlayerDirections();
+            }
+
+            if (!gameDisconnected) {
                 map.update(gameManager.playerManager, delta);
             }
         }
@@ -291,10 +289,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         }
     }
 
-    private void showDisconnectionDialog() {
-        screenStage.showOKDialog("Disconnected", false, button -> endGame());
-    }
-
     private void showPauseDialog() {
         gamePaused = true;
 
@@ -391,7 +385,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             gameDisconnected = true;
             if (!gameManager.gameOver) {
                 gameManager.directionBufferManager.clearBuffer();
-                showDisconnectionDialog();
+                screenStage.showOKDialog("Disconnected", false, button -> endGame());
                 Gdx.input.setInputProcessor(screenStage);
             }
         });

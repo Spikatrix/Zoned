@@ -38,9 +38,6 @@ public class GameConnectionManager implements GameConnectionHandler {
     // Used by clients to store directions received from the server for processing later
     private Array<BufferDirections> clientDirectionBacklog;
 
-    // Used by clients to handle player position predictions
-    private ClientPredictionHandler clientPredictionHandler;
-
     // Used by clients to display their ping to the server. On the server, this is always zero
     private int ping;
 
@@ -67,15 +64,6 @@ public class GameConnectionManager implements GameConnectionHandler {
             clientDirectionBacklog = new Array<>();
             client.addListener(connListener);
         }
-    }
-
-    /**
-     * Used to enable client side predictions, called from the client
-     */
-    public void initClientPrediction() {
-        Player[] players = gameManager.playerManager.getPlayers();
-        clientPredictionHandler = new ClientPredictionHandler(players,
-                gameManager.directionBufferManager, gameManager.playerManager);
     }
 
     /**
@@ -117,25 +105,16 @@ public class GameConnectionManager implements GameConnectionHandler {
      * The backlog is filled from {@link #clientUpdateDirections(BufferDirections, int)} when receiving
      * direction information from the server
      *
-     * The client predicted positions are also checked and applied accordingly from here if it was initialized from
-     * {@link #initClientPrediction()}. The predicted positions are filled from {@link #clientCommunicate()}
-     *
      * @param map The map object used to fast forward turns in case multiple packets are available for processing
      */
-    private void processClientLogs(Map map) {
-        if (clientPredictionHandler != null) {
-            clientPredictionHandler.verifyClientPredictions(clientDirectionBacklog, map);
-        }
-
-        if (clientDirectionBacklog.notEmpty()) {
-            processClientBacklog(map);
-        }
-    }
-
     private void processClientBacklog(Map map) {
+        if (clientDirectionBacklog.isEmpty()) {
+            return;
+        }
+
         Player[] players = gameManager.playerManager.getPlayers();
 
-        if (clientPredictionHandler == null && gameManager.playerManager.movementInProgress(true)) {
+        if (gameManager.playerManager.movementInProgress(true)) {
             // Update the map data for the previous turn
             map.updateMap(gameManager.playerManager);
         }
@@ -150,18 +129,10 @@ public class GameConnectionManager implements GameConnectionHandler {
 
             gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
 
-            if (clientPredictionHandler != null) {
-                clientPredictionHandler.updateMapColors(map, gameManager.directionBufferManager.getDirectionBuffer());
-            }
-
             if (i != clientDirectionBacklog.size - 1) {
                 // Fast forward player movement and update map data for the
                 // current turn as there are more turns left to process
-                if (clientPredictionHandler == null) {
-                    map.update(gameManager.playerManager, Constants.PLAYER_MOVEMENT_MAX_TIME);
-                } else {
-                    map.updatePlayerPositions(players, Constants.PLAYER_MOVEMENT_MAX_TIME);
-                }
+                map.update(gameManager.playerManager, Constants.PLAYER_MOVEMENT_MAX_TIME);
             }
         }
 
@@ -173,24 +144,13 @@ public class GameConnectionManager implements GameConnectionHandler {
      * Sets and broadcasts the direction of the player in the server/client
      *
      * @param map Used by the client to fast forward turns in case it missed a couple
-     * @param delta Delta time passed used to advance turns
      */
-    public void serverClientCommunicate(Map map, float delta) {
+    public void serverClientCommunicate(Map map) {
         if (server != null) {
             serverCommunicate();
         } else if (client != null) {
-            processClientLogs(map);
-
+            processClientBacklog(map);
             clientCommunicate();
-            performClientPredictions();
-        }
-
-        if (server != null || (client != null && clientPredictionHandler == null)) {
-            // Update the map for the server and the client if prediction is not enabled
-            map.update(gameManager.playerManager, delta);
-        } else if (client != null) {
-            // Move players in the client without updating the map as prediction is enabled
-            map.updatePlayerPositions(gameManager.playerManager.getPlayers(), delta);
         }
     }
 
@@ -222,14 +182,6 @@ public class GameConnectionManager implements GameConnectionHandler {
             previousDirection = player.updatedDirection;
             gameManager.directionBufferManager.updateDirectionBuffer(player.updatedDirection, 0);
             broadcastDirections();
-        }
-    }
-
-    private void performClientPredictions() {
-        if (clientPredictionHandler != null && readyForNextTurn() && !clientPredictionHandler.reachedPredictionLimit()) {
-            // It's time for the next turn, but the client hasn't received the next turn info from the server
-            // So the client predicts and interpolates player position in the mean time instead of waiting
-            clientPredictionHandler.applyPrediction();
         }
     }
 

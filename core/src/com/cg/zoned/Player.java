@@ -9,7 +9,6 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
 public class Player extends InputAdapter {
-    // TODO: Too many public fields. Reduce access level using getters and setters etc
     public Color color;
     public String name;
 
@@ -78,7 +77,7 @@ public class Player extends InputAdapter {
         }
 
         this.targetPosition = new Vector2(this.position);
-        updateTargetPosition(this.targetPosition, direction);
+        updatePosition(this.targetPosition, direction);
 
         this.move(delta);
     }
@@ -131,19 +130,7 @@ public class Player extends InputAdapter {
         }
     }
 
-    public static void updateTargetPosition(Vector2 pos, Direction direction) {
-        if (direction == Direction.LEFT) {
-            pos.x--;
-        } else if (direction == Direction.RIGHT) {
-            pos.x++;
-        } else if (direction == Direction.DOWN) {
-            pos.y--;
-        } else if (direction == Direction.UP) {
-            pos.y++;
-        }
-    }
-
-    public static void updateTargetPosition(GridPoint2 pos, Direction direction) {
+    private void updatePosition(Vector2 pos, Direction direction) {
         if (direction == Direction.LEFT) {
             pos.x--;
         } else if (direction == Direction.RIGHT) {
