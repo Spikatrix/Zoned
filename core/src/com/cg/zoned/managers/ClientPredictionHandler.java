@@ -1,9 +1,7 @@
 package com.cg.zoned.managers;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.utils.Array;
-import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.buffers.BufferDirections;
@@ -53,20 +51,15 @@ public class ClientPredictionHandler {
             }
 
             Player.Direction[] predictedDirections = clientPredictedLog.get(i);
-            Player.Direction[] actualDirections = clientDirectionBacklog.get(i).directions;
 
             // Check if the predicted direction is correct or not
             if (predictedDirectionIsCorrect(predictedDirections, clientDirectionBacklog.get(i))) {
                 // Prediction was right, hooray!
-                Gdx.app.log(Constants.LOG_TAG, "Correct prediction [" + predictedDirections[0] + ", " + predictedDirections[1] + "]" +
-                        " compared to " + " [" + actualDirections[0] + ", " + actualDirections[1] + "]");
-                updateMapColors(map, predictedDirections); // actual and predicted being "equal" doesn't mean they can be used interchangeably
+                updateMapColors(map, predictedDirections);
                 clientPredictedLog.removeIndex(i);
                 clientDirectionBacklog.removeIndex(i--);
             } else {
                 // Uh oh, we got an incorrect prediction
-                Gdx.app.log(Constants.LOG_TAG, "Wrong prediction [" + predictedDirections[0] + ", " + predictedDirections[1] + "]" +
-                        " compared to " + " [" + actualDirections[0] + ", " + actualDirections[1] + "]");
                 clientPredictedLog.clear();
                 correctClient();
                 break;
@@ -112,12 +105,10 @@ public class ClientPredictionHandler {
     }
 
     public void updateVerifiedPlayerPosition(int playerIndex, Player.Direction direction, Map map) {
-        Gdx.app.log(Constants.LOG_TAG, "before " + players[playerIndex].name + " verified curr: " + verifiedPlayerPos[playerIndex] + " | prev: " + verifiedPrevPlayerPos[playerIndex] + " | dir: " + direction);
         verifiedPrevPlayerPos[playerIndex].set(verifiedPlayerPos[playerIndex]);
         if (map.isValidMovement(verifiedPlayerPos[playerIndex], direction)) {
             Player.updateTargetPosition(verifiedPlayerPos[playerIndex], direction);
         }
-        Gdx.app.log(Constants.LOG_TAG, "after  " + players[playerIndex].name + " verified curr: " + verifiedPlayerPos[playerIndex] + " | prev: " + verifiedPrevPlayerPos[playerIndex] + " | dir: " + direction);
     }
 
     public void updateMap(Map map) {

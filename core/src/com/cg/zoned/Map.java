@@ -212,9 +212,7 @@ public class Map {
 
     public void update(PlayerManager playerManager, Player[] players, float delta) {
         // If movement(s) have been completed and at least one player moved
-        boolean test = updatePlayerPositions(players, delta);
-        //Gdx.app.log(Constants.LOG_TAG, "test: " + test + " pMoved: " + playerMoved);
-        if (test && playerMoved) {
+        if (updatePlayerPositions(players, delta) && playerMoved) {
             playerMoved = false;
             // Update the map grid data
             updateMap(players, playerManager);
@@ -299,7 +297,6 @@ public class Map {
     }
 
     public void updateMap(Player[] players, PlayerManager playerManager, GridPoint2[] prevPos, GridPoint2[] currPos) {
-        Gdx.app.log(Constants.LOG_TAG, "Update map called at " + System.currentTimeMillis());
         setMapWeights(players, prevPos, currPos);
         setMapColors(playerManager, players, currPos);
         updateCapturePercentage(playerManager);
@@ -326,14 +323,6 @@ public class Map {
             }
 
             mapGrid[rPosY][rPosX].playerCount++;
-        }
-
-        for (int i = rows - 1; i >= 0; i--) {
-            StringBuilder line = new StringBuilder();
-            for (int j = 0; j < cols; j++) {
-                line.append(mapGrid[i][j].playerCount).append(" ");
-            }
-            Gdx.app.log(Constants.LOG_TAG, line.toString());
         }
     }
 

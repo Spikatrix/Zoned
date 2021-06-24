@@ -107,7 +107,6 @@ public class GameConnectionManager implements GameConnectionHandler {
     @Override
     public void clientUpdateDirections(final BufferDirections bd, final int returnTripTime) {
         Gdx.app.postRunnable(() -> {
-            Gdx.app.log(Constants.LOG_TAG, "Incoming package");
             clientDirectionBacklog.add(bd);
             ping = returnTripTime;
         });
@@ -138,24 +137,17 @@ public class GameConnectionManager implements GameConnectionHandler {
 
         if (clientPredictionHandler == null && gameManager.playerManager.movementInProgress(true)) {
             // Update the map data for the previous turn
-            Gdx.app.log(Constants.LOG_TAG, "Calling updateMap from backlog");
             map.updateMap(gameManager.playerManager);
         }
 
-        Gdx.app.log(Constants.LOG_TAG, "Processing " + clientDirectionBacklog.size + " turns...");
         for (int i = 0; i < clientDirectionBacklog.size; i++) {
             BufferDirections bd = clientDirectionBacklog.get(i);
-            Gdx.app.log(Constants.LOG_TAG, "Handling backlog [" + bd.directions[0] + " " + bd.directions[1] + "] (server, client)");
 
             for (int j = 0; j < bd.playerNames.length; j++) {
                 int playerIndex = PlayerManager.getPlayerIndex(players, bd.playerNames[j]);
                 gameManager.directionBufferManager.updateDirectionBuffer(bd.directions[j], playerIndex);
-                /*if (clientPredictionHandler != null) {
-                    clientPredictionHandler.updateVerifiedPlayerPosition(playerIndex, bd.directions[j], map);
-                }*/
             }
 
-            Gdx.app.log(Constants.LOG_TAG, "Setting dirs [" + gameManager.directionBufferManager.getDirection(0) + ", " + gameManager.directionBufferManager.getDirection(1) + "]");
             gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
 
             if (clientPredictionHandler != null) {
@@ -165,7 +157,6 @@ public class GameConnectionManager implements GameConnectionHandler {
             if (i != clientDirectionBacklog.size - 1) {
                 // Fast forward player movement and update map data for the
                 // current turn as there are more turns left to process
-                Gdx.app.log(Constants.LOG_TAG, "Fast forwarding turn");
                 if (clientPredictionHandler == null) {
                     map.update(gameManager.playerManager, Constants.PLAYER_MOVEMENT_MAX_TIME);
                 } else {
@@ -182,7 +173,7 @@ public class GameConnectionManager implements GameConnectionHandler {
      * Sets and broadcasts the direction of the player in the server/client
      *
      * @param map Used by the client to fast forward turns in case it missed a couple
-     * @param delta
+     * @param delta Delta time passed used to advance turns
      */
     public void serverClientCommunicate(Map map, float delta) {
         if (server != null) {
@@ -216,7 +207,6 @@ public class GameConnectionManager implements GameConnectionHandler {
 
     private void serverProcessTurn() {
         gameManager.playerManager.setPlayerDirections(gameManager.directionBufferManager.getDirectionBuffer());
-        Gdx.app.log(Constants.LOG_TAG, "Server broadcastin' [" + gameManager.directionBufferManager.getDirection(0) + " " + gameManager.directionBufferManager.getDirection(1) + "]");
         broadcastDirections();
         gameManager.directionBufferManager.clearBuffer();
     }
@@ -239,10 +229,7 @@ public class GameConnectionManager implements GameConnectionHandler {
         if (clientPredictionHandler != null && readyForNextTurn() && !clientPredictionHandler.reachedPredictionLimit()) {
             // It's time for the next turn, but the client hasn't received the next turn info from the server
             // So the client predicts and interpolates player position in the mean time instead of waiting
-            Direction[] directions = gameManager.directionBufferManager.getDirectionBuffer();
-            Gdx.app.log(Constants.LOG_TAG, "Performing prediction with [" + directions[0] + ", " + directions[1] + "]");
             clientPredictionHandler.applyPrediction();
-            Gdx.app.log(Constants.LOG_TAG, "Prediction size: " + clientPredictionHandler.getSize() + " Backlog size: " + clientDirectionBacklog.size);
         }
     }
 
