@@ -177,9 +177,4 @@ public class LoadingScreen extends ScreenObject {
 
         screenStage.addAction(sequenceAction);
     }
-
-    @Override
-    public void dispose() {
-        super.dispose();
-    }
 }

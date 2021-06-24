@@ -274,11 +274,6 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         displayFPS();
     }
 
-    @Override
-    public void dispose() {
-        super.dispose();
-    }
-
     /**
      * Actions to do when the back/escape button is pressed
      *

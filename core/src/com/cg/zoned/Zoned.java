@@ -67,11 +67,6 @@ public class Zoned extends Game {
         return SCALE_FACTOR;
     }
 
-    @Override
-    public void render() {
-        super.render();
-    }
-
     public void setAssetManager(AssetManager assetManager) {
         assets.setAssetManager(assetManager);
     }

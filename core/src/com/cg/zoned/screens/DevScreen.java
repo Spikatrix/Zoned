@@ -132,11 +132,6 @@ public class DevScreen extends ScreenObject implements InputProcessor {
         }
     }
 
-    @Override
-    public void dispose() {
-        super.dispose();
-    }
-
     /**
      * Actions to do when the back/escape button is pressed
      *
