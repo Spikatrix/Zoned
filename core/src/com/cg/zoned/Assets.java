@@ -56,7 +56,7 @@ public class Assets {
         REGULAR             ("glametrix.otf", 32), // Default font, required to be named as 'REGULAR'
         SMALL               ("bebasneue.otf", 18),
         PLAYER_LABEL_NOSCALE("bebasneue.otf",
-                (int) (Map.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
+                (int) (MapRenderer.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
         // Player label font height is based on cell size minus a bit of line width as calculated above
 
         private String fontFileName;

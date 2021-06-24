@@ -166,7 +166,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
             }
         }
 
-        Animation playButtonAnimation = new Animation<>(1 / 15f, playFrames);
+        Animation<TextureRegion> playButtonAnimation = new Animation<>(1 / 15f, playFrames);
 
         float buttonSize = 144f;
 
@@ -226,15 +226,15 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
             backgroundColorImage.setScaling(Scaling.stretch);
 
             Image backgroundImage = null;
-            if (gameModes[i].previewLocation != null) {
-                Texture backgroundImageTexture = new Texture(Gdx.files.internal(gameModes[i].previewLocation));
+            if (gameModes[i].getPreviewLocation() != null) {
+                Texture backgroundImageTexture = new Texture(Gdx.files.internal(gameModes[i].getPreviewLocation()));
                 usedTextures.add(backgroundImageTexture);
                 backgroundImage = new Image(backgroundImageTexture);
                 backgroundImage.setScaling(Scaling.fit);
                 backgroundImage.getColor().a = .3f;
             }
 
-            Label modeLabel = new Label(gameModes[i].name, game.skin);
+            Label modeLabel = new Label(gameModes[i].getName(), game.skin);
             modeLabel.setAlignment(Align.center);
 
             final int finalI = i;
@@ -273,7 +273,8 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 public void clicked(InputEvent event, float x, float y) {
                     try {
                         bgAlpha = 0;
-                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) ClassReflection.getConstructor(gameModes[finalI].targetClass, Zoned.class).newInstance(game));
+                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this,
+                                (Screen) ClassReflection.getConstructor(gameModes[finalI].getTargetClass(), Zoned.class).newInstance(game));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
