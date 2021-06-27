@@ -59,7 +59,7 @@ public class SplitViewportManager {
         dragOffset = new Vector2[splitCount];
         for (int i = 0; i < splitCount; i++) {
             dragOffset[i] = new Vector2(0, 0);
-            touchPoint[i] = new GameTouchPoint(0, 0, -1, null, -1);
+            touchPoint[i] = new GameTouchPoint(0, 0);
         }
 
         screenStage.addListener(new ClickListener() {

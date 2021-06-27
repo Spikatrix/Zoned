@@ -29,11 +29,11 @@ public class ControlManager {
             new ControlType("D-Pad",
                     "images/control_icons/ic_control_piemenu_off.png",
                     "images/control_icons/ic_control_piemenu_on.png",
-                    new PieMenuControlManager()),
+                    PieMenuControlManager.class),
             new ControlType("Fling",
                     "images/control_icons/ic_control_fling_off.png",
                     "images/control_icons/ic_control_fling_on.png",
-                    new FlingControlManager()),
+                    FlingControlManager.class),
     };
 
     private ControlTypeEntity currentControls = null;
@@ -49,8 +49,13 @@ public class ControlManager {
     }
 
     public void setUpControls(int controlIndex, boolean isSplitScreen, float scaleFactor, Array<Texture> usedTextures) {
-        currentControls = CONTROL_TYPES[controlIndex].controlTypeEntity;
-        currentControls.init(players, isSplitScreen, stage, scaleFactor, usedTextures);
+        currentControls = null;
+        try {
+            currentControls = (ControlTypeEntity) CONTROL_TYPES[controlIndex].controlTypeEntity.getConstructors()[0]
+                    .newInstance(players, isSplitScreen, stage, scaleFactor, usedTextures);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void setUpOverlay(boolean isSplitScreen, int controlIndex, Skin skin, float scaleFactor, Array<Texture> usedTextures) {

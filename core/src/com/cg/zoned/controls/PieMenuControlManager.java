@@ -9,8 +9,6 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
@@ -23,16 +21,14 @@ import java.util.Arrays;
 public class PieMenuControlManager extends ControlTypeEntity {
     private final int piemenuRadius = 46;
     private final int arrowImagePadding = 10;
+
     private PieMenu[] menus;
     private int[] pointers;
     private Vector2[] coords;
     private Image[][] arrowImages;
 
-    public PieMenuControlManager() {
-    }
-
-    public void init(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
-        super.init(players, isSplitScreen, stage, scaleFactor, usedTextures);
+    public PieMenuControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
+        super(players, isSplitScreen, stage, scaleFactor, usedTextures);
 
         this.menus = new PieMenu[players.length];
         this.pointers = new int[players.length];
@@ -46,9 +42,8 @@ public class PieMenuControlManager extends ControlTypeEntity {
     private void setUpPieMenus(Array<Texture> usedTextures) {
         Texture arrowTexture = new Texture(Gdx.files.internal("images/control_icons/ic_arrow.png"));
         usedTextures.add(arrowTexture);
-        final Drawable arrow = new TextureRegionDrawable(arrowTexture);
-        this.arrowImages = new Image[menus.length][];
 
+        this.arrowImages = new Image[menus.length][];
         for (int i = 0; i < menus.length; i++) {
             final PieMenu.PieMenuStyle style = new PieMenu.PieMenuStyle();
             style.separatorWidth = 1;
@@ -60,10 +55,10 @@ public class PieMenuControlManager extends ControlTypeEntity {
             menus[i] = new PieMenu(ShapeDrawer.get1x1TextureRegion(usedTextures), style, piemenuRadius * scaleFactor);
 
             arrowImages[i] = new Image[]{
-                    new Image(arrow),
-                    new Image(arrow),
-                    new Image(arrow),
-                    new Image(arrow),
+                    new Image(arrowTexture),
+                    new Image(arrowTexture),
+                    new Image(arrowTexture),
+                    new Image(arrowTexture),
             };
             float arrowSize = Math.max(menus[i].getPreferredRadius() - (arrowImagePadding * scaleFactor),
                     (arrowImagePadding * scaleFactor));
@@ -117,16 +112,7 @@ public class PieMenuControlManager extends ControlTypeEntity {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
-            int playerIndex = 0;
-            if (isSplitScreen) {
-                for (int i = 1; i < this.players.length; i++) {
-                    if (screenX > ((stage.getWidth() / this.players.length) * i)) {
-                        playerIndex++;
-                    } else {
-                        break;
-                    }
-                }
-            }
+            int playerIndex = getPlayerIndex(screenX);
 
             if (!menus[playerIndex].isVisible() && pointers[playerIndex] == -1) {
                 stage.addActor(menus[playerIndex]);

@@ -13,13 +13,25 @@ public class ControlTypeEntity extends InputAdapter {
     protected float scaleFactor;
     protected Array<Texture> usedTextures;
 
-    public ControlTypeEntity() {}
-
-    public void init(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
+    public ControlTypeEntity(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
         this.players = players;
         this.isSplitScreen = isSplitScreen;
         this.stage = stage;
         this.scaleFactor = scaleFactor;
         this.usedTextures = usedTextures;
+    }
+
+    public int getPlayerIndex(int screenX) {
+        int playerIndex = 0;
+        if (isSplitScreen) {
+            for (int i = 1; i < this.players.length; i++) {
+                if (screenX > ((stage.getWidth() / this.players.length) * i)) {
+                    playerIndex++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return playerIndex;
     }
 }
