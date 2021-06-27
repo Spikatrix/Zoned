@@ -21,7 +21,8 @@ import com.payne.games.piemenu.PieMenu;
 import java.util.Arrays;
 
 public class PieMenuControlManager extends ControlTypeEntity {
-    private int piemenuRadius = 80;
+    private final int piemenuRadius = 46;
+    private final int arrowImagePadding = 10;
     private PieMenu[] menus;
     private int[] pointers;
     private Vector2[] coords;
@@ -55,8 +56,8 @@ public class PieMenuControlManager extends ControlTypeEntity {
             style.separatorColor = Color.BLACK;
             style.downColor = Color.WHITE;
             style.sliceColor = players[i].color;
-            // Multiply by scaleFactor? Size kinda gets messed up when doing it
-            menus[i] = new PieMenu(ShapeDrawer.get1x1TextureRegion(usedTextures), style, piemenuRadius);
+
+            menus[i] = new PieMenu(ShapeDrawer.get1x1TextureRegion(usedTextures), style, piemenuRadius * scaleFactor);
 
             arrowImages[i] = new Image[]{
                     new Image(arrow),
@@ -64,9 +65,12 @@ public class PieMenuControlManager extends ControlTypeEntity {
                     new Image(arrow),
                     new Image(arrow),
             };
+            float arrowSize = Math.max(menus[i].getPreferredRadius() - (arrowImagePadding * scaleFactor),
+                    (arrowImagePadding * scaleFactor));
             for (int j = 0; j < arrowImages[i].length; j++) {
-                arrowImages[i][j].setOrigin(Align.center);
                 arrowImages[i][j].setScaling(Scaling.fit);
+                arrowImages[i][j].setSize(arrowSize, arrowSize);
+                arrowImages[i][j].setOrigin(Align.center);
                 arrowImages[i][j].setColor(Color.WHITE);
                 arrowImages[i][j].setRotation(-45f + (j * 90));
                 menus[i].addActor(arrowImages[i][j]);

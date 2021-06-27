@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.reflect.ClassReflection;
 import com.badlogic.gdx.utils.reflect.ReflectionException;
+import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.MapManager;
@@ -68,7 +69,8 @@ public class ScreenHelper {
         }
 
         // Generic instantiation
-        return (Screen) ClassReflection.getConstructor(targetScreenClass, Zoned.class).newInstance(game);
+        return (Screen) ClassReflection.getConstructor(targetScreenClass, Zoned.class)
+                .newInstance(game);
     }
 
     private static Screen getServerLobbyScreen(Zoned game) throws ReflectionException {
@@ -87,7 +89,8 @@ public class ScreenHelper {
             return (Screen) ClassReflection.getConstructor(HostJoinScreen.class, Zoned.class).newInstance(game);
         }
 
-        return (Screen) ClassReflection.getConstructors(ServerLobbyScreen.class)[0].newInstance(game, server, "Boss#" + random.nextInt(100));
+        return (Screen) ClassReflection.getConstructors(ServerLobbyScreen.class)[0]
+                .newInstance(game, server, "Boss#" + random.nextInt(100));
     }
 
     private static Screen getClientLobbyScreen(Zoned game) throws ReflectionException {
@@ -117,7 +120,8 @@ public class ScreenHelper {
             return getServerLobbyScreen(game);
         }
 
-        return (Screen) ClassReflection.getConstructors(ClientLobbyScreen.class)[0].newInstance(game, client, "Gamer#" + random.nextInt(100));
+        return (Screen) ClassReflection.getConstructors(ClientLobbyScreen.class)[0]
+                .newInstance(game, client, "Gamer#" + random.nextInt(100));
     }
 
     private static Screen getMapStartPosScreen(Zoned game) throws ReflectionException {
@@ -145,7 +149,8 @@ public class ScreenHelper {
             players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
         }
 
-        return (Screen) ClassReflection.getConstructors(MapStartPosScreen.class)[0].newInstance(game, mapManager.getPreparedMapData(), players);
+        return (Screen) ClassReflection.getConstructors(MapStartPosScreen.class)[0]
+                .newInstance(game, mapManager.getPreparedMapData(), players);
     }
 
     private static Screen getGameScreen(Zoned game) throws ReflectionException {
@@ -173,7 +178,8 @@ public class ScreenHelper {
             players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
         }
 
-        return (Screen) ClassReflection.getConstructor(GameScreen.class, Zoned.class, MapManager.class, Player[].class).newInstance(game, mapManager, players);
+        return (Screen) ClassReflection.getConstructor(GameScreen.class, Zoned.class, PreparedMapData.class, Player[].class)
+                .newInstance(game, mapManager.getPreparedMapData(), players);
     }
 
     private static Screen getVictoryScreen(Zoned game) throws ReflectionException {
