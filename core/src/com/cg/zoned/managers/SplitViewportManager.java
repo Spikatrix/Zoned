@@ -3,6 +3,7 @@ package com.cg.zoned.managers;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.GridPoint3;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -14,7 +15,6 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.ShapeDrawer;
-import com.cg.zoned.dataobjects.GameTouchPoint;
 import com.cg.zoned.ui.FocusableStage;
 
 public class SplitViewportManager {
@@ -55,11 +55,11 @@ public class SplitViewportManager {
     public void setUpDragOffset(FocusableStage screenStage) {
         int splitCount = splitViewports.length;
 
-        final GameTouchPoint[] touchPoint = new GameTouchPoint[splitCount];
+        final GridPoint3[] touchPoint = new GridPoint3[splitCount];
         dragOffset = new Vector2[splitCount];
         for (int i = 0; i < splitCount; i++) {
             dragOffset[i] = new Vector2(0, 0);
-            touchPoint[i] = new GameTouchPoint(0, 0);
+            touchPoint[i] = new GridPoint3(-1, -1, -1);
         }
 
         screenStage.addListener(new ClickListener() {
@@ -79,10 +79,8 @@ public class SplitViewportManager {
                     }
                 }
 
-                if (touchPoint[splitPaneIndex].pointer == -1) {
-                    touchPoint[splitPaneIndex].pointer = pointer;
-                    touchPoint[splitPaneIndex].point.x = (int) x;
-                    touchPoint[splitPaneIndex].point.y = (int) y;
+                if (touchPoint[splitPaneIndex].z == -1) {
+                    touchPoint[splitPaneIndex].set((int) x, (int) y, pointer);
                 }
 
                 return true;
@@ -91,9 +89,9 @@ public class SplitViewportManager {
             @Override
             public void touchDragged(InputEvent event, float x, float y, int pointer) {
                 for (int i = 0; i < splitCount; i++) {
-                    if (touchPoint[i].pointer == pointer) {
-                        dragOffset[i].x = touchPoint[i].point.x - x;
-                        dragOffset[i].y = touchPoint[i].point.y - y;
+                    if (touchPoint[i].z == pointer) {
+                        dragOffset[i].x = touchPoint[i].x - x;
+                        dragOffset[i].y = touchPoint[i].y - y;
                         break;
                     }
                 }
@@ -102,9 +100,9 @@ public class SplitViewportManager {
             @Override
             public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
                 for (int i = 0; i < splitCount; i++) {
-                    if (touchPoint[i].pointer == pointer) {
+                    if (touchPoint[i].z == pointer) {
                         dragOffset[i].set(0, 0);
-                        touchPoint[i].pointer = -1;
+                        touchPoint[i].set(-1, -1, -1);
                         break;
                     }
                 }

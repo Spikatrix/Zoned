@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.GridPoint2;
+import com.badlogic.gdx.math.GridPoint3;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -11,24 +12,24 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Player;
-import com.cg.zoned.dataobjects.GameTouchPoint;
 
 public class FlingControlManager extends ControlTypeEntity {
     private Image[] arrowImages;
-    private GameTouchPoint[] clickPoints;
+    private GridPoint3[] clickPoints;
 
     public FlingControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
         super(players, isSplitScreen, stage, scaleFactor, usedTextures);
 
-        this.clickPoints = new GameTouchPoint[players.length];
+        this.clickPoints = new GridPoint3[players.length];
         this.arrowImages = new Image[players.length];
 
         Texture arrowTexture = new Texture(Gdx.files.internal("images/control_icons/ic_arrow.png"));
         for (int i = 0; i < players.length; i++) {
-            clickPoints[i] = new GameTouchPoint();
+            clickPoints[i] = new GridPoint3(-1, -1, -1);
 
             arrowImages[i] = new Image(arrowTexture);
             arrowImages[i].setColor(players[i].color);
+            arrowImages[i].setVisible(false);
             arrowImages[i].setOrigin(Align.center);
             arrowImages[i].setScale(scaleFactor);
             stage.addActor(arrowImages[i]);
@@ -42,7 +43,7 @@ public class FlingControlManager extends ControlTypeEntity {
         if (button == Input.Buttons.LEFT) {
             int playerIndex = getPlayerIndex(screenX);
 
-            if (clickPoints[playerIndex].pointer != -1) {
+            if (clickPoints[playerIndex].z != -1) {
                 // There's already another pointer in use
                 return false;
             }
@@ -50,9 +51,9 @@ public class FlingControlManager extends ControlTypeEntity {
             Image arrowImage = arrowImages[playerIndex];
             arrowImage.clearActions();
             arrowImage.getColor().a = 1f;
+            arrowImage.setVisible(true);
             arrowImage.setPosition(screenX, stage.getHeight() - screenY, Align.center);
-            clickPoints[playerIndex].point.set(screenX, screenY);
-            clickPoints[playerIndex].pointer = pointer;
+            clickPoints[playerIndex].set(screenX, screenY, pointer);
 
             return true;
         }
@@ -63,12 +64,13 @@ public class FlingControlManager extends ControlTypeEntity {
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
         for (int i = 0; i < clickPoints.length; i++) {
-            GameTouchPoint gameTouchPoint = clickPoints[i];
-            if (gameTouchPoint.pointer == pointer) {
+            GridPoint3 gameTouchPoint = clickPoints[i];
+            if (gameTouchPoint.z == pointer) {
                 Image arrowImage = arrowImages[i];
 
-                GridPoint2 endPoint = new GridPoint2(screenX, screenY);
-                GridPoint2 subPoint = endPoint.sub(gameTouchPoint.point);
+                GridPoint2 subPoint = new GridPoint2(screenX, screenY);
+                subPoint.x -= gameTouchPoint.x;
+                subPoint.y -= gameTouchPoint.y;
 
                 if (Math.abs(subPoint.x) > Math.abs(subPoint.y)) {
                     if (subPoint.x > 0) { // RIGHT
@@ -96,8 +98,8 @@ public class FlingControlManager extends ControlTypeEntity {
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
         for (int i = 0; i < clickPoints.length; i++) {
-            GameTouchPoint gameTouchPoint = clickPoints[i];
-            if (gameTouchPoint.pointer == pointer) {
+            GridPoint3 gameTouchPoint = clickPoints[i];
+            if (gameTouchPoint.z == pointer) {
                 final Image arrowImage = arrowImages[i];
                 float arrowImageRotation = arrowImage.getRotation();
 
@@ -120,9 +122,11 @@ public class FlingControlManager extends ControlTypeEntity {
                     moveAction = Actions.moveBy(0f, moveAnimationDistance, moveAnimationDuration);
                 }
 
-                arrowImage.addAction(Actions.parallel(moveAction, Actions.fadeOut(.2f)));
-                clickPoints[i].point.set(-1, -1);
-                clickPoints[i].pointer = -1;
+                arrowImage.addAction(Actions.sequence(
+                    Actions.parallel(moveAction,  Actions.fadeOut(.2f)),
+                    Actions.run(() -> arrowImage.setVisible(false))
+                ));
+                clickPoints[i].set(-1, -1, -1);
 
                 return true;
             }
