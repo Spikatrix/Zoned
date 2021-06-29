@@ -4,7 +4,15 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -17,6 +25,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Preferences;
+import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.controls.ControlType;
 import com.cg.zoned.managers.AnimationManager;
@@ -26,12 +35,22 @@ import com.cg.zoned.ui.HoverCheckBox;
 import com.cg.zoned.ui.HoverImageButton;
 
 public class SettingsScreen extends ScreenObject implements InputProcessor {
+    private FrameBuffer[] controlOnFBOs;
+    private float controlWidth = 124f;
+    private float controlHeight = 162f;
+
     public SettingsScreen(final Zoned game) {
         super(game);
         game.discordRPCManager.updateRPC("Configuring Settings");
 
         this.animationManager = new AnimationManager(this.game, this);
         this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
+
+        this.batch = new SpriteBatch();
+        this.shapeDrawer = new ShapeDrawer(batch, game.skin);
+
+        /*this.controlWidth = this.controlWidth * game.getScaleFactor(); COMING UP NEXT
+        this.controlHeight = this.controlHeight * game.getScaleFactor();*/
     }
 
     @Override
@@ -43,11 +62,11 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
 
     private void setUpStage() {
         Table masterTable = new Table();
-        //masterTable.setDebug(true);
         masterTable.setFillParent(true);
         masterTable.center();
 
         Table table = new Table();
+        //table.setDebug(true);
         table.center();
         table.pad(20f);
         ScrollPane screenScrollPane = new ScrollPane(table);
@@ -62,15 +81,21 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         table.add(controlSchemeLabel).colspan(controlTypes.length).padBottom(10f);
         table.row();
 
+        controlOnFBOs = new FrameBuffer[controlTypes.length];
+        batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, controlWidth, controlHeight));
+
         final HoverImageButton[] controlButtons = new HoverImageButton[controlTypes.length];
         final Label[] controlLabels = new Label[controlTypes.length];
         for (int i = 0; i < controlTypes.length; i++) {
             ControlType controlType = controlTypes[i];
+            controlOnFBOs[i] = new FrameBuffer(Pixmap.Format.RGBA8888, (int) controlWidth, (int) controlHeight, false);
 
-            Texture controlOffTexture = new Texture(Gdx.files.internal(controlType.controlOffTexturePath));
-            Texture controlOnTexture = new Texture(Gdx.files.internal(controlType.controlOnTexturePath));
+            Texture controlOffTexture = new Texture(Gdx.files.internal(controlType.controlTexturePath));
+            drawControlOnFbo(controlOnFBOs[i], controlOffTexture, Color.GREEN, 16, 4);
+            TextureRegion controlOnTexture = new TextureRegion(controlOnFBOs[i].getColorBufferTexture(), (int) controlWidth, (int) controlHeight);
+            controlOnTexture.flip(false, true);
+
             usedTextures.add(controlOffTexture);
-            usedTextures.add(controlOnTexture);
 
             Drawable controlOff = new TextureRegionDrawable(controlOffTexture);
             Drawable controlOn = new TextureRegionDrawable(controlOnTexture);
@@ -102,7 +127,7 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         }
 
         for (HoverImageButton controlButton : controlButtons) {
-            table.add(controlButton).space(5f);
+            table.add(controlButton).space(5f).width(controlWidth).height(controlHeight);
             screenStage.addFocusableActor(controlButton);
         }
         table.row();
@@ -117,7 +142,7 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         table.row();
 
         final HoverCheckBox showFPS = new HoverCheckBox("Show FPS counter", game.skin);
-        showFPS.getImageCell().width(showFPS.getLabel().getPrefHeight()).height(showFPS.getLabel().getPrefHeight());
+        showFPS.getImageCell().size(showFPS.getLabel().getPrefHeight());
         showFPS.getImage().setScaling(Scaling.fill);
         showFPS.setChecked(game.showFPSCounter());
         showFPS.addListener(new ChangeListener() {
@@ -133,7 +158,7 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         HoverCheckBox discordRPCSwitch = null;
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             discordRPCSwitch = new HoverCheckBox("Enable Discord Rich Presence", game.skin);
-            discordRPCSwitch.getImageCell().width(discordRPCSwitch.getLabel().getPrefHeight()).height(discordRPCSwitch.getLabel().getPrefHeight());
+            discordRPCSwitch.getImageCell().size(discordRPCSwitch.getLabel().getPrefHeight());
             discordRPCSwitch.getImage().setScaling(Scaling.fill);
             discordRPCSwitch.setChecked(game.preferences.getBoolean(Preferences.DISCORD_RPC_PREFERENCE, true));
             discordRPCSwitch.addListener(new ChangeListener() {
@@ -165,6 +190,41 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         screenStage.setScrollFocus(screenScrollPane);
     }
 
+    private void drawControlOnFbo(FrameBuffer controlOnFBO, Texture controlTexture, Color color, int roundedRadius, int outlineWidth) {
+        controlOnFBO.begin();
+        batch.begin();
+
+        Gdx.gl.glClearColor(0, 0, 0, 0);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        batch.draw(controlTexture, 0, 0, controlWidth, controlHeight);
+
+        shapeDrawer.setColor(color);
+        // Top right rounded corner
+        shapeDrawer.arc(controlWidth - roundedRadius - (outlineWidth / 2f), controlHeight - roundedRadius - (outlineWidth / 2f),
+                roundedRadius, 0, 90 * MathUtils.degreesToRadians, outlineWidth, true);
+        // Top left rounded corner
+        shapeDrawer.arc(roundedRadius + (outlineWidth / 2f), controlHeight - roundedRadius - (outlineWidth / 2f),
+                roundedRadius, 90 * MathUtils.degreesToRadians, 90 * MathUtils.degreesToRadians, outlineWidth, true);
+        // Bottom left rounded corner
+        shapeDrawer.arc(roundedRadius + (outlineWidth / 2f), roundedRadius + (outlineWidth / 2f),
+                roundedRadius, 180 * MathUtils.degreesToRadians, 90 * MathUtils.degreesToRadians, outlineWidth, true);
+        // Bottom right rounded corner
+        shapeDrawer.arc(controlWidth - roundedRadius - (outlineWidth / 2f), roundedRadius + (outlineWidth / 2f),
+                roundedRadius, -90 * MathUtils.degreesToRadians, 90 * MathUtils.degreesToRadians, outlineWidth, true);
+        // Bottom edge
+        shapeDrawer.filledRectangle(roundedRadius, 0, controlWidth - (roundedRadius * 2), outlineWidth);
+        // Top edge
+        shapeDrawer.filledRectangle(roundedRadius, controlHeight - outlineWidth, controlWidth - (roundedRadius * 2), outlineWidth);
+        // Left edge
+        shapeDrawer.filledRectangle(0, roundedRadius, outlineWidth, controlHeight - (roundedRadius * 2));
+        // Right edge
+        shapeDrawer.filledRectangle(controlWidth - outlineWidth, roundedRadius, outlineWidth, controlHeight - (roundedRadius * 2f));
+
+        batch.end();
+        controlOnFBO.end();
+    }
+
     private void setUpBackButton() {
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
@@ -183,6 +243,14 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         screenStage.act(delta);
 
         displayFPS();
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        for (FrameBuffer fbo : controlOnFBOs) {
+            fbo.dispose();
+        }
     }
 
     /**

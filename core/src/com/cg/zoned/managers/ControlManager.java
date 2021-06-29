@@ -24,15 +24,11 @@ import com.cg.zoned.controls.FlingControlManager;
 import com.cg.zoned.controls.PieMenuControlManager;
 
 public class ControlManager {
-    // Specify at least one control mechanism. Otherwise, it will crash and burn.
+    // At least one control type needs to be specified
     public static final ControlType[] CONTROL_TYPES = {
-            new ControlType("D-Pad",
-                    "images/control_icons/ic_control_piemenu_off.png",
-                    "images/control_icons/ic_control_piemenu_on.png",
+            new ControlType("D-Pad", "images/control_icons/ic_control_piemenu.png",
                     PieMenuControlManager.class),
-            new ControlType("Fling",
-                    "images/control_icons/ic_control_fling_off.png",
-                    "images/control_icons/ic_control_fling_on.png",
+            new ControlType("Fling", "images/control_icons/ic_control_fling.png",
                     FlingControlManager.class),
     };
 
@@ -61,7 +57,7 @@ public class ControlManager {
     public void setUpOverlay(boolean isSplitScreen, int controlIndex, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
         setUpControls(controlIndex, isSplitScreen, scaleFactor, usedTextures);
 
-        FileHandle controlImagePath = Gdx.files.internal(CONTROL_TYPES[controlIndex].controlOffTexturePath);
+        FileHandle controlImagePath = Gdx.files.internal(CONTROL_TYPES[controlIndex].controlTexturePath);
 
         Table masterTable = new Table();
         masterTable.setFillParent(true);
