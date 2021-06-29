@@ -32,6 +32,9 @@ public class ControlManager {
                     FlingControlManager.class),
     };
 
+    public static final float controlWidth = 106f;
+    public static final float controlHeight = 129f;
+
     private ControlTypeEntity currentControls = null;
 
     private Player[] players;
@@ -104,7 +107,9 @@ public class ControlManager {
             controlTables[i] = new Table();
             controlTables[i].center();
             controlTables[i].setSize(splitScreenWidth, stage.getHeight());
-            controlTables[i].add(controlImages[i]);
+            controlTables[i].add(controlImages[i])
+                    .width(ControlManager.controlWidth * scaleFactor)
+                    .height(ControlManager.controlHeight * scaleFactor);
             if (controlLabels != null) {
                 controlTables[i].row();
                 controlTables[i].add(controlLabels[i]);

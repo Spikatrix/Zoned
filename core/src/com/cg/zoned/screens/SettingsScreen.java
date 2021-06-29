@@ -36,8 +36,6 @@ import com.cg.zoned.ui.HoverImageButton;
 
 public class SettingsScreen extends ScreenObject implements InputProcessor {
     private FrameBuffer[] controlOnFBOs;
-    private float controlWidth = 124f;
-    private float controlHeight = 162f;
 
     public SettingsScreen(final Zoned game) {
         super(game);
@@ -48,9 +46,6 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
-
-        /*this.controlWidth = this.controlWidth * game.getScaleFactor(); COMING UP NEXT
-        this.controlHeight = this.controlHeight * game.getScaleFactor();*/
     }
 
     @Override
@@ -82,17 +77,22 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         table.row();
 
         controlOnFBOs = new FrameBuffer[controlTypes.length];
-        batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, controlWidth, controlHeight));
 
         final HoverImageButton[] controlButtons = new HoverImageButton[controlTypes.length];
         final Label[] controlLabels = new Label[controlTypes.length];
         for (int i = 0; i < controlTypes.length; i++) {
             ControlType controlType = controlTypes[i];
-            controlOnFBOs[i] = new FrameBuffer(Pixmap.Format.RGBA8888, (int) controlWidth, (int) controlHeight, false);
-
             Texture controlOffTexture = new Texture(Gdx.files.internal(controlType.controlTexturePath));
-            drawControlOnFbo(controlOnFBOs[i], controlOffTexture, Color.GREEN, 16, 4);
-            TextureRegion controlOnTexture = new TextureRegion(controlOnFBOs[i].getColorBufferTexture(), (int) controlWidth, (int) controlHeight);
+            controlOffTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+
+            int controlWidth = controlOffTexture.getWidth();
+            int controlHeight = controlOffTexture.getHeight();
+
+            batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, controlWidth, controlHeight));
+            controlOnFBOs[i] = new FrameBuffer(Pixmap.Format.RGBA8888, controlWidth, controlHeight, false);
+            drawControlOnFbo(controlOnFBOs[i], controlOffTexture, Color.GREEN, 28, 8);
+
+            TextureRegion controlOnTexture = new TextureRegion(controlOnFBOs[i].getColorBufferTexture(), controlWidth, controlHeight);
             controlOnTexture.flip(false, true);
 
             usedTextures.add(controlOffTexture);
@@ -127,13 +127,16 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
         }
 
         for (HoverImageButton controlButton : controlButtons) {
-            table.add(controlButton).space(5f).width(controlWidth).height(controlHeight);
+            table.add(controlButton).space(5f * game.getScaleFactor())
+                    .width(ControlManager.controlWidth * game.getScaleFactor())
+                    .height(ControlManager.controlHeight * game.getScaleFactor());
             screenStage.addFocusableActor(controlButton);
         }
         table.row();
+
         screenStage.row();
         for (Label controlLabel : controlLabels) {
-            table.add(controlLabel).space(5f);
+            table.add(controlLabel);
         }
         table.row();
 
@@ -191,13 +194,16 @@ public class SettingsScreen extends ScreenObject implements InputProcessor {
     }
 
     private void drawControlOnFbo(FrameBuffer controlOnFBO, Texture controlTexture, Color color, int roundedRadius, int outlineWidth) {
+        int controlWidth = controlOnFBO.getWidth();
+        int controlHeight = controlOnFBO.getHeight();
+
         controlOnFBO.begin();
         batch.begin();
 
         Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        batch.draw(controlTexture, 0, 0, controlWidth, controlHeight);
+        batch.draw(controlTexture, 0, 0);
 
         shapeDrawer.setColor(color);
         // Top right rounded corner
