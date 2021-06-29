@@ -152,7 +152,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
 
     private HoverImageButton setUpAnimatedPlayButton(Table mainTable) {
         Texture playSheet = game.assets.getTexture(Assets.TextureObject.PLAY_SHEET_TEXTURE);
-        int rowCount = 5, colCount = 6;
+        int rowCount = 4, colCount = 4;
 
         TextureRegion[][] tmp = TextureRegion.split(playSheet,
                 playSheet.getWidth() / colCount,
@@ -167,6 +167,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         }
 
         Animation<TextureRegion> playButtonAnimation = new Animation<>(1 / 15f, playFrames);
+        playButtonAnimation.setPlayMode(Animation.PlayMode.LOOP_PINGPONG);
 
         float buttonSize = 144f;
 
