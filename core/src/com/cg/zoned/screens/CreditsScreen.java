@@ -96,7 +96,6 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
         masterTable.add(screenScrollPane).grow();
 
         screenStage.setScrollFocus(screenScrollPane);
-        screenStage.setScrollpane(screenScrollPane);
         screenStage.addActor(masterTable);
     }
 
@@ -230,28 +229,23 @@ public class CreditsScreen extends ScreenObject implements InputProcessor {
         screenStage.addFocusableActor(titleLabel);
         screenStage.row();
 
+        float padTop = screenStage.getHeight() / 5;
+        float padBottom = screenStage.getHeight() / 5;
+
         if (title.contains("Thank You")) { // Last item in the credits screen
-            table.add(titleLabel).growX()
-                    .padTop(screenStage.getHeight() / 2)
-                    .padLeft(10f)
-                    .padRight(10f);
-            table.row();
-            table.add(contentLabel).growX()
-                    .padBottom((screenStage.getHeight() / 2) - titleLabel.getHeight())
-                    .padLeft(10f)
-                    .padRight(10f);
-            // Hacky line above, but this whole thing is kinda hacky and doesn't work on resize anyway
-        } else {
-            table.add(titleLabel).growX()
-                    .padTop(screenStage.getHeight() / 5)
-                    .padLeft(10f)
-                    .padRight(10f);
-            table.row();
-            table.add(contentLabel).growX()
-                    .padBottom(screenStage.getHeight() / 5)
-                    .padLeft(10f)
-                    .padRight(10f);
+            padTop = screenStage.getHeight() / 2;
+            padBottom = (screenStage.getHeight() / 2) - titleLabel.getHeight();
         }
+
+        table.add(titleLabel).growX()
+                .padTop(padTop)
+                .padLeft(10f)
+                .padRight(10f);
+        table.row();
+        table.add(contentLabel).growX()
+                .padBottom(padBottom)
+                .padLeft(10f)
+                .padRight(10f);
         table.row();
     }
 

@@ -295,7 +295,7 @@ public class MapSelector {
             scrollTable.row();
 
             mapSelectorStage.addFocusableActor(stack);
-            mapSelectorStage.setScrollpane(scrollPane);
+            mapSelectorStage.setScrollFocus((Actor) scrollPane);
             mapSelectorStage.row();
 
             if (i == 0) {

@@ -114,7 +114,8 @@ public class FocusableStage extends Stage {
         createDialogBGTexture();
     }
 
-    public void setScrollpane(ScrollPane scrollPane) {
+    public void setScrollFocus(ScrollPane scrollPane) {
+        super.setScrollFocus(scrollPane);
         this.scrollpane = scrollPane;
     }
 
@@ -210,13 +211,11 @@ public class FocusableStage extends Stage {
         actor.fire(event);
 
         currentFocusedActor = actor;
-        this.setKeyboardFocus(actor);
-        this.setScrollFocus(actor);
+        super.setKeyboardFocus(actor);
+        super.setScrollFocus(actor);
 
         if (scrollpane != null && !dialogIsActive()) {
-            // TODO: getY() doesn't give the desired value when the actor is inside a table
-            scrollpane.scrollTo(actor.getX(), actor.getY(),
-                    actor.getWidth(), actor.getHeight(), true, true);
+            scrollIntoView(actor);
         }
     }
 
@@ -233,9 +232,35 @@ public class FocusableStage extends Stage {
             actor.fire(event);
 
             currentFocusedActor = null;
-            this.setKeyboardFocus(null);
-            this.setScrollFocus(null);
+            super.setKeyboardFocus(null);
+            super.setScrollFocus(null);
         }
+    }
+
+    /**
+     * Puts the specified actor into view by scrolling the set scrollpane
+     *
+     * @param actor The actor to scroll into view
+     */
+    private void scrollIntoView(Actor actor) {
+        Actor parent = scrollpane.getActor();
+        if (parent == null) {
+            parent = scrollpane;
+        }
+
+        float xOffset = 0;
+        float yOffset = 0;
+        float width = actor.getWidth();
+        float height = actor.getHeight();
+
+        // Loop finds the X and Y offsets of the actor relative to the scrollpane
+        do {
+            yOffset += actor.getY();
+            xOffset += actor.getX();
+            actor = actor.getParent();
+        } while (parent != actor && actor != null);
+
+        scrollpane.scrollTo(xOffset, yOffset, width, height, true, true);
     }
 
     /**
