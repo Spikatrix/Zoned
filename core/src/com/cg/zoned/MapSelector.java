@@ -44,6 +44,7 @@ public class MapSelector {
     private Array<Boolean> mapPreviewChecked;
     private Array<Image> mapPreviewImages;
     private boolean extraParamsDialogActive;
+    private boolean addedCustomMapInfo;
 
     private Assets assets;
     private Array<Texture> usedTextures;
@@ -100,6 +101,11 @@ public class MapSelector {
     }
 
     private void updatePreview(Array<MapEntity> mapList, int index) {
+        if (isCustomMapInfo(index)) {
+            // This is the custom map import info; not really a map
+            return;
+        }
+
         if (!mapPreviewChecked.get(index)) {
             Texture mapPreviewTexture = mapManager.getMapPreview(mapList.get(index).getName());
             if (mapPreviewTexture != null) {
@@ -162,7 +168,28 @@ public class MapSelector {
         return stack;
     }
 
-    public void loadExternalMaps(final MapManager.ExternalMapScanListener externalMapLoadListener) {
+    private void addCustomMapInfo() {
+        if (addedCustomMapInfo) {
+            // Already added custom map import information to the spinner
+            return;
+        }
+
+        Texture customMapInfoTexture = new Texture("images/map_icons/Custom Map Info.png");
+        usedTextures.add(customMapInfoTexture);
+        Image customMapInfoImage = new Image(customMapInfoTexture);
+        customMapInfoImage.setScaling(Scaling.fit);
+        customMapInfoImage.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Gdx.net.openURI("https://github.com/Spikatrix/Zoned/discussions/categories/custom-map");
+            }
+        });
+        mapSpinner.addContent(customMapInfoImage);
+
+        addedCustomMapInfo = true;
+    }
+
+    public void loadExternalMaps(boolean addCustomMapInfo, final MapManager.ExternalMapScanListener externalMapLoadListener) {
         mapManager.loadExternalMaps((mapList, externalMapStartIndex) -> Gdx.app.postRunnable(() -> {
             for (int i = externalMapStartIndex; i < mapList.size; i++) {
                 MapEntity map = mapList.get(i);
@@ -172,6 +199,10 @@ public class MapSelector {
 
             if (externalMapLoadListener != null) {
                 externalMapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
+            }
+
+            if (addCustomMapInfo) {
+                addCustomMapInfo();
             }
         }));
     }
@@ -229,6 +260,11 @@ public class MapSelector {
 
     public boolean loadSelectedMap() {
         int mapIndex = mapSpinner.getPositionIndex();
+
+        if (isCustomMapInfo(mapIndex)) {
+            stage.showOKDialog("Please select a valid map", false, null);
+            return false;
+        }
 
         try {
             mapManager.loadMap(mapIndex);
@@ -312,12 +348,13 @@ public class MapSelector {
     }
 
     public boolean extraParamShortcutPressed() {
-        if (extraParamsDialogActive) {
+        int mapIndex = mapSpinner.getPositionIndex();
+        if (extraParamsDialogActive || isCustomMapInfo(mapIndex)) {
             // Dialog is already active
             return false;
         }
 
-        MapEntity map = mapManager.getMapList().get(mapSpinner.getPositionIndex());
+        MapEntity map = mapManager.getMapList().get(mapIndex);
         MapExtraParams extraParams = map.getExtraParams();
         if (extraParams != null) {
             showExtraParamDialog(extraParams, map);
@@ -345,6 +382,10 @@ public class MapSelector {
 
     public MapManager getMapManager() {
         return mapManager;
+    }
+
+    private boolean isCustomMapInfo(int index) {
+        return (addedCustomMapInfo && index == mapManager.getMapList().size);
     }
 
     public interface ExtendedMapSelectionListener {

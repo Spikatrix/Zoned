@@ -58,7 +58,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
         screenStage.getRoot().getColor().a = 0;
 
         // The screen is faded in once the maps and the extended selector is loaded
-        mapSelector.loadExternalMaps((mapList, externalMapStartIndex) -> {
+        mapSelector.loadExternalMaps(false, (mapList, externalMapStartIndex) -> {
             // Set up the extended map selector once external maps have been loaded
             setUpExtendedSelectorListener();
             mapSelector.setUpExtendedSelector(mapSelectorStage, extendedMapSelectionListener);

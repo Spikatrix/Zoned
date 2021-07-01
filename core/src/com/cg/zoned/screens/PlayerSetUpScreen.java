@@ -90,7 +90,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         screenStage.getRoot().getColor().a = 0;
 
         // The screen is faded in once the maps and the extended selector is loaded
-        mapSelector.loadExternalMaps((mapList, externalMapStartIndex) -> {
+        mapSelector.loadExternalMaps(true, (mapList, externalMapStartIndex) -> {
             // Set up the extended map selector once external maps have been loaded
             mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
                 @Override

@@ -29,7 +29,7 @@ import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.ParticleEffectActor;
 
 public class CreditsScreen extends ScreenObject implements InputProcessor {
-    private Color linkColor = new Color(.4f, .4f, 1f, 1f);
+    private final Color linkColor = new Color(.4f, .4f, 1f, 1f);
     private ParticleEffect clickParticleEffect = null;
 
     public CreditsScreen(final Zoned game) {

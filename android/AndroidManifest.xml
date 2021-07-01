@@ -26,6 +26,7 @@
         </activity>
     </application>
 
+    <!-- Fixes Gdx.net.openURI not working on Android 11 -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
