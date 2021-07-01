@@ -31,7 +31,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 30
         versionCode 5
-        versionName "0.0.5-beta"
+        versionName "0.0.6-dev"
         // Remember to update the GAME_VERSION in Constants.java
         // And project.setVersion in Desktop's build.gradle
         // And the version in the badge in the README file
