@@ -1,59 +1,59 @@
 package com.cg.zoned.controls;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.GridPoint2;
+import com.badlogic.gdx.math.GridPoint3;
+import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.actions.MoveByAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Player;
-import com.cg.zoned.dataobjects.GameTouchPoint;
 
 public class FlingControlManager extends ControlTypeEntity {
-    private Texture arrowTexture;
+    private Image[] arrowImages;
+    private GridPoint3[] clickPoints;
 
-    private Array<GameTouchPoint> clickPoints;
+    public FlingControlManager(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
+        super(players, isSplitScreen, stage, scaleFactor, usedTextures);
 
-    public FlingControlManager() {
-    }
+        this.clickPoints = new GridPoint3[players.length];
+        this.arrowImages = new Image[players.length];
 
-    public void init(Player[] players, boolean isSplitScreen, Stage stage, float scaleFactor, Array<Texture> usedTextures) {
-        super.init(players, isSplitScreen, stage, scaleFactor, usedTextures);
+        Texture arrowTexture = new Texture(Gdx.files.internal("images/control_icons/ic_arrow.png"));
+        for (int i = 0; i < players.length; i++) {
+            clickPoints[i] = new GridPoint3(-1, -1, -1);
 
-        this.clickPoints = new Array<>();
+            arrowImages[i] = new Image(arrowTexture);
+            arrowImages[i].setColor(players[i].color);
+            arrowImages[i].setVisible(false);
+            arrowImages[i].setOrigin(Align.center);
+            arrowImages[i].setScale(scaleFactor);
+            stage.addActor(arrowImages[i]);
+        }
 
-        arrowTexture = new Texture(Gdx.files.internal("images/control_icons/ic_arrow.png"));
         usedTextures.add(arrowTexture);
     }
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
-            int playerIndex = 0;
-            if (isSplitScreen) {
-                for (int i = 1; i < this.players.length; i++) {
-                    if (screenX > ((stage.getWidth() / this.players.length) * i)) {
-                        playerIndex++;
-                    } else {
-                        break;
-                    }
-                }
+            int playerIndex = getPlayerIndex(screenX);
+
+            if (clickPoints[playerIndex].z != -1) {
+                // There's already another pointer in use
+                return false;
             }
 
-            Image clickImage = new Image(arrowTexture);
-            if (Gdx.app.getType() == Application.ApplicationType.Android) {
-                // Scale both X and Y at the same rate or we'll have problems since the code below uses getScaleX only
-                clickImage.setScale(scaleFactor, scaleFactor);
-            }
-            clickImage.setColor(players[playerIndex].color);
-            clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
-
-            clickPoints.add(new GameTouchPoint(screenX, screenY, pointer, clickImage, playerIndex));
-            stage.addActor(clickImage);
+            Image arrowImage = arrowImages[playerIndex];
+            arrowImage.clearActions();
+            arrowImage.getColor().a = 1f;
+            arrowImage.setVisible(true);
+            arrowImage.setPosition(screenX, stage.getHeight() - screenY, Align.center);
+            clickPoints[playerIndex].set(screenX, screenY, pointer);
 
             return true;
         }
@@ -63,31 +63,30 @@ public class FlingControlManager extends ControlTypeEntity {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-        for (GameTouchPoint gameTouchPoint : clickPoints) {
-            if (gameTouchPoint.pointer == pointer) {
-                Image clickImage = gameTouchPoint.clickImage;
-                clickImage.clearActions();
+        for (int i = 0; i < clickPoints.length; i++) {
+            GridPoint3 gameTouchPoint = clickPoints[i];
+            if (gameTouchPoint.z == pointer) {
+                Image arrowImage = arrowImages[i];
 
-                GridPoint2 endPoint = new GridPoint2(screenX, screenY);
-                GridPoint2 subPoint = endPoint.sub(gameTouchPoint.point);
+                GridPoint2 subPoint = new GridPoint2(screenX, screenY);
+                subPoint.x -= gameTouchPoint.x;
+                subPoint.y -= gameTouchPoint.y;
 
                 if (Math.abs(subPoint.x) > Math.abs(subPoint.y)) {
                     if (subPoint.x > 0) { // RIGHT
-                        clickImage.setRotation(-90f);
-                        clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY + clickImage.getHeight() * clickImage.getScaleX() / 2);
+                        arrowImage.setRotation(-90f);
                     } else {              // LEFT
-                        clickImage.setRotation(90f);
-                        clickImage.setPosition(screenX + clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
+                        arrowImage.setRotation(90f);
                     }
                 } else {
-                    if (subPoint.y > 0) { //DOWN
-                        clickImage.setRotation(-180f);
-                        clickImage.setPosition(screenX + clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY + clickImage.getHeight() * clickImage.getScaleX() / 2);
+                    if (subPoint.y > 0) { // DOWN
+                        arrowImage.setRotation(-180f);
                     } else {              // UP
-                        clickImage.setRotation(0f);
-                        clickImage.setPosition(screenX - clickImage.getWidth() * clickImage.getScaleX() / 2, stage.getHeight() - screenY - clickImage.getHeight() * clickImage.getScaleX() / 2);
+                        arrowImage.setRotation(0f);
                     }
                 }
+
+                arrowImage.setPosition(screenX, stage.getHeight() - screenY, Align.center);
 
                 return true;
             }
@@ -98,47 +97,36 @@ public class FlingControlManager extends ControlTypeEntity {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        for (GameTouchPoint gameTouchPoint : clickPoints) {
-            if (gameTouchPoint.pointer == pointer) {
-                final Image clickImage = gameTouchPoint.clickImage;
+        for (int i = 0; i < clickPoints.length; i++) {
+            GridPoint3 gameTouchPoint = clickPoints[i];
+            if (gameTouchPoint.z == pointer) {
+                final Image arrowImage = arrowImages[i];
+                float arrowImageRotation = arrowImage.getRotation();
 
-                GridPoint2 endPoint = new GridPoint2(screenX, screenY);
-                GridPoint2 subPoint = endPoint.sub(gameTouchPoint.point);
+                Player player = players[i];
 
-                Player player = players[gameTouchPoint.playerIndex];
-
-                float moveAnimationDistance = 60f * clickImage.getScaleX();
-                MoveByAction moveAction;
-                if (Math.abs(subPoint.x) > Math.abs(subPoint.y)) {
-                    if (subPoint.x > 0) {
-                        player.updatedDirection = Player.Direction.RIGHT;
-                        moveAction = Actions.moveBy(moveAnimationDistance, 0f, .2f);
-                    } else {
-                        player.updatedDirection = Player.Direction.LEFT;
-                        moveAction = Actions.moveBy(-moveAnimationDistance, 0f, .2f);
-                    }
-                } else {
-                    if (subPoint.y > 0) {
-                        player.updatedDirection = Player.Direction.DOWN;
-                        moveAction = Actions.moveBy(0f, -moveAnimationDistance, .2f);
-                    } else {
-                        player.updatedDirection = Player.Direction.UP;
-                        moveAction = Actions.moveBy(0f, moveAnimationDistance, .2f);
-                    }
+                float moveAnimationDistance = 60f * scaleFactor;
+                float moveAnimationDuration = .2f;
+                Action moveAction = null;
+                if (arrowImageRotation == -90f) {
+                    player.updatedDirection = Player.Direction.RIGHT;
+                    moveAction = Actions.moveBy(moveAnimationDistance, 0f, moveAnimationDuration);
+                } else if (arrowImageRotation == 90f){
+                    player.updatedDirection = Player.Direction.LEFT;
+                    moveAction = Actions.moveBy(-moveAnimationDistance, 0f, moveAnimationDuration);
+                } else if (arrowImageRotation == -180f) {
+                    player.updatedDirection = Player.Direction.DOWN;
+                    moveAction = Actions.moveBy(0f, -moveAnimationDistance, moveAnimationDuration);
+                } else if (arrowImageRotation == 0f){
+                    player.updatedDirection = Player.Direction.UP;
+                    moveAction = Actions.moveBy(0f, moveAnimationDistance, moveAnimationDuration);
                 }
 
-                clickImage.addAction(
-                        Actions.sequence(
-                                Actions.parallel(moveAction, Actions.fadeOut(.2f)),
-                                Actions.run(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        stage.getRoot().removeActor(clickImage);
-                                    }
-                                })
-                        )
-                );
-                clickPoints.removeValue(gameTouchPoint, true);
+                arrowImage.addAction(Actions.sequence(
+                    Actions.parallel(moveAction,  Actions.fadeOut(.2f)),
+                    Actions.run(() -> arrowImage.setVisible(false))
+                ));
+                clickPoints[i].set(-1, -1, -1);
 
                 return true;
             }

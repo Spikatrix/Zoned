@@ -28,7 +28,16 @@ public class Assets {
         CROSS_TEXTURE      ("images/ui_icons/ic_cross.png"),
         DEV_TEXTURE        ("images/ui_icons/ic_dev.png"),
         SETTINGS_TEXTURE   ("images/ui_icons/ic_settings.png"),
-        TUTORIAL_TEXTURE   ("images/ui_icons/ic_tutorial.png");
+        TUTORIAL_TEXTURE   ("images/ui_icons/ic_tutorial.png"),
+        PAUSE_TEXTURE      ("images/ui_icons/ic_pause.png"),
+        ZOOM_OUT_TEXTURE   ("images/ui_icons/ic_zoom_out.png"),
+        ZOOM_IN_TEXTURE    ("images/ui_icons/ic_zoom_in.png"),
+        READY_UP_TEXTURE   ("images/ui_icons/ic_ready_up.png"),
+        UNREADY_UP_TEXTURE ("images/ui_icons/ic_unready_up.png"),
+        READY_TEXTURE      ("images/ui_icons/ic_green_check.png"),
+        NOT_READY_TEXTURE  ("images/ui_icons/ic_red_cross.png"),
+        HOST_TEXTURE       ("images/ui_icons/ic_crown.png"),
+        KICK_TEXTURE       ("images/ui_icons/ic_kick.png");
 
         private final String location;
 
@@ -41,14 +50,13 @@ public class Assets {
         }
     }
 
-    // TODO: The default font size is way too big (really noticeable on mobile screens)
     public enum FontManager {
-        STYLED_LARGE        ("recharge.otf",  65),
+        STYLED_LARGE        ("recharge.otf",  64),
         STYLED_SMALL        ("recharge.otf",  24),
         REGULAR             ("glametrix.otf", 32), // Default font, required to be named as 'REGULAR'
         SMALL               ("bebasneue.otf", 18),
         PLAYER_LABEL_NOSCALE("bebasneue.otf",
-                (int) (Map.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
+                (int) (MapRenderer.playerLabelRegionScale * (Constants.CELL_SIZE - (2 * Constants.MAP_GRID_LINE_WIDTH))));
         // Player label font height is based on cell size minus a bit of line width as calculated above
 
         private String fontFileName;

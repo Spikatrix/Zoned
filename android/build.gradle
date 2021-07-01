@@ -1,6 +1,7 @@
 android {
-    buildToolsVersion "29.0.3"
-    compileSdkVersion 29
+    buildToolsVersion "30.0.3"
+    compileSdkVersion 30
+
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -28,9 +29,9 @@ android {
     defaultConfig {
         applicationId "com.cg.zoned"
         minSdkVersion 14
-        targetSdkVersion 29
-        versionCode 4
-        versionName "0.0.4-beta"
+        targetSdkVersion 30
+        versionCode 5
+        versionName "0.0.5-dev"
         // Remember to update the GAME_VERSION in Constants.java
         // And project.setVersion in Desktop's build.gradle
         // And the version in the badge in the README file
@@ -41,8 +42,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false // Don't set this to true because it'll result in a lot of classes missing causing Runtime crashes (Unless you `-keep` them all) TODO: Read wiki page on this
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -127,8 +128,8 @@ eclipse {
     }
 
     jdt {
-        sourceCompatibility = 1.7
-        targetCompatibility = 1.7
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
     }
 
     classpath {

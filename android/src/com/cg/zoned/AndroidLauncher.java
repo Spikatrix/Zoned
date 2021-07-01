@@ -6,7 +6,7 @@ import android.widget.Toast;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-import com.cg.zoned.maps.ExternalMapReader;
+import com.cg.zoned.maps.ExternalMapScanner;
 
 public class AndroidLauncher extends AndroidApplication {
 
@@ -25,7 +25,7 @@ public class AndroidLauncher extends AndroidApplication {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             /* Creates /storage/emulated/0/Android/data/com.cg.zoned/files/ZonedExternalMaps */
-            getExternalFilesDir(ExternalMapReader.mapDirName);
+            getExternalFilesDir(ExternalMapScanner.mapDirName);
         }
 
         startGame();

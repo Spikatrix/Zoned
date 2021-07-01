@@ -9,13 +9,13 @@ public class DirectionBufferManager {
     private int directionBufferUsed;
     private int ignoredPlayerCount;
 
-    public DirectionBufferManager(int noOfPlayers) {
-        directionBuffer = new Direction[noOfPlayers];
+    public DirectionBufferManager(int playerCount) {
+        directionBuffer = new Direction[playerCount];
         directionBufferUsed = 0;
         ignoredPlayerCount = 0;
     }
 
-    public void updateDirection(Direction direction, int index) {
+    public void updateDirectionBuffer(Direction direction, int index) {
         if (directionBuffer[index] == null && direction != null) {
             directionBufferUsed++;
         } else if (directionBuffer[index] != null && direction == null) {
@@ -27,7 +27,7 @@ public class DirectionBufferManager {
     public void updateDirections(Direction[] directions) {
         clearBuffer();
         for (int i = 0; i < directions.length; i++) {
-            updateDirection(directions[i], i);
+            updateDirectionBuffer(directions[i], i);
         }
     }
 

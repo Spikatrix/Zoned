@@ -1,6 +1,5 @@
 package com.cg.zoned.managers;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -18,10 +17,8 @@ public class UIButtonManager {
 
     private Array<Table> buttonPositionTables;
 
-    private final float buttonHeight = 64f;
-    private final float buttonWidth = 64f;
-
-    private final float buttonPadding = 24f;
+    public final float buttonSize = 64f;
+    public final float buttonPadding = 16f;
 
     public UIButtonManager(Stage stage, float scaleFactor, Array<Texture> usedTextures) {
         this.stage = stage;
@@ -69,14 +66,14 @@ public class UIButtonManager {
                 Position.TOP_RIGHT, settingsTexture, null);
     }
 
-    public HoverImageButton addPauseButtonToStage() {
+    public HoverImageButton addPauseButtonToStage(Texture pauseTexture) {
         return addButtonToStage(.8f, .65f, .5f, 0,
-                Position.TOP_CENTER, getTexture(Gdx.files.internal("images/ui_icons/ic_pause.png")), null);
+                Position.TOP_CENTER, pauseTexture, null);
     }
 
-    public HoverImageButton addZoomButtonToStage() {
+    public HoverImageButton addZoomButtonToStage(Texture zoomOutTexture, Texture zoomInTexture) {
         return addButtonToStage(.8f, .65f, .5f, 0,
-                Position.TOP_CENTER, getTexture(Gdx.files.internal("images/ui_icons/ic_zoom_out.png")), getTexture(Gdx.files.internal("images/ui_icons/ic_zoom_in.png")));
+                Position.TOP_CENTER, zoomOutTexture, zoomInTexture);
     }
 
     public HoverImageButton addTutorialButtonToStage(Texture tutorialTexture) {
@@ -92,6 +89,12 @@ public class UIButtonManager {
     public HoverImageButton addCreditsButtonToStage(Texture creditsTexture) {
         return addButtonToStage(1f, .65f, .5f, 0,
                 Position.TOP_RIGHT, creditsTexture, null);
+    }
+
+    public HoverImageButton addReadyButtonToStage(Texture readyTexture, Texture unreadyTexture) {
+        return addButtonToStage(1f, .65f, .5f, 0,
+                Position.BOTTOM_RIGHT, readyTexture, unreadyTexture);
+
     }
 
     public HoverImageButton addExitButtonToStage(Texture crossTexture) {
@@ -119,7 +122,7 @@ public class UIButtonManager {
         }
 
         Image buttonImage = button.getImage();
-        buttonImage.setOrigin(buttonWidth * scaleFactor / 2, buttonHeight * scaleFactor / 2);
+        buttonImage.setOrigin(buttonSize * scaleFactor / 2, buttonSize * scaleFactor / 2);
         buttonImage.rotateBy(rotateDegrees);
         button.setNormalAlpha(normalAlpha);
         button.setHoverAlpha(hoverAlpha);
@@ -127,8 +130,7 @@ public class UIButtonManager {
 
         Cell<HoverImageButton> cell = table.add(button)
                 .padLeft(buttonPadding).padRight(buttonPadding)
-                .width(buttonWidth * scaleFactor)
-                .height(buttonHeight * scaleFactor);
+                .size(buttonSize * scaleFactor);
         if (position.name().startsWith("TOP")) {
             cell.padTop(buttonPadding * scaleFactor);
         } else if (position.name().startsWith("BOTTOM")) {
@@ -142,7 +144,7 @@ public class UIButtonManager {
     }
 
     public float getHeaderPad(float givenHeight) {
-        return (buttonPadding * scaleFactor) + (((buttonHeight * scaleFactor) - givenHeight) / 2);
+        return (buttonPadding * scaleFactor) + (((buttonSize * scaleFactor) - givenHeight) / 2);
     }
 
     private enum Position {

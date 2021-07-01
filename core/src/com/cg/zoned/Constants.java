@@ -2,12 +2,14 @@ package com.cg.zoned;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
+import com.cg.zoned.dataobjects.PlayerColor;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public final class Constants {
-    public static final String GAME_VERSION = "0.0.4-beta";
+    public static final String GAME_VERSION = "0.0.5-dev";
     // Remember to update the versionName in Android's build.gradle
     // And project.setVersion in Desktop's build.gradle
     // And the version in the badge in the README file
@@ -46,21 +48,21 @@ public final class Constants {
      * Values for smooth player movement among cells in the map
      * Also, this animation speed is what determines each turn time
      */
-    public static final float PLAYER_MOVEMENT_LERP_VALUE = .5f;  // Best value IMO: .5f
-    public static final float PLAYER_MOVEMENT_MAX_TIME   = .25f; // Best value IMO: .25f
+    // Best values (0.5f, 0.25f)
+    // Slow values (1.0f, 0.50f)
+    public static final float PLAYER_MOVEMENT_LERP_VALUE = 0.50f;
+    public static final float PLAYER_MOVEMENT_MAX_TIME   = 0.25f;
 
     /**
      * Available player colors
      */
-    public static final Map<String, Color> PLAYER_COLORS = new LinkedHashMap<String, Color>() {
-        {
-            put("GREEN",  new Color(0,     0.8f,  0,    1.0f)); // Alpha won't matter
-            put("RED",    new Color(0.8f,  0,     0,    1.0f));
-            put("BLUE",   new Color(0.16f, 0.16f, 0.8f, 1.0f)); // A bit of r & g as deep blue is hard to read on a black bg
-            put("YELLOW", new Color(0.8f,  0.8f,  0,    1.0f));
-            put("PINK",   new Color(0.8f,  0,     0.8f, 1.0f));
-        }
-    };
+    public static final List<PlayerColor> PLAYER_COLORS = Collections.unmodifiableList(Arrays.asList(
+            new PlayerColor("GREEN",  new Color(0,     0.8f,  0,    1.0f)), // Alpha won't matter
+            new PlayerColor("RED",    new Color(0.8f,  0f,    0,    1.0f)),
+            new PlayerColor("BLUE",   new Color(0.16f, 0.16f, 0.8f, 1.0f)), // A bit of r & g as deep blue is hard to read on a black bg
+            new PlayerColor("YELLOW", new Color(0.8f,  0.8f,  0,    1.0f)),
+            new PlayerColor("PINK",   new Color(0.8f,  0,     0.8f, 1.0f))
+    ));
 
     /**
      * Controls for players playing in splitscreen mode. Player one has the first control scheme, two has the second etc
@@ -81,14 +83,14 @@ public final class Constants {
     public static final float ZOOM_MIN_VALUE = 1f;
     public static final float ZOOM_MAX_VALUE = 1.6f;
 
-    public static final float DESKTOP_FONT_SCALE_FACTOR = 1.0f;
-    // Values from https://developer.android.com/training/multiscreen/screendensities
-    public static final float ANDROID_LDPI_FONT_SCALE_FACTOR    = 0.75f;
-    public static final float ANDROID_MDPI_FONT_SCALE_FACTOR    = 1.0f;
-    public static final float ANDROID_HDPI_FONT_SCALE_FACTOR    = 1.5f;
-    public static final float ANDROID_XHDPI_FONT_SCALE_FACTOR   = 2.0f;
-    public static final float ANDROID_XXHDPI_FONT_SCALE_FACTOR  = 3.0f;
-    public static final float ANDROID_XXXHDPI_FONT_SCALE_FACTOR = 4.0f;
+    public static final float DESKTOP_UI_SCALE_FACTOR = 0.9f;
+    // Values from https://developer.android.com/training/multiscreen/screendensities minus 0.3f
+    public static final float ANDROID_LDPI_UI_SCALE_FACTOR    = 0.55f;
+    public static final float ANDROID_MDPI_UI_SCALE_FACTOR    = 0.7f;
+    public static final float ANDROID_HDPI_UI_SCALE_FACTOR    = 1.2f;
+    public static final float ANDROID_XHDPI_UI_SCALE_FACTOR   = 1.7f;
+    public static final float ANDROID_XXHDPI_UI_SCALE_FACTOR  = 2.7f;
+    public static final float ANDROID_XXXHDPI_UI_SCALE_FACTOR = 3.7f;
 
     public static final String LOG_TAG = "ZONED";
 

@@ -1,10 +1,11 @@
 package com.cg.zoned.listeners;
 
 import com.cg.zoned.buffers.BufferGameStart;
+import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
-import com.cg.zoned.buffers.BufferServerRejectedConnection;
+import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -20,10 +21,13 @@ public class ClientLobbyListener extends Listener {
     public void received(Connection connection, Object object) {
         if (object instanceof BufferPlayerData) {
             BufferPlayerData bpd = (BufferPlayerData) object;
-            clientLobbyConnectionManager.receiveServerPlayerData(bpd.nameStrings, bpd.whoStrings, bpd.readyStrings, bpd.colorStrings, bpd.startPosStrings);
-        } else if (object instanceof BufferServerRejectedConnection) {
-            BufferServerRejectedConnection bsrc = (BufferServerRejectedConnection) object;
-            clientLobbyConnectionManager.connectionRejected(bsrc.errorMsg);
+            clientLobbyConnectionManager.receiveServerPlayerData(bpd.names, bpd.readyStatus, bpd.colorIndex, bpd.startPosIndex);
+        } else if (object instanceof BufferKickClient) {
+            BufferKickClient bkc = (BufferKickClient) object;
+            clientLobbyConnectionManager.connectionRejected(bkc.kickReason);
+        } else if (object instanceof BufferPlayerDisconnected) {
+            BufferPlayerDisconnected bpd = (BufferPlayerDisconnected) object;
+            clientLobbyConnectionManager.playerDisconnected(bpd.playerName);
         } else if (object instanceof BufferNewMap) {
             BufferNewMap bnm = (BufferNewMap) object;
             clientLobbyConnectionManager.newMapSet(bnm.mapName, bnm.mapExtraParams, bnm.mapHash);

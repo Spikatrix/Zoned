@@ -8,10 +8,13 @@ import com.cg.zoned.managers.PlayerManager;
 
 public class FloodFiller {
     private FloodFillGridState[][] gridState;
+
     private GridPoint2[] gridPointPool;
     private int nextFreeIndex = 0;
+
     private GridPoint2[] helperStack;
     private int helperStackTop = -1;
+
     private Array<GridPoint2> fillPositions;
 
     private final int rows;

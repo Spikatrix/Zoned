@@ -3,7 +3,6 @@ package com.cg.zoned.ui;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -22,8 +21,6 @@ public class Spinner extends Table {
 
     private float scrollPaneHeight;
     private float scrollPaneWidth;
-    private float buttonHeight;
-    private float buttonWidth;
     private int buttonStepCount = 10;
 
     public Spinner(Skin skin, float scrollPaneHeight, float scrollPaneWidth, boolean isVerticalSpinner) {
@@ -34,9 +31,9 @@ public class Spinner extends Table {
     }
 
     private void init(Skin skin) {
-        this.leftButton = new TextButton("-", skin);
+        this.leftButton = new TextButton("  -  ", skin);
         this.stepScrollPane = new StepScrollPane(skin, isVerticalSpinner);
-        this.rightButton = new TextButton("+", skin);
+        this.rightButton = new TextButton("  +  ", skin);
 
         this.leftButton.addListener(new ClickListener() {
             @Override
@@ -52,56 +49,13 @@ public class Spinner extends Table {
             }
         });
 
-        this.addListener(new ClickListener() {
-            final float thresholdY = scrollPaneHeight / 2;
-            final float thresholdX = scrollPaneWidth / 2;
-            float touchPos;
-
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                if (isVerticalSpinner) {
-                    touchPos = y;
-                } else {
-                    touchPos = x;
-                }
-                return super.touchDown(event, x, y, pointer, button);
-            }
-
-            @Override
-            public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                if (isVerticalSpinner) {
-                    if (Math.abs(touchPos - y) >= thresholdY) {
-                        if (touchPos > y) {
-                            snapToStep(-1);
-                        } else {
-                            snapToStep(+1);
-                        }
-                        touchPos = y;
-                    }
-                } else {
-                    if (Math.abs(touchPos - x) >= thresholdX) {
-                        if (touchPos > x) {
-                            snapToStep(-1);
-                        } else {
-                            snapToStep(+1);
-                        }
-                        touchPos = x;
-                    }
-                }
-            }
-        });
-        this.setTouchable(Touchable.enabled);
-
-        buttonHeight = Math.max(this.leftButton.getPrefHeight(), scrollPaneHeight);
-        buttonWidth = Math.min(this.leftButton.getPrefWidth() + 30f, scrollPaneWidth);
-
         addAllComponentsToSpinner();
     }
 
     private void addAllComponentsToSpinner() {
-        add(leftButton).width(buttonWidth).height(buttonHeight);
+        add(leftButton).growY();
         add(stepScrollPane).height(scrollPaneHeight).width(scrollPaneWidth);
-        add(rightButton).width(buttonWidth).height(buttonHeight);
+        add(rightButton).growY();
 
         stepScrollPane.setHeight(scrollPaneHeight);
         stepScrollPane.setWidth(scrollPaneWidth);

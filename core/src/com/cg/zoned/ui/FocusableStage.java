@@ -87,19 +87,38 @@ public class FocusableStage extends Stage {
     private ScrollPane scrollpane;
 
     /**
-     * Constructor for initializing the Stage
-     *
-     * @param viewport Viewport for the super class Stage
+     * The skin used for styling dialog elements
      */
+    private Skin skin;
+
+    /**
+     * Scale factor used for scaling dialog UI elements accordingly
+     */
+    private float scaleFactor;
+
+
     public FocusableStage(Viewport viewport) {
+        this(viewport, 1f);
+    }
+
+    public FocusableStage(Viewport viewport, float scaleFactor) {
+        this(viewport, scaleFactor, null);
+    }
+
+    public FocusableStage(Viewport viewport, float scaleFactor, Skin skin) {
         super(viewport);
+
+        this.scaleFactor = scaleFactor;
+        this.skin = skin;
 
         createDialogBGTexture();
     }
 
-    public void setScrollpane(ScrollPane scrollPane) {
+    public void setScrollFocus(ScrollPane scrollPane) {
+        super.setScrollFocus(scrollPane);
         this.scrollpane = scrollPane;
     }
+
     /**
      * Creates the dialog background texture
      */
@@ -142,16 +161,13 @@ public class FocusableStage extends Stage {
                  */
                 ((TextField) actor).setFocusTraversal(false);
                 ((TextField) actor).setOnlyFontChars(true);
-                ((TextField) actor).setTextFieldListener(new TextField.TextFieldListener() {
-                    @Override
-                    public void keyTyped(TextField textField, char c) {
-                        /*
-                         * Gets rid of those pesky tabs that get inserted into the TextField
-                         * when tab navigating through them
-                         */
-                        if (c == TAB) {
-                            textField.setText(textField.getText().replaceAll("\t", ""));
-                        }
+                ((TextField) actor).setTextFieldListener((textField, typedChar) -> {
+                    /*
+                     * Gets rid of those pesky tabs that get inserted into the TextField
+                     * when tab navigating through them
+                     */
+                    if (typedChar == TAB) {
+                        textField.setText(textField.getText().replaceAll("\t", ""));
                     }
                 });
             }
@@ -195,13 +211,11 @@ public class FocusableStage extends Stage {
         actor.fire(event);
 
         currentFocusedActor = actor;
-        this.setKeyboardFocus(actor);
-        this.setScrollFocus(actor);
+        super.setKeyboardFocus(actor);
+        super.setScrollFocus(actor);
 
         if (scrollpane != null && !dialogIsActive()) {
-            // TODO: getY() doesn't give the desired value when the actor is inside a table
-            scrollpane.scrollTo(actor.getX(), actor.getY(),
-                    actor.getWidth(), actor.getHeight(), true, true);
+            scrollIntoView(actor);
         }
     }
 
@@ -218,9 +232,35 @@ public class FocusableStage extends Stage {
             actor.fire(event);
 
             currentFocusedActor = null;
-            this.setKeyboardFocus(null);
-            this.setScrollFocus(null);
+            super.setKeyboardFocus(null);
+            super.setScrollFocus(null);
         }
+    }
+
+    /**
+     * Puts the specified actor into view by scrolling the set scrollpane
+     *
+     * @param actor The actor to scroll into view
+     */
+    private void scrollIntoView(Actor actor) {
+        Actor parent = scrollpane.getActor();
+        if (parent == null) {
+            parent = scrollpane;
+        }
+
+        float xOffset = 0;
+        float yOffset = 0;
+        float width = actor.getWidth();
+        float height = actor.getHeight();
+
+        // Loop finds the X and Y offsets of the actor relative to the scrollpane
+        do {
+            yOffset += actor.getY();
+            xOffset += actor.getX();
+            actor = actor.getParent();
+        } while (parent != actor && actor != null);
+
+        scrollpane.scrollTo(xOffset, yOffset, width, height, true, true);
     }
 
     /**
@@ -229,33 +269,27 @@ public class FocusableStage extends Stage {
      * @param msg                   The message to display
      * @param buttons               Buttons to be displayed in the dialog
      * @param useVerticalButtonList Determines whether the dialog buttons are arranged horizontally or vertically
-     * @param scaleFactor           The game's scaleFactor to scale up/down dialog button width
      * @param dialogResultListener  Listener for beaming back the selected dialog option to the caller
-     * @param skin                  The skin to use for the dialog
      */
-    public void showDialog(String msg,
-                           DialogButton[] buttons, boolean useVerticalButtonList,
-                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog(new Label(msg, skin), null, buttons, useVerticalButtonList,
-                scaleFactor, dialogResultListener, skin);
+    public void showDialog(String msg,  DialogButton[] buttons,
+                           boolean useVerticalButtonList, DialogResultListener dialogResultListener) {
+        showDialog(new Label(msg, skin), null, buttons, useVerticalButtonList, dialogResultListener);
     }
 
     public void showDialog(Table contentTable, Array<Actor> dialogFocusableActorArray,
                            DialogButton[] buttons, boolean useVerticalButtonList,
-                           float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog((Actor) contentTable, dialogFocusableActorArray, buttons, useVerticalButtonList,
-                scaleFactor, dialogResultListener, skin);
+                           DialogResultListener dialogResultListener) {
+        showDialog((Actor) contentTable, dialogFocusableActorArray, buttons,
+                useVerticalButtonList, dialogResultListener);
     }
 
-    public void showOKDialog(String msg, boolean useVerticalButtonList,
-                             float scaleFactor, DialogResultListener dialogResultListener, Skin skin) {
-        showDialog(new Label(msg, skin), null, new DialogButton[]{DialogButton.OK}, useVerticalButtonList,
-                scaleFactor, dialogResultListener, skin);
+    public void showOKDialog(String msg, boolean useVerticalButtonList, DialogResultListener dialogResultListener) {
+        showDialog(new Label(msg, skin), null, new DialogButton[]{DialogButton.OK},
+                useVerticalButtonList, dialogResultListener);
     }
 
-    private void showDialog(Actor content, Array<Actor> dialogFocusableActorArray,
-                            DialogButton[] buttons, boolean useVerticalButtonList,
-                            float scaleFactor, final DialogResultListener dialogResultListener, Skin skin) {
+    private void showDialog(Actor content, Array<Actor> dialogFocusableActorArray, DialogButton[] buttons,
+                            boolean useVerticalButtonList, final DialogResultListener dialogResultListener) {
         final Array<Actor> backupCurrentActorArray = new Array<>(this.focusableActorArray);
         final Actor backupFocusedActor = this.currentFocusedActor;
 
@@ -293,9 +327,9 @@ public class FocusableStage extends Stage {
 
         dialogs.add(dialog);
 
-        dialog.getContentTable().add(content).pad(20f);
+        dialog.getContentTable().add(content).pad(20f * scaleFactor).padBottom(0f * scaleFactor);
         dialog.getButtonTable().defaults().width(200f * scaleFactor);
-        dialog.getButtonTable().padBottom(10f).padLeft(10f).padRight(10f);
+        dialog.getButtonTable().pad(10f * scaleFactor);
         dialog.setScale(0.6f);
         dialog.getColor().a = 0;
 
@@ -341,7 +375,7 @@ public class FocusableStage extends Stage {
                 Actions.fadeIn(.2f, Interpolation.smooth)
         ));
 
-        dialog.setOrigin(dialog.getWidth() / 2, dialog.getHeight() / 2);
+        dialog.setOrigin(Align.center);
         dialog.setPosition(Math.round((getWidth() - dialog.getWidth()) / 2), Math.round((getHeight() - dialog.getHeight()) / 2));
     }
 
@@ -522,8 +556,8 @@ public class FocusableStage extends Stage {
             } else if (keyCode == Input.Keys.RIGHT) {
                 return textField.getCursorPosition() == textField.getText().length() && textField.getSelection().isEmpty();
             }
-        } else if (currentFocusedActor instanceof DropDownMenu) {
-            DropDownMenu selectBox = (DropDownMenu) currentFocusedActor;
+        } else if (currentFocusedActor instanceof DropDownMenu<?>) {
+            DropDownMenu<?> selectBox = (DropDownMenu<?>) currentFocusedActor;
             boolean isExpanded = selectBox.isExpanded();
 
             if (isExpanded) {
@@ -533,8 +567,7 @@ public class FocusableStage extends Stage {
                 }
 
                 // Collapse the SelectBox as some other key was pressed
-                triggerTouchDown();
-                triggerTouchUp();
+                selectBox.hideList();
             }
         }
 
@@ -704,6 +737,7 @@ public class FocusableStage extends Stage {
         Cancel("Cancel"),
         Set("Set"),
         Yes("Yes"),
+        Kick("Kick"),
         Resume("Resume"),
         MainMenu("Main Menu"),
         Exit("Exit"),

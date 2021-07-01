@@ -16,16 +16,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.KryoHelper;
 import com.cg.zoned.Preferences;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
@@ -35,17 +32,18 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 public class HostJoinScreen extends ScreenObject implements InputProcessor {
-    // Bigger buffer as map preview images, which is bigger than text data, are sent
-    private static final int CONNECTION_BUFFER_SIZE = 131072; // 2^17
+    // Bigger connection buffer size as map preview images, which are bigger than text data, are sent
+    public static final int CONNECTION_BUFFER_SIZE = 131072; // 2^17
+    public static final int SERVER_OBJECT_BUFFER_SIZE = 2048;
+    public static final int CLIENT_WRITE_BUFFER_SIZE = 8192;
 
     public HostJoinScreen(final Zoned game) {
         super(game);
 
         game.discordRPCManager.updateRPC("Setting up local multiplayer");
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
     }
 
     @Override
@@ -78,6 +76,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         final TextField playerNameField = new TextField("", game.skin);
         playerNameField.setText(game.preferences.getString(Preferences.NAME_PREFERENCE, null));
         playerNameField.setCursorPosition(playerNameField.getText().length());
+        playerNameField.setMaxLength(16);
         table.add(playerNameLabel).right();
         table.add(playerNameField).width(playerNameField.getPrefWidth() * game.getScaleFactor()).left();
 
@@ -102,17 +101,9 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         hostButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                restoreScreen();
-
-                String name = playerNameField.getText().trim();
-                if (!name.isEmpty()) {
-                    game.preferences.putString(Preferences.NAME_PREFERENCE, name);
-                    game.preferences.flush();
-
-                    startServerLobby(playerNameField.getText().trim());
-                } else {
-                    screenStage.showOKDialog("Please enter the player name", false,
-                            game.getScaleFactor(), null, game.skin);
+                String name = validateName(playerNameField.getText());
+                if (name != null) {
+                    startServerLobby(name);
                 }
             }
         });
@@ -120,22 +111,14 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         joinButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                restoreScreen();
-
-                String name = playerNameField.getText().trim();
-                if (!name.isEmpty()) {
+                String name = validateName(playerNameField.getText());
+                if (name != null) {
                     if (searchingLabel.getColor().a == 0) {
-                        game.preferences.putString(Preferences.NAME_PREFERENCE, name);
-                        game.preferences.flush();
-
                         searchingLabel.setText("Searching for servers...");
-                        startClientLobby(name, searchingLabel);
+                        prepareClient(name, searchingLabel);
                     } else {
                         searchingLabel.setText("Already searching for servers...");
                     }
-                } else {
-                    screenStage.showOKDialog("Please enter the player name", false,
-                            game.getScaleFactor(), null, game.skin);
                 }
             }
         });
@@ -150,8 +133,21 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         screenStage.setFocusedActor(playerNameField);
     }
 
+    private String validateName(String playerName) {
+        restoreScreen();
+
+        playerName = playerName.trim();
+        if (!playerName.isEmpty()) {
+            game.preferences.putString(Preferences.NAME_PREFERENCE, playerName);
+            game.preferences.flush();
+            return playerName;
+        }
+
+        screenStage.showOKDialog("Please enter the player name", false, null);
+        return null;
+    }
+
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
@@ -162,7 +158,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
     }
 
     private void startServerLobby(final String playerName) {
-        final Server server = new Server(CONNECTION_BUFFER_SIZE, 2048);
+        final Server server = new Server(CONNECTION_BUFFER_SIZE, SERVER_OBJECT_BUFFER_SIZE);
 
         Kryo kryo = server.getKryo();
         KryoHelper.registerClasses(kryo);
@@ -171,8 +167,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         try {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException | IllegalArgumentException e) {
-            screenStage.showOKDialog("Server bind error\n" + e.getMessage(), false,
-                    game.getScaleFactor(), null, game.skin);
+            screenStage.showOKDialog("Server bind error\n" + e.getMessage(), false, null);
             e.printStackTrace();
             return;
         }
@@ -180,8 +175,8 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         animationManager.fadeOutStage(screenStage, this, new ServerLobbyScreen(game, server, playerName));
     }
 
-    private void startClientLobby(final String playerName, final Label searchingLabel) {
-        final Client client = new Client(8192, CONNECTION_BUFFER_SIZE);
+    private void prepareClient(final String playerName, final Label searchingLabel) {
+        final Client client = new Client(CLIENT_WRITE_BUFFER_SIZE, CONNECTION_BUFFER_SIZE);
 
         Kryo kryo = client.getKryo();
         KryoHelper.registerClasses(kryo);
@@ -189,21 +184,20 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         client.start();
         searchingLabel.addAction(Actions.fadeIn(.2f));
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final InetAddress addr = client.discoverHost(Constants.SERVER_PORT, 4000);
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        checkAndStartClientScreen(client, playerName, addr, searchingLabel);
-                    }
-                });
-            }
+        new Thread(() -> {
+            final InetAddress addr = client.discoverHost(Constants.SERVER_PORT, 4000);
+            Gdx.app.postRunnable(() -> {
+                if (screenStage == null) {
+                    // User probably navigated to another screen before discoverHost completed
+                    return;
+                }
+
+                checkAndStartClientLobby(client, playerName, addr, searchingLabel);
+            });
         }).start();
     }
 
-    private void checkAndStartClientScreen(Client client, String playerName, InetAddress addr, Label searchingLabel) {
+    private void checkAndStartClientLobby(Client client, String playerName, InetAddress addr, Label searchingLabel) {
         searchingLabel.clearActions();
 
         try {
@@ -212,20 +206,21 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
             }
             client.connect(4000, addr, Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException e) {
-            screenStage.showOKDialog("Error connecting to the server\n" + e.getMessage(), false,
-                    game.getScaleFactor(), null, game.skin);
-            searchingLabel.addAction(Actions.fadeOut(.2f));
+            showConnectionError("Error connecting to the server\n" + e.getMessage(), searchingLabel);
             return;
         }
 
         if (!client.isConnected()) {
-            screenStage.showOKDialog("Failed to connect to the server", false,
-                    game.getScaleFactor(), null, game.skin);
-            searchingLabel.addAction(Actions.fadeOut(.2f));
+            showConnectionError("Failed to connect to the server", searchingLabel);
             return;
         }
 
         animationManager.fadeOutStage(screenStage, this, new ClientLobbyScreen(game, client, playerName));
+    }
+
+    private void showConnectionError(String errorMessage, Label searchingLabel) {
+        screenStage.showOKDialog(errorMessage, false, null);
+        searchingLabel.addAction(Actions.fadeOut(.2f));
     }
 
     private void restoreScreen() {
@@ -273,17 +268,10 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
     public void render(float delta) {
         super.render(delta);
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.draw();
         screenStage.act(delta);
-    }
 
-    @Override
-    public void dispose() {
-        super.dispose();
+        displayFPS();
     }
 
     /**

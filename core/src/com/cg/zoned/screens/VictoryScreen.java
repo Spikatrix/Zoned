@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -23,20 +22,15 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.Sort;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.PlayerColorHelper;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.AnimationManager;
-import com.cg.zoned.managers.PlayerManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
 import java.text.DecimalFormat;
-import java.util.Comparator;
 
 public class VictoryScreen extends ScreenObject implements InputProcessor {
     private ParticleEffect trailEffect;
@@ -48,22 +42,21 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
     private float rowHeightScale = 1.5f;
     private float padding;
 
-    public VictoryScreen(final Zoned game, PlayerManager playerManager) {
+    public VictoryScreen(final Zoned game, Array<TeamData> teamData) {
         super(game);
         game.discordRPCManager.updateRPC("Post match");
 
         this.padding = 16f * game.getScaleFactor();
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
-        finalizeTeamData(playerManager);
+        this.teamData = teamData;
+        finalizeTeamData();
     }
 
-    private void finalizeTeamData(PlayerManager playerManager) {
-        teamData = playerManager.getTeamData();
-        new Sort().sort(teamData, new TeamDataComparator());
+    private void finalizeTeamData() {
+        new Sort().sort(teamData, (t1, t2) -> t2.getScore() - t1.getScore());
 
         DecimalFormat df = new DecimalFormat("#.##");
         for (TeamData td : teamData) {
@@ -80,15 +73,12 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
         trailEffect.load(Gdx.files.internal("particles/trails.p"), Gdx.files.internal("particles"));
 
         animationManager.startGameOverAnimation(screenStage, trailEffect);
-        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
-            @Override
-            public void animationEnd(Stage stage) {
-                stage.clear();
-                setUpVictoryUI();
-                stage.getRoot().setPosition(0, 0);
-                animationManager.setAnimationListener(null);
-                animationManager.startScoreBoardAnimation(stage, scoreBoardTitleContainer, scoreboardActors, rowHeightScale, padding);
-            }
+        animationManager.setAnimationListener(stage -> {
+            stage.clear();
+            setUpVictoryUI();
+            stage.getRoot().setPosition(0, 0);
+            animationManager.setAnimationListener(null);
+            animationManager.startScoreBoardAnimation(stage, scoreBoardTitleContainer, scoreboardActors, rowHeightScale, padding);
         });
     }
 
@@ -238,7 +228,6 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpNextButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton nextButton = uiButtonManager.addNextButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         nextButton.addListener(new ClickListener() {
             @Override
@@ -263,12 +252,10 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
         trailEffect.draw(screenStage.getBatch(), delta);
         screenStage.getBatch().end();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.draw();
         screenStage.act(delta);
+
+        displayFPS();
     }
 
     @Override
@@ -290,13 +277,6 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
 
         animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
         return true;
-    }
-
-    private static class TeamDataComparator implements Comparator<TeamData> {
-        @Override
-        public int compare(TeamData t1, TeamData t2) {
-            return t2.getScore() - t1.getScore();
-        }
     }
 
     private static class ScoreboardHeaderData {

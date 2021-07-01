@@ -1,10 +1,10 @@
 package com.cg.zoned.maps.internalmaps;
 
 import com.badlogic.gdx.utils.Array;
+import com.cg.zoned.dataobjects.StartPosition;
 import com.cg.zoned.maps.MapEntity;
-import com.cg.zoned.maps.MapExtraParams;
 
-public class HoloMap implements MapEntity {
+public class HoloMap extends MapEntity {
     private String mapGridString = "" + // Added this line as the auto-code formatter messes up the arrangement
             "........A##C........\n" +
             "....#..........#....\n" +
@@ -17,35 +17,23 @@ public class HoloMap implements MapEntity {
             "....#..........#....\n" +
             "........D##B........\n";
 
-    private Array<String> startPosNames = new Array<>();
+    private Array<StartPosition> startPositions = new Array<>();
 
     private int rowCount = 10;
     private int colCount = 20;
 
     public HoloMap() {
+        startPositions.addAll(
+                new StartPosition("Top Left",     'A'),
+                new StartPosition("Bottom Right", 'B'),
+                new StartPosition("Top Right",    'C'),
+                new StartPosition("Bottom Left",  'D')
+        );
     }
 
     @Override
-    public MapExtraParams getExtraParams() {
-        return null;
-    }
-
-    @Override
-    public void applyExtraParams() {
-    }
-
-    @Override
-    public Array<String> getStartPosNames() {
-        if (startPosNames.isEmpty()) {
-            startPosNames.addAll(
-                    "Top Left",            // A
-                    "Bottom Right",        // B
-                    "Top Right",           // C
-                    "Bottom Left"          // D
-            );
-        }
-
-        return startPosNames;
+    public Array<StartPosition> getStartPositions() {
+        return startPositions;
     }
 
     @Override

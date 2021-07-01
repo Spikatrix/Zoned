@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -16,7 +15,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
@@ -24,12 +22,13 @@ import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
+import com.cg.zoned.dataobjects.PlayerSetUpParams;
+import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.managers.AnimationManager;
-import com.cg.zoned.managers.MapManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.maps.MapEntity;
+import com.cg.zoned.maps.MapExtraParams;
 import com.cg.zoned.ui.ButtonGroup;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
@@ -41,6 +40,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     private Color[] currentBgColors;
     private Color[] targetBgColors;
 
+    private PlayerSetUpParams playerSetUpParams;
     private int playerCount;
     private FocusableStage mapSelectorStage;
     private MapSelector mapSelector;
@@ -51,9 +51,8 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         super(game);
         game.discordRPCManager.updateRPC("Setting up splitscreen multiplayer");
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(this.game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
@@ -68,49 +67,68 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         }
     }
 
+    public PlayerSetUpScreen(final Zoned game, PlayerSetUpParams playerSetUpParams) {
+        this(game);
+        this.playerSetUpParams = playerSetUpParams;
+    }
+
     @Override
     public void show() {
         setUpMapSelectorStage();
         setUpStage();
         setUpUIButtons();
 
-        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
-            @Override
-            public void animationEnd(Stage stage) {
-                boolean showTutorialDialogPrompt = game.preferences.getBoolean(Preferences.SHOW_TUTORIAL_PREFERENCE, true);
-                if (showTutorialDialogPrompt) {
-                    showTutorialDialog();
+        animationManager.setAnimationListener(stage -> {
+            boolean showTutorialDialogPrompt = game.preferences.getBoolean(Preferences.SHOW_TUTORIAL_PREFERENCE, true);
+            if (showTutorialDialogPrompt) {
+                showTutorialDialog();
 
-                    game.preferences.putBoolean(Preferences.SHOW_TUTORIAL_PREFERENCE, false);
-                    game.preferences.flush();
-                }
+                game.preferences.putBoolean(Preferences.SHOW_TUTORIAL_PREFERENCE, false);
+                game.preferences.flush();
             }
         });
         screenStage.getRoot().getColor().a = 0;
 
         // The screen is faded in once the maps and the extended selector is loaded
-        mapSelector.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
-            @Override
-            public void onExternalMapsLoaded(Array<MapEntity> mapList, final int externalMapStartIndex) {
-                // Set up the extended map selector once external maps have been loaded
-                mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
-                    @Override
-                    public void onExtendedMapSelectorOpened() {
-                        openExtendedMapSelector();
-                    }
+        mapSelector.loadExternalMaps(true, (mapList, externalMapStartIndex) -> {
+            // Set up the extended map selector once external maps have been loaded
+            mapSelector.setUpExtendedSelector(mapSelectorStage, new MapSelector.ExtendedMapSelectionListener() {
+                @Override
+                public void onExtendedMapSelectorOpened() {
+                    openExtendedMapSelector();
+                }
 
-                    @Override
-                    public void onMapSelect(int mapIndex) {
-                        if (mapIndex != -1) {
-                            mapSpinner.snapToStep(mapIndex - mapSpinner.getPositionIndex());
-                        }
-                        animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
-                        extendedMapSelectorActive = false;
+                @Override
+                public void onMapSelect(int mapIndex) {
+                    if (mapIndex != -1) {
+                        mapSpinner.snapToStep(mapIndex - mapSpinner.getPositionIndex());
                     }
-                });
+                    animationManager.endExtendedMapSelectorAnimation(screenStage, mapSelectorStage);
+                    extendedMapSelectorActive = false;
+                }
+            });
 
-                animationManager.fadeInStage(screenStage);
+            if (playerSetUpParams != null) {
+                int snapCount = 0;
+                for (MapEntity map : mapSelector.getMapManager().getMapList()) {
+                    if (map.getName().equals(playerSetUpParams.mapName)) {
+                        mapSpinner.snapToStep(snapCount);
+                        break;
+                    }
+                    snapCount++;
+                }
+
+                if (playerSetUpParams.mapExtraParams != null) {
+                    MapEntity map = mapSelector.getMapManager().getMap(playerSetUpParams.mapName);
+                    MapExtraParams mapExtraParams = map.getExtraParams();
+                    mapExtraParams.extraParams = playerSetUpParams.mapExtraParams.extraParams;
+                    mapExtraParams.paramSelectTitle = playerSetUpParams.mapExtraParams.paramSelectTitle;
+                    mapExtraParams.spinnerVars = playerSetUpParams.mapExtraParams.spinnerVars;
+                    map.applyExtraParams();
+                }
             }
+
+            animationManager.fadeInStage(screenStage);
         });
     }
 
@@ -121,12 +139,11 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     }
 
     private void setUpMapSelectorStage() {
-        mapSelectorStage = new FocusableStage(screenViewport);
+        mapSelectorStage = new FocusableStage(screenViewport, this.game.getScaleFactor(), this.game.skin);
         mapSelectorStage.getRoot().getColor().a = 0f;
     }
 
     private void setUpUIButtons() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
@@ -145,7 +162,6 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
 
     private void setUpStage() {
         final int NO_OF_COLORS = Constants.PLAYER_COLORS.size();
-        final float COLOR_BUTTON_DIMENSIONS = 60f * game.getScaleFactor();
 
         Table masterTable = new Table();
         masterTable.setFillParent(true);
@@ -162,7 +178,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
 
         Label[] promptLabels = new Label[playerCount];
         Button[][] colorButtons = new Button[playerCount][];
-        final ButtonGroup[] colorButtonGroups = new ButtonGroup[playerCount];
+        final ButtonGroup<Button>[] colorButtonGroups = new ButtonGroup[playerCount];
         Table playerList = new Table();
         for (int i = 0; i < playerCount; i++) {
             Table playerItem = new Table();
@@ -171,7 +187,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
             playerItem.add(promptLabels[i]);
 
             colorButtons[i] = new Button[NO_OF_COLORS];
-            colorButtonGroups[i] = new ButtonGroup();
+            colorButtonGroups[i] = new ButtonGroup<>();
             colorButtonGroups[i].setMinCheckCount(1);
             colorButtonGroups[i].setMaxCheckCount(1);
 
@@ -180,22 +196,23 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
                 colorButtons[i][j].setColor(PlayerColorHelper.getColorFromIndex(j));
                 colorButtonGroups[i].add(colorButtons[i][j]);
 
-                playerItem.add(colorButtons[i][j]).width(COLOR_BUTTON_DIMENSIONS).height(COLOR_BUTTON_DIMENSIONS);
+                playerItem.add(colorButtons[i][j]).size(promptLabels[i].getPrefHeight() * 1.75f);
 
                 screenStage.addFocusableActor(colorButtons[i][j]);
             }
 
             final int finalI = i;
-            colorButtonGroups[i].setOnCheckChangeListener(new ButtonGroup.OnCheckChangeListener() {
-                @Override
-                public void buttonPressed(Button button) {
-                    targetBgColors[finalI].set(button.getColor());
-                    targetBgColors[finalI].a = bgAlpha;
-                }
+            colorButtonGroups[i].setOnCheckChangeListener(button -> {
+                targetBgColors[finalI].set(button.getColor());
+                targetBgColors[finalI].a = bgAlpha;
             });
 
             colorButtonGroups[i].uncheckAll();
-            colorButtons[i][i % NO_OF_COLORS].setChecked(true);
+            if (playerSetUpParams == null) {
+                colorButtons[i][i % NO_OF_COLORS].setChecked(true);
+            } else {
+                colorButtons[i][PlayerColorHelper.getIndexFromColor(playerSetUpParams.playerColors[i])].setChecked(true);
+            }
             screenStage.row();
             playerList.add(playerItem).right();
             playerList.row();
@@ -205,9 +222,9 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
 
         mapSelector = new MapSelector(screenStage, game.getScaleFactor(), game.assets, game.skin);
         mapSelector.setUsedTextureArray(usedTextures);
-        mapSelector.getMapManager().enableExternalMapLogging(true);
-        mapSpinner = mapSelector.loadMapSelectorSpinner(150 * game.getScaleFactor(),
-                game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3);
+        mapSelector.getMapManager().enableExternalMapScanLogging(true);
+        float spinnerHeight = game.skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight() * 3;
+        mapSpinner = mapSelector.loadMapSelectorSpinner(spinnerHeight * 1.5f, spinnerHeight);
         table.add(mapSpinner).colspan(NO_OF_COLORS + 1).pad(20 * game.getScaleFactor()).expandX();
         table.row();
 
@@ -233,12 +250,12 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 Array<Color> playerColors = new Array<>();
-                for (ButtonGroup buttonGroup : colorButtonGroups) {
+                for (ButtonGroup<Button> buttonGroup : colorButtonGroups) {
                     playerColors.add(buttonGroup.getChecked().getColor());
                 }
 
                 if (mapSelector.loadSelectedMap()) {
-                    startGame(playerColors, mapSelector.getMapManager());
+                    startGame(playerColors, mapSelector.getMapManager().getPreparedMapData());
                 }
             }
 
@@ -250,32 +267,24 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         screenStage.addActor(masterTable);
     }
 
-    private void startGame(Array<Color> playerColors, MapManager mapManager) {
+    private void startGame(Array<Color> playerColors, PreparedMapData mapData) {
         final Player[] players = new Player[playerColors.size];
         for (int i = 0; i < players.length; i++) {
             players[i] = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
+            players[i].setControlScheme(i % Constants.PLAYER_CONTROLS.length);
         }
 
-        for (int i = 0; i < players.length; i++) {
-            players[i].setControlIndex(i % Constants.PLAYER_CONTROLS.length);
-        }
-
-        int startPosSplitScreenCount = game.preferences.getInteger(Preferences.MAP_START_POS_SPLITSCREEN_COUNT_PREFERENCE, 2);
-        animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapManager, players, startPosSplitScreenCount));
+        animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapData, players));
     }
 
     private void showTutorialDialog() {
         screenStage.showDialog("Start the tutorial?",
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Yes },
-                false, game.getScaleFactor(),
-                new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(FocusableStage.DialogButton button) {
-                        if (button == FocusableStage.DialogButton.Yes) {
-                            animationManager.fadeOutStage(screenStage, PlayerSetUpScreen.this, new TutorialScreen(game));
-                        }
+                false, button -> {
+                    if (button == FocusableStage.DialogButton.Yes) {
+                        animationManager.fadeOutStage(screenStage, PlayerSetUpScreen.this, new TutorialScreen(game));
                     }
-                }, game.skin);
+                });
     }
 
     @Override
@@ -295,10 +304,6 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         }
         batch.end();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.act(delta);
         screenStage.draw();
 
@@ -306,6 +311,8 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
         if (mapSelectorStage.getRoot().getColor().a > 0) {
             mapSelectorStage.draw();
         }
+
+        displayFPS();
     }
 
     @Override

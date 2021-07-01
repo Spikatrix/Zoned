@@ -48,6 +48,13 @@ public class ScoreBar {
         }
     }
 
+    public void reset() {
+        int size = scoreBarTargetWidth.length;
+        for (int i = 0; i < size; i++) {
+            scoreBarCurrentWidth[i] = scoreBarTargetWidth[i] = 0;
+        }
+    }
+
     public void resize(int width, int height) {
         totalWidth = width;
         totalHeight = height;

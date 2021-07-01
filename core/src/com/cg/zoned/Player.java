@@ -12,16 +12,14 @@ public class Player extends InputAdapter {
     public Color color;
     public String name;
 
-    public int[] controls;
+    private int[] controls;
     public Direction direction;
     public Direction updatedDirection;
 
-    public Vector2 position;
-    public Vector2 prevPosition;
-    public Vector2 targetPosition;
-
-    public boolean dummyMoving;
-    private Vector2 dummyPosition;
+    private Vector2 position;
+    private Vector2 targetPosition;
+    private GridPoint2 prevPosition;
+    private GridPoint2 roundedPosition;
 
     private float timeElapsed;
 
@@ -30,58 +28,95 @@ public class Player extends InputAdapter {
         this.name = name;
 
         this.position = new Vector2();
-        this.prevPosition = null;
-        this.targetPosition = null;
-
-        this.dummyPosition = new Vector2(0, 0);
-        this.dummyMoving = false;
-
-        this.direction = this.updatedDirection = null;
+        this.roundedPosition = new GridPoint2();
+        this.prevPosition = new GridPoint2(-1, -1);
 
         this.controls = Constants.PLAYER_CONTROLS[0]; // Default is the first control scheme
     }
 
-    public void setStartPos(GridPoint2 pos) {
-        position = new Vector2(pos.x, pos.y);
+    public void setPosition(GridPoint2 pos) {
+        setPosition(pos.x, pos.y);
     }
 
-    public void setControlIndex(int index) {
-        controls = Constants.PLAYER_CONTROLS[index];
+    public void setPosition(Vector2 pos) {
+        // Nope, you're not allowed to place the player in between cells
+        setPosition(Math.round(pos.x), Math.round(pos.y));
     }
 
-    public void moveTo(Vector2 targetPosition, float delta) {
-        if (this.targetPosition == null) {
-            this.targetPosition = targetPosition;
+    public void setPosition(int x, int y) {
+        prevPosition.set(roundedPosition);
+        position.set(x, y);
+        roundedPosition.set(x, y);
+    }
+
+    public void resetPrevPosition() {
+        this.prevPosition.set(-1, -1);
+    }
+
+    public void setControlScheme(int index) {
+        this.controls = Constants.PLAYER_CONTROLS[index];
+    }
+
+    public void move(float delta) {
+        if (isMoving()) {
+            // Move to the target position if it is available
+            this.moveTo(this.targetPosition, delta);
+        }
+    }
+
+    public void moveTo(Direction direction, float delta) {
+        if (isMoving()) {
+            // Not allowed to change direction when the player is already moving
+            return;
         }
 
+        if (direction == null) {
+            // Run a fake movement
+            this.moveTo(new Vector2(-1, -1), delta);
+            return;
+        }
+
+        this.targetPosition = new Vector2(this.position);
+        updatePosition(this.targetPosition, direction);
+
+        this.move(delta);
+    }
+
+    private void moveTo(Vector2 targetPosition, float delta) {
+        this.targetPosition = targetPosition;
+
+        // Fake movements are done to synchronize movement of all players at discrete intervals
+        boolean fakeMovement = targetPosition.x < 0 || targetPosition.y < 0;
         timeElapsed += delta;
-        this.position.lerp(this.targetPosition, timeElapsed / Constants.PLAYER_MOVEMENT_LERP_VALUE);
+
+        if (!fakeMovement) {
+            this.position.lerp(this.targetPosition, timeElapsed / Constants.PLAYER_MOVEMENT_LERP_VALUE);
+        }
 
         if (timeElapsed >= Constants.PLAYER_MOVEMENT_MAX_TIME) {
-            timeElapsed = 0;
-            this.position.x = Math.round(this.targetPosition.x);
-            this.position.y = Math.round(this.targetPosition.y);
-            this.targetPosition = null;
-            this.direction = null;
+            completeMovement();
         }
     }
 
-    public void dummyMoveTo(Vector2 targetPosition, float delta) { // Simulate a fake movement for timed movement from all players
-        if (this.targetPosition == null) {
-            this.targetPosition = targetPosition;
-            this.dummyMoving = true;
+    public void completeMovement() {
+        if (!isMoving()) {
+            return;
         }
 
-        timeElapsed += delta;
-        this.dummyPosition.lerp(this.targetPosition, timeElapsed / Constants.PLAYER_MOVEMENT_LERP_VALUE);
-
-        if (timeElapsed >= Constants.PLAYER_MOVEMENT_MAX_TIME) {
-            timeElapsed = 0;
-            this.dummyMoving = false;
-            this.dummyPosition.set(0, 0);
-            this.targetPosition = null;
-            this.direction = null;
+        boolean fakeMovement = this.targetPosition.x < 0 || this.targetPosition.y < 0;
+        if (fakeMovement) {
+            setPosition(this.position);
+        } else {
+            setPosition(this.targetPosition);
         }
+
+        timeElapsed = 0;
+        this.targetPosition = null;
+        this.direction = null;
+    }
+
+    public boolean isMoving() {
+        return this.targetPosition != null;
     }
 
     public void render(Rectangle userViewRect, Batch batch, TextureRegion playerTexture, float playerTextureRegionScale) {
@@ -92,6 +127,18 @@ public class Player extends InputAdapter {
             batch.draw(playerTexture, startX, startY,
                     playerTexture.getRegionWidth() / playerTextureRegionScale,
                     playerTexture.getRegionHeight() / playerTextureRegionScale);
+        }
+    }
+
+    private void updatePosition(Vector2 pos, Direction direction) {
+        if (direction == Direction.LEFT) {
+            pos.x--;
+        } else if (direction == Direction.RIGHT) {
+            pos.x++;
+        } else if (direction == Direction.DOWN) {
+            pos.y--;
+        } else if (direction == Direction.UP) {
+            pos.y++;
         }
     }
 
@@ -108,6 +155,53 @@ public class Player extends InputAdapter {
         }
 
         return false;
+    }
+
+    public float getPositionX() {
+        return position.x;
+    }
+
+    public float getPositionY() {
+        return position.y;
+    }
+
+    public Vector2 getPosition() {
+        // New object so that the caller can't modify the position object content
+        return new Vector2(this.position);
+    }
+
+    public int getRoundedPositionX() {
+        return roundedPosition.x;
+    }
+
+    public int getRoundedPositionY() {
+        return roundedPosition.y;
+    }
+
+    public GridPoint2 getRoundedPosition() {
+        // New object so that the caller can't modify the roundedPosition object content
+        return new GridPoint2(this.roundedPosition);
+    }
+
+    public int getPreviousPositionX() {
+        return prevPosition.x;
+    }
+
+    public int getPreviousPositionY() {
+        return prevPosition.y;
+    }
+
+    public GridPoint2 getPreviousPosition() {
+        // New object so that the caller can't modify the previousPosition object content
+        return new GridPoint2(this.prevPosition);
+    }
+
+    public boolean hasPreviousPosition() {
+        return getPreviousPositionX() > -1 && getPreviousPositionY() > -1;
+    }
+
+    public int[] getControls() {
+        return controls;
     }
 
     public enum Direction {UP, LEFT, DOWN, RIGHT}

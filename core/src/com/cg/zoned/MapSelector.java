@@ -24,11 +24,14 @@ import com.cg.zoned.maps.InvalidMapCharacter;
 import com.cg.zoned.maps.InvalidMapDimensions;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
-import com.cg.zoned.maps.NoStartPositionsFound;
+import com.cg.zoned.maps.MapGridMissing;
+import com.cg.zoned.maps.StartPositionsMissing;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 import com.cg.zoned.ui.StepScrollPane;
+
+import java.io.FileNotFoundException;
 
 public class MapSelector {
     private MapManager mapManager;
@@ -41,6 +44,7 @@ public class MapSelector {
     private Array<Boolean> mapPreviewChecked;
     private Array<Image> mapPreviewImages;
     private boolean extraParamsDialogActive;
+    private boolean addedCustomMapInfo;
 
     private Assets assets;
     private Array<Texture> usedTextures;
@@ -89,14 +93,19 @@ public class MapSelector {
             }
         });
 
-        mapSpinner.getLeftButton().setText(" < ");
-        mapSpinner.getRightButton().setText(" > ");
+        mapSpinner.getLeftButton().setText("  <  ");
+        mapSpinner.getRightButton().setText("  >  ");
         mapSpinner.setButtonStepCount(1);
 
         return mapSpinner;
     }
 
     private void updatePreview(Array<MapEntity> mapList, int index) {
+        if (isCustomMapInfo(index)) {
+            // This is the custom map import info; not really a map
+            return;
+        }
+
         if (!mapPreviewChecked.get(index)) {
             Texture mapPreviewTexture = mapManager.getMapPreview(mapList.get(index).getName());
             if (mapPreviewTexture != null) {
@@ -140,14 +149,15 @@ public class MapSelector {
 
             Texture texture = assets.getTexture(Assets.TextureObject.SETTINGS_TEXTURE);
 
-            HoverImageButton hoverImageButton = new HoverImageButton(new TextureRegionDrawable(texture));
-            hoverImageButton.getImage().setScaling(Scaling.fit);
-            innerTable.add(hoverImageButton)
+            HoverImageButton extraParamButton = new HoverImageButton(new TextureRegionDrawable(texture));
+            extraParamButton.getImage().setScaling(Scaling.fit);
+            innerTable.add(extraParamButton)
                     .width(mapSpinner.getSpinnerHeight() / 3)
-                    .height(mapSpinner.getSpinnerHeight() / 3);
+                    .height(mapSpinner.getSpinnerHeight() / 3)
+                    .padRight(1f);
             stack.add(innerTable);
 
-            hoverImageButton.addListener(new ClickListener() {
+            extraParamButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     showExtraParamDialog(extraParams, map);
@@ -158,26 +168,43 @@ public class MapSelector {
         return stack;
     }
 
-    public void loadExternalMaps(final MapManager.OnExternalMapLoadListener externalMapLoadListener) {
-        mapManager.loadExternalMaps(new MapManager.OnExternalMapLoadListener() {
-            @Override
-            public void onExternalMapsLoaded(final Array<MapEntity> mapList, final int externalMapStartIndex) {
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = externalMapStartIndex; i < mapList.size; i++) {
-                            MapEntity map = mapList.get(i);
-                            mapPreviewChecked.add(false);
-                            mapSpinner.addContent(getMapStack(map, null));
-                        }
+    private void addCustomMapInfo() {
+        if (addedCustomMapInfo) {
+            // Already added custom map import information to the spinner
+            return;
+        }
 
-                        if (externalMapLoadListener != null) {
-                            externalMapLoadListener.onExternalMapsLoaded(mapList, externalMapStartIndex);
-                        }
-                    }
-                });
+        Texture customMapInfoTexture = new Texture("images/map_icons/Custom Map Info.png");
+        usedTextures.add(customMapInfoTexture);
+        Image customMapInfoImage = new Image(customMapInfoTexture);
+        customMapInfoImage.setScaling(Scaling.fit);
+        customMapInfoImage.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Gdx.net.openURI("https://github.com/Spikatrix/Zoned/discussions/categories/custom-map");
             }
         });
+        mapSpinner.addContent(customMapInfoImage);
+
+        addedCustomMapInfo = true;
+    }
+
+    public void loadExternalMaps(boolean addCustomMapInfo, final MapManager.ExternalMapScanListener externalMapLoadListener) {
+        mapManager.loadExternalMaps((mapList, externalMapStartIndex) -> Gdx.app.postRunnable(() -> {
+            for (int i = externalMapStartIndex; i < mapList.size; i++) {
+                MapEntity map = mapList.get(i);
+                mapPreviewChecked.add(false);
+                mapSpinner.addContent(getMapStack(map, null));
+            }
+
+            if (externalMapLoadListener != null) {
+                externalMapLoadListener.onExternalMapScanComplete(mapList, externalMapStartIndex);
+            }
+
+            if (addCustomMapInfo) {
+                addCustomMapInfo();
+            }
+        }));
     }
 
     private void showExtraParamDialog(final MapExtraParams prompts, final MapEntity map) {
@@ -219,29 +246,31 @@ public class MapSelector {
         extraParamsDialogActive = true;
         stage.showDialog(contentTable, focusableDialogButtons,
                 new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Set},
-                false, scaleFactor,
-                new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(FocusableStage.DialogButton button) {
-                        if (button == FocusableStage.DialogButton.Set) {
-                            for (int i = 0; i < prompts.spinnerVars.size; i++) {
-                                prompts.extraParams[i] = spinners[i].getPositionIndex() + prompts.spinnerVars.get(i).lowValue;
-                            }
-                            map.applyExtraParams();
+                false, button -> {
+                    if (button == FocusableStage.DialogButton.Set) {
+                        for (int i = 0; i < prompts.spinnerVars.size; i++) {
+                            prompts.extraParams[i] = spinners[i].getPositionIndex() + prompts.spinnerVars.get(i).lowValue;
                         }
-
-                        extraParamsDialogActive = false;
+                        map.applyExtraParams();
                     }
-                }, skin);
+
+                    extraParamsDialogActive = false;
+                });
     }
 
     public boolean loadSelectedMap() {
         int mapIndex = mapSpinner.getPositionIndex();
 
+        if (isCustomMapInfo(mapIndex)) {
+            stage.showOKDialog("Please select a valid map", false, null);
+            return false;
+        }
+
         try {
-            mapManager.prepareMap(mapIndex);
-        } catch (InvalidMapCharacter | NoStartPositionsFound | InvalidMapDimensions e) {
-            stage.showOKDialog("Error: " + e.getMessage(), false, scaleFactor, null, skin);
+            mapManager.loadMap(mapIndex);
+        } catch (InvalidMapCharacter | StartPositionsMissing | InvalidMapDimensions | MapGridMissing |
+                FileNotFoundException | IndexOutOfBoundsException e) {
+            stage.showOKDialog("Error: " + e.getMessage(), false, null);
             e.printStackTrace();
             return false;
         }
@@ -298,13 +327,11 @@ public class MapSelector {
                 }
             });
 
-            scrollTable.add(stack)
-                    .growX()
-                    .height(mapLabel.getPrefHeight() * 2);
+            scrollTable.add(stack).growX().height(mapLabel.getPrefHeight() * 2);
             scrollTable.row();
 
             mapSelectorStage.addFocusableActor(stack);
-            mapSelectorStage.setScrollpane(scrollPane);
+            mapSelectorStage.setScrollFocus((Actor) scrollPane);
             mapSelectorStage.row();
 
             if (i == 0) {
@@ -321,12 +348,13 @@ public class MapSelector {
     }
 
     public boolean extraParamShortcutPressed() {
-        if (extraParamsDialogActive) {
+        int mapIndex = mapSpinner.getPositionIndex();
+        if (extraParamsDialogActive || isCustomMapInfo(mapIndex)) {
             // Dialog is already active
             return false;
         }
 
-        MapEntity map = mapManager.getMapList().get(mapSpinner.getPositionIndex());
+        MapEntity map = mapManager.getMapList().get(mapIndex);
         MapExtraParams extraParams = map.getExtraParams();
         if (extraParams != null) {
             showExtraParamDialog(extraParams, map);
@@ -354,6 +382,10 @@ public class MapSelector {
 
     public MapManager getMapManager() {
         return mapManager;
+    }
+
+    private boolean isCustomMapInfo(int index) {
+        return (addedCustomMapInfo && index == mapManager.getMapList().size);
     }
 
     public interface ExtendedMapSelectionListener {

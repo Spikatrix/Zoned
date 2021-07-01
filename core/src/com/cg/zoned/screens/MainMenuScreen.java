@@ -15,7 +15,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -26,10 +25,8 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.reflect.ClassReflection;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Preferences;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.GameMode;
 import com.cg.zoned.managers.AnimationManager;
@@ -52,11 +49,10 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         super(game);
         this.game.discordRPCManager.updateRPC("Main Menu");
 
-        screenViewport = new ScreenViewport();
-        screenStage = new FocusableStage(screenViewport);
         mainStage = screenStage;
-        playModeStage = new FocusableStage(screenViewport);
+        playModeStage = new FocusableStage(screenViewport, this.game.getScaleFactor(), this.game.skin);
         animationManager = new AnimationManager(this.game, this);
+        uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures); // This is the one for playModeStage
         batch = new SpriteBatch();
         batch.setColor(1, 1, 1, bgAlpha);
     }
@@ -65,31 +61,22 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
     public void show() {
         setUpMainMenu();
         animationManager.startMainMenuAnimation(mainStage, mainMenuUIButtons);
-        animationManager.setAnimationListener(new AnimationManager.AnimationListener() {
-            @Override
-            public void animationEnd(Stage stage) {
-                bgTexture = game.assets.getTexture(Assets.TextureObject.DIAMOND_TEXTURE);
-                bgTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+        animationManager.setAnimationListener(stage -> {
+            bgTexture = game.assets.getTexture(Assets.TextureObject.DIAMOND_TEXTURE);
+            bgTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
-                bgAlpha = 1;
-            }
+            bgAlpha = 1;
         });
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final int radius = 40;
-                final Pixmap pixmap = PixmapFactory.getRoundedCornerPixmap(Color.GREEN, radius);
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        Texture roundedCornerBgColorTexture = new Texture(pixmap);
-                        usedTextures.add(roundedCornerBgColorTexture);
-                        roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
-                        pixmap.dispose();
-                    }
-                });
-            }
+        new Thread(() -> {
+            final int radius = 40;
+            final Pixmap pixmap = PixmapFactory.getRoundedCornerPixmap(Color.GREEN, radius);
+            Gdx.app.postRunnable(() -> {
+                Texture roundedCornerBgColorTexture = new Texture(pixmap);
+                usedTextures.add(roundedCornerBgColorTexture);
+                roundedCornerNP = new NinePatch(roundedCornerBgColorTexture, radius, radius, radius, radius);
+                pixmap.dispose();
+            });
         }).start();
     }
 
@@ -165,7 +152,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
 
     private HoverImageButton setUpAnimatedPlayButton(Table mainTable) {
         Texture playSheet = game.assets.getTexture(Assets.TextureObject.PLAY_SHEET_TEXTURE);
-        int rowCount = 5, colCount = 6;
+        int rowCount = 4, colCount = 4;
 
         TextureRegion[][] tmp = TextureRegion.split(playSheet,
                 playSheet.getWidth() / colCount,
@@ -179,12 +166,12 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
             }
         }
 
-        Animation playButtonAnimation = new Animation<>(1 / 15f, playFrames);
+        Animation<TextureRegion> playButtonAnimation = new Animation<>(1 / 15f, playFrames);
+        playButtonAnimation.setPlayMode(Animation.PlayMode.LOOP_PINGPONG);
 
-        float buttonWidth = 144f;
-        float buttonHeight = 144f;
+        float buttonSize = 144f;
 
-        final HoverImageButton playButton = new HoverImageButton(new AnimatedDrawable(playButtonAnimation, buttonWidth, buttonHeight, game.getScaleFactor()));
+        final HoverImageButton playButton = new HoverImageButton(new AnimatedDrawable(playButtonAnimation, buttonSize, buttonSize, game.getScaleFactor()));
         playButton.setTransform(true);
         playButton.setHoverAlpha(.75f);
         playButton.setClickAlpha(.6f);
@@ -197,7 +184,7 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 }
 
                 if (!playModeStage.getRoot().hasChildren()) {
-                    // Causes a bit of noticeable lag on my mobile
+                    // Causes a bit of noticeable lag on my old mobile
                     setUpPlayMenu();
                 }
 
@@ -206,9 +193,8 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 animationManager.startPlayModeAnimation(mainStage, playModeStage, playButton);
             }
         });
-        mainTable.add(playButton).pad(10f * game.getScaleFactor())
-                .width(buttonWidth * game.getScaleFactor())
-                .height(buttonHeight * game.getScaleFactor());
+
+        mainTable.add(playButton).pad(10f * game.getScaleFactor()).size(buttonSize * game.getScaleFactor());
         mainTable.row();
 
         return playButton;
@@ -223,8 +209,6 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 new GameMode("Splitscreen\nMultiplayer", "images/multiplayer_icons/ic_splitscreen_multiplayer.png", PlayerSetUpScreen.class),
                 new GameMode("Local\nNetwork\nMultiplayer", "images/multiplayer_icons/ic_local_multiplayer.png", HostJoinScreen.class),
         };
-
-        UIButtonManager uiButtonManager = new UIButtonManager(playModeStage, game.getScaleFactor(), usedTextures);
 
         Label chooseMode = new Label("Choose the game mode", game.skin, "themed-rounded-background");
         float headerPad = uiButtonManager.getHeaderPad(chooseMode.getPrefHeight());
@@ -243,15 +227,15 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
             backgroundColorImage.setScaling(Scaling.stretch);
 
             Image backgroundImage = null;
-            if (gameModes[i].previewLocation != null) {
-                Texture backgroundImageTexture = new Texture(Gdx.files.internal(gameModes[i].previewLocation));
+            if (gameModes[i].getPreviewLocation() != null) {
+                Texture backgroundImageTexture = new Texture(Gdx.files.internal(gameModes[i].getPreviewLocation()));
                 usedTextures.add(backgroundImageTexture);
                 backgroundImage = new Image(backgroundImageTexture);
                 backgroundImage.setScaling(Scaling.fit);
                 backgroundImage.getColor().a = .3f;
             }
 
-            Label modeLabel = new Label(gameModes[i].name, game.skin);
+            Label modeLabel = new Label(gameModes[i].getName(), game.skin);
             modeLabel.setAlignment(Align.center);
 
             final int finalI = i;
@@ -290,7 +274,8 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
                 public void clicked(InputEvent event, float x, float y) {
                     try {
                         bgAlpha = 0;
-                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this, (Screen) ClassReflection.getConstructors(gameModes[finalI].targetClass)[0].newInstance(game));
+                        animationManager.fadeOutStage(playModeStage, MainMenuScreen.this,
+                                (Screen) ClassReflection.getConstructor(gameModes[finalI].getTargetClass(), Zoned.class).newInstance(game));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -343,10 +328,6 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         drawBG(batch, delta);
         batch.end();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, batch, game.getSmallFont());
-        }
-
         mainStage.act(delta);
         if (mainStage.getRoot().getColor().a > 0) {
             mainStage.draw();
@@ -356,6 +337,8 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
         if (playModeStage.getRoot().getColor().a > 0) {
             playModeStage.draw();
         }
+
+        displayFPS();
     }
 
     private void drawBG(Batch batch, float delta) {
@@ -405,15 +388,11 @@ public class MainMenuScreen extends ScreenObject implements InputProcessor {
     private void showExitDialog() {
         mainStage.showDialog("Are you sure that you want to exit?",
                 new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.Exit },
-                false,
-                game.getScaleFactor(), new FocusableStage.DialogResultListener() {
-                    @Override
-                    public void dialogResult(FocusableStage.DialogButton button) {
-                        if (button == FocusableStage.DialogButton.Exit) {
-                            Gdx.app.exit();
-                        }
+                false, button -> {
+                    if (button == FocusableStage.DialogButton.Exit) {
+                        Gdx.app.exit();
                     }
-                }, game.skin);
+                });
     }
 
     /**

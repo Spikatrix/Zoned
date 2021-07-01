@@ -5,15 +5,12 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -22,24 +19,21 @@ import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
+import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
-import com.cg.zoned.UITextDisplayer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
 import com.cg.zoned.dataobjects.TutorialItem;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ControlManager;
+import com.cg.zoned.managers.SplitViewportManager;
 import com.cg.zoned.managers.UIButtonManager;
-import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 
 import java.util.Random;
@@ -47,11 +41,8 @@ import java.util.Random;
 public class TutorialScreen extends ScreenObject implements InputProcessor {
     private Map map;
     private Cell[][] mapGrid;
-    private ExtendViewport mapViewport;
-    private Color mapOverlayColor;
-    private Color mapDarkOverlayColor;
-    private Color mapNoOverlayColor;
-    private boolean drawOverlay;
+    private SplitViewportManager splitViewportManager;
+    private Overlay mapOverlay;
     private Player[] players;
     private ControlManager controlManager;
 
@@ -67,9 +58,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         super(game);
         game.discordRPCManager.updateRPC("Playing the Tutorial");
 
-        this.screenViewport = new ScreenViewport();
-        this.screenStage = new FocusableStage(this.screenViewport);
         this.animationManager = new AnimationManager(game, this);
+        this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
 
         this.batch = new SpriteBatch();
         this.shapeDrawer = new ShapeDrawer(batch, game.skin);
@@ -79,17 +69,15 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
 
     private void initMap() {
         populateMapGrid();
-        this.map = new Map(mapGrid, 0, shapeDrawer);
+        this.map = new Map(mapGrid, shapeDrawer);
         this.map.initFloodFillVars();
-        this.mapViewport = new ExtendViewport(Constants.WORLD_SIZE, Constants.WORLD_SIZE);
-        this.mapOverlayColor = new Color(0, 0, 0, .8f);
-        this.mapDarkOverlayColor = new Color(0, 0, 0, .8f);
-        this.mapNoOverlayColor = new Color(0, 0, 0, 0f);
-        this.drawOverlay = true;
+        this.mapOverlay = new Overlay(new Color(0, 0, 0, 0.7f), 2.5f);
+
         this.players = new Player[1];
-        this.players[0] = new Player(PlayerColorHelper.getColorFromString("GREEN"), "Player");
-        this.players[0].position = new Vector2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f));
-        this.players[0].setControlIndex(0);
+        this.players[0] = new Player(PlayerColorHelper.getColorFromIndex(0), "Player");
+        this.players[0].setPosition(new GridPoint2(Math.round(this.mapGrid.length / 2f), Math.round(this.mapGrid[0].length / 2f)));
+
+        this.splitViewportManager = new SplitViewportManager(1, Constants.WORLD_SIZE, this.players[0].getPosition());
         BitmapFont playerLabelFont = game.skin.getFont(Assets.FontManager.PLAYER_LABEL_NOSCALE.getFontName());
         this.map.createPlayerLabelTextures(this.players, shapeDrawer, playerLabelFont);
         this.controlManager = new ControlManager(players, screenStage);
@@ -120,12 +108,13 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
     private void setUpStage() {
         mainLabel = new Label("Welcome to the tutorial!", game.skin, "themed");
         subLabel = new Label("Tap here to continue >", game.skin);
-        textboxHeight = (mainLabel.getPrefHeight() * 2) + 20f;
+        float tablePad = 16f * game.getScaleFactor();
+        textboxHeight = (mainLabel.getPrefHeight() * 2) + (tablePad * 2);
 
         tutorialTable = new Table();
         tutorialTable.setSize(screenStage.getWidth(), textboxHeight);
         tutorialTable.setPosition(0, 0);
-        tutorialTable.left().bottom().pad(10f);
+        tutorialTable.left().bottom().pad(tablePad);
 
         Table innerTable = new Table();
         tutorialScrollPane = new ScrollPane(innerTable);
@@ -203,13 +192,14 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
     private void showNextTutorialItem() {
         tutorialTable.clearActions();
 
-        players[0].updatedDirection = players[0].direction = null;
-        players[0].position.x = Math.round(players[0].position.x);
-        players[0].position.y = Math.round(players[0].position.y);
+        Player player = players[0];
+        player.completeMovement();
+        player.updatedDirection = player.direction = null;
 
-        if (mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor == null) {
-            mapGrid[(int) players[0].position.y][(int) players[0].position.x].cellColor =
-                    new Color(players[0].color.r, players[0].color.g, players[0].color.b, 0.1f);
+        Cell playerCell = mapGrid[player.getRoundedPositionY()][player.getRoundedPositionX()];
+        if (playerCell.cellColor == null) {
+            playerCell.cellColor = new Color(player.color.r, player.color.g, player.color.b, 0.1f);
+            map.updateMap(players, null);
         }
 
         if (tutorialPromptIndex == tutorialPrompts.size) {
@@ -228,20 +218,17 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
 
         tutorialTable.addAction(Actions.sequence(
                 Actions.fadeOut(.2f, Interpolation.fastSlow),
-                Actions.run(new Runnable() {
-                    @Override
-                    public void run() {
-                        String mainText = tutorialPrompts.get(tutorialPromptIndex).mainItem;
-                        if (mainText.contains("Walls")) {
-                            generateRandomWalls();
-                            map.createMapTexture(shapeDrawer);
-                        }
-
-                        displayNextTutorialText(mainLabel, subLabel, mainText, tutorialPrompts.get(tutorialPromptIndex).subItem);
-                        togglePlayerInteractable(tutorialPrompts.get(tutorialPromptIndex).enablePlayerInteraction);
-
-                        tutorialPromptIndex++;
+                Actions.run(() -> {
+                    String mainText = tutorialPrompts.get(tutorialPromptIndex).mainItem;
+                    if (mainText.contains("Walls")) {
+                        generateRandomWalls();
+                        map.createMapTexture(shapeDrawer);
                     }
+
+                    displayNextTutorialText(mainLabel, subLabel, mainText, tutorialPrompts.get(tutorialPromptIndex).subItem);
+                    togglePlayerInteractable(tutorialPrompts.get(tutorialPromptIndex).enablePlayerInteraction);
+
+                    tutorialPromptIndex++;
                 }),
                 Actions.fadeIn(.2f, Interpolation.fastSlow)
         ));
@@ -251,8 +238,9 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         int rowCount = mapGrid.length;
         int colCount = mapGrid[0].length;
 
-        int playerPosX = Math.round(players[0].position.x);
-        int playerPosY = Math.round(players[0].position.y);
+        Player player = players[0];
+        int playerPosX = player.getRoundedPositionX();
+        int playerPosY = player.getRoundedPositionY();
 
         Random rand = new Random();
 
@@ -260,7 +248,7 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
             int randomY = rand.nextInt(rowCount);
             int randomX = rand.nextInt(colCount);
 
-            if (randomX != playerPosX && randomY != playerPosY) {
+            if (!(randomX == playerPosX && randomY == playerPosY)) {
                 mapGrid[randomY][randomX].cellColor = null;
                 mapGrid[randomY][randomX].isMovable = false;
             }
@@ -273,19 +261,18 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
     }
 
     private void togglePlayerInteractable(boolean playerInteractable) {
-        this.drawOverlay = !playerInteractable;
+        this.mapOverlay.drawOverlay(!playerInteractable);
 
         InputMultiplexer inputMultiplexer = new InputMultiplexer(this, screenStage);
         if (playerInteractable) {
-            inputMultiplexer.addProcessor(players[0]);
-            inputMultiplexer.addProcessor(controlManager.getControls());
+            inputMultiplexer.addProcessor(players[0]);                   // Enables Keyboard controls for the player
+            inputMultiplexer.addProcessor(controlManager.getControls()); // Enables on-screen touch controls for players
         }
 
         Gdx.input.setInputProcessor(inputMultiplexer);
     }
 
     private void setUpBackButton() {
-        UIButtonManager uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
         HoverImageButton backButton = uiButtonManager.addBackButtonToStage(game.assets.getTexture(Assets.TextureObject.BACK_TEXTURE));
         backButton.addListener(new ClickListener() {
             @Override
@@ -300,15 +287,8 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         super.resize(width, height);
 
         tutorialTable.setSize(width, textboxHeight);
-        mapViewport.update(width, (int) Math.max(0, height - textboxHeight));
-        updateCamera(mapViewport.getCamera(), width, (int) Math.max(0, height - textboxHeight));
-        mapViewport.setScreenPosition(0, (int) textboxHeight);
-    }
-
-    private void updateCamera(Camera camera, int width, int height) {
-        camera.viewportHeight = Constants.WORLD_SIZE;
-        camera.viewportWidth = Constants.WORLD_SIZE * height / width;
-        camera.update();
+        splitViewportManager.resize(width, (int) Math.max(0, height - textboxHeight));
+        splitViewportManager.setScreenPosition(0, (int) textboxHeight);
     }
 
     @Override
@@ -319,64 +299,20 @@ public class TutorialScreen extends ScreenObject implements InputProcessor {
         players[0].direction = players[0].updatedDirection;
         map.update(null, players, delta);
 
-        renderMap(delta);
+        splitViewportManager.render(shapeDrawer, batch, map, players, delta);
 
         this.screenViewport.apply(true);
         batch.setProjectionMatrix(this.screenViewport.getCamera().combined);
 
-        drawDarkOverlay(delta);
-
         batch.begin();
+        mapOverlay.render(shapeDrawer, screenStage, delta);
         shapeDrawer.filledRectangle(0, textboxHeight, screenStage.getWidth(), 2f, Color.WHITE);
         batch.end();
 
-        if (game.showFPSCounter()) {
-            UITextDisplayer.displayFPS(screenViewport, screenStage.getBatch(), game.getSmallFont());
-        }
-
         screenStage.act(delta);
         screenStage.draw();
-    }
 
-    private void renderMap(float delta) {
-        Viewport viewport = mapViewport;
-        Player player = players[0];
-
-        focusCameraOnPlayer(viewport, player, delta);
-        viewport.apply();
-
-        batch.setProjectionMatrix(viewport.getCamera().combined);
-        batch.begin();
-        map.render(players, shapeDrawer, (OrthographicCamera) viewport.getCamera(), delta);
-        batch.end();
-    }
-
-    private void focusCameraOnPlayer(Viewport viewport, Player player, float delta) {
-        OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
-
-        float lerp = 2.5f;
-        Vector3 position = camera.position;
-
-        float posX = (player.position.x * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-        float posY = (player.position.y * Constants.CELL_SIZE) + Constants.CELL_SIZE / 2.0f;
-
-        position.x += (posX - position.x) * lerp * delta;
-        position.y += (posY - position.y) * lerp * delta;
-    }
-
-    private void drawDarkOverlay(float delta) {
-        if (drawOverlay) {
-            mapOverlayColor.lerp(mapDarkOverlayColor, 1.8f * delta);
-        } else {
-            mapOverlayColor.lerp(mapNoOverlayColor, 1.8f * delta);
-        }
-
-        float height = screenStage.getViewport().getWorldHeight();
-        float width = screenStage.getViewport().getWorldWidth();
-        batch.begin();
-        shapeDrawer.setColor(mapOverlayColor);
-        shapeDrawer.filledRectangle(0, 0, width, height);
-        batch.end();
+        displayFPS();
     }
 
     @Override

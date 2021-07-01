@@ -2,7 +2,7 @@
 
 read -p "Old version name: " oldVersionName
 read -p "New version name: " newVersionName
-read -p "Are you sure you wanna do this? (Y/N) " proceed
+read -p "Are you sure you wanna update the version? (Y/N) " proceed
 
 if [ "$proceed" == "Y" ]; then
 	files=(

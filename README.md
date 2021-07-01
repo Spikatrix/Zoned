@@ -1,8 +1,8 @@
-# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.4-beta](https://img.shields.io/badge/version-0.0.4--beta-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.4-beta)
+# Zoned &nbsp; [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Version: 0.0.5-dev](https://img.shields.io/badge/version-0.0.5--dev-orange)](https://github.com/Spikatrix/Zoned/releases/tag/v0.0.5-dev)
 
 <img src="https://i.stack.imgur.com/cunrq.png" alt="Zoned Icon" align="left" style="margin: 10px 20px 10px 10px; border-radius: 20%; box-shadow: 0 6px 20px 2px black" height="162px">
 
-Zoned is a cross-platform grid based multiplayer strategy game powered by [libGDX][libGDX]. The game is primarily targeted for Android, but it will work just fine on Windows and Linux as well.
+Zoned is a cross-platform grid based multiplayer strategy game powered by [libGDX][libGDX]. The game is primarily targeted for Android, but it will work on Windows and Linux as well.
 
 It is available to download on the [Google Play Store][play_store_page] (Android) as well as on [GitHub][github_release_page] (Windows, Linux, Android and [Web][gwt_release_page])
 
@@ -17,7 +17,7 @@ It is available to download on the [Google Play Store][play_store_page] (Android
 
 ## About
 
-Zoned is multiplayer strategy game. Every game is played on a grid based map where the objective is to capture as many cells in the grid as possible. Currently, it supports splitscreen multiplayer as well as cross-platform local network multiplayer. In addition to the default internal maps, Zoned also supports [custom external maps][custom_external_map_wiki] which you can play on if you get bored of the default ones. The best part is that Zoned is free of ads and will never have ads!
+Zoned is a multiplayer strategy game. Every game is played on a grid based map where the objective is to capture as many cells in the grid as possible. Currently, both splitscreen multiplayer as well as cross-platform local network multiplayer are supported. In addition to the default internal maps, Zoned also supports [custom external maps][custom_external_map_wiki] which you can play on if you ever get bored of the default ones. The best part is that Zoned is free of ads and will never have ads!
 
 The game is currently in beta. You can track the development progress of the game [here][beta_work]. There may be additional changes as well.
 

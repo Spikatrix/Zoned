@@ -8,11 +8,19 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 
-public class DropDownMenu extends SelectBox<String> {
-    private final float moveAmount = 8f;
+public class DropDownMenu<T> extends SelectBox<T> {
+    private float moveAmount = 8f;
+    private float padding = 16f;
 
     public DropDownMenu(Skin skin) {
+        this(skin, 1f);
+    }
+
+    public DropDownMenu(Skin skin, float scaleFactor) {
         super(skin);
+
+        this.padding = this.padding * scaleFactor;
+        this.moveAmount = this.moveAmount * scaleFactor;
 
         customSetup();
     }
@@ -22,8 +30,8 @@ public class DropDownMenu extends SelectBox<String> {
         this.setAlignment(Align.center);
     }
 
-    public void append(String s) {
-        Array<String> itemList = getItems();
+    public void append(T s) {
+        Array<T> itemList = getItems();
         itemList.add(s);
         setItems(itemList);
     }
@@ -36,10 +44,10 @@ public class DropDownMenu extends SelectBox<String> {
     @Override
     protected void onShow(Actor selectBoxList, boolean below) {
         selectBoxList.getColor().a = 0;
-        selectBoxList.moveBy(0, moveAmount * 2);
+        selectBoxList.moveBy(0, moveAmount);
         selectBoxList.addAction(Actions.parallel(
                 Actions.moveBy(0, -moveAmount, .2f, Interpolation.smooth),
-                Actions.fadeIn(.15f, Interpolation.smooth))
+                Actions.fadeIn(.2f, Interpolation.smooth))
         );
     }
 
@@ -49,9 +57,16 @@ public class DropDownMenu extends SelectBox<String> {
         selectBoxList.addAction(Actions.sequence(
                 Actions.parallel(
                     Actions.moveBy(0, moveAmount, .2f, Interpolation.smooth),
-                    Actions.fadeOut(.15f)
+                    Actions.fadeOut(.2f)
                 ),
                 Actions.removeActor())
         );
     }
+
+    @Override
+    public float getPrefWidth() {
+        // A bit of horizontal padding between the dropdown list edge and its contents
+        return super.getPrefWidth() + padding;
+    }
+
 }
