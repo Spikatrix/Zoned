@@ -28,20 +28,8 @@
 -dontwarn com.badlogic.gdx.jnigen.BuildTarget*
 -dontwarn com.badlogic.gdx.graphics.g2d.freetype.FreetypeBuild
 
--keep class com.badlogic.gdx.controllers.android.AndroidControllers
-
 -keepclassmembers class com.badlogic.gdx.backends.android.AndroidInput* {
    <init>(com.badlogic.gdx.Application, android.content.Context, java.lang.Object, com.badlogic.gdx.backends.android.AndroidApplicationConfiguration);
-}
-
--keepclassmembers class com.badlogic.gdx.physics.box2d.World {
-   boolean contactFilter(long, long);
-   void    beginContact(long);
-   void    endContact(long);
-   void    preSolve(long, long);
-   void    postSolve(long, long);
-   boolean reportFixture(long);
-   float   reportRayFixture(long, float, float, float, float, float);
 }
 
 -keep class com.badlogic.gdx.scenes.scene2d.ui.** {
@@ -56,4 +44,12 @@
     *;
 }
 
--keepattributes *Annotation*,SourceFile,LineNumberTable
+-keep public class * extends com.cg.zoned.controls.ControlTypeEntity {
+    public <init>(...);
+}
+
+-keep public class * extends com.cg.zoned.screens.ScreenObject {
+    public <init>(...);
+}
+
+-keepattributes SourceFile,LineNumberTable
