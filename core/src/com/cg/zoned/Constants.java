@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class Constants {
-    public static final String GAME_VERSION = "0.0.5-dev";
+    public static final String GAME_VERSION = "0.0.5-beta";
     // Remember to update the versionName in Android's build.gradle
     // And project.setVersion in Desktop's build.gradle
     // And the version in the badge in the README file

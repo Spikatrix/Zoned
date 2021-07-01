@@ -31,7 +31,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 30
         versionCode 5
-        versionName "0.0.5-dev"
+        versionName "0.0.5-beta"
         // Remember to update the GAME_VERSION in Constants.java
         // And project.setVersion in Desktop's build.gradle
         // And the version in the badge in the README file
@@ -59,7 +59,6 @@ android {
     }
 }
 
-
 // called every time gradle gets executed, takes the native dependencies of
 // the natives configuration, and extracts them to the proper libs/ folders
 // so they get packed with the APK.
@@ -75,9 +74,9 @@ task copyAndroidNatives {
             def outputDir = null
             if (jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
             if (jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
-            if(jar.name.endsWith("natives-armeabi.jar")) outputDir = file("libs/armeabi")
-            if(jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
-            if(jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
+            if (jar.name.endsWith("natives-armeabi.jar")) outputDir = file("libs/armeabi")
+            if (jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
+            if (jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
             if(outputDir != null) {
                 copy {
                     from zipTree(jar)
