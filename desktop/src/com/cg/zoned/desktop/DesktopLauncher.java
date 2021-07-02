@@ -9,6 +9,7 @@ public class DesktopLauncher {
     public static void main(String[] args) {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
         config.title = "Zoned";
+        config.foregroundFPS = 0;
         config.vSyncEnabled = true;
         config.samples = 4;
 
