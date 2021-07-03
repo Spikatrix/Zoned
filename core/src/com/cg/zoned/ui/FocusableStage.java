@@ -258,7 +258,13 @@ public class FocusableStage extends Stage {
             yOffset += actor.getY();
             xOffset += actor.getX();
             actor = actor.getParent();
-        } while (parent != actor && actor != null);
+
+            if (actor == null) {
+                // Actor is outside the scrollpane
+                return;
+            }
+
+        } while (parent != actor);
 
         scrollpane.scrollTo(xOffset, yOffset, width, height, true, true);
     }

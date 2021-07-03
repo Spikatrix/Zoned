@@ -1,5 +1,6 @@
 package com.cg.zoned.screens;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -175,6 +176,11 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
     }
 
     private void nudgeReadyButton() {
+        if (Gdx.app.getType() == Application.ApplicationType.Android) {
+            // This condition isn't really needed but I didn't want it to create redundant long[] objects
+            Gdx.input.vibrate(new long[]{0, 100, 100, 75}, -1);
+        }
+
         if (!readyButton.hasActions()) {
             int nudgeAngle = 25;
             float nudgeTime = 0.06f;
