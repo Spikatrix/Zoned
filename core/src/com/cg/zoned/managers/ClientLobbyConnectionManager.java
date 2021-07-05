@@ -6,13 +6,19 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferClientConnect;
+import com.cg.zoned.buffers.BufferGameStart;
+import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
+import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
+import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
-import com.cg.zoned.listeners.ClientLobbyListener;
+import com.cg.zoned.listeners.ClientLobbyScreenBridge;
 import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.Listener;
 
-public class ClientLobbyConnectionManager {
+public class ClientLobbyConnectionManager extends Listener {
     private Client client;
 
     /**
@@ -20,12 +26,14 @@ public class ClientLobbyConnectionManager {
      */
     private Array<String> playerNames;
 
-    private ClientPlayerListener clientPlayerListener; // This manager to screen
-    private ClientLobbyListener clientLobbyListener; // Kryonet to this manager
+    /**
+     * Bridges this manager with the client lobby screen
+     */
+    private ClientLobbyScreenBridge clientPlayerListener;
 
     // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
 
-    public ClientLobbyConnectionManager(Client client, ClientPlayerListener clientPlayerListener) {
+    public ClientLobbyConnectionManager(Client client, ClientLobbyScreenBridge clientPlayerListener) {
         playerNames = new Array<>();
 
         this.clientPlayerListener = clientPlayerListener;
@@ -35,8 +43,29 @@ public class ClientLobbyConnectionManager {
     public void start(String clientName) {
         playerNames.add(clientName);
 
-        clientLobbyListener = new ClientLobbyListener(this);
-        client.addListener(clientLobbyListener);
+        client.addListener(this); // Kryonet packets will arrive directly in this class
+    }
+
+    @Override
+    public void received(Connection connection, Object object) {
+        if (object instanceof BufferPlayerData) {
+            BufferPlayerData bpd = (BufferPlayerData) object;
+            this.receiveServerPlayerData(bpd.names, bpd.readyStatus, bpd.colorIndex, bpd.startPosIndex);
+        } else if (object instanceof BufferKickClient) {
+            BufferKickClient bkc = (BufferKickClient) object;
+            this.connectionRejected(bkc.kickReason);
+        } else if (object instanceof BufferPlayerDisconnected) {
+            BufferPlayerDisconnected bpd = (BufferPlayerDisconnected) object;
+            this.playerDisconnected(bpd.playerName);
+        } else if (object instanceof BufferNewMap) {
+            BufferNewMap bnm = (BufferNewMap) object;
+            this.newMapSet(bnm.mapName, bnm.mapExtraParams, bnm.mapHash);
+        } else if (object instanceof BufferMapData) {
+            BufferMapData bmd = (BufferMapData) object;
+            this.downloadMap(bmd.mapName, bmd.mapData, bmd.mapHash, bmd.mapPreviewData);
+        } else if (object instanceof BufferGameStart) {
+            this.startGame();
+        }
     }
 
     /**
@@ -133,14 +162,12 @@ public class ClientLobbyConnectionManager {
 
     private void emptyBuffers() {
         playerNames.clear();
-
+        clientPlayerListener = null;
         try {
-            client.removeListener(clientLobbyListener);
+            client.removeListener(this);
         } catch (IllegalArgumentException ignored) {
             // Probably clicked the back button more than once; ignore exception
         }
-        clientLobbyListener = null;
-        clientPlayerListener = null;
     }
 
     public void closeConnection() {
@@ -151,7 +178,13 @@ public class ClientLobbyConnectionManager {
         }
     }
 
-    public void clientDisconnected() {
+    /**
+     * Called when te client gets disconnected from the server
+     *
+     * @param connection The disconnected connection
+     */
+    @Override
+    public void disconnected(Connection connection) {
         clientPlayerListener.disconnectWithMessage("Lost connection to the server");
     }
 
@@ -178,21 +211,5 @@ public class ClientLobbyConnectionManager {
 
     public Client getClient() {
         return client;
-    }
-
-    public interface ClientPlayerListener {
-        void disconnectWithMessage(String errorMsg);
-
-        void startGame();
-
-        void disconnectClient();
-
-        void mapChanged(String mapName, int[] extraParams, int mapHash, boolean reloadExternalMaps);
-
-        void updatePlayers(Array<String> playerNames, String[] nameStrings, boolean[] readyStrings, int[] colorStrings, int[] startPosStrings);
-
-        void playerDisconnected(int playerIndex);
-
-        FileHandle getExternalMapDir();
     }
 }

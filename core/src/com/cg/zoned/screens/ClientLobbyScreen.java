@@ -20,6 +20,7 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
+import com.cg.zoned.listeners.ClientLobbyScreenBridge;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.MapManager;
@@ -34,7 +35,7 @@ import com.esotericsoftware.kryonet.Client;
 
 import java.io.FileNotFoundException;
 
-public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyConnectionManager.ClientPlayerListener, InputProcessor {
+public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyScreenBridge, InputProcessor {
     private ClientLobbyConnectionManager connectionManager;
 
     private MapManager mapManager;

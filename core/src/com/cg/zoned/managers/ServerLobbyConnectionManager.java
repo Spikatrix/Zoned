@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants;
+import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferGameStart;
 import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
@@ -12,14 +13,15 @@ import com.cg.zoned.buffers.BufferPlayerData;
 import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
 import com.cg.zoned.dataobjects.PreparedMapData;
-import com.cg.zoned.listeners.ServerLobbyListener;
+import com.cg.zoned.listeners.ServerLobbyScreenBridge;
 import com.cg.zoned.maps.MapEntity;
 import com.cg.zoned.maps.MapExtraParams;
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
-public class ServerLobbyConnectionManager {
+public class ServerLobbyConnectionManager extends Listener {
     private Server server;
 
     /**
@@ -35,16 +37,18 @@ public class ServerLobbyConnectionManager {
     // Why not use playerNames for servers as well since clients already use them?
     // Cause connections and disconnections can't be handled using names as we get only the Connection object
 
-    private ServerPlayerListener serverPlayerListener; // This manager to screen
-    private ServerLobbyListener serverLobbyListener; // Kryonet to this manager
+    /**
+     * Bridges this manager with the client lobby screen
+     */
+    private ServerLobbyScreenBridge serverLobbyScreenBridge;
 
     // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
 
-    public ServerLobbyConnectionManager(Server server, ServerPlayerListener serverPlayerListener) {
+    public ServerLobbyConnectionManager(Server server, ServerLobbyScreenBridge serverLobbyScreenBridge) {
         playerConnections = new Array<>();
         playerNameResolved = new Array<>();
 
-        this.serverPlayerListener = serverPlayerListener;
+        this.serverLobbyScreenBridge = serverLobbyScreenBridge;
         this.server = server;
     }
 
@@ -52,8 +56,21 @@ public class ServerLobbyConnectionManager {
         playerConnections.add(null);
         playerNameResolved.add(true);
 
-        serverLobbyListener = new ServerLobbyListener(this);
-        server.addListener(serverLobbyListener);
+        server.addListener(this); // Kryonet packets will arrive directly in this class
+    }
+
+    @Override
+    public void received(Connection connection, Object object) {
+        if (object instanceof BufferClientConnect) {
+            BufferClientConnect bcc = (BufferClientConnect) object;
+            this.receiveClientName(connection, bcc.playerName, bcc.version);
+        } else if (object instanceof BufferPlayerData) {
+            BufferPlayerData bpd = (BufferPlayerData) object;
+            this.receiveClientData(connection, bpd.names[0], bpd.readyStatus[0], bpd.colorIndex[0], bpd.startPosIndex[0]);
+        } else if (object instanceof BufferMapData) {
+            BufferMapData bmd = (BufferMapData) object;
+            this.serveMap(connection, bmd.mapName);
+        }
     }
 
     /**
@@ -61,10 +78,11 @@ public class ServerLobbyConnectionManager {
      *
      * @param connection The newly connected client connection
      */
-    public void clientConnected(final Connection connection) {
+    @Override
+    public void connected(Connection connection) {
         Gdx.app.postRunnable(() -> {
             final String clientIpAddress = connection.getRemoteAddressTCP().getAddress().getHostAddress();
-            if (serverPlayerListener != null) {
+            if (serverLobbyScreenBridge != null) {
                 addNewPlayer(connection, clientIpAddress);
             } else {
                 rejectConnection(connection, "No listener configured in the host (server) for incoming clients");
@@ -73,7 +91,7 @@ public class ServerLobbyConnectionManager {
     }
 
     private void addNewPlayer(Connection connection, String clientIpAddress) {
-        serverPlayerListener.playerConnected(clientIpAddress);
+        serverLobbyScreenBridge.playerConnected(clientIpAddress);
         playerNameResolved.add(false);
         playerConnections.add(connection);
     }
@@ -101,7 +119,7 @@ public class ServerLobbyConnectionManager {
                 addNewPlayer(connection, connection.getRemoteAddressTCP().getAddress().getHostAddress());
                 index = getConnectionIndex(connection);
             }
-            serverPlayerListener.updatePlayerDetails(index, clientName);
+            serverLobbyScreenBridge.updatePlayerDetails(index, clientName);
         });
     }
 
@@ -173,27 +191,6 @@ public class ServerLobbyConnectionManager {
     }
 
     /**
-     * Called in the server when a client disconnects
-     *
-     * @param connection The connection of the client that disconnected
-     */
-    public void clientDisconnected(final Connection connection) {
-        Gdx.app.postRunnable(() -> {
-            int index = getConnectionIndex(connection);
-
-            if (index == -1) {
-                return; // Some error occurred or server is shutting down
-            }
-
-            serverPlayerListener.playerDisconnected(index);
-
-            playerNameResolved.removeIndex(index);
-            playerConnections.removeIndex(index);
-
-        });
-    }
-
-    /**
      * Called when the server receives a change in a client's data.
      * This change is broadcasted to all connected clients so that they can update their UI accordingly
      *
@@ -211,7 +208,7 @@ public class ServerLobbyConnectionManager {
                 return;
             }
 
-            serverPlayerListener.updatePlayerDetails(index, name, ready, colorIndex, startPosIndex);
+            serverLobbyScreenBridge.updatePlayerDetails(index, name, ready, colorIndex, startPosIndex);
         });
     }
 
@@ -257,11 +254,11 @@ public class ServerLobbyConnectionManager {
      */
     public void serveMap(final Connection connection, final String mapName) {
         Gdx.app.postRunnable(() -> {
-            FileHandle externalMapDir = serverPlayerListener.getExternalMapDir();
+            FileHandle externalMapDir = serverLobbyScreenBridge.getExternalMapDir();
             FileHandle mapFile = Gdx.files.external(externalMapDir + "/" + mapName + ".map");
             FileHandle mapPreviewFile = Gdx.files.external(externalMapDir + "/" + mapName + ".png");
 
-            MapEntity map = serverPlayerListener.fetchMap(mapName);
+            MapEntity map = serverLobbyScreenBridge.fetchMap(mapName);
 
             BufferMapData bmd = new BufferMapData();
             bmd.mapName = mapName;
@@ -343,16 +340,36 @@ public class ServerLobbyConnectionManager {
         }
     }
 
+    /**
+     * Called in the server when a client disconnects
+     *
+     * @param connection The connection of the client that disconnected
+     */
+    @Override
+    public void disconnected(Connection connection) {
+        Gdx.app.postRunnable(() -> {
+            int index = getConnectionIndex(connection);
+
+            if (index == -1) {
+                return; // Some error occurred or server is shutting down
+            }
+
+            serverLobbyScreenBridge.playerDisconnected(index);
+
+            playerNameResolved.removeIndex(index);
+            playerConnections.removeIndex(index);
+
+        });
+    }
+
     private void emptyBuffers() {
         playerConnections.clear();
-
+        serverLobbyScreenBridge = null;
         try {
-            server.removeListener(serverLobbyListener);
+            server.removeListener(this);
         } catch (IllegalArgumentException ignored) {
             // Probably clicked the back button more than once; ignore exception
         }
-        serverLobbyListener = null;
-        serverPlayerListener = null;
     }
 
     public void closeConnection() {

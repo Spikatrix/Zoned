@@ -17,6 +17,7 @@ import com.cg.zoned.Assets;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
+import com.cg.zoned.listeners.ServerLobbyScreenBridge;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.PlayerManager;
 import com.cg.zoned.managers.ServerLobbyConnectionManager;
@@ -27,7 +28,7 @@ import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
 import com.esotericsoftware.kryonet.Server;
 
-public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyConnectionManager.ServerPlayerListener, InputProcessor {
+public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyScreenBridge, InputProcessor {
     private ServerLobbyConnectionManager connectionManager;
 
     private MapSelector mapSelector;
