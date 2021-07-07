@@ -124,7 +124,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyC
             public void clicked(InputEvent event, float x, float y) {
                 String errorMsg = connectionManager.validateServerData(playerItemAttributes);
                 if (errorMsg != null) {
-                    screenStage.showOKDialog(errorMsg, false, null);
+                    screenStage.showOKDialog(errorMsg, null);
                     return;
                 }
 

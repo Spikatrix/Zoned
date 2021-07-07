@@ -143,7 +143,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
             return playerName;
         }
 
-        screenStage.showOKDialog("Please enter the player name", false, null);
+        screenStage.showOKDialog("Please enter the player name", null);
         return null;
     }
 
@@ -167,7 +167,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         try {
             server.bind(Constants.SERVER_PORT, Constants.SERVER_PORT);
         } catch (IOException | IllegalArgumentException e) {
-            screenStage.showOKDialog("Server bind error\n" + e.getMessage(), false, null);
+            screenStage.showOKDialog("Server bind error\n" + e.getMessage(), null);
             e.printStackTrace();
             return;
         }
@@ -219,7 +219,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
     }
 
     private void showConnectionError(String errorMessage, Label searchingLabel) {
-        screenStage.showOKDialog(errorMessage, false, null);
+        screenStage.showOKDialog(errorMessage, null);
         searchingLabel.addAction(Actions.fadeOut(.2f));
     }
 

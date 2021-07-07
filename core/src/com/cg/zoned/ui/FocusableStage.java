@@ -289,9 +289,9 @@ public class FocusableStage extends Stage {
                 useVerticalButtonList, dialogResultListener);
     }
 
-    public void showOKDialog(String msg, boolean useVerticalButtonList, DialogResultListener dialogResultListener) {
+    public void showOKDialog(String msg, DialogResultListener dialogResultListener) {
         showDialog(new Label(msg, skin), null, new DialogButton[]{DialogButton.OK},
-                useVerticalButtonList, dialogResultListener);
+                false, dialogResultListener);
     }
 
     private void showDialog(Actor content, Array<Actor> dialogFocusableActorArray, DialogButton[] buttons,

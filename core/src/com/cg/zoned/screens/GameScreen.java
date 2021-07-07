@@ -377,7 +377,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     private void showPlayerDisconnectedDialog(String playerName) {
-        screenStage.showOKDialog(playerName + " got disconnected", false, null);
+        screenStage.showOKDialog(playerName + " got disconnected", null);
     }
 
     public void disconnected() {
@@ -385,7 +385,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
             gameDisconnected = true;
             if (!gameManager.gameOver) {
                 gameManager.directionBufferManager.clearBuffer();
-                screenStage.showOKDialog("Disconnected", false, button -> endGame());
+                screenStage.showOKDialog("Disconnected", button -> endGame());
                 Gdx.input.setInputProcessor(screenStage);
             }
         });

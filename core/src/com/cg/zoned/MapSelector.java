@@ -262,7 +262,7 @@ public class MapSelector {
         int mapIndex = mapSpinner.getPositionIndex();
 
         if (isCustomMapInfo(mapIndex)) {
-            stage.showOKDialog("Please select a valid map", false, null);
+            stage.showOKDialog("Please select a valid map", null);
             return false;
         }
 
@@ -270,7 +270,7 @@ public class MapSelector {
             mapManager.loadMap(mapIndex);
         } catch (InvalidMapCharacter | StartPositionsMissing | InvalidMapDimensions | MapGridMissing |
                 FileNotFoundException | IndexOutOfBoundsException e) {
-            stage.showOKDialog("Error: " + e.getMessage(), false, null);
+            stage.showOKDialog("Error: " + e.getMessage(), null);
             e.printStackTrace();
             return false;
         }

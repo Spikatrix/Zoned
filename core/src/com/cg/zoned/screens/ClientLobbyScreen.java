@@ -298,7 +298,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
     @Override
     public void disconnectWithMessage(String errorMsg) {
         disconnectClient();
-        screenStage.showOKDialog(errorMsg, false, button -> exitScreen());
+        screenStage.showOKDialog(errorMsg, button -> exitScreen());
     }
 
     @Override
