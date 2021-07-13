@@ -239,7 +239,7 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
             usedTextures.add(infoIconTexture);
             Image infoImage = new Image(infoIconTexture);
             Label infoLabel = new Label("First to capture more than 50% of the grid wins", game.skin);
-            infoTable.add(infoImage).height(infoLabel.getPrefHeight()).width(infoLabel.getPrefHeight()).padRight(20f);
+            infoTable.add(infoImage).size(infoLabel.getPrefHeight()).padRight(20f);
             infoTable.add(infoLabel);
             table.add(infoTable).colspan(NO_OF_COLORS + 1).padBottom(20f * game.getScaleFactor()).expandX();
             table.row();

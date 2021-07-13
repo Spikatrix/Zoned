@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Assets;
 import com.cg.zoned.MapSelector;
+import com.cg.zoned.Player;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
 import com.cg.zoned.listeners.ServerLobbyScreenBridge;
@@ -26,6 +27,7 @@ import com.cg.zoned.ui.DropDownMenu;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.HoverImageButton;
 import com.cg.zoned.ui.Spinner;
+import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Server;
 
 public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyScreenBridge, InputProcessor {
@@ -38,21 +40,32 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
     private boolean mapSelectorActive;
     private boolean extendedMapSelectorActive;
 
-    public ServerLobbyScreen(final Zoned game, Server server, String name) {
-        super(game, name);
+    public ServerLobbyScreen(final Zoned game, Server server) {
+        super(game);
         game.discordRPCManager.updateRPC("In the Server Lobby");
 
         this.animationManager = new AnimationManager(game, this);
         this.connectionManager = new ServerLobbyConnectionManager(server, this);
     }
 
+    public ServerLobbyScreen(final Zoned game, Server server, String name) {
+        this(game, server);
+        this.name = name;
+    }
+
     @Override
     public void show() {
+        if (screenStage.getRoot().hasChildren()) {
+            restoreLobby();
+            animationManager.fadeInStage(screenStage);
+            return;
+        }
+
         setUpServerLobbyStage();
         setUpMapSelectorStage();
         initMap();
 
-        playerConnected(null); // Add the host player (oneself) to the player list
+        playerConnected(this.name); // Add the host player (oneself) to the player list
         connectionManager.start();
 
         // Required as the screen is shown only after external maps and selector is loaded
@@ -66,6 +79,19 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
 
             animationManager.fadeInStage(screenStage);
         });
+    }
+
+    /**
+     * Restores server lobby data after coming back from VictoryScreen
+     */
+    private void restoreLobby() {
+        game.discordRPCManager.updateRPC("In the Server Lobby");
+        map.clearGrid();
+        super.updateInGameAttr(0, false);
+        for (int i = 0; i < playerItemAttributes.size; i++) {
+            super.updateMapColor(i);
+        }
+        connectionManager.broadcastPlayerInfo(playerItemAttributes, 0);
     }
 
     private void setUpExtendedSelectorListener() {
@@ -123,10 +149,14 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
         startButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                String errorMsg = connectionManager.validateServerData(playerItemAttributes);
-                if (errorMsg != null) {
-                    screenStage.showOKDialog(errorMsg, false, null);
+                if (!allPlayersReady()) {
+                    screenStage.showOKDialog("All players are not ready", false, null);
                     return;
+                }
+
+                for (int i = 0; i < playerItemAttributes.size; i++) {
+                    updateInGameAttr(i, true);
+                    updatePlayerReadyAttr(i, false);
                 }
 
                 connectionManager.broadcastGameStart();
@@ -192,7 +222,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
     public void playerConnected(String ipAddress) {
         Table playerItem = super.newPlayerItem(ipAddress, this);
 
-        if (ipAddress == null) {
+        if (ipAddress.equals(this.name)) {
             DropDownMenu<?> colorSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.COLOR.ordinal());
             colorSelector.addListener(new ChangeListener() {
                 @Override
@@ -249,14 +279,20 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
                 });
     }
 
-    public void updatePlayerDetails(int playerIndex, String clientName) {
-        for (PlayerItemAttributes playerItemAttribute : playerItemAttributes) {
-            String name = playerItemAttribute.getName();
+    public void updatePlayerDetails(int playerIndex, String clientName, boolean nameAlreadyValidated) {
+        if (!nameAlreadyValidated) {
+            // Name check shouldn't be done if it had already been done for the client previously
+            for (PlayerItemAttributes playerItemAttribute : playerItemAttributes) {
+                String name = playerItemAttribute.getName();
 
-            if (clientName.equals(name)) {
-                connectionManager.kickPlayer(playerIndex, "Another player is using the same name\nPlease use a different name");
-                return;
+                if (clientName.equals(name)) {
+                    connectionManager.kickPlayer(playerIndex, "Another player is using the same name\nPlease use a different name");
+                    return;
+                }
             }
+        } else {
+            super.updateInGameAttr(playerIndex, false);
+            super.updatePlayerReadyAttr(playerIndex, false);
         }
 
         super.updatePlayerName(playerIndex, clientName);
@@ -267,10 +303,11 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
     }
 
     @Override
-    public void updatePlayerDetails(int playerIndex, String name, boolean ready, int colorIndex, int startPosIndex) {
+    public void updatePlayerDetails(int playerIndex, String name, boolean ready, boolean inGame, int colorIndex, int startPosIndex) {
         super.updatePlayerName(playerIndex, name);
         super.updatePlayerColorAttr(playerIndex, colorIndex);
         super.updatePlayerReadyAttr(playerIndex, ready);
+        super.updateInGameAttr(playerIndex, inGame);
         super.updateMapColor(playerIndex, startPosIndex);
 
         connectionManager.broadcastPlayerInfo(playerItemAttributes, playerIndex);
@@ -291,9 +328,28 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
         return this.mapSelector.getMapManager().getMap(mapName);
     }
 
+    /**
+     * Called to validate player ready statuses before starting the match
+     *
+     * @return true if all players are ready, false otherwise
+     */
+    public boolean allPlayersReady() {
+        for (int i = 1; i < this.playerItemAttributes.size; i++) {
+            PlayerItemAttributes playerAttribute = this.playerItemAttributes.get(i);
+            if (!playerAttribute.isReady()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private void startGame() {
         map.clearGrid(players);
-        animationManager.fadeOutStage(screenStage, this, new GameScreen(game, preparedMapData, players, connectionManager));
+        // Players are cloned as the server lobby is persisted and changes to
+        // player properties from the game must not affect the lobby and vice versa
+        animationManager.fadeOutStage(screenStage, null,
+                new GameScreen(game, preparedMapData, clonePlayers(), this));
     }
 
     @Override
@@ -331,6 +387,22 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
         displayFPS();
     }
 
+    Player[] clonePlayers() {
+        Player[] players = new Player[this.players.length];
+        for (int i = 0; i < players.length; i++) {
+            players[i] = new Player(this.players[i]);
+        }
+        return players;
+    }
+
+    public Server getServer() {
+        return this.connectionManager.getServer();
+    }
+
+    public int getConnectionIndex(Connection connection) {
+        return this.connectionManager.getConnectionIndex(connection);
+    }
+
     @Override
     public void resize(int width, int height) {
         super.resize(width, height);
@@ -341,16 +413,16 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
     public void dispose() {
         super.dispose();
         mapSelectorStage.dispose();
-        if (map != null) {
-            map.dispose();
-            map = null;
-        }
+        map.dispose();
+    }
+
+    public void clearAndCloseLobby() {
+        playerList.clear();
+        connectionManager.closeConnection();
     }
 
     private void exitScreen() {
-        playerList.clear();
-        connectionManager.closeConnection();
-
+        clearAndCloseLobby();
         animationManager.fadeOutStage(screenStage, this, new HostJoinScreen(game));
     }
 

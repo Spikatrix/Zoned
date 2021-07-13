@@ -101,9 +101,8 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         hostButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                String name = validateName(playerNameField.getText());
-                if (name != null) {
-                    startServerLobby(name);
+                if (validateName(playerNameField.getText())) {
+                    startServerLobby();
                 }
             }
         });
@@ -111,11 +110,10 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         joinButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                String name = validateName(playerNameField.getText());
-                if (name != null) {
+                if (validateName(playerNameField.getText())) {
                     if (searchingLabel.getColor().a == 0) {
                         searchingLabel.setText("Searching for servers...");
-                        prepareClient(name, searchingLabel);
+                        prepareClient(searchingLabel);
                     } else {
                         searchingLabel.setText("Already searching for servers...");
                     }
@@ -133,18 +131,18 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         screenStage.setFocusedActor(playerNameField);
     }
 
-    private String validateName(String playerName) {
+    private boolean validateName(String playerName) {
         restoreScreen();
 
         playerName = playerName.trim();
         if (!playerName.isEmpty()) {
             game.preferences.putString(Preferences.NAME_PREFERENCE, playerName);
             game.preferences.flush();
-            return playerName;
+            return true;
         }
 
         screenStage.showOKDialog("Please enter the player name", false, null);
-        return null;
+        return false;
     }
 
     private void setUpBackButton() {
@@ -157,7 +155,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
         });
     }
 
-    private void startServerLobby(final String playerName) {
+    private void startServerLobby() {
         final Server server = new Server(CONNECTION_BUFFER_SIZE, SERVER_OBJECT_BUFFER_SIZE);
 
         Kryo kryo = server.getKryo();
@@ -172,10 +170,10 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
             return;
         }
 
-        animationManager.fadeOutStage(screenStage, this, new ServerLobbyScreen(game, server, playerName));
+        animationManager.fadeOutStage(screenStage, this, new ServerLobbyScreen(game, server));
     }
 
-    private void prepareClient(final String playerName, final Label searchingLabel) {
+    private void prepareClient(final Label searchingLabel) {
         final Client client = new Client(CLIENT_WRITE_BUFFER_SIZE, CONNECTION_BUFFER_SIZE);
 
         Kryo kryo = client.getKryo();
@@ -192,12 +190,12 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
                     return;
                 }
 
-                checkAndStartClientLobby(client, playerName, addr, searchingLabel);
+                checkAndStartClientLobby(client, addr, searchingLabel);
             });
         }).start();
     }
 
-    private void checkAndStartClientLobby(Client client, String playerName, InetAddress addr, Label searchingLabel) {
+    private void checkAndStartClientLobby(Client client, InetAddress addr, Label searchingLabel) {
         searchingLabel.clearActions();
 
         try {
@@ -215,7 +213,7 @@ public class HostJoinScreen extends ScreenObject implements InputProcessor {
             return;
         }
 
-        animationManager.fadeOutStage(screenStage, this, new ClientLobbyScreen(game, client, playerName));
+        animationManager.fadeOutStage(screenStage, this, new ClientLobbyScreen(game, client));
     }
 
     private void showConnectionError(String errorMessage, Label searchingLabel) {

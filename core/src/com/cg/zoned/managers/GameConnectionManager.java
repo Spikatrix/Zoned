@@ -7,10 +7,9 @@ import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.Player.Direction;
 import com.cg.zoned.buffers.BufferDirections;
-import com.cg.zoned.buffers.BufferKickClient;
-import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.listeners.ClientGameListener;
 import com.cg.zoned.listeners.ServerGameListener;
+import com.cg.zoned.screens.ServerLobbyScreen;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -32,8 +31,8 @@ public class GameConnectionManager implements GameConnectionHandler {
     // Used by the client to store the previously sent direction
     private Direction previousDirection;
 
-    // Used by the server to store client connections that came in when a match is already underway
-    private Array<Connection> discardConnections;
+    // The server lobby reference is kept alive to switch to after the match
+    private ServerLobbyScreen serverLobby;
 
     // Used by clients to store directions received from the server for processing later
     private Array<BufferDirections> clientDirectionBacklog;
@@ -44,22 +43,23 @@ public class GameConnectionManager implements GameConnectionHandler {
     // Gdx.app.postRunnables are required in several methods below that run on the kryonet thread
     // in order to properly sync multiple requests with the main GDX thread
 
-    public GameConnectionManager(GameManager gameManager, Server server, Client client) {
-        isActive = server != null || client != null;
+    public GameConnectionManager(GameManager gameManager, ServerLobbyScreen serverLobby, Client client) {
+        isActive = serverLobby != null || client != null;
         if (!isActive) {
             return;
         }
 
         this.gameManager = gameManager;
-
-        this.server = server;
+        this.serverLobby = serverLobby;
         this.client = client;
 
-        if (server != null) {
+        if (serverLobby != null) {
+            // Server user
+            this.server = serverLobby.getServer();
             connListener = new ServerGameListener(this);
-            discardConnections = new Array<>();
             server.addListener(connListener);
-        } else if (client != null) {
+        } else {
+            // Client user
             connListener = new ClientGameListener(this);
             clientDirectionBacklog = new Array<>();
             client.addListener(connListener);
@@ -217,25 +217,35 @@ public class GameConnectionManager implements GameConnectionHandler {
                 gameManager.directionBufferManager.getBufferUsedCount() == players.length);
     }
 
+    public String getClientPlayerName(Connection connection) {
+        int connIndex = serverLobby.getConnectionIndex(connection);
+        if (connIndex != -1) {
+            return gameManager.playerManager.getPlayer(connIndex).name;
+        }
+
+        return null;
+    }
+
     /**
      * Called in the server when any of its clients disconnects
      */
     @Override
-    public void serverDisconnect(final Connection connection) {
-        if (discardConnections.indexOf(connection, true) != -1) {
-            discardConnections.removeValue(connection, true);
-            return;
-        }
-
+    public void clientDisconnectedFromServer(final Connection connection) {
         Gdx.app.postRunnable(() -> {
-            if (server != null) {
-                gameManager.serverPlayerDisconnected(connection);
-                Player player = gameManager.playerManager.getPlayers()[0];
-                player.updatedDirection = player.direction = null;
-            } else {
-                endGame();
-            }
+            String playerName = getClientPlayerName(connection);
+            gameManager.clientDisconnectedFromServer(playerName);
+            gameManager.playerManager.getPlayers()[0].direction = null;
         });
+    }
+
+    public Object getServerClientObject() {
+        if (serverLobby != null) {
+            return serverLobby;
+        } else if (client != null) {
+            return client;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -243,32 +253,7 @@ public class GameConnectionManager implements GameConnectionHandler {
      */
     @Override
     public void clientDisconnect(final Connection connection) {
-        Gdx.app.postRunnable(this::endGame);
-    }
-
-    private void endGame() {
-        this.close();
-        gameManager.endGame();
-    }
-
-    /**
-     * Called in the server when a new client connects when the server already started a match.
-     * Server rejects incoming connections when a match is underway
-     *
-     * @param connection The client's connection
-     */
-    public void rejectNewConnection(Connection connection) {
-        discardConnections.add(connection);
-
-        BufferKickClient bkc = new BufferKickClient();
-        bkc.kickReason = "Server is busy playing a match.\nPlease try again later";
-        connection.sendTCP(bkc);
-    }
-
-    public void sendPlayerDisconnectedBroadcast(String playerName) {
-        BufferPlayerDisconnected bpd = new BufferPlayerDisconnected();
-        bpd.playerName = playerName;
-        server.sendToAllTCP(bpd);
+        Gdx.app.postRunnable(gameManager::clientDisconnected);
     }
 
     /**
@@ -278,10 +263,17 @@ public class GameConnectionManager implements GameConnectionHandler {
      * @param playerName The name of the player that got disconnected
      */
     public void clientPlayerDisconnected(String playerName) {
-        gameManager.clientPlayerDisconnected(playerName);
-        previousDirection = null;
-        Player player = gameManager.playerManager.getPlayers()[0];
-        player.updatedDirection = player.direction = null;
+        Gdx.app.postRunnable(() -> {
+            Player[] players = gameManager.playerManager.getPlayers();
+             if (PlayerManager.getPlayerIndex(players, playerName) == -1) {
+                return;
+            }
+
+            gameManager.clientPlayerDisconnected(playerName);
+            previousDirection = null;
+            Player player = gameManager.playerManager.getPlayers()[0];
+            player.updatedDirection = player.direction = null;
+        });
     }
 
     public int getPing() {
@@ -289,22 +281,26 @@ public class GameConnectionManager implements GameConnectionHandler {
     }
 
     public void close() {
-        if (server != null) {
-            server.removeListener(connListener);
-            server.close();
-            connListener = null;
-            server = null;
-            isActive = false;
-
-            endGame();
+        removeGameListener();
+        if (serverLobby != null) {
+            serverLobby.clearAndCloseLobby();
+            serverLobby.dispose();
+            serverLobby = null;
         } else if (client != null) {
-            client.removeListener(connListener);
             client.close();
-            connListener = null;
             client = null;
-            isActive = false;
+        }
+    }
 
-            endGame();
+    public void removeGameListener() {
+        if (connListener != null) {
+            if (server != null) {
+                server.removeListener(connListener);
+                connListener = null;
+            } else if (client != null) {
+                client.removeListener(connListener);
+                connListener = null;
+            }
         }
     }
 }

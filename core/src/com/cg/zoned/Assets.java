@@ -37,7 +37,8 @@ public class Assets {
         READY_TEXTURE      ("images/ui_icons/ic_green_check.png"),
         NOT_READY_TEXTURE  ("images/ui_icons/ic_red_cross.png"),
         HOST_TEXTURE       ("images/ui_icons/ic_crown.png"),
-        KICK_TEXTURE       ("images/ui_icons/ic_kick.png");
+        KICK_TEXTURE       ("images/ui_icons/ic_kick.png"),
+        JOYSTICK_TEXTURE   ("images/ui_icons/ic_joystick.png");
 
         private final String location;
 

@@ -147,9 +147,8 @@ public class MapSelector {
             innerTable.setFillParent(true);
             innerTable.top().right();
 
-            Texture texture = assets.getTexture(Assets.TextureObject.SETTINGS_TEXTURE);
-
-            HoverImageButton extraParamButton = new HoverImageButton(new TextureRegionDrawable(texture));
+            Texture settingsTexture = assets.getTexture(Assets.TextureObject.SETTINGS_TEXTURE);
+            HoverImageButton extraParamButton = new HoverImageButton(new TextureRegionDrawable(settingsTexture));
             extraParamButton.getImage().setScaling(Scaling.fit);
             innerTable.add(extraParamButton)
                     .width(mapSpinner.getSpinnerHeight() / 3)
@@ -191,6 +190,14 @@ public class MapSelector {
 
     public void loadExternalMaps(boolean addCustomMapInfo, final MapManager.ExternalMapScanListener externalMapLoadListener) {
         mapManager.loadExternalMaps((mapList, externalMapStartIndex) -> Gdx.app.postRunnable(() -> {
+            if (mapPreviewChecked.size > externalMapStartIndex) {
+                mapPreviewChecked.removeRange(externalMapStartIndex, mapPreviewChecked.size - 1);
+            }
+            if (mapPreviewImages.size > externalMapStartIndex) {
+                // Warning: Image references gets accumulated and is disposed altogether at the end only
+                mapPreviewImages.removeRange(externalMapStartIndex, mapPreviewImages.size - 1);
+            }
+
             for (int i = externalMapStartIndex; i < mapList.size; i++) {
                 MapEntity map = mapList.get(i);
                 mapPreviewChecked.add(false);

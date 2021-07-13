@@ -15,7 +15,7 @@ public interface ClientLobbyScreenBridge {
 
     void mapChanged(String mapName, int[] extraParams, int mapHash, boolean reloadExternalMaps);
 
-    void updatePlayers(Array<String> playerNames, String[] nameStrings, boolean[] readyStrings, int[] colorStrings, int[] startPosStrings);
+    void updatePlayers(Array<String> playerNames, String[] nameStrings, boolean[] ready, boolean[] inGame, int[] colorIndices, int[] startPosIndices);
 
     void playerDisconnected(int playerIndex);
 

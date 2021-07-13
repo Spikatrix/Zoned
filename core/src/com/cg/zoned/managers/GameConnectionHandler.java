@@ -8,7 +8,7 @@ public interface GameConnectionHandler {
 
     void clientUpdateDirections(BufferDirections bd, int returnTripTime);
 
-    void serverDisconnect(Connection connection);
+    void clientDisconnectedFromServer(Connection connection);
 
     void clientDisconnect(Connection connection);
 }

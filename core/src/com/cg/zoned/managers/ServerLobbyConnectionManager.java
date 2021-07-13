@@ -66,7 +66,7 @@ public class ServerLobbyConnectionManager extends Listener {
             this.receiveClientName(connection, bcc.playerName, bcc.version);
         } else if (object instanceof BufferPlayerData) {
             BufferPlayerData bpd = (BufferPlayerData) object;
-            this.receiveClientData(connection, bpd.names[0], bpd.readyStatus[0], bpd.colorIndex[0], bpd.startPosIndex[0]);
+            this.receiveClientData(connection, bpd.names[0], bpd.readyStatus[0], bpd.inGameStatus[0], bpd.colorIndex[0], bpd.startPosIndex[0]);
         } else if (object instanceof BufferMapData) {
             BufferMapData bmd = (BufferMapData) object;
             this.serveMap(connection, bmd.mapName);
@@ -91,9 +91,11 @@ public class ServerLobbyConnectionManager extends Listener {
     }
 
     private void addNewPlayer(Connection connection, String clientIpAddress) {
-        serverLobbyScreenBridge.playerConnected(clientIpAddress);
-        playerNameResolved.add(false);
-        playerConnections.add(connection);
+        if (getConnectionIndex(connection) == -1) { // If false, the client came back to the lobby from VictoryScreen
+            serverLobbyScreenBridge.playerConnected(clientIpAddress);
+            playerNameResolved.add(false);
+            playerConnections.add(connection);
+        }
     }
 
     /**
@@ -119,7 +121,8 @@ public class ServerLobbyConnectionManager extends Listener {
                 addNewPlayer(connection, connection.getRemoteAddressTCP().getAddress().getHostAddress());
                 index = getConnectionIndex(connection);
             }
-            serverLobbyScreenBridge.updatePlayerDetails(index, clientName);
+
+            serverLobbyScreenBridge.updatePlayerDetails(index, clientName, playerNameResolved.get(index));
         });
     }
 
@@ -168,6 +171,7 @@ public class ServerLobbyConnectionManager extends Listener {
         BufferPlayerData bpd = new BufferPlayerData();
         bpd.names = new String[size];
         bpd.readyStatus = new boolean[size];
+        bpd.inGameStatus = new boolean[size];
         bpd.colorIndex = new int[size];
         bpd.startPosIndex = new int[size];
 
@@ -183,6 +187,7 @@ public class ServerLobbyConnectionManager extends Listener {
 
             bpd.names[i] = playerItemsAttributes.get(attrIndex).getName();
             bpd.readyStatus[i] = playerItemsAttributes.get(attrIndex).isReady();
+            bpd.inGameStatus[i] = playerItemsAttributes.get(attrIndex).isInGame();
             bpd.colorIndex[i] = playerItemsAttributes.get(attrIndex).getColorIndex();
             bpd.startPosIndex[i] = playerItemsAttributes.get(attrIndex).getStartPosIndex();
         }
@@ -197,10 +202,11 @@ public class ServerLobbyConnectionManager extends Listener {
      * @param connection    Client's connection
      * @param name          Client's name
      * @param ready         Client's ready or not ready status
+     * @param inGame        Client's in game or not status
      * @param colorIndex    Client's color index
      * @param startPosIndex Client's start position index
      */
-    public void receiveClientData(final Connection connection, String name, boolean ready, int colorIndex, int startPosIndex) {
+    public void receiveClientData(final Connection connection, String name, boolean ready, boolean inGame, int colorIndex, int startPosIndex) {
         Gdx.app.postRunnable(() -> {
             int index = getConnectionIndex(connection);
             if (!playerNameResolved.get(index)) {
@@ -208,7 +214,7 @@ public class ServerLobbyConnectionManager extends Listener {
                 return;
             }
 
-            serverLobbyScreenBridge.updatePlayerDetails(index, name, ready, colorIndex, startPosIndex);
+            serverLobbyScreenBridge.updatePlayerDetails(index, name, ready, inGame, colorIndex, startPosIndex);
         });
     }
 
@@ -302,32 +308,12 @@ public class ServerLobbyConnectionManager extends Listener {
         }
     }
 
-    /**
-     * Called to validate all data before starting the match
-     *
-     * @param playerAttributes Player attribute data array
-     * @return null if no errors, a string showing the error otherwise
-     */
-    public String validateServerData(Array<PlayerItemAttributes> playerAttributes) {
-        for (int i = 1; i < playerAttributes.size; i++) {
-            PlayerItemAttributes playerAttribute = playerAttributes.get(i);
-            if (!playerAttribute.isReady()) {
-                return "All players are not ready";
-            }
-        }
-
-        // No errors
-        return null;
-    }
-
     public void broadcastGameStart() {
         BufferGameStart bgs = new BufferGameStart();
         sentToAcceptedClients(bgs);
-
-        emptyBuffers();
     }
 
-    private int getConnectionIndex(Connection connection) {
+    public int getConnectionIndex(Connection connection) {
         return playerConnections.indexOf(connection, true);
     }
 
@@ -350,48 +336,22 @@ public class ServerLobbyConnectionManager extends Listener {
         Gdx.app.postRunnable(() -> {
             int index = getConnectionIndex(connection);
 
-            if (index == -1) {
-                return; // Some error occurred or server is shutting down
-            }
-
             serverLobbyScreenBridge.playerDisconnected(index);
-
             playerNameResolved.removeIndex(index);
             playerConnections.removeIndex(index);
-
         });
     }
 
-    private void emptyBuffers() {
+    public void closeConnection() {
         playerConnections.clear();
         serverLobbyScreenBridge = null;
         try {
             server.removeListener(this);
-        } catch (IllegalArgumentException ignored) {
-            // Probably clicked the back button more than once; ignore exception
-        }
-    }
-
-    public void closeConnection() {
-        emptyBuffers();
+        } catch (NegativeArraySizeException ignored) { }
         server.close();
     }
 
     public Server getServer() {
         return server;
-    }
-
-    public interface ServerPlayerListener {
-        void playerConnected(String ipAddress);
-
-        void updatePlayerDetails(int index, String clientName);
-
-        void updatePlayerDetails(int index, String name, boolean ready, int colorIndex, int startPosIndex);
-
-        void playerDisconnected(int itemIndex);
-
-        FileHandle getExternalMapDir();
-
-        MapEntity fetchMap(String mapName);
     }
 }

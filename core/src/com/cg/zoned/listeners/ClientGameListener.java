@@ -23,13 +23,10 @@ public class ClientGameListener extends Listener {
             BufferPlayerDisconnected bpd = (BufferPlayerDisconnected) object;
             gameConnectionManager.clientPlayerDisconnected(bpd.playerName);
         }
-
-        super.received(connection, object);
     }
 
     @Override
     public void disconnected(Connection connection) {
         gameConnectionManager.clientDisconnect(connection);
-        super.disconnected(connection);
     }
 }

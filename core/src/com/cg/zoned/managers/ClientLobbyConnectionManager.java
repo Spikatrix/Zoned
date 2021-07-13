@@ -40,9 +40,7 @@ public class ClientLobbyConnectionManager extends Listener {
         this.client = client;
     }
 
-    public void start(String clientName) {
-        playerNames.add(clientName);
-
+    public void initLobbyConnectionListener() {
         client.addListener(this); // Kryonet packets will arrive directly in this class
     }
 
@@ -50,7 +48,7 @@ public class ClientLobbyConnectionManager extends Listener {
     public void received(Connection connection, Object object) {
         if (object instanceof BufferPlayerData) {
             BufferPlayerData bpd = (BufferPlayerData) object;
-            this.receiveServerPlayerData(bpd.names, bpd.readyStatus, bpd.colorIndex, bpd.startPosIndex);
+            this.receiveServerPlayerData(bpd.names, bpd.readyStatus, bpd.inGameStatus, bpd.colorIndex, bpd.startPosIndex);
         } else if (object instanceof BufferKickClient) {
             BufferKickClient bkc = (BufferKickClient) object;
             this.connectionRejected(bkc.kickReason);
@@ -73,12 +71,12 @@ public class ClientLobbyConnectionManager extends Listener {
      *
      * @param nameStrings     Names of players
      * @param ready           Ready or not status of players
+     * @param inGame          In game or not status of players
      * @param colorIndices    Player color indices
      * @param startPosIndices Start positions indices of all players
      */
-    public void receiveServerPlayerData(String[] nameStrings, final boolean[] ready, int[] colorIndices, int[] startPosIndices) {
-        Gdx.app.postRunnable(() -> clientPlayerListener.updatePlayers(playerNames, nameStrings, ready, colorIndices, startPosIndices));
-
+    public void receiveServerPlayerData(String[] nameStrings, boolean[] ready, boolean[] inGame, int[] colorIndices, int[] startPosIndices) {
+        Gdx.app.postRunnable(() -> clientPlayerListener.updatePlayers(playerNames, nameStrings, ready, inGame, colorIndices, startPosIndices));
     }
 
     /**
@@ -148,6 +146,7 @@ public class ClientLobbyConnectionManager extends Listener {
         BufferPlayerData bpd = new BufferPlayerData();
         bpd.names = new String[]{ playerAttribute.getName() };
         bpd.readyStatus = new boolean[]{ playerAttribute.isReady() };
+        bpd.inGameStatus = new boolean[] { playerAttribute.isInGame() };
         bpd.colorIndex = new int[]{ playerAttribute.getColorIndex() };
         bpd.startPosIndex = new int[]{ playerAttribute.getStartPosIndex() };
 
@@ -156,7 +155,6 @@ public class ClientLobbyConnectionManager extends Listener {
 
     public void startGame() {
         clientPlayerListener.startGame();
-
         emptyBuffers();
     }
 
@@ -165,17 +163,12 @@ public class ClientLobbyConnectionManager extends Listener {
         clientPlayerListener = null;
         try {
             client.removeListener(this);
-        } catch (IllegalArgumentException ignored) {
-            // Probably clicked the back button more than once; ignore exception
-        }
+        } catch (NegativeArraySizeException ignored) { }
     }
 
     public void closeConnection() {
         emptyBuffers();
-
-        if (client.isConnected()) {
-            client.close();
-        }
+        client.close();
     }
 
     /**
@@ -185,7 +178,10 @@ public class ClientLobbyConnectionManager extends Listener {
      */
     @Override
     public void disconnected(Connection connection) {
-        clientPlayerListener.disconnectWithMessage("Lost connection to the server");
+        // Client got disconnected already if false
+        if (clientPlayerListener != null) {
+            clientPlayerListener.disconnectWithMessage("Lost connection to the server");
+        }
     }
 
     public void sendClientNameToServer(String clientName) {
@@ -202,8 +198,10 @@ public class ClientLobbyConnectionManager extends Listener {
      * @param playerName The name of the client that got disconnected
      */
     public void playerDisconnected(String playerName) {
-        // playerIndex should never be -1
         int playerIndex = playerNames.indexOf(playerName, false);
+        /*if (playerIndex == -1) {
+            return;
+        }*/
 
         playerNames.removeIndex(playerIndex);
         clientPlayerListener.playerDisconnected(playerIndex);

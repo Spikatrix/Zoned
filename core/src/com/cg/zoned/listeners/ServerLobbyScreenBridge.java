@@ -9,9 +9,9 @@ import com.cg.zoned.maps.MapEntity;
 public interface ServerLobbyScreenBridge {
     void playerConnected(String ipAddress);
 
-    void updatePlayerDetails(int index, String clientName);
+    void updatePlayerDetails(int index, String clientName, boolean nameAlreadyValidated);
 
-    void updatePlayerDetails(int index, String name, boolean ready, int colorIndex, int startPosIndex);
+    void updatePlayerDetails(int index, String name, boolean ready, boolean inGame, int colorIndex, int startPosIndex);
 
     void playerDisconnected(int itemIndex);
 

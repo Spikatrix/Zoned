@@ -27,16 +27,12 @@ import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.ViewportDividers;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PreparedMapData;
-import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.GameManager;
-import com.cg.zoned.managers.ServerLobbyConnectionManager;
 import com.cg.zoned.managers.SplitViewportManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.FocusableStage;
 import com.cg.zoned.ui.UITextDisplayer;
 import com.esotericsoftware.kryonet.Client;
-import com.esotericsoftware.kryonet.Connection;
-import com.esotericsoftware.kryonet.Server;
 
 public class GameScreen extends ScreenObject implements InputProcessor {
     private GameManager gameManager;
@@ -53,7 +49,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private boolean gameCompleteFadeOutDone;
 
     private ScoreBar scoreBars;
-    private boolean gamePaused;
     private boolean gameDisconnected;
 
     private GridPoint2[] playerStartPositions;
@@ -62,20 +57,22 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         this(game, mapData, players, null, null);
     }
 
-    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players, ServerLobbyConnectionManager connectionManager) {
-        this(game, mapData, players, connectionManager.getServer(), null);
+    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players, ServerLobbyScreen serverLobby) {
+        // The server lobby screen itself is passed as it is not destroyed
+        this(game, mapData, players, serverLobby, null);
     }
 
-    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players, ClientLobbyConnectionManager connectionManager) {
-        this(game, mapData, players, null, connectionManager.getClient());
+    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players, Client client) {
+        this(game, mapData, players, null, client);
     }
 
-    private GameScreen(final Zoned game, PreparedMapData mapData, Player[] players, Server server, Client client) {
+    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players,
+                      ServerLobbyScreen serverLobbyScreen, Client client) {
         super(game);
         game.discordRPCManager.updateRPC("Playing a match", mapData.map.getName(), players.length - 1);
 
         this.gameManager = new GameManager(this);
-        this.gameManager.setUpConnectionManager(server, client);
+        this.gameManager.setUpConnectionManager(serverLobbyScreen, client);
         this.gameManager.setUpDirectionAndPlayerBuffer(players, screenStage,
                 game.preferences.getInteger(Preferences.CONTROL_PREFERENCE, 0),
                 game.skin, game.getScaleFactor(), usedTextures);
@@ -277,21 +274,19 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
         if (screenOverlay.getOverlayAlpha() >= 0.96f && !gameCompleteFadeOutDone) {
             gameCompleteFadeOutDone = true;
-            if (gameManager.gameConnectionManager.isActive) {
-                gameManager.gameConnectionManager.close();
-            }
+            gameManager.gameConnectionManager.removeGameListener();
 
             // Transition to VictoryScreen after completing rendering the current frame to avoid SIGSEGV crashes
             Gdx.app.postRunnable(() -> {
                 dispose();
-                game.setScreen(new VictoryScreen(game, gameManager.playerManager.getTeamData()));
+                game.setScreen(new VictoryScreen(game,
+                        gameManager.playerManager.getTeamData(),
+                        gameManager.gameConnectionManager.getServerClientObject()));
             });
         }
     }
 
     private void showPauseDialog() {
-        gamePaused = true;
-
         FocusableStage.DialogButton[] dialogButtons;
 
         if (isSplitscreenMultiplayer()) {
@@ -314,12 +309,10 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         screenStage.showDialog("Pause Menu", dialogButtons,
                 true, button -> {
                     if (button == FocusableStage.DialogButton.MainMenu) {
-                        endGame();
+                        exitToMainMenu();
                     } else if (button == FocusableStage.DialogButton.Restart) {
                         restartGame();
                     }
-
-                    gamePaused = false;
                 });
     }
 
@@ -346,58 +339,68 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         return !gameManager.gameConnectionManager.isActive;
     }
 
-    public void serverPlayerDisconnected(final Connection connection) {
+    /**
+     * Called in the server when a client player disconnects
+     *
+     * @param clientName The name of the client player
+     */
+    public void serverPlayerDisconnected(String clientName) {
         Gdx.app.postRunnable(() -> {
             if (gameManager.gameOver) {
                 return;
             }
 
-            // TODO: Connection ID is not always the connIndex, don't use getID for the index
-            int connIndex = connection.getID();
-            String playerName = "A player"; // A generic name for now xD
-
-            try {
-                playerName = gameManager.playerManager.getPlayer(connIndex).name;
-            } catch (ArrayIndexOutOfBoundsException e) {
-                Gdx.app.error(Constants.LOG_TAG, "Failed to fetch the name of the disconnected client");
+            String playerName = clientName;
+            if (playerName == null) {
+                // Shouldn't really happen. Use a generic name if it does
+                playerName = "A player";
             }
 
             gameManager.playerManager.stopPlayers(false);
 
             gameManager.directionBufferManager.ignorePlayer();
-            gameManager.gameConnectionManager.sendPlayerDisconnectedBroadcast(playerName);
+            //gameManager.gameConnectionManager.sendPlayerDisconnectedBroadcast(playerName);
             showPlayerDisconnectedDialog(playerName);
         });
     }
 
+    /**
+     * Called in the client when it receives word from the server that another player got disconnected
+     *
+     * @param playerName The name of the player that got disconnected
+     */
     public void clientPlayerDisconnected(String playerName) {
         gameManager.playerManager.stopPlayers(false);
         gameManager.directionBufferManager.ignorePlayer();
         showPlayerDisconnectedDialog(playerName);
     }
 
+    /**
+     * Shows the player disconnected dialog. Used in both the both server and client when a player disconnects
+     *
+     * @param playerName The name of the player that got disconnected.
+     *                   Might be a generic name if there was an issue fetching the player name
+     */
     private void showPlayerDisconnectedDialog(String playerName) {
         screenStage.showOKDialog(playerName + " got disconnected", false, null);
     }
 
-    public void disconnected() {
-        Gdx.app.postRunnable(() -> {
-            gameDisconnected = true;
-            if (!gameManager.gameOver) {
-                gameManager.directionBufferManager.clearBuffer();
-                screenStage.showOKDialog("Disconnected", false, button -> endGame());
-                Gdx.input.setInputProcessor(screenStage);
-            }
-        });
+    /**
+     * Called from the client that gets disconnected from the server
+     */
+    public void clientDisconnected() {
+        gameDisconnected = true;
+        if (!gameManager.gameOver) {
+            gameManager.directionBufferManager.clearBuffer();
+            screenStage.showOKDialog("Disconnected", false, button -> exitToMainMenu());
+            Gdx.input.setInputProcessor(screenStage);
+        }
     }
 
-    private void endGame() {
-        if (gameManager.gameConnectionManager.isActive) {
-            gameManager.gameConnectionManager.close();
-        } else {
-            dispose();
-            game.setScreen(new MainMenuScreen(game));
-        }
+    private void exitToMainMenu() {
+        gameManager.gameConnectionManager.close();
+        this.dispose();
+        game.setScreen(new MainMenuScreen(game));
     }
 
     private void toggleZoom() {
@@ -406,7 +409,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     @Override
     public void pause() {
-        if (!gamePaused) {
+        if (!screenStage.dialogIsActive()) {
             showPauseDialog();
         }
     }

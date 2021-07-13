@@ -29,22 +29,26 @@ import com.cg.zoned.dataobjects.TeamData;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.UIButtonManager;
 import com.cg.zoned.ui.HoverImageButton;
+import com.esotericsoftware.kryonet.Client;
 
 import java.text.DecimalFormat;
 
 public class VictoryScreen extends ScreenObject implements InputProcessor {
     private ParticleEffect trailEffect;
 
-    private Array<TeamData> teamData;
+    private Object serverClientReference;
 
+    private Array<TeamData> teamData;
     private Actor[][] scoreboardActors;
     private Container<Label> scoreBoardTitleContainer;
     private float rowHeightScale = 1.5f;
     private float padding;
 
-    public VictoryScreen(final Zoned game, Array<TeamData> teamData) {
+    public VictoryScreen(final Zoned game, Array<TeamData> teamData, Object serverClientObject) {
         super(game);
         game.discordRPCManager.updateRPC("Post match");
+
+        this.serverClientReference = serverClientObject;
 
         this.padding = 16f * game.getScaleFactor();
 
@@ -232,7 +236,7 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
         nextButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                animationManager.fadeOutStage(screenStage, VictoryScreen.this, new MainMenuScreen(game));
+                onBackPressed();
             }
         });
         screenStage.addFocusableActor(nextButton);
@@ -264,6 +268,18 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
         trailEffect.dispose();
     }
 
+    private boolean networkedModeAvailable() {
+        if (serverClientReference instanceof ServerLobbyScreen) {
+            animationManager.fadeOutStage(screenStage, this, (ServerLobbyScreen) serverClientReference);
+            return true;
+        } else if (serverClientReference instanceof Client) {
+            animationManager.fadeOutStage(screenStage, this, new ClientLobbyScreen(game, (Client) serverClientReference));
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Actions to do when the back/escape button is pressed
      *
@@ -275,7 +291,9 @@ public class VictoryScreen extends ScreenObject implements InputProcessor {
             return false;
         }
 
-        animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
+        if (!networkedModeAvailable()) {
+            animationManager.fadeOutStage(screenStage, this, new MainMenuScreen(game));
+        }
         return true;
     }
 
