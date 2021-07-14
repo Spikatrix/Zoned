@@ -7,7 +7,9 @@ import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.Player.Direction;
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.listeners.ClientGameConnectionHandler;
 import com.cg.zoned.listeners.ClientGameListener;
+import com.cg.zoned.listeners.ServerGameConnectionHandler;
 import com.cg.zoned.listeners.ServerGameListener;
 import com.cg.zoned.screens.ServerLobbyScreen;
 import com.esotericsoftware.kryonet.Client;
@@ -15,7 +17,7 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
-public class GameConnectionManager implements GameConnectionHandler {
+public class GameConnectionManager implements ServerGameConnectionHandler, ClientGameConnectionHandler {
     // GameConnectionManager will be inactive when playing in splitscreen mode
     public boolean isActive;
 
@@ -270,9 +272,8 @@ public class GameConnectionManager implements GameConnectionHandler {
             }
 
             gameManager.clientPlayerDisconnected(playerName);
-            previousDirection = null;
             Player player = gameManager.playerManager.getPlayers()[0];
-            player.updatedDirection = player.direction = null;
+            previousDirection = player.updatedDirection = player.direction = null;
         });
     }
 

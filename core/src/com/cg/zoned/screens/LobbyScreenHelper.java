@@ -6,10 +6,12 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
@@ -266,6 +268,14 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             colorSelector.setItems(PlayerColorHelper.getNameList());
             playerItem.add(colorSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
 
+            colorSelector.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    updatePlayerColorAttr(0, colorSelector.getSelectedIndex());
+                    updateMapColor(0);
+                }
+            });
+
             screenStage.addFocusableActor(colorSelector);
             if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
                 screenStage.setFocusedActor(colorSelector);
@@ -282,6 +292,13 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             final DropDownMenu<String> startPosSelector = new DropDownMenu<>(game.skin, game.getScaleFactor());
             startPosSelector.setItems(getStartPosViewNameList());
             playerItem.add(startPosSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
+
+            startPosSelector.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    updateMapColor(0, startPosSelector.getSelectedIndex());
+                }
+            });
 
             screenStage.addFocusableActor(startPosSelector);
         }

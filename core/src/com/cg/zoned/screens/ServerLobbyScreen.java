@@ -227,9 +227,6 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    /*super.*/updatePlayerColorAttr(0, colorSelector.getSelectedIndex());
-                    updateMapColor(0);
-
                     connectionManager.broadcastPlayerInfo(playerItemAttributes, 0);
                 }
             });
@@ -238,7 +235,6 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
             startPosSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    /*super.*/updateMapColor(0, startPosSelector.getSelectedIndex());
                     connectionManager.broadcastPlayerInfo(playerItemAttributes, 0);
                 }
             });

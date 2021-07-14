@@ -143,9 +143,6 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyS
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    /*super.*/updatePlayerColorAttr(0, colorSelector.getSelectedIndex());
-                    updateMapColor(0);
-
                     connectionManager.broadcastClientInfo(playerItemAttributes.first());
                 }
             });
@@ -162,7 +159,6 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyS
             startPosSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    /*super.*/updateMapColor(0, startPosSelector.getSelectedIndex());
                     connectionManager.broadcastClientInfo(playerItemAttributes.first());
                 }
             });
