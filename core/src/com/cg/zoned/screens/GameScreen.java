@@ -45,11 +45,9 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     private Overlay backgroundColorOverlay;
     private float bgAlpha = .25f;
 
+    private ScoreBar scoreBars;
     private Overlay screenOverlay;
     private boolean gameCompleteFadeOutDone;
-
-    private ScoreBar scoreBars;
-    private boolean gameDisconnected;
 
     private GridPoint2[] playerStartPositions;
 
@@ -184,9 +182,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                 gameManager.playerManager.updatePlayerDirections();
             }
 
-            if (!gameDisconnected) {
-                map.update(gameManager.playerManager, delta);
-            }
+            map.update(gameManager.playerManager, delta);
         }
 
         drawGameBG(delta);
@@ -209,6 +205,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         if (!gameManager.gameOver && map.gameComplete(gameManager.playerManager.getTeamData())) {
             gameManager.directionBufferManager.clearBuffer();
             gameManager.playerManager.stopPlayers(true);
+            screenOverlay.drawOverlay(true);
             gameManager.gameOver = true;
         }
 
@@ -269,7 +266,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     private void fadeOutScreen(float delta) {
-        screenOverlay.drawOverlay(true);
         screenOverlay.render(shapeDrawer, screenStage, delta);
 
         if (screenOverlay.getOverlayAlpha() >= 0.96f && !gameCompleteFadeOutDone) {
@@ -344,7 +340,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
      *
      * @param clientName The name of the client player
      */
-    public void serverPlayerDisconnected(String clientName) {
+    public void serverClientDisconnected(String clientName) {
         Gdx.app.postRunnable(() -> {
             if (gameManager.gameOver) {
                 return;
@@ -356,10 +352,6 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                 playerName = "A player";
             }
 
-            gameManager.playerManager.stopPlayers(false);
-
-            gameManager.directionBufferManager.ignorePlayer();
-            //gameManager.gameConnectionManager.sendPlayerDisconnectedBroadcast(playerName);
             showPlayerDisconnectedDialog(playerName);
         });
     }
@@ -370,18 +362,19 @@ public class GameScreen extends ScreenObject implements InputProcessor {
      * @param playerName The name of the player that got disconnected
      */
     public void clientPlayerDisconnected(String playerName) {
-        gameManager.playerManager.stopPlayers(false);
-        gameManager.directionBufferManager.ignorePlayer();
         showPlayerDisconnectedDialog(playerName);
     }
 
     /**
-     * Shows the player disconnected dialog. Used in both the both server and client when a player disconnects
+     * Shows the player disconnected dialog after stopping all players and incrementing the ignore player counter.
+     * Used in both the both server and client when a player disconnects
      *
      * @param playerName The name of the player that got disconnected.
      *                   Might be a generic name if there was an issue fetching the player name
      */
     private void showPlayerDisconnectedDialog(String playerName) {
+        gameManager.playerManager.stopPlayers(false);
+        gameManager.directionBufferManager.ignorePlayer();
         screenStage.showOKDialog(playerName + " got disconnected", false, null);
     }
 
@@ -389,10 +382,10 @@ public class GameScreen extends ScreenObject implements InputProcessor {
      * Called from the client that gets disconnected from the server
      */
     public void clientDisconnected() {
-        gameDisconnected = true;
         if (!gameManager.gameOver) {
+            gameManager.playerManager.stopPlayers(true);
             gameManager.directionBufferManager.clearBuffer();
-            screenStage.showOKDialog("Disconnected", false, button -> exitToMainMenu());
+            screenStage.showOKDialog("Disconnected from the server", false, button -> exitToMainMenu());
             Gdx.input.setInputProcessor(screenStage);
         }
     }

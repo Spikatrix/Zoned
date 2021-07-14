@@ -33,7 +33,7 @@ public class ServerGameListener extends Listener {
     @Override
     public void disconnected(Connection connection) {
         if (!discardConnections.removeValue(connection, true)) {
-            connectionHandler.clientDisconnectedFromServer(connection);
+            connectionHandler.serverClientDisconnected(connection);
         }
     }
 }

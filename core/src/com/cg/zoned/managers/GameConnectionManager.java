@@ -232,10 +232,10 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
      * Called in the server when any of its clients disconnects
      */
     @Override
-    public void clientDisconnectedFromServer(final Connection connection) {
+    public void serverClientDisconnected(final Connection connection) {
         Gdx.app.postRunnable(() -> {
             String playerName = getClientPlayerName(connection);
-            gameManager.clientDisconnectedFromServer(playerName);
+            gameManager.serverClientDisconnected(playerName);
             gameManager.playerManager.getPlayers()[0].direction = null;
         });
     }

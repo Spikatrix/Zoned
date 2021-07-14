@@ -6,5 +6,5 @@ import com.esotericsoftware.kryonet.Connection;
 public interface ServerGameConnectionHandler {
     void serverUpdateDirections(BufferDirections bd);
 
-    void clientDisconnectedFromServer(Connection connection);
+    void serverClientDisconnected(Connection connection);
 }

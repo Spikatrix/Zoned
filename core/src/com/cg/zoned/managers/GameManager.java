@@ -32,8 +32,8 @@ public class GameManager {
         this.playerManager = new PlayerManager(this, players, stage, controlIndex, skin, scaleFactor, usedTextures);
     }
 
-    public void clientDisconnectedFromServer(String playerName) {
-        gameScreen.serverPlayerDisconnected(playerName);
+    public void serverClientDisconnected(String playerName) {
+        gameScreen.serverClientDisconnected(playerName);
     }
 
     public void clientPlayerDisconnected(String playerName) {
