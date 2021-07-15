@@ -745,7 +745,7 @@ public class FocusableStage extends Stage {
         Yes("Yes"),
         Kick("Kick"),
         Resume("Resume"),
-        MainMenu("Main Menu"),
+        EndGame("End Game"),
         Exit("Exit"),
         Restart("Restart"),
         SetMap("Set Map");

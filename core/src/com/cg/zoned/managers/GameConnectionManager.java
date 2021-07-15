@@ -6,12 +6,20 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
 import com.cg.zoned.Player.Direction;
+import com.cg.zoned.Zoned;
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.buffers.BufferGameEnd;
+import com.cg.zoned.buffers.BufferPlayerDisconnected;
 import com.cg.zoned.listeners.ClientGameConnectionHandler;
 import com.cg.zoned.listeners.ClientGameListener;
 import com.cg.zoned.listeners.ServerGameConnectionHandler;
 import com.cg.zoned.listeners.ServerGameListener;
+import com.cg.zoned.screens.ClientLobbyScreen;
+import com.cg.zoned.screens.HostJoinScreen;
+import com.cg.zoned.screens.MainMenuScreen;
+import com.cg.zoned.screens.ScreenObject;
 import com.cg.zoned.screens.ServerLobbyScreen;
+import com.cg.zoned.ui.FocusableStage;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -219,6 +227,34 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
                 gameManager.directionBufferManager.getBufferUsedCount() == players.length);
     }
 
+    public boolean broadcastGameEnd(boolean restart, FocusableStage screenStage) {
+        BufferGameEnd bge = new BufferGameEnd();
+        bge.restartGame = restart;
+
+        if (client != null) {
+            if (restart) { // The client can't restart matches
+                screenStage.showOKDialog("Only the host can restart the match", false, null);
+                return false;
+            }
+            // Client exited the current match
+            client.sendTCP(bge);
+        } else if (server != null) {
+            // Server ended/restarted the current match
+            server.sendToAllTCP(bge);
+        } else {
+            // Shouldn't really happen
+            screenStage.showOKDialog("Connection lost", false, null);
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void clientGameEnd(boolean restartGame) {
+        gameManager.clientGameEnd(restartGame);
+    }
+
     public String getClientPlayerName(Connection connection) {
         int connIndex = serverLobby.getConnectionIndex(connection);
         if (connIndex != -1) {
@@ -229,15 +265,39 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
     }
 
     /**
+     * Called in the server when any of its clients exits the match
+     */
+    @Override
+    public void serverClientExited(Connection connection) {
+        handleClientLeave(connection, false);
+    }
+
+    /**
      * Called in the server when any of its clients disconnects
      */
     @Override
     public void serverClientDisconnected(final Connection connection) {
+        handleClientLeave(connection, true);
+    }
+
+    private void handleClientLeave(final Connection connection, boolean disconnected) {
         Gdx.app.postRunnable(() -> {
             String playerName = getClientPlayerName(connection);
-            gameManager.serverClientDisconnected(playerName);
+            if (!disconnected) {
+                broadcastClientExit(playerName);
+            }
+
+            gameManager.serverClientLeft(playerName, disconnected);
             gameManager.playerManager.getPlayers()[0].direction = null;
         });
+    }
+
+    private void broadcastClientExit(String playerName) {
+        BufferPlayerDisconnected bpd = new BufferPlayerDisconnected();
+        bpd.playerName = playerName;
+        bpd.disconnected = false;
+
+        server.sendToAllTCP(bpd);
     }
 
     public Object getServerClientObject() {
@@ -263,15 +323,16 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
      * a player has been disconnected from the server
      *
      * @param playerName The name of the player that got disconnected
+     * @param disconnected Indicates whether the player got disconnected or left
      */
-    public void clientPlayerDisconnected(String playerName) {
+    public void clientPlayerDisconnected(String playerName, boolean disconnected) {
         Gdx.app.postRunnable(() -> {
             Player[] players = gameManager.playerManager.getPlayers();
              if (PlayerManager.getPlayerIndex(players, playerName) == -1) {
                 return;
             }
 
-            gameManager.clientPlayerDisconnected(playerName);
+            gameManager.clientPlayerDisconnected(playerName, disconnected);
             Player player = gameManager.playerManager.getPlayers()[0];
             previousDirection = player.updatedDirection = player.direction = null;
         });
@@ -279,6 +340,20 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
 
     public int getPing() {
         return ping;
+    }
+
+    public ScreenObject getLobbyScreen(Zoned game) {
+        if (serverLobby != null) {
+            return serverLobby;
+        } else if (client != null) {
+            if (client.isConnected()) {
+                return new ClientLobbyScreen(game, client);
+            } else {
+                return new HostJoinScreen(game);
+            }
+        } else {
+            return new MainMenuScreen(game);
+        }
     }
 
     public void close() {

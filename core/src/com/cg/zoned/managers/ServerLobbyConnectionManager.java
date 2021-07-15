@@ -322,6 +322,7 @@ public class ServerLobbyConnectionManager extends Listener {
         if (playerNameResolved.get(playerIndex)) {
             BufferPlayerDisconnected bpf = new BufferPlayerDisconnected();
             bpf.playerName = playerName;
+            bpf.disconnected = true;
             sentToAcceptedClients(bpf);
         }
     }

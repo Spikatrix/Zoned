@@ -2,6 +2,7 @@ package com.cg.zoned.listeners;
 
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.buffers.BufferGameEnd;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 
@@ -21,6 +22,8 @@ public class ServerGameListener extends Listener {
         if (object instanceof BufferDirections) {
             BufferDirections bd = (BufferDirections) object;
             connectionHandler.serverUpdateDirections(bd);
+        } else if (object instanceof BufferGameEnd) {
+            connectionHandler.serverClientExited(connection);
         }
     }
 

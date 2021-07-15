@@ -283,39 +283,43 @@ public class GameScreen extends ScreenObject implements InputProcessor {
     }
 
     private void showPauseDialog() {
-        FocusableStage.DialogButton[] dialogButtons;
+        FocusableStage.DialogButton[] dialogButtons = {
+                FocusableStage.DialogButton.Resume,
+                FocusableStage.DialogButton.Restart,
+                FocusableStage.DialogButton.EndGame,
+        };
 
         if (isSplitscreenMultiplayer()) {
             // Stop players when in splitscreen multiplayer only
             gameManager.playerManager.stopPlayers(false);
             gameManager.directionBufferManager.clearBuffer();
-
-            dialogButtons = new FocusableStage.DialogButton[] {
-                    FocusableStage.DialogButton.Resume,
-                    FocusableStage.DialogButton.Restart,
-                    FocusableStage.DialogButton.MainMenu,
-            };
-        } else {
-            dialogButtons = new FocusableStage.DialogButton[] {
-                    FocusableStage.DialogButton.Resume,
-                    FocusableStage.DialogButton.MainMenu,
-            };
         }
 
-        screenStage.showDialog("Pause Menu", dialogButtons,
-                true, button -> {
-                    if (button == FocusableStage.DialogButton.MainMenu) {
-                        exitToMainMenu();
-                    } else if (button == FocusableStage.DialogButton.Restart) {
-                        restartGame();
-                    }
-                });
+        screenStage.showDialog("Pause Menu", dialogButtons, true, button -> {
+            if (button == FocusableStage.DialogButton.Resume) {
+                return;
+            }
+
+            if (!isSplitscreenMultiplayer()) {
+                boolean restartMatch = button == FocusableStage.DialogButton.Restart;
+                if (!gameManager.gameConnectionManager.broadcastGameEnd(restartMatch, screenStage)) {
+                    return;
+                }
+            }
+
+            if (button == FocusableStage.DialogButton.EndGame) {
+                exitGameScreen();
+            } else if (button == FocusableStage.DialogButton.Restart) {
+                restartGame();
+            }
+        });
     }
 
     /**
      * Restarts the match (Supported only in splitscreen multiplayer mode for now)
      */
     private void restartGame() {
+        gameManager.playerManager.movementInProgress(true);
         gameManager.playerManager.stopPlayers(true);
         gameManager.directionBufferManager.clearBuffer();
 
@@ -331,16 +335,29 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         map.updateMap(gameManager.playerManager);
     }
 
+    public void clientGameEnd(boolean restartGame) {
+        if (restartGame) {
+            screenStage.showOKDialog("The host restarted the match", false, null);
+            restartGame();
+            return;
+        }
+
+        screenStage.showOKDialog("The host ended the match", false, button -> exitGameScreen());
+        gameManager.playerManager.stopPlayers(true);
+        gameManager.directionBufferManager.clearBuffer();
+    }
+
     private boolean isSplitscreenMultiplayer() {
         return !gameManager.gameConnectionManager.isActive;
     }
 
     /**
-     * Called in the server when a client player disconnects
+     * Called in the server when a client player disconnects/leaves
      *
-     * @param clientName The name of the client player
+     * @param clientName The name of the player that left. Might be null.
+     * @param disconnected Indicates whether the client disconnected or left
      */
-    public void serverClientDisconnected(String clientName) {
+    public void serverClientLeft(String clientName, boolean disconnected) {
         Gdx.app.postRunnable(() -> {
             if (gameManager.gameOver) {
                 return;
@@ -352,7 +369,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
                 playerName = "A player";
             }
 
-            showPlayerDisconnectedDialog(playerName);
+            showPlayerDisconnectedDialog(playerName, disconnected);
         });
     }
 
@@ -360,22 +377,28 @@ public class GameScreen extends ScreenObject implements InputProcessor {
      * Called in the client when it receives word from the server that another player got disconnected
      *
      * @param playerName The name of the player that got disconnected
+     * @param disconnected Indicates whether the player got disconnected or left
      */
-    public void clientPlayerDisconnected(String playerName) {
-        showPlayerDisconnectedDialog(playerName);
+    public void clientPlayerDisconnected(String playerName, boolean disconnected) {
+        showPlayerDisconnectedDialog(playerName, disconnected);
     }
 
     /**
      * Shows the player disconnected dialog after stopping all players and incrementing the ignore player counter.
      * Used in both the both server and client when a player disconnects
      *
-     * @param playerName The name of the player that got disconnected.
-     *                   Might be a generic name if there was an issue fetching the player name
+     * @param playerName    The name of the player that got disconnected.
+     *                      Might be a generic name if there was an issue fetching the player name
+     * @param disconnected  Depicts whether the player got disconnected or left
      */
-    private void showPlayerDisconnectedDialog(String playerName) {
+    private void showPlayerDisconnectedDialog(String playerName, boolean disconnected) {
         gameManager.playerManager.stopPlayers(false);
         gameManager.directionBufferManager.ignorePlayer();
-        screenStage.showOKDialog(playerName + " got disconnected", false, null);
+        if (disconnected) {
+            screenStage.showOKDialog(playerName + " got disconnected", false, null);
+        } else {
+            screenStage.showOKDialog(playerName + " left the match", false, null);
+        }
     }
 
     /**
@@ -385,15 +408,22 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         if (!gameManager.gameOver) {
             gameManager.playerManager.stopPlayers(true);
             gameManager.directionBufferManager.clearBuffer();
-            screenStage.showOKDialog("Disconnected from the server", false, button -> exitToMainMenu());
+            screenStage.showOKDialog("Disconnected from the server", false, button -> exitGameScreen());
             Gdx.input.setInputProcessor(screenStage);
         }
     }
 
-    private void exitToMainMenu() {
-        gameManager.gameConnectionManager.close();
+    private void exitGameScreen() {
+        gameManager.gameConnectionManager.removeGameListener();
         this.dispose();
-        game.setScreen(new MainMenuScreen(game));
+
+        ScreenObject screen;
+        if (isSplitscreenMultiplayer()) {
+            screen = new PlayerSetUpScreen(game);
+        } else {
+            screen = gameManager.gameConnectionManager.getLobbyScreen(game);
+        }
+        game.setScreen(screen);
     }
 
     private void toggleZoom() {

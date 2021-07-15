@@ -7,4 +7,6 @@ public interface ServerGameConnectionHandler {
     void serverUpdateDirections(BufferDirections bd);
 
     void serverClientDisconnected(Connection connection);
+
+    void serverClientExited(Connection connection);
 }

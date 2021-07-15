@@ -203,7 +203,7 @@ public class ServerLobbyScreen extends LobbyScreenHelper implements ServerLobbyS
         mapSelectorActive = true;
 
         screenStage.showDialog(mapSelectorTable, focusableDialogButtons,
-                new FocusableStage.DialogButton[]{ FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.SetMap },
+                new FocusableStage.DialogButton[]{FocusableStage.DialogButton.Cancel, FocusableStage.DialogButton.SetMap},
                 false, button -> {
                     if (button == FocusableStage.DialogButton.SetMap && mapSelector.loadSelectedMap()) {
                         updateMap();

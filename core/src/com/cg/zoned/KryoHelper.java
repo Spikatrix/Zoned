@@ -3,6 +3,7 @@ package com.cg.zoned;
 import com.cg.zoned.Player.Direction;
 import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferDirections;
+import com.cg.zoned.buffers.BufferGameEnd;
 import com.cg.zoned.buffers.BufferGameStart;
 import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
@@ -19,6 +20,7 @@ public class KryoHelper {
         kryo.register(BufferDirections.class);
         kryo.register(BufferKickClient.class);
         kryo.register(BufferGameStart.class);
+        kryo.register(BufferGameEnd.class);
         kryo.register(BufferMapData.class);
         kryo.register(BufferNewMap.class);
         kryo.register(Direction[].class);

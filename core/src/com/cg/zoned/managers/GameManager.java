@@ -32,12 +32,16 @@ public class GameManager {
         this.playerManager = new PlayerManager(this, players, stage, controlIndex, skin, scaleFactor, usedTextures);
     }
 
-    public void serverClientDisconnected(String playerName) {
-        gameScreen.serverClientDisconnected(playerName);
+    public void serverClientLeft(String playerName, boolean disconnected) {
+        gameScreen.serverClientLeft(playerName, disconnected);
     }
 
-    public void clientPlayerDisconnected(String playerName) {
-        gameScreen.clientPlayerDisconnected(playerName);
+    public void clientPlayerDisconnected(String playerName, boolean disconnected) {
+        gameScreen.clientPlayerDisconnected(playerName, disconnected);
+    }
+
+    public void clientGameEnd(boolean restartGame) {
+        gameScreen.clientGameEnd(restartGame);
     }
 
     public void clientDisconnected() {

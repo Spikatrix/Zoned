@@ -8,5 +8,7 @@ public interface ClientGameConnectionHandler {
 
     void clientDisconnect(Connection connection);
 
-    void clientPlayerDisconnected(String playerName);
+    void clientPlayerDisconnected(String playerName, boolean disconnected);
+
+    void clientGameEnd(boolean restartGame);
 }

@@ -54,7 +54,9 @@ public class ClientLobbyConnectionManager extends Listener {
             this.connectionRejected(bkc.kickReason);
         } else if (object instanceof BufferPlayerDisconnected) {
             BufferPlayerDisconnected bpd = (BufferPlayerDisconnected) object;
-            this.playerDisconnected(bpd.playerName);
+            if (bpd.disconnected) {
+                this.playerDisconnected(bpd.playerName);
+            }
         } else if (object instanceof BufferNewMap) {
             BufferNewMap bnm = (BufferNewMap) object;
             this.newMapSet(bnm.mapName, bnm.mapExtraParams, bnm.mapHash);
@@ -199,9 +201,6 @@ public class ClientLobbyConnectionManager extends Listener {
      */
     public void playerDisconnected(String playerName) {
         int playerIndex = playerNames.indexOf(playerName, false);
-        /*if (playerIndex == -1) {
-            return;
-        }*/
 
         playerNames.removeIndex(playerIndex);
         clientPlayerListener.playerDisconnected(playerIndex);
