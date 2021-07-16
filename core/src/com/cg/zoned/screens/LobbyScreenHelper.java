@@ -262,11 +262,11 @@ public abstract class LobbyScreenHelper extends ScreenObject {
         if (!name.equals(this.name)) {
             Label colorLabel = new Label(PlayerColorHelper.getStringFromIndex(colorIndex), game.skin);
             colorLabel.setAlignment(Align.center);
-            playerItem.add(colorLabel).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
+            playerItem.add(colorLabel).space(20f * game.getScaleFactor()).width(200f * game.getScaleFactor());
         } else {
             DropDownMenu<String> colorSelector = new DropDownMenu<>(game.skin, game.getScaleFactor());
             colorSelector.setItems(PlayerColorHelper.getNameList());
-            playerItem.add(colorSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
+            playerItem.add(colorSelector).space(20f * game.getScaleFactor()).width(200f * game.getScaleFactor());
 
             colorSelector.addListener(new ChangeListener() {
                 @Override
