@@ -6,13 +6,19 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.cg.zoned.Constants;
 import com.cg.zoned.buffers.BufferClientConnect;
+import com.cg.zoned.buffers.BufferGameStart;
+import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
+import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
+import com.cg.zoned.buffers.BufferPlayerLeft;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
-import com.cg.zoned.listeners.ClientLobbyListener;
+import com.cg.zoned.listeners.ClientLobbyScreenBridge;
 import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.Listener;
 
-public class ClientLobbyConnectionManager {
+public class ClientLobbyConnectionManager extends Listener {
     private Client client;
 
     /**
@@ -20,23 +26,46 @@ public class ClientLobbyConnectionManager {
      */
     private Array<String> playerNames;
 
-    private ClientPlayerListener clientPlayerListener; // This manager to screen
-    private ClientLobbyListener clientLobbyListener; // Kryonet to this manager
+    /**
+     * Bridges this manager with the client lobby screen
+     */
+    private ClientLobbyScreenBridge clientPlayerListener;
 
     // I've put a bunch of Gdx.app.postRunnables in order to properly sync multiple requests
 
-    public ClientLobbyConnectionManager(Client client, ClientPlayerListener clientPlayerListener) {
+    public ClientLobbyConnectionManager(Client client, ClientLobbyScreenBridge clientPlayerListener) {
         playerNames = new Array<>();
 
         this.clientPlayerListener = clientPlayerListener;
         this.client = client;
     }
 
-    public void start(String clientName) {
-        playerNames.add(clientName);
+    public void initLobbyConnectionListener() {
+        client.addListener(this); // Kryonet packets will arrive directly in this class
+    }
 
-        clientLobbyListener = new ClientLobbyListener(this);
-        client.addListener(clientLobbyListener);
+    @Override
+    public void received(Connection connection, Object object) {
+        if (object instanceof BufferPlayerData) {
+            BufferPlayerData bpd = (BufferPlayerData) object;
+            this.receiveServerPlayerData(bpd.names, bpd.readyStatus, bpd.inGameStatus, bpd.colorIndex, bpd.startPosIndex);
+        } else if (object instanceof BufferKickClient) {
+            BufferKickClient bkc = (BufferKickClient) object;
+            this.connectionRejected(bkc.kickReason);
+        } else if (object instanceof BufferPlayerLeft) {
+            BufferPlayerLeft bpd = (BufferPlayerLeft) object;
+            if (bpd.disconnected) {
+                this.playerDisconnected(bpd.playerName);
+            }
+        } else if (object instanceof BufferNewMap) {
+            BufferNewMap bnm = (BufferNewMap) object;
+            this.newMapSet(bnm.mapName, bnm.mapExtraParams, bnm.mapHash);
+        } else if (object instanceof BufferMapData) {
+            BufferMapData bmd = (BufferMapData) object;
+            this.downloadMap(bmd.mapName, bmd.mapData, bmd.mapHash, bmd.mapPreviewData);
+        } else if (object instanceof BufferGameStart) {
+            this.startGame();
+        }
     }
 
     /**
@@ -44,12 +73,12 @@ public class ClientLobbyConnectionManager {
      *
      * @param nameStrings     Names of players
      * @param ready           Ready or not status of players
+     * @param inGame          In game or not status of players
      * @param colorIndices    Player color indices
      * @param startPosIndices Start positions indices of all players
      */
-    public void receiveServerPlayerData(String[] nameStrings, final boolean[] ready, int[] colorIndices, int[] startPosIndices) {
-        Gdx.app.postRunnable(() -> clientPlayerListener.updatePlayers(playerNames, nameStrings, ready, colorIndices, startPosIndices));
-
+    public void receiveServerPlayerData(String[] nameStrings, boolean[] ready, boolean[] inGame, int[] colorIndices, int[] startPosIndices) {
+        Gdx.app.postRunnable(() -> clientPlayerListener.updatePlayers(playerNames, nameStrings, ready, inGame, colorIndices, startPosIndices));
     }
 
     /**
@@ -119,6 +148,7 @@ public class ClientLobbyConnectionManager {
         BufferPlayerData bpd = new BufferPlayerData();
         bpd.names = new String[]{ playerAttribute.getName() };
         bpd.readyStatus = new boolean[]{ playerAttribute.isReady() };
+        bpd.inGameStatus = new boolean[] { playerAttribute.isInGame() };
         bpd.colorIndex = new int[]{ playerAttribute.getColorIndex() };
         bpd.startPosIndex = new int[]{ playerAttribute.getStartPosIndex() };
 
@@ -127,32 +157,33 @@ public class ClientLobbyConnectionManager {
 
     public void startGame() {
         clientPlayerListener.startGame();
-
         emptyBuffers();
     }
 
     private void emptyBuffers() {
         playerNames.clear();
-
-        try {
-            client.removeListener(clientLobbyListener);
-        } catch (IllegalArgumentException ignored) {
-            // Probably clicked the back button more than once; ignore exception
-        }
-        clientLobbyListener = null;
         clientPlayerListener = null;
+        try {
+            client.removeListener(this);
+        } catch (NegativeArraySizeException ignored) { }
     }
 
     public void closeConnection() {
         emptyBuffers();
-
-        if (client.isConnected()) {
-            client.close();
-        }
+        client.close();
     }
 
-    public void clientDisconnected() {
-        clientPlayerListener.disconnectWithMessage("Lost connection to the server");
+    /**
+     * Called when te client gets disconnected from the server
+     *
+     * @param connection The disconnected connection
+     */
+    @Override
+    public void disconnected(Connection connection) {
+        // Client got disconnected already if false
+        if (clientPlayerListener != null) {
+            clientPlayerListener.disconnectWithMessage("Lost connection to the server");
+        }
     }
 
     public void sendClientNameToServer(String clientName) {
@@ -169,7 +200,6 @@ public class ClientLobbyConnectionManager {
      * @param playerName The name of the client that got disconnected
      */
     public void playerDisconnected(String playerName) {
-        // playerIndex should never be -1
         int playerIndex = playerNames.indexOf(playerName, false);
 
         playerNames.removeIndex(playerIndex);
@@ -178,21 +208,5 @@ public class ClientLobbyConnectionManager {
 
     public Client getClient() {
         return client;
-    }
-
-    public interface ClientPlayerListener {
-        void disconnectWithMessage(String errorMsg);
-
-        void startGame();
-
-        void disconnectClient();
-
-        void mapChanged(String mapName, int[] extraParams, int mapHash, boolean reloadExternalMaps);
-
-        void updatePlayers(Array<String> playerNames, String[] nameStrings, boolean[] readyStrings, int[] colorStrings, int[] startPosStrings);
-
-        void playerDisconnected(int playerIndex);
-
-        FileHandle getExternalMapDir();
     }
 }

@@ -1,34 +1,42 @@
 package com.cg.zoned.listeners;
 
-import com.cg.zoned.buffers.BufferClientConnect;
+import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.buffers.BufferDirections;
-import com.cg.zoned.managers.GameConnectionManager;
+import com.cg.zoned.buffers.BufferGameEnd;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 
 public class ServerGameListener extends Listener {
-    private GameConnectionManager gameConnectionManager;
+    private ServerGameConnectionHandler connectionHandler;
 
-    public ServerGameListener(GameConnectionManager gameConnectionManager) {
-        this.gameConnectionManager = gameConnectionManager;
+    // Used by the server to store client connections that came in when a match is already underway
+    private Array<Connection> discardConnections;
+
+    public ServerGameListener(ServerGameConnectionHandler connectionHandler) {
+        this.connectionHandler = connectionHandler;
+        discardConnections = new Array<>();
     }
 
     @Override
     public void received(Connection connection, Object object) {
         if (object instanceof BufferDirections) {
             BufferDirections bd = (BufferDirections) object;
-            connection.updateReturnTripTime();
-            gameConnectionManager.serverUpdateDirections(bd);
-        } else if (object instanceof BufferClientConnect) {
-            gameConnectionManager.rejectNewConnection(connection);
+            connectionHandler.serverUpdateDirections(bd);
+        } else if (object instanceof BufferGameEnd) {
+            connectionHandler.serverClientExited(connection);
         }
+    }
 
-        super.received(connection, object);
+    @Override
+    public void connected(Connection connection) {
+        // Ignore new connections when a match is already underway
+        discardConnections.add(connection);
     }
 
     @Override
     public void disconnected(Connection connection) {
-        gameConnectionManager.serverDisconnect(connection);
-        super.disconnected(connection);
+        if (!discardConnections.removeValue(connection, true)) {
+            connectionHandler.serverClientDisconnected(connection);
+        }
     }
 }

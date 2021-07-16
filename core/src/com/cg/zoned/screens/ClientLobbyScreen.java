@@ -20,6 +20,7 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Assets;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
+import com.cg.zoned.listeners.ClientLobbyScreenBridge;
 import com.cg.zoned.managers.AnimationManager;
 import com.cg.zoned.managers.ClientLobbyConnectionManager;
 import com.cg.zoned.managers.MapManager;
@@ -34,7 +35,7 @@ import com.esotericsoftware.kryonet.Client;
 
 import java.io.FileNotFoundException;
 
-public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyConnectionManager.ClientPlayerListener, InputProcessor {
+public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyScreenBridge, InputProcessor {
     private ClientLobbyConnectionManager connectionManager;
 
     private MapManager mapManager;
@@ -42,12 +43,17 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
     private HoverImageButton readyButton;
     private Label mapLabel;
 
-    public ClientLobbyScreen(final Zoned game, Client client, String name) {
-        super(game, name);
+    public ClientLobbyScreen(final Zoned game, Client client) {
+        super(game);
         game.discordRPCManager.updateRPC("In the Client lobby");
 
         animationManager = new AnimationManager(game, this);
         connectionManager = new ClientLobbyConnectionManager(client, this);
+    }
+
+    public ClientLobbyScreen(final Zoned game, Client client, String name) {
+        this(game, client);
+        this.name = name;
     }
 
     @Override
@@ -55,19 +61,23 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
         setUpClientLobbyStage();
         initMap();
 
-        addPlayer(null, false, 0, 0);
-        connectionManager.start(name);
+        connectionManager.initLobbyConnectionListener();
         animationManager.setAnimationListener(stage -> {
             mapManager.loadExternalMaps((mapList, externalMapStartIndex) -> connectionManager.sendClientNameToServer(this.name));
             animationManager.setAnimationListener(null);
+
+            if (!connectionManager.getClient().isConnected()) {
+                connectionManager.disconnected(null);
+            }
         });
+
         animationManager.fadeInStage(screenStage);
     }
 
     private void setUpClientLobbyStage() {
         Table clientLobbyTable = super.setUpLobbyUI();
 
-        mapLabel = new Label("", game.skin);
+        mapLabel = new Label("Fetching lobby data...", game.skin);
         float mapLabelPadding = uiButtonManager.getHeaderPad(mapLabel.getPrefHeight());
         mapLabel.setAlignment(Align.center);
         clientLobbyTable.add(mapLabel).pad(mapLabelPadding).expandX();
@@ -125,21 +135,14 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
         }
     }
 
-    private void addPlayer(String name, boolean ready, int colorIndex, int startPosIndex) {
-        Table playerItem = super.newPlayerItem(name, ready, colorIndex, startPosIndex, this);
+    private void addPlayer(String name, boolean ready, boolean inGame, int colorIndex, int startPosIndex) {
+        Table playerItem = super.newPlayerItem(name, ready, inGame, colorIndex, startPosIndex, this);
 
-        if (name == null) {
+        if (name.equals(this.name)) {
             DropDownMenu<?> colorSelector = (DropDownMenu<?>) playerItem.getChild(PlayerItemType.COLOR.ordinal());
             colorSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    if (mapGrid == null) { // Did not receive map info from the server yet. Slow connection?
-                        return;
-                    }
-
-                    /*super.*/updatePlayerColorAttr(0, colorSelector.getSelectedIndex());
-                    updateMapColor(0);
-
                     connectionManager.broadcastClientInfo(playerItemAttributes.first());
                 }
             });
@@ -156,11 +159,6 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
             startPosSelector.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    if (mapGrid == null) { // Did not receive map info from the server yet. Slow connection?
-                        return;
-                    }
-
-                    /*super.*/updateMapColor(0, startPosSelector.getSelectedIndex());
                     connectionManager.broadcastClientInfo(playerItemAttributes.first());
                 }
             });
@@ -201,16 +199,40 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
     }
 
     @Override
-    public void updatePlayers(Array<String> playerNames, String[] nameStrings, boolean[] ready, int[] colorIndices, int[] startPosIndices) {
+    public void updatePlayers(Array<String> playerNames, String[] nameStrings, boolean[] ready, boolean[] inGame, int[] colorIndices, int[] startPosIndices) {
+        if (playerItemAttributes.isEmpty()) {
+            // Add this client at the top of the player list
+            int index = setUpClientPlayer(nameStrings, ready, inGame, colorIndices, startPosIndices);
+            playerNames.add(nameStrings[index]);
+        }
+
         for (int i = 0; i < nameStrings.length; i++) {
             int playerIndex = playerNames.indexOf(nameStrings[i], false);
             if (playerIndex != -1) {
-                super.updatePlayerAttrsAndMap(playerIndex, nameStrings[i], ready[i], colorIndices[i], startPosIndices[i]);
+                super.updatePlayerAttrsAndMap(playerIndex, nameStrings[i], ready[i], inGame[i], colorIndices[i], startPosIndices[i]);
             } else {
-                addPlayer(nameStrings[i], ready[i], colorIndices[i], startPosIndices[i]);
+                addPlayer(nameStrings[i], ready[i], inGame[i], colorIndices[i], startPosIndices[i]);
                 playerNames.add(nameStrings[i]);
             }
         }
+    }
+
+    /**
+     * Used to setup this client player at the first position in the player list
+     *
+     * @return The position of this client player in the lists received from the server
+     */
+    private int setUpClientPlayer(String[] nameStrings, boolean[] ready, boolean[] inGame, int[] colorIndices, int[] startPosIndices) {
+        for (int i = 0; i < nameStrings.length; i++) {
+            if (!nameStrings[i].equals(this.name)) {
+                continue;
+            }
+
+            addPlayer(this.name, ready[i], inGame[i], colorIndices[i], startPosIndices[i]);
+            return i;
+        }
+
+        return -1; // Should never really happen
     }
 
     @Override
@@ -225,7 +247,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
 
     @Override
     public void mapChanged(final String mapName, final int[] mapExtraParams, final int mapHash, boolean isNewMap) {
-        if (playerItemAttributes.first().isReady()) {
+        if (playerItemAttributes.notEmpty() && playerItemAttributes.first().isReady()) {
             // Make the client unready as the map has been changed
             readyButton.toggle();
         }
@@ -233,7 +255,7 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
         if (isNewMap) {
             // If true, a new external map was just downloaded from the server
             this.mapManager.addNewExternalMap(mapName);
-            this.mapLabel.setText("");
+            this.mapLabel.setText("Loading map...");
         }
 
         setMap(mapName, mapExtraParams, mapHash);
@@ -247,15 +269,11 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
         this.preparedMapData = mapManager.getPreparedMapData();
         this.mapGrid = preparedMapData.mapGrid;
         this.map = new com.cg.zoned.Map(this.mapGrid, shapeDrawer);
-        setCameraPosition();
-        resetStartPosLabels();
+        super.setCameraPosition();
+        super.resetStartPositions();
 
         this.mapLabel.setText(preparedMapData.map.getName());
         readyButton.setDisabled(false);
-    }
-
-    private void resetStartPosLabels() {
-        super.resetStartPositions();
     }
 
     private boolean loadNewMap(String mapName, int[] mapExtraParams, int serverMapHash) {
@@ -303,9 +321,13 @@ public class ClientLobbyScreen extends LobbyScreenHelper implements ClientLobbyC
 
     @Override
     public void startGame() {
+        updatePlayerReadyAttr(0, false);
+        for (int i = 0; i < playerItemAttributes.size; i++) {
+            updateInGameAttr(i, true);
+        }
         map.clearGrid(players);
         Gdx.app.postRunnable(() -> animationManager.fadeOutStage(screenStage, ClientLobbyScreen.this,
-                new GameScreen(game, preparedMapData, players, connectionManager)));
+                new GameScreen(game, preparedMapData, players, connectionManager.getClient())));
     }
 
     @Override

@@ -69,8 +69,7 @@ public class ScreenHelper {
         }
 
         // Generic instantiation
-        return (Screen) ClassReflection.getConstructor(targetScreenClass, Zoned.class)
-                .newInstance(game);
+        return (Screen) ClassReflection.getConstructor(targetScreenClass, Zoned.class).newInstance(game);
     }
 
     private static Screen getServerLobbyScreen(Zoned game) throws ReflectionException {
@@ -89,7 +88,7 @@ public class ScreenHelper {
             return (Screen) ClassReflection.getConstructor(HostJoinScreen.class, Zoned.class).newInstance(game);
         }
 
-        return (Screen) ClassReflection.getConstructors(ServerLobbyScreen.class)[0]
+        return (Screen) ClassReflection.getConstructor(ServerLobbyScreen.class, Zoned.class, Server.class, String.class)
                 .newInstance(game, server, "Boss#" + random.nextInt(100));
     }
 
@@ -120,7 +119,7 @@ public class ScreenHelper {
             return getServerLobbyScreen(game);
         }
 
-        return (Screen) ClassReflection.getConstructors(ClientLobbyScreen.class)[0]
+        return (Screen) ClassReflection.getConstructor(ClientLobbyScreen.class, Zoned.class, Client.class, String.class)
                 .newInstance(game, client, "Gamer#" + random.nextInt(100));
     }
 

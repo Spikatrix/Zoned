@@ -6,10 +6,12 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
@@ -18,6 +20,7 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.dataobjects.Cell;
@@ -44,11 +47,11 @@ public abstract class LobbyScreenHelper extends ScreenObject {
     Array<PlayerItemAttributes> playerItemAttributes;
     Table playerList;
 
-    LobbyScreenHelper(Zoned game, String name) {
+    LobbyScreenHelper(Zoned game) {
         super(game);
 
         this.uiButtonManager = new UIButtonManager(screenStage, game.getScaleFactor(), usedTextures);
-        this.name = name;
+        this.name = game.preferences.getString(Preferences.NAME_PREFERENCE, "Player");
     }
 
     Table setUpLobbyUI() {
@@ -82,9 +85,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
         this.splitViewportManager.setUpDragOffset(screenStage);
         this.mapOverlay = new Overlay(new Color(0, 0, 0, .8f));
 
-        // This array size is increased in playerConnected
-        // I know I should use ArrayLists instead, but Map works with regular 'ol arrays for now
-        this.players = new Player[0];
+        this.players = new Player[0]; // Starts with 0 players
         this.playerItemAttributes = new Array<>();
     }
 
@@ -102,8 +103,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
         int playerIndex = players.length;
         players = Arrays.copyOf(players, playerIndex + 1);
 
-        PlayerItemAttributes playerItemAttributes = new PlayerItemAttributes(playerName == null ? name : playerName,
-                false, colorIndex, startPosIndex);
+        PlayerItemAttributes playerItemAttributes = new PlayerItemAttributes(playerName, false, false, colorIndex, startPosIndex);
         this.playerItemAttributes.add(playerItemAttributes);
 
         if (preparedMapData != null) {
@@ -127,8 +127,8 @@ public abstract class LobbyScreenHelper extends ScreenObject {
     }
 
     private void updateMapColor(int playerIndex, Player player, Color color, int startPosIndex) {
-        if (mapGrid == null) {
-            // Skip updating colors as the map hasn't been loaded yet
+        if (playerItemAttributes.first().isInGame()) {
+            updatePlayerStartPosAttr(playerIndex, startPosIndex);
             return;
         }
 
@@ -147,7 +147,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
 
         if (!outOfBounds) { // Huh? Excuse me, lint? Always true? Nope.
             for (Player p : players) {
-                if (p.getRoundedPositionX() == prevLoc.x && p.getRoundedPositionY() == prevLoc.y && p.color != Color.BLACK) {
+                if (p.getRoundedPositionX() == prevLoc.x && p.getRoundedPositionY() == prevLoc.y && p.color != null) {
                     mapGrid[prevLoc.y][prevLoc.x].cellColor = p.color;
                     break;
                 }
@@ -157,7 +157,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
 
     void removePlayer(int playerIndex) {
         // Remove player colors from the map
-        updateMapColor(playerIndex, players[playerIndex], Color.BLACK, 0);
+        updateMapColor(playerIndex, players[playerIndex], null, 0);
 
         // Remove player object
         Player[] ps = new Player[players.length - 1];
@@ -179,10 +179,10 @@ public abstract class LobbyScreenHelper extends ScreenObject {
     }
 
     Table newPlayerItem(String name, ScreenObject screen) {
-        return newPlayerItem(name, false, 0, 0, screen);
+        return newPlayerItem(name, false, false, 0, 0, screen);
     }
 
-    Table newPlayerItem(String name, boolean ready, int colorIndex, int startPosIndex, ScreenObject screen) {
+    Table newPlayerItem(String name, boolean ready, boolean inGame, int colorIndex, int startPosIndex, ScreenObject screen) {
         Table playerItem = new Table();
         playerItem.pad(10 * game.getScaleFactor());
 
@@ -193,7 +193,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
 
         for (PlayerItemType playerItemType : PlayerItemType.values()) {
             if (playerItemType == PlayerItemType.READY) {
-                addReadyField(playerItem, ready, isServer);
+                addReadyField(playerItem, ready, inGame, isServer);
             } else if (playerItemType == PlayerItemType.NAME) {
                 addNameField(playerItem, name);
             } else if (playerItemType == PlayerItemType.COLOR) {
@@ -219,7 +219,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
         return playerItem;
     }
 
-    private void addReadyField(Table playerItem, boolean ready, boolean isServer) {
+    private void addReadyField(Table playerItem, boolean ready, boolean inGame, boolean isServer) {
         boolean isHost = false;
         if (isServer && players.length == 0) {
             // First player in the server is the host
@@ -229,39 +229,37 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             isHost = true;
         }
 
-        TextureRegionDrawable hostTexture = new TextureRegionDrawable(
-                game.assets.getTexture(Assets.TextureObject.HOST_TEXTURE));
-        TextureRegionDrawable readyTextureDrawable = new TextureRegionDrawable(
-                game.assets.getTexture(Assets.TextureObject.READY_TEXTURE));
-        TextureRegionDrawable notReadyTextureDrawable = new TextureRegionDrawable(
-                game.assets.getTexture(Assets.TextureObject.NOT_READY_TEXTURE));
-
+        TextureRegionDrawable defaultDrawable = null, checkDrawable = null;
+        ImageButton.ImageButtonStyle imageButtonStyle;
         ImageButton readyImage;
+
         if (isHost) {
-            readyImage = new ImageButton(hostTexture);
+            defaultDrawable = new TextureRegionDrawable(game.assets.getTexture(Assets.TextureObject.HOST_TEXTURE));
         } else {
-            readyImage = new ImageButton(notReadyTextureDrawable, null, readyTextureDrawable);
+            defaultDrawable = new TextureRegionDrawable(game.assets.getTexture(Assets.TextureObject.NOT_READY_TEXTURE));
+            checkDrawable = new TextureRegionDrawable(game.assets.getTexture(Assets.TextureObject.READY_TEXTURE));
         }
 
+        imageButtonStyle = new ImageButton.ImageButtonStyle(null, null, null, defaultDrawable, null, checkDrawable);
+        imageButtonStyle.imageDisabled = new TextureRegionDrawable(game.assets.getTexture(Assets.TextureObject.JOYSTICK_TEXTURE));
+
+        readyImage = new ImageButton(imageButtonStyle);
+        readyImage.removeListener(readyImage.getClickListener()); // Don't behave like a button xD
         readyImage.setChecked(ready);
-        readyImage.setDisabled(true);
+        readyImage.setDisabled(inGame);
+
         playerItem.add(readyImage).space(20f * game.getScaleFactor()).size(48f * game.getScaleFactor());
     }
 
     private void addNameField(Table playerItem, String name) {
-        Label nameLabel;
-        if (name == null) {
-            nameLabel = new Label(this.name, game.skin); // this.name != name
-        } else {
-            nameLabel = new Label(name, game.skin);
-        }
+        Label nameLabel = new Label(name, game.skin);
         nameLabel.setAlignment(Align.center);
         nameLabel.setEllipsis(true);
         playerItem.add(nameLabel).space(20f * game.getScaleFactor()).width(180f * game.getScaleFactor());
     }
 
     private void addColorField(Table playerItem, int colorIndex, String name) {
-        if (name != null) {
+        if (!name.equals(this.name)) {
             Label colorLabel = new Label(PlayerColorHelper.getStringFromIndex(colorIndex), game.skin);
             colorLabel.setAlignment(Align.center);
             playerItem.add(colorLabel).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
@@ -269,6 +267,14 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             DropDownMenu<String> colorSelector = new DropDownMenu<>(game.skin, game.getScaleFactor());
             colorSelector.setItems(PlayerColorHelper.getNameList());
             playerItem.add(colorSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
+
+            colorSelector.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    updatePlayerColorAttr(0, colorSelector.getSelectedIndex());
+                    updateMapColor(0);
+                }
+            });
 
             screenStage.addFocusableActor(colorSelector);
             if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
@@ -278,7 +284,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
     }
 
     private void addStartPosField(Table playerItem, int startPosIndex, String name) {
-        if (name != null) {
+        if (!name.equals(this.name)) {
             Label startPosLabel = new Label(preparedMapData.startPositions.get(startPosIndex).getViewName(), game.skin);
             startPosLabel.setAlignment(Align.center);
             playerItem.add(startPosLabel).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
@@ -286,6 +292,13 @@ public abstract class LobbyScreenHelper extends ScreenObject {
             final DropDownMenu<String> startPosSelector = new DropDownMenu<>(game.skin, game.getScaleFactor());
             startPosSelector.setItems(getStartPosViewNameList());
             playerItem.add(startPosSelector).space(20f * game.getScaleFactor()).expandX().uniformX().fillX();
+
+            startPosSelector.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    updateMapColor(0, startPosSelector.getSelectedIndex());
+                }
+            });
 
             screenStage.addFocusableActor(startPosSelector);
         }
@@ -313,9 +326,10 @@ public abstract class LobbyScreenHelper extends ScreenObject {
         return player;
     }
 
-    void updatePlayerAttrsAndMap(int playerIndex, String name, boolean readyStatus, int colorIndex, int startPosIndex) {
+    void updatePlayerAttrsAndMap(int playerIndex, String name, boolean readyStatus, boolean inGameStatus, int colorIndex, int startPosIndex) {
         updatePlayerName(playerIndex, name);
         updatePlayerReadyAttr(playerIndex, readyStatus);
+        updateInGameAttr(playerIndex, inGameStatus);
         updatePlayerColorAttr(playerIndex, colorIndex);
         updateMapColor(playerIndex, startPosIndex);
     }
@@ -365,6 +379,15 @@ public abstract class LobbyScreenHelper extends ScreenObject {
         }
     }
 
+    void updateInGameAttr(int playerIndex, boolean inGameStatus) {
+        PlayerItemAttributes playerAttribute = playerItemAttributes.get(playerIndex);
+        playerAttribute.setInGame(inGameStatus);
+
+        Table playerItem = ((Table) playerList.getChild(playerIndex));
+        ImageButton readyImage = ((ImageButton) playerItem.getChild(PlayerItemType.READY.ordinal()));
+        readyImage.setDisabled(inGameStatus);
+    }
+
     void updatePlayerName(int playerIndex, String name) {
         playerItemAttributes.get(playerIndex).setName(name);
         players[playerIndex].name = name;
@@ -397,7 +420,7 @@ public abstract class LobbyScreenHelper extends ScreenObject {
     }
 
     // The element order here determines how they're laid out in the UI
-    enum PlayerItemType {
+    protected enum PlayerItemType {
         READY, NAME, COLOR, STARTPOS, KICK
     }
 }

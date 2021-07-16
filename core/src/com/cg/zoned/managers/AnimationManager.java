@@ -158,15 +158,29 @@ public class AnimationManager {
         fadeOutAnimation.addAction(Actions.alpha(0f, .3f, Interpolation.smooth));
         // Crashes on GWT without the postRunnable
         fadeOutAnimation.addAction(Actions.run(() -> Gdx.app.postRunnable(() -> {
-            Gdx.input.setInputProcessor(null);
-            fromScreen.dispose();
-            game.setScreen(toScreen);
+            switchScreen(fromScreen, toScreen);
             if (animationListener != null) {
                 animationListener.animationEnd(stage);
             }
         })));
 
         stage.addAction(fadeOutAnimation);
+    }
+
+    /**
+     * Used to switch screens instantly. Use {@link #fadeOutStage(Stage, Screen, Screen)} in conjunction with
+     * {@link #fadeInStage(Stage)} if you'd like a fade out+in animation when switching screens.
+     *
+     * @param fromScreen The screen to switch from
+     * @param toScreen   The screen to switch to
+     */
+    public void switchScreen(Screen fromScreen, Screen toScreen) {
+        Gdx.input.setInputProcessor(null);
+        if (fromScreen != null) {
+            // If null, you'll have to handle disposal yourself
+            fromScreen.dispose();
+        }
+        game.setScreen(toScreen);
     }
 
     public void startScoreBoardAnimation(final Stage stage, Container<Label> scoreBoardTitle, final Actor[][] actors, float rowHeightScale, float padding) {

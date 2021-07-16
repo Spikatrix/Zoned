@@ -34,6 +34,26 @@ public class Player extends InputAdapter {
         this.controls = Constants.PLAYER_CONTROLS[0]; // Default is the first control scheme
     }
 
+    /**
+     * Copy constructor used for cloning the player object
+     *
+     * @param player The player object to clone
+     */
+    public Player(Player player) {
+        this.color = new Color(player.color);
+        this.name = player.name;
+        this.controls = player.controls;
+        this.direction = player.direction;
+        this.updatedDirection = player.updatedDirection;
+        this.position = new Vector2(player.position);
+        if (player.targetPosition != null) {
+            this.targetPosition = new Vector2(player.targetPosition);
+        }
+        this.prevPosition = new GridPoint2(player.prevPosition);
+        this.roundedPosition = new GridPoint2(player.roundedPosition);
+        this.timeElapsed = player.timeElapsed;
+    }
+
     public void setPosition(GridPoint2 pos) {
         setPosition(pos.x, pos.y);
     }

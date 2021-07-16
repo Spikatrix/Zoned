@@ -3,12 +3,14 @@ package com.cg.zoned.dataobjects;
 public class PlayerItemAttributes {
     private String name;
     private boolean ready;
+    private boolean inGame;
     private int colorIndex;
     private int startPosIndex;
 
-    public PlayerItemAttributes(String name, boolean ready, int colorIndex, int startPosIndex) {
+    public PlayerItemAttributes(String name, boolean ready, boolean inGame, int colorIndex, int startPosIndex) {
         this.name = name;
         this.ready = ready;
+        this.inGame = inGame;
         this.colorIndex = colorIndex;
         this.startPosIndex = startPosIndex;
     }
@@ -19,6 +21,10 @@ public class PlayerItemAttributes {
 
     public void setReady(boolean ready) {
         this.ready = ready;
+    }
+
+    public void setInGame(boolean inGame) {
+        this.inGame = inGame;
     }
 
     public void setColorIndex(int colorIndex) {
@@ -35,6 +41,10 @@ public class PlayerItemAttributes {
 
     public boolean isReady() {
         return ready;
+    }
+
+    public boolean isInGame() {
+        return inGame;
     }
 
     public int getColorIndex() {
