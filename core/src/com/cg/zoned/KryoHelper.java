@@ -9,12 +9,12 @@ import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
-import com.cg.zoned.buffers.BufferPlayerDisconnected;
+import com.cg.zoned.buffers.BufferPlayerLeft;
 import com.esotericsoftware.kryo.Kryo;
 
 public class KryoHelper {
     public static void registerClasses(Kryo kryo) {
-        kryo.register(BufferPlayerDisconnected.class);
+        kryo.register(BufferPlayerLeft.class);
         kryo.register(BufferClientConnect.class);
         kryo.register(BufferPlayerData.class);
         kryo.register(BufferDirections.class);

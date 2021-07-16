@@ -11,7 +11,7 @@ import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
-import com.cg.zoned.buffers.BufferPlayerDisconnected;
+import com.cg.zoned.buffers.BufferPlayerLeft;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
 import com.cg.zoned.listeners.ClientLobbyScreenBridge;
 import com.esotericsoftware.kryonet.Client;
@@ -52,8 +52,8 @@ public class ClientLobbyConnectionManager extends Listener {
         } else if (object instanceof BufferKickClient) {
             BufferKickClient bkc = (BufferKickClient) object;
             this.connectionRejected(bkc.kickReason);
-        } else if (object instanceof BufferPlayerDisconnected) {
-            BufferPlayerDisconnected bpd = (BufferPlayerDisconnected) object;
+        } else if (object instanceof BufferPlayerLeft) {
+            BufferPlayerLeft bpd = (BufferPlayerLeft) object;
             if (bpd.disconnected) {
                 this.playerDisconnected(bpd.playerName);
             }

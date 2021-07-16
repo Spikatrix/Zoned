@@ -9,7 +9,7 @@ import com.cg.zoned.Player.Direction;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.buffers.BufferGameEnd;
-import com.cg.zoned.buffers.BufferPlayerDisconnected;
+import com.cg.zoned.buffers.BufferPlayerLeft;
 import com.cg.zoned.listeners.ClientGameConnectionHandler;
 import com.cg.zoned.listeners.ClientGameListener;
 import com.cg.zoned.listeners.ServerGameConnectionHandler;
@@ -250,6 +250,11 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
         return true;
     }
 
+    /**
+     * Called in the client when it receives word that the server restarted/ended the current match
+     *
+     * @param restartGame Indicates whether the server restarted/ended the current match
+     */
     @Override
     public void clientGameEnd(boolean restartGame) {
         gameManager.clientGameEnd(restartGame);
@@ -293,7 +298,7 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
     }
 
     private void broadcastClientExit(String playerName) {
-        BufferPlayerDisconnected bpd = new BufferPlayerDisconnected();
+        BufferPlayerLeft bpd = new BufferPlayerLeft();
         bpd.playerName = playerName;
         bpd.disconnected = false;
 
@@ -322,7 +327,7 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
      * Called in the client when it receives the information that
      * a player has been disconnected from the server
      *
-     * @param playerName The name of the player that got disconnected
+     * @param playerName The name of the player that got disconnected or left
      * @param disconnected Indicates whether the player got disconnected or left
      */
     public void clientPlayerDisconnected(String playerName, boolean disconnected) {

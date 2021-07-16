@@ -2,7 +2,7 @@ package com.cg.zoned.listeners;
 
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.buffers.BufferGameEnd;
-import com.cg.zoned.buffers.BufferPlayerDisconnected;
+import com.cg.zoned.buffers.BufferPlayerLeft;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 
@@ -22,8 +22,8 @@ public class ClientGameListener extends Listener {
         } else if (object instanceof BufferGameEnd) {
             BufferGameEnd bge = (BufferGameEnd) object;
             connectionHandler.clientGameEnd(bge.restartGame);
-        } else if (object instanceof BufferPlayerDisconnected) {
-            BufferPlayerDisconnected bpd = (BufferPlayerDisconnected) object;
+        } else if (object instanceof BufferPlayerLeft) {
+            BufferPlayerLeft bpd = (BufferPlayerLeft) object;
             connectionHandler.clientPlayerDisconnected(bpd.playerName, bpd.disconnected);
         }
     }

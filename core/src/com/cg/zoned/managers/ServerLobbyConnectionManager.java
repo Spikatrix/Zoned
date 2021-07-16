@@ -10,7 +10,7 @@ import com.cg.zoned.buffers.BufferKickClient;
 import com.cg.zoned.buffers.BufferMapData;
 import com.cg.zoned.buffers.BufferNewMap;
 import com.cg.zoned.buffers.BufferPlayerData;
-import com.cg.zoned.buffers.BufferPlayerDisconnected;
+import com.cg.zoned.buffers.BufferPlayerLeft;
 import com.cg.zoned.dataobjects.PlayerItemAttributes;
 import com.cg.zoned.dataobjects.PreparedMapData;
 import com.cg.zoned.listeners.ServerLobbyScreenBridge;
@@ -320,7 +320,7 @@ public class ServerLobbyConnectionManager extends Listener {
     public void broadcastPlayerDisconnected(int playerIndex, String playerName) {
         // If not resolved, other clients don't have information about this client
         if (playerNameResolved.get(playerIndex)) {
-            BufferPlayerDisconnected bpf = new BufferPlayerDisconnected();
+            BufferPlayerLeft bpf = new BufferPlayerLeft();
             bpf.playerName = playerName;
             bpf.disconnected = true;
             sentToAcceptedClients(bpf);

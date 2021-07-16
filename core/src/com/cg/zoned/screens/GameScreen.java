@@ -335,6 +335,11 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         map.updateMap(gameManager.playerManager);
     }
 
+    /**
+     * Called in the client when it receives word that the server restarted/ended the current match
+     *
+     * @param restartGame Indicates whether the server restarted/ended the current match
+     */
     public void clientGameEnd(boolean restartGame) {
         if (restartGame) {
             screenStage.showOKDialog("The host restarted the match", false, null);
@@ -387,7 +392,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
      * Shows the player disconnected dialog after stopping all players and incrementing the ignore player counter.
      * Used in both the both server and client when a player disconnects
      *
-     * @param playerName    The name of the player that got disconnected.
+     * @param playerName    The name of the player that got disconnected or left
      *                      Might be a generic name if there was an issue fetching the player name
      * @param disconnected  Depicts whether the player got disconnected or left
      */

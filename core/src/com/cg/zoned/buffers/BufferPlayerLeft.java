@@ -1,6 +1,6 @@
 package com.cg.zoned.buffers;
 
-public class BufferPlayerDisconnected {
+public class BufferPlayerLeft {
     public String playerName;
     public boolean disconnected;
 }
