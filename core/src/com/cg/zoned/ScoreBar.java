@@ -53,6 +53,7 @@ public class ScoreBar {
         for (int i = 0; i < size; i++) {
             scoreBarCurrentWidth[i] = scoreBarTargetWidth[i] = 0;
         }
+        computeDrawStartPos();
     }
 
     public void resize(int width, int height) {
