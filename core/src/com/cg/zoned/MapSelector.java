@@ -231,20 +231,21 @@ public class MapSelector {
             } else {
                 /* Params */
 
-                int lowValue = prompts.spinnerVars.get(i - 1).lowValue;
-                int highValue = prompts.spinnerVars.get(i - 1).highValue;
-                int snapValue = prompts.spinnerVars.get(i - 1).snapValue;
+                int index = i - 1;
+                int lowValue = prompts.spinnerVars.get(index).lowValue;
+                int highValue = prompts.spinnerVars.get(index).highValue;
+                int snapValue = prompts.spinnerVars.get(index).snapValue;
 
-                label = new Label(prompts.spinnerVars.get(i - 1).prompt, skin);
-                spinners[i - 1] = new Spinner(skin, skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
+                label = new Label(prompts.spinnerVars.get(index).prompt, skin);
+                spinners[index] = new Spinner(skin, skin.getFont(Assets.FontManager.REGULAR.getFontName()).getLineHeight(),
                         64f * scaleFactor, true);
-                spinners[i - 1].generateValueRange(lowValue, highValue, skin);
-                spinners[i - 1].snapToStep(snapValue - lowValue);
-                contentTable.add(label).left();
-                contentTable.add(spinners[i - 1]);
+                spinners[index].generateValueRange(lowValue, highValue, skin);
+                spinners[index].snapToStep(snapValue - lowValue);
+                contentTable.add(label).left().space(8f * scaleFactor);
+                contentTable.add(spinners[index]).space(8f * scaleFactor);
 
-                focusableDialogButtons.add(spinners[i - 1].getLeftButton());
-                focusableDialogButtons.add(spinners[i - 1].getRightButton());
+                focusableDialogButtons.add(spinners[index].getLeftButton());
+                focusableDialogButtons.add(spinners[index].getRightButton());
                 focusableDialogButtons.add(null);
             }
             contentTable.row();
