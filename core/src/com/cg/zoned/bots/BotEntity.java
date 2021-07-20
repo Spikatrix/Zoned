@@ -1,12 +1,18 @@
 package com.cg.zoned.bots;
 
+import com.badlogic.gdx.graphics.Color;
 import com.cg.zoned.Player;
+import com.cg.zoned.PlayerEntity;
 import com.cg.zoned.dataobjects.Cell;
 
 /**
  * All bots are required to extend this class
  */
-public abstract class BotEntity {
+public abstract class BotEntity extends PlayerEntity {
+
+    public BotEntity(Color color, String name) {
+        super(color, name);
+    }
 
     /**
      * The available directions to move to. Bots can use this if needed

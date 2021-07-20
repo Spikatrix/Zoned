@@ -5,7 +5,7 @@ import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Player;
-import com.cg.zoned.Player.Direction;
+import com.cg.zoned.PlayerEntity.Direction;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.buffers.BufferGameEnd;

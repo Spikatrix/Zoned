@@ -1,6 +1,6 @@
 package com.cg.zoned;
 
-import com.cg.zoned.Player.Direction;
+import com.cg.zoned.PlayerEntity.Direction;
 import com.cg.zoned.buffers.BufferClientConnect;
 import com.cg.zoned.buffers.BufferDirections;
 import com.cg.zoned.buffers.BufferGameEnd;

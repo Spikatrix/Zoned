@@ -1,6 +1,6 @@
 package com.cg.zoned.managers;
 
-import com.cg.zoned.Player.Direction;
+import com.cg.zoned.PlayerEntity.Direction;
 
 import java.util.Arrays;
 

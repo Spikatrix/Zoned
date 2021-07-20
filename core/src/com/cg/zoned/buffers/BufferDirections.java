@@ -1,6 +1,6 @@
 package com.cg.zoned.buffers;
 
-import com.cg.zoned.Player.Direction;
+import com.cg.zoned.PlayerEntity.Direction;
 
 public class BufferDirections {
     public String[] playerNames;
