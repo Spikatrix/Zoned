@@ -1,6 +1,5 @@
 package com.cg.zoned;
 
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -8,11 +7,10 @@ import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
-public abstract class PlayerEntity extends InputAdapter {
+public abstract class PlayerEntity {
     public Color color;
     public String name;
 
-    private int[] controls;
     public Direction direction;
     public Direction updatedDirection;
 
@@ -30,8 +28,6 @@ public abstract class PlayerEntity extends InputAdapter {
         this.position = new Vector2();
         this.roundedPosition = new GridPoint2();
         this.prevPosition = new GridPoint2(-1, -1);
-
-        this.controls = Constants.PLAYER_CONTROLS[0]; // Default is the first control scheme
     }
 
     /**
@@ -42,7 +38,6 @@ public abstract class PlayerEntity extends InputAdapter {
     public PlayerEntity(PlayerEntity player) {
         this.color = new Color(player.color);
         this.name = player.name;
-        this.controls = player.controls;
         this.direction = player.direction;
         this.updatedDirection = player.updatedDirection;
         this.position = new Vector2(player.position);
@@ -71,10 +66,6 @@ public abstract class PlayerEntity extends InputAdapter {
 
     public void resetPrevPosition() {
         this.prevPosition.set(-1, -1);
-    }
-
-    public void setControlScheme(int index) {
-        this.controls = Constants.PLAYER_CONTROLS[index];
     }
 
     public void move(float delta) {
@@ -162,21 +153,6 @@ public abstract class PlayerEntity extends InputAdapter {
         }
     }
 
-    @Override
-    public boolean keyDown(int keycode) {
-        if (keycode == controls[Direction.UP.ordinal()]) {
-            updatedDirection = Direction.UP;
-        } else if (keycode == controls[Direction.RIGHT.ordinal()]) {
-            updatedDirection = Direction.RIGHT;
-        } else if (keycode == controls[Direction.DOWN.ordinal()]) {
-            updatedDirection = Direction.DOWN;
-        } else if (keycode == controls[Direction.LEFT.ordinal()]) {
-            updatedDirection = Direction.LEFT;
-        }
-
-        return false;
-    }
-
     public float getPositionX() {
         return position.x;
     }
@@ -218,10 +194,6 @@ public abstract class PlayerEntity extends InputAdapter {
 
     public boolean hasPreviousPosition() {
         return getPreviousPositionX() > -1 && getPreviousPositionY() > -1;
-    }
-
-    public int[] getControls() {
-        return controls;
     }
 
     public enum Direction {UP, LEFT, DOWN, RIGHT}
