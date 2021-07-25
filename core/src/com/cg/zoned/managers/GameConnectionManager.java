@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
-import com.cg.zoned.Player;
+import com.cg.zoned.PlayerEntity;
 import com.cg.zoned.PlayerEntity.Direction;
 import com.cg.zoned.Zoned;
 import com.cg.zoned.buffers.BufferDirections;
@@ -86,7 +86,7 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
     @Override
     public void serverUpdateDirections(final BufferDirections bd) {
         Gdx.app.postRunnable(() -> {
-                Player[] players = gameManager.playerManager.getPlayers();
+                PlayerEntity[] players = gameManager.playerManager.getPlayers();
 
                 int playerIndex = PlayerManager.getPlayerIndex(players, bd.playerNames[0]);
                 if (playerIndex != -1) {
@@ -122,7 +122,7 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
             return;
         }
 
-        Player[] players = gameManager.playerManager.getPlayers();
+        PlayerEntity[] players = gameManager.playerManager.getPlayers();
 
         if (gameManager.playerManager.movementInProgress(true)) {
             // Update the map data for the previous turn
@@ -185,7 +185,7 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
      * Called in the client every render frame to send its direction information
      */
     private void clientCommunicate() {
-        Player player = gameManager.playerManager.getPlayer(0);
+        PlayerEntity player = gameManager.playerManager.getPlayer(0);
 
         // Sends the direction only when it changes instead of wasting bandwidth sending the same direction
         if (previousDirection != player.updatedDirection) {
@@ -202,7 +202,7 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
      * In cast of a   client, it will send information about itself to the server
      */
     private void broadcastDirections() {
-        Player[] players = gameManager.playerManager.getPlayers();
+        PlayerEntity[] players = gameManager.playerManager.getPlayers();
         Direction[] directions = gameManager.directionBufferManager.getDirectionBuffer();
         int size = server != null ? players.length : 1;
 
@@ -222,7 +222,7 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
     }
 
     private boolean readyForNextTurn() {
-        Player[] players = gameManager.playerManager.getPlayers();
+        PlayerEntity[] players = gameManager.playerManager.getPlayers();
         return (!gameManager.playerManager.movementInProgress(false) &&
                 gameManager.directionBufferManager.getBufferUsedCount() == players.length);
     }
@@ -332,13 +332,13 @@ public class GameConnectionManager implements ServerGameConnectionHandler, Clien
      */
     public void clientPlayerDisconnected(String playerName, boolean disconnected) {
         Gdx.app.postRunnable(() -> {
-            Player[] players = gameManager.playerManager.getPlayers();
+            PlayerEntity[] players = gameManager.playerManager.getPlayers();
              if (PlayerManager.getPlayerIndex(players, playerName) == -1) {
                 return;
             }
 
             gameManager.clientPlayerDisconnected(playerName, disconnected);
-            Player player = gameManager.playerManager.getPlayers()[0];
+            PlayerEntity player = gameManager.playerManager.getPlayers()[0];
             previousDirection = player.updatedDirection = player.direction = null;
         });
     }

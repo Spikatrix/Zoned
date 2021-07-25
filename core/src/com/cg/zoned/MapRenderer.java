@@ -100,7 +100,7 @@ public class MapRenderer {
         mapTextureRegion.flip(false, true);
     }
 
-    public void createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
+    public void createPlayerLabelTextures(PlayerEntity[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
         playerLabels = new TextureRegion[players.length];
 
         int totalHeight = (((int) (playerLabelFont.getLineHeight() - (Constants.MAP_GRID_LINE_WIDTH / 2))) * players.length);
@@ -190,7 +190,7 @@ public class MapRenderer {
         return userViewRect;
     }
 
-    public void render(Player[] players, int playerIndex, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
+    public void render(PlayerEntity[] players, int playerIndex, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         Rectangle userViewRect = calcUserViewRect(camera);
         Batch batch = shapeDrawer.getBatch();
 
@@ -200,8 +200,8 @@ public class MapRenderer {
         drawPlayerLabels(players, playerIndex, userViewRect, batch);
     }
 
-    private void drawPlayers(Player[] players, Rectangle userViewRect, Batch batch) {
-        for (Player player : players) {
+    private void drawPlayers(PlayerEntity[] players, Rectangle userViewRect, Batch batch) {
+        for (PlayerEntity player : players) {
             player.render(userViewRect, batch, playerTextureRegion, playerTextureRegionScale);
         }
     }
@@ -232,7 +232,7 @@ public class MapRenderer {
         batch.draw(mapTextureRegion, -Constants.MAP_GRID_LINE_WIDTH / 2, -Constants.MAP_GRID_LINE_WIDTH / 2);
     }
 
-    public void drawPlayerLabels(Player[] players, int playerIndex, Rectangle userViewRect, Batch batch) {
+    public void drawPlayerLabels(PlayerEntity[] players, int playerIndex, Rectangle userViewRect, Batch batch) {
         if (playerLabels != null) {
             for (int i = 0; i < players.length; i++) {
                 if (i == playerIndex) {
@@ -246,7 +246,7 @@ public class MapRenderer {
         }
     }
 
-    private void renderPlayerLabel(Player player, TextureRegion playerLabel, Rectangle userViewRect, Batch batch) {
+    private void renderPlayerLabel(PlayerEntity player, TextureRegion playerLabel, Rectangle userViewRect, Batch batch) {
         float posX = (player.getPositionX() * Constants.CELL_SIZE) - (playerLabel.getRegionWidth() / (playerLabelRegionScale * 2f)) + (Constants.CELL_SIZE / 2);
         float posY = (player.getPositionY() * Constants.CELL_SIZE) + Constants.CELL_SIZE + (Constants.MAP_GRID_LINE_WIDTH / 2);
         if (userViewRect.contains(posX + playerLabel.getRegionWidth(), posY - (Constants.CELL_SIZE / 2)) ||

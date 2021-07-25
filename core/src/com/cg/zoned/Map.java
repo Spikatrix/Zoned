@@ -41,7 +41,7 @@ public class Map {
         this(mapGrid, 0, shapeDrawer);
     }
 
-    public void createPlayerLabelTextures(Player[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
+    public void createPlayerLabelTextures(PlayerEntity[] players, ShapeDrawer shapeDrawer, BitmapFont playerLabelFont) {
         mapRenderer.createPlayerLabelTextures(players, shapeDrawer, playerLabelFont);
     }
 
@@ -57,7 +57,7 @@ public class Map {
         update(playerManager, playerManager.getPlayers(), delta);
     }
 
-    public void update(PlayerManager playerManager, Player[] players, float delta) {
+    public void update(PlayerManager playerManager, PlayerEntity[] players, float delta) {
         // If movement(s) have been completed and at least one player moved
         if (updatePlayerPositions(players, delta) && playerMoved) {
             playerMoved = false;
@@ -73,9 +73,9 @@ public class Map {
      * @param delta   The time passed between two successive frames
      * @return        true if all player movements have been completed, false if not
      */
-    public boolean updatePlayerPositions(Player[] players, float delta) {
+    public boolean updatePlayerPositions(PlayerEntity[] players, float delta) {
         boolean completedMovement = false;
-        for (Player player : players) {
+        for (PlayerEntity player : players) {
             // If true, the player is in the middle of a movement
             if (player.isMoving()) {
                 // Continue the current movement
@@ -103,7 +103,7 @@ public class Map {
      * @param delta  The time passed between two successive frames
      * @return true if the movement was not a fake one, false otherwise
      */
-    private boolean beginPlayerMovement(Player player, float delta) {
+    private boolean beginPlayerMovement(PlayerEntity player, float delta) {
         if (isValidMovement(player, player.direction)) {
             player.moveTo(player.direction, delta);
             return true;
@@ -114,7 +114,7 @@ public class Map {
         }
     }
 
-    public boolean isValidMovement(Player player, Player.Direction direction) {
+    public boolean isValidMovement(PlayerEntity player, Player.Direction direction) {
         int posX = player.getRoundedPositionX();
         int posY = player.getRoundedPositionY();
 
@@ -133,15 +133,15 @@ public class Map {
         updateMap(playerManager.getPlayers(), playerManager);
     }
 
-    public void updateMap(Player[] players, PlayerManager playerManager) {
+    public void updateMap(PlayerEntity[] players, PlayerManager playerManager) {
         // `playerManager` can be null (Like in the tutorial)
         setMapWeights(players);
         setMapColors(playerManager, players);
         updateCapturePercentage(playerManager);
     }
 
-    private void setMapWeights(Player[] players) {
-        for (Player player : players) {
+    private void setMapWeights(PlayerEntity[] players) {
+        for (PlayerEntity player : players) {
             // If false, previous position is unavailable (Should be the very first turn)
             if (player.hasPreviousPosition()) {
                 mapGrid[player.getPreviousPositionY()][player.getPreviousPositionX()].playerCount--;
@@ -151,8 +151,8 @@ public class Map {
         }
     }
 
-    private void setMapColors(PlayerManager playerManager, Player[] players) {
-        for (Player player : players) {
+    private void setMapColors(PlayerManager playerManager, PlayerEntity[] players) {
+        for (PlayerEntity player : players) {
             int rPosX = player.getRoundedPositionX();
             int rPosY = player.getRoundedPositionY();
 
@@ -183,11 +183,11 @@ public class Map {
     }
 
 
-    public void render(Player[] players, int playerIndex, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
+    public void render(PlayerEntity[] players, int playerIndex, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         mapRenderer.render(players, playerIndex, shapeDrawer, camera, delta);
     }
 
-    public void render(Player[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
+    public void render(PlayerEntity[] players, ShapeDrawer shapeDrawer, OrthographicCamera camera, float delta) {
         render(players, 0, shapeDrawer, camera, delta);
     }
 
@@ -201,9 +201,9 @@ public class Map {
         }
     }
 
-    public void clearGrid(Player[] players) {
+    public void clearGrid(PlayerEntity[] players) {
         this.coloredCellCount = 0;
-        for (Player player : players) {
+        for (PlayerEntity player : players) {
             resetCell(player.getRoundedPositionY(), player.getRoundedPositionX());
         }
     }

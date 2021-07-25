@@ -21,6 +21,7 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
+import com.cg.zoned.PlayerEntity;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ScoreBar;
 import com.cg.zoned.ShapeDrawer;
@@ -51,7 +52,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
 
     private GridPoint2[] playerStartPositions;
 
-    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players) {
+    public GameScreen(final Zoned game, PreparedMapData mapData, PlayerEntity[] players) {
         this(game, mapData, players, null, null);
     }
 
@@ -64,7 +65,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         this(game, mapData, players, null, client);
     }
 
-    public GameScreen(final Zoned game, PreparedMapData mapData, Player[] players,
+    public GameScreen(final Zoned game, PreparedMapData mapData, PlayerEntity[] players,
                       ServerLobbyScreen serverLobbyScreen, Client client) {
         super(game);
         game.discordRPCManager.updateRPC("Playing a match", mapData.map.getName(), players.length - 1);
@@ -102,7 +103,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         map.updateMap(gameManager.playerManager);
     }
 
-    private void initViewports(Player[] players, Map map) {
+    private void initViewports(PlayerEntity[] players, Map map) {
         int viewportCount = isSplitscreenMultiplayer() ? players.length : 1;
         float stretchAspectRatio = 16f / 9;
 
@@ -323,7 +324,7 @@ public class GameScreen extends ScreenObject implements InputProcessor {
         gameManager.playerManager.stopPlayers(true);
         gameManager.directionBufferManager.clearBuffer();
 
-        Player[] players = gameManager.playerManager.getPlayers();
+        PlayerEntity[] players = gameManager.playerManager.getPlayers();
         for (int i = 0; i < players.length; i++) {
             players[i].setPosition(playerStartPositions[i]);
             players[i].resetPrevPosition();

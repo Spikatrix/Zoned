@@ -43,7 +43,7 @@ public class FloodFiller {
         fillPositions = new Array<>();
     }
 
-    public int fillSurroundedCells(Cell[][] mapGrid, PlayerManager playerManager, Player[] players) {
+    public int fillSurroundedCells(Cell[][] mapGrid, PlayerManager playerManager, PlayerEntity[] players) {
         int coloredCells = 0;
 
         nextFreeIndex = 0;

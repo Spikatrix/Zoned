@@ -9,11 +9,11 @@ public class ViewportDividers {
     private Color[] leftDividerColors;
     private Color[] rightDividerColors;
 
-    public ViewportDividers(Viewport[] playerViewports, Player[] players) {
+    public ViewportDividers(Viewport[] playerViewports, PlayerEntity[] players) {
         this(playerViewports.length, players);
     }
 
-    public ViewportDividers(int viewportCount, Player[] players) {
+    public ViewportDividers(int viewportCount, PlayerEntity[] players) {
         this.dividerCount = viewportCount - 1;
         if (this.dividerCount < 1) {
             // No dividers needed since there's only one player viewport (Networked multiplayer)
@@ -26,7 +26,7 @@ public class ViewportDividers {
         updateDividerColors(players);
     }
 
-    public void updateDividerColors(Player[] players) {
+    public void updateDividerColors(PlayerEntity[] players) {
         updateDividerColors(players, 0);
     }
 
@@ -38,7 +38,7 @@ public class ViewportDividers {
      * @param players The list of players to update divider colors with
      * @param playerIndex The index of the players list to start from
      */
-    public void updateDividerColors(Player[] players, int playerIndex) {
+    public void updateDividerColors(PlayerEntity[] players, int playerIndex) {
         if (this.dividerCount < 1) {
             return;
         }

@@ -177,7 +177,7 @@ public class ScreenHelper {
             players[i].setPosition(startPositions.get(i % startPositions.size).getLocation());
         }
 
-        return (Screen) ClassReflection.getConstructor(GameScreen.class, Zoned.class, PreparedMapData.class, Player[].class)
+        return (Screen) ClassReflection.getConstructor(GameScreen.class, Zoned.class, PreparedMapData.class, PlayerEntity[].class)
                 .newInstance(game, mapManager.getPreparedMapData(), players);
     }
 

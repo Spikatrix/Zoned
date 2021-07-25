@@ -25,6 +25,10 @@ public class FlingControlManager extends ControlTypeEntity {
 
         Texture arrowTexture = new Texture(Gdx.files.internal("images/control_icons/ic_arrow.png"));
         for (int i = 0; i < players.length; i++) {
+            if (players[i] == null) {
+                continue;
+            }
+
             clickPoints[i] = new GridPoint3(-1, -1, -1);
 
             arrowImages[i] = new Image(arrowTexture);
@@ -43,7 +47,7 @@ public class FlingControlManager extends ControlTypeEntity {
         if (button == Input.Buttons.LEFT) {
             int playerIndex = getPlayerIndex(screenX);
 
-            if (clickPoints[playerIndex].z != -1) {
+            if (clickPoints[playerIndex] == null || clickPoints[playerIndex].z != -1) {
                 // There's already another pointer in use
                 return false;
             }
@@ -65,7 +69,7 @@ public class FlingControlManager extends ControlTypeEntity {
     public boolean touchDragged(int screenX, int screenY, int pointer) {
         for (int i = 0; i < clickPoints.length; i++) {
             GridPoint3 gameTouchPoint = clickPoints[i];
-            if (gameTouchPoint.z == pointer) {
+            if (gameTouchPoint != null && gameTouchPoint.z == pointer) {
                 Image arrowImage = arrowImages[i];
 
                 GridPoint2 subPoint = new GridPoint2(screenX, screenY);
@@ -99,7 +103,7 @@ public class FlingControlManager extends ControlTypeEntity {
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
         for (int i = 0; i < clickPoints.length; i++) {
             GridPoint3 gameTouchPoint = clickPoints[i];
-            if (gameTouchPoint.z == pointer) {
+            if (gameTouchPoint != null && gameTouchPoint.z == pointer) {
                 final Image arrowImage = arrowImages[i];
                 float arrowImageRotation = arrowImage.getRotation();
 

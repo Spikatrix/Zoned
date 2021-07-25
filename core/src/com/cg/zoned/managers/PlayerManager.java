@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 import com.cg.zoned.Player;
+import com.cg.zoned.PlayerEntity;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.dataobjects.TeamData;
 
@@ -15,10 +16,10 @@ public class PlayerManager extends InputMultiplexer {
 
     private ControlManager controlManager;
 
-    private Player[] players;
+    private PlayerEntity[] players;
     private Array<TeamData> teamData;
 
-    public PlayerManager(GameManager gameManager, Player[] players, Stage stage, int controlIndex, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
+    public PlayerManager(GameManager gameManager, PlayerEntity[] players, Stage stage, int controlIndex, Skin skin, float scaleFactor, Array<Texture> usedTextures) {
         this.gameManager = gameManager;
 
         this.players = players;
@@ -26,10 +27,14 @@ public class PlayerManager extends InputMultiplexer {
 
         if (gameManager.gameConnectionManager.isActive) {
             // Not in splitscreen mode; add only the first player's inputs
-            this.addProcessor(players[0]);
+            this.addProcessor((Player) players[0]);
         } else {
-            for (Player player : players) {
-                this.addProcessor(player);
+            for (PlayerEntity player : players) {
+                if (player instanceof Player) {
+                    this.addProcessor((Player) player); // Enables keyboard controls for the player
+                } else {
+                    // player is a bot
+                }
             }
         }
 
@@ -41,7 +46,7 @@ public class PlayerManager extends InputMultiplexer {
     private void initTeamData() {
         this.teamData = new Array<>();
 
-        for (Player player : players) {
+        for (PlayerEntity player : players) {
             boolean alreadyExists = false;
             for (TeamData teamData : this.teamData) {
                 if (player.color.equals(teamData.getColor())) {
@@ -63,7 +68,7 @@ public class PlayerManager extends InputMultiplexer {
     }
 
     public void stopPlayers(boolean freeze) {
-        for (Player player : players) {
+        for (PlayerEntity player : players) {
             player.updatedDirection = null;
 
             if (freeze) { // Freezing a player might result in the player stopping in between cells
@@ -77,7 +82,7 @@ public class PlayerManager extends InputMultiplexer {
 
         // Apply directions only if all players have set a direction
         if (gameManager.directionBufferManager.getBufferUsedCount() == players.length) {
-            for (Player player : players) {
+            for (PlayerEntity player : players) {
                 player.direction = player.updatedDirection;
             }
         }
@@ -94,7 +99,7 @@ public class PlayerManager extends InputMultiplexer {
      *
      * @param player The player whose team's score is to be incremented
      */
-    public void incrementScore(Player player) {
+    public void incrementScore(PlayerEntity player) {
         for (TeamData teamData : this.teamData) {
             if (player.color.equals(teamData.getColor())) {
                 teamData.incrementScore();
@@ -157,7 +162,7 @@ public class PlayerManager extends InputMultiplexer {
      */
     public boolean movementInProgress(boolean completeMovement) {
         boolean movementStatus = false;
-        for (Player player : players) {
+        for (PlayerEntity player : players) {
             if (player.isMoving()) {
                 movementStatus = true;
                 if (completeMovement) {
@@ -173,7 +178,7 @@ public class PlayerManager extends InputMultiplexer {
         controlManager.renderPlayerControlPrompt(shapeDrawer, delta);
     }
 
-    public static int getPlayerIndex(Player[] players, String name) {
+    public static int getPlayerIndex(PlayerEntity[] players, String name) {
         for (int i = 0; i < players.length; i++) {
             if (players[i].name.equals(name)) {
                 return i;
@@ -183,11 +188,11 @@ public class PlayerManager extends InputMultiplexer {
         return -1;
     }
 
-    public Player getPlayer(int index) {
+    public PlayerEntity getPlayer(int index) {
         return players[index];
     }
 
-    public Player[] getPlayers() {
+    public PlayerEntity[] getPlayers() {
         return players;
     }
 

@@ -45,6 +45,10 @@ public class PieMenuControlManager extends ControlTypeEntity {
 
         this.arrowImages = new Image[menus.length][];
         for (int i = 0; i < menus.length; i++) {
+            if (players[i] == null) {
+                continue;
+            }
+
             final PieMenu.PieMenuStyle style = new PieMenu.PieMenuStyle();
             style.separatorWidth = 1;
             style.backgroundColor = Color.BLACK;
@@ -114,7 +118,7 @@ public class PieMenuControlManager extends ControlTypeEntity {
         if (button == Input.Buttons.LEFT) {
             int playerIndex = getPlayerIndex(screenX);
 
-            if (!menus[playerIndex].isVisible() && pointers[playerIndex] == -1) {
+            if (menus[playerIndex] != null && !menus[playerIndex].isVisible() && pointers[playerIndex] == -1) {
                 stage.addActor(menus[playerIndex]);
                 menus[playerIndex].setPosition(screenX, stage.getHeight() - screenY, Align.center);
                 menus[playerIndex].setVisible(true);

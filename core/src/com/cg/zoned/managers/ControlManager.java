@@ -17,6 +17,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 import com.cg.zoned.Overlay;
 import com.cg.zoned.Player;
+import com.cg.zoned.PlayerEntity;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.controls.ControlType;
 import com.cg.zoned.controls.ControlTypeEntity;
@@ -42,8 +43,18 @@ public class ControlManager {
     private Overlay[] overlays;
     private Table[] controlTables;
 
-    public ControlManager(Player[] players, Stage stage) {
+    public ControlManager(PlayerEntity[] playerEntities, Stage stage) {
         this.stage = stage;
+
+        // Filters out players from player entities containing both players and bots
+        Player[] players = new Player[playerEntities.length];
+        for (int i = 0; i < playerEntities.length; i++) {
+            if (playerEntities[i] instanceof Player) {
+                players[i] = (Player) playerEntities[i];
+            } else {
+                players[i] = null;
+            }
+        }
         this.players = players;
     }
 
@@ -77,42 +88,44 @@ public class ControlManager {
         Texture controlImageTexture = new Texture(controlImagePath);
         usedTextures.add(controlImageTexture);
 
-        float splitScreenWidth = stage.getWidth() / overlays.length;
         for (int i = 0; i < overlays.length; i++) {
-            overlays[i] = new Overlay(new Color(0, 0, 0, 0.8f), 6.0f);
-            controlImages[i] = new Image(controlImageTexture);
-            controlImages[i].setScaling(Scaling.fit);
-            controlImages[i].setOrigin(Align.center);
-            if (splitScreenCount == 2 && Gdx.app.getType() == Application.ApplicationType.Android) {
-                if (i == 0) {
-                    controlImages[i].setRotation(-90f);
-                } else {
-                    controlImages[i].setRotation(90f);
+            if (players[i] != null) {
+                overlays[i] = new Overlay(new Color(0, 0, 0, 0.8f), 6.0f);
+                controlImages[i] = new Image(controlImageTexture);
+                controlImages[i].setScaling(Scaling.fit);
+                controlImages[i].setOrigin(Align.center);
+                if (splitScreenCount == 2 && Gdx.app.getType() == Application.ApplicationType.Android) {
+                    if (i == 0) {
+                        controlImages[i].setRotation(-90f);
+                    } else {
+                        controlImages[i].setRotation(90f);
+                    }
                 }
-            }
-            if (controlLabels != null) {
-                int[] playerControls = players[i].getControls();
-                String controlString = Input.Keys.toString(playerControls[0]) + '\n' +
-                        Input.Keys.toString(playerControls[1]) +
-                        "  " +
-                        Input.Keys.toString(playerControls[2]) +
-                        "  " +
-                        Input.Keys.toString(playerControls[3]);
-                controlLabels[i] = new Label(controlString, skin);
-                Color labelColor = new Color(players[i].color);
-                controlLabels[i].setColor(labelColor);
-                controlLabels[i].setAlignment(Align.center);
-            }
+                if (controlLabels != null) {
+                    int[] playerControls = players[i].getControls();
+                    String controlString = Input.Keys.toString(playerControls[0]) + '\n' +
+                            Input.Keys.toString(playerControls[1]) +
+                            "  " +
+                            Input.Keys.toString(playerControls[2]) +
+                            "  " +
+                            Input.Keys.toString(playerControls[3]);
+                    controlLabels[i] = new Label(controlString, skin);
+                    Color labelColor = new Color(players[i].color);
+                    controlLabels[i].setColor(labelColor);
+                    controlLabels[i].setAlignment(Align.center);
+                }
 
-            controlTables[i] = new Table();
-            controlTables[i].center();
-            controlTables[i].setSize(splitScreenWidth, stage.getHeight());
-            controlTables[i].add(controlImages[i])
-                    .width(ControlManager.controlWidth * scaleFactor)
-                    .height(ControlManager.controlHeight * scaleFactor);
-            if (controlLabels != null) {
-                controlTables[i].row();
-                controlTables[i].add(controlLabels[i]);
+                controlTables[i] = new Table();
+                controlTables[i].center();
+                if (controlImages[i] != null) {
+                    controlTables[i].add(controlImages[i])
+                            .width(ControlManager.controlWidth * scaleFactor)
+                            .height(ControlManager.controlHeight * scaleFactor);
+                }
+                if (controlLabels != null) {
+                    controlTables[i].row();
+                    controlTables[i].add(controlLabels[i]);
+                }
             }
 
             masterTable.add(controlTables[i]).uniformX().expand();
@@ -125,6 +138,10 @@ public class ControlManager {
         float splitScreenWidth = stage.getWidth() / overlays.length;
 
         for (int i = 0; i < overlays.length; i++) {
+            if (overlays[i] == null) {
+                continue;
+            }
+
             overlays[i].render(shapeDrawer,
                     i * splitScreenWidth, 0, splitScreenWidth, stage.getHeight(), delta);
 

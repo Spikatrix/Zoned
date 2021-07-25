@@ -20,6 +20,7 @@ import com.cg.zoned.Constants;
 import com.cg.zoned.MapSelector;
 import com.cg.zoned.Player;
 import com.cg.zoned.PlayerColorHelper;
+import com.cg.zoned.PlayerEntity;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.Zoned;
@@ -267,10 +268,11 @@ public class PlayerSetUpScreen extends ScreenObject implements InputProcessor {
     }
 
     private void startGame(Array<Color> playerColors, PreparedMapData mapData) {
-        final Player[] players = new Player[playerColors.size];
+        final PlayerEntity[] players = new PlayerEntity[playerColors.size];
         for (int i = 0; i < players.length; i++) {
-            players[i] = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
-            players[i].setControlScheme(i % Constants.PLAYER_CONTROLS.length);
+            Player player = new Player(playerColors.get(i), PlayerColorHelper.getStringFromColor(playerColors.get(i)));
+            player.setControlScheme(i % Constants.PLAYER_CONTROLS.length);
+            players[i] = player;
         }
 
         animationManager.fadeOutStage(screenStage, this, new MapStartPosScreen(game, mapData, players));

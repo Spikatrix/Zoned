@@ -13,7 +13,7 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
-import com.cg.zoned.Player;
+import com.cg.zoned.PlayerEntity;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.ui.FocusableStage;
 
@@ -140,19 +140,19 @@ public class SplitViewportManager {
         }
     }
 
-    public void render(ShapeDrawer shapeDrawer, SpriteBatch batch, Map map, Player[] players, float delta) {
+    public void render(ShapeDrawer shapeDrawer, SpriteBatch batch, Map map, PlayerEntity[] players, float delta) {
         render(shapeDrawer, batch, map, players, 0, delta);
     }
 
     public void render(ShapeDrawer shapeDrawer, Batch batch, Map map,
-                        Player[] players, int playerStartIndex, float delta) {
+                       PlayerEntity[] players, int playerStartIndex, float delta) {
         for (int viewportIndex = 0; viewportIndex < splitViewports.length; viewportIndex++) {
             renderMap(shapeDrawer, batch, map, players, playerStartIndex + viewportIndex, viewportIndex, delta);
         }
     }
 
     private void renderMap(ShapeDrawer shapeDrawer, Batch batch, Map map,
-                            Player[] players, int playerIndex, int viewportIndex, float delta) {
+                            PlayerEntity[] players, int playerIndex, int viewportIndex, float delta) {
         if (playerIndex >= players.length) {
             return;
         }
@@ -169,7 +169,7 @@ public class SplitViewportManager {
         batch.end();
     }
 
-    private void focusCameraOnPlayer(Viewport viewport, Player player, Vector2 vel, float delta) {
+    private void focusCameraOnPlayer(Viewport viewport, PlayerEntity player, Vector2 vel, float delta) {
         OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
 
         Vector3 position = camera.position;

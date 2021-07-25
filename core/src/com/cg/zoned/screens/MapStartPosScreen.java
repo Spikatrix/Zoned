@@ -21,7 +21,7 @@ import com.cg.zoned.Assets;
 import com.cg.zoned.Constants;
 import com.cg.zoned.Map;
 import com.cg.zoned.Overlay;
-import com.cg.zoned.Player;
+import com.cg.zoned.PlayerEntity;
 import com.cg.zoned.Preferences;
 import com.cg.zoned.ShapeDrawer;
 import com.cg.zoned.ViewportDividers;
@@ -49,13 +49,13 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
     private ViewportDividers viewportDividers;
     private int splitScreenCount;
 
-    private Player[] players;
+    private PlayerEntity[] players;
     private CheckBox[][] radioButtons;
     private ButtonGroup<Button>[] buttonGroup;
     private Label[] playerLabels;
     private int playerStartIndex;
 
-    public MapStartPosScreen(final Zoned game, PreparedMapData preparedMapData, Player[] players) {
+    public MapStartPosScreen(final Zoned game, PreparedMapData preparedMapData, PlayerEntity[] players) {
         super(game);
         game.discordRPCManager.updateRPC("Choosing start positions");
 
@@ -217,7 +217,7 @@ public class MapStartPosScreen extends ScreenObject implements InputProcessor {
         GridPoint2 oldPos = players[index].getPreviousPosition();
 
         mapGrid[oldPos.y][oldPos.x].cellColor = null;
-        for (Player player : players) {
+        for (PlayerEntity player : players) {
             if (player.getPositionX() == oldPos.x && player.getPositionY() == oldPos.y) {
                 mapGrid[oldPos.y][oldPos.x].cellColor = player.color;
                 break;
