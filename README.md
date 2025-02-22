@@ -4,12 +4,9 @@
 
 Zoned is a cross-platform grid based multiplayer strategy game powered by [libGDX][libGDX]. The game is primarily targeted for Android, but will work on Windows and Linux as well.
 
-It is available to download on the [Google Play Store][play_store_page] (Android) as well as on [GitHub][github_release_page] (Windows, Linux, Android and [Web][gwt_release_page])
+It is available to download on [GitHub][github_release_page] (Windows, Linux, Android and [Web][gwt_release_page])
 
 <p>
-	<a href="https://play.google.com/store/apps/details?id=com.cg.zoned">
-		<img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" alt="Download from Google Play" height="80px">
-	</a>
 	<a href="https://github.com/Spikatrix/Zoned/releases">
 		<img src="https://github.com/Spikatrix/LRC-Editor/assets/12792882/cf29751a-93bf-4f47-96b2-99716653e3ba" alt="Download from GitHub" height="80px">
 	</a>
@@ -19,14 +16,12 @@ It is available to download on the [Google Play Store][play_store_page] (Android
 
 Zoned is a multiplayer strategy game. Every game is played on a grid based map where the objective is to capture as many cells in the grid as possible. Zoned supports both splitscreen multiplayer as well as cross-platform local network multiplayer. In addition to the default internal maps, Zoned also supports [custom external maps][custom_external_map_wiki] which you can play on if you ever get bored of the default ones. The best part is that Zoned is free of ads and will never have ads!
 
-The game is in beta. You can track the development progress of the game [here][beta_work]. However, I've stopped working on Zoned and have moved on to other projects. 
+The game is in beta. However, I've stopped working on Zoned and have moved on to other projects. 
 
 ## Screenshots
 
 <img src="https://user-images.githubusercontent.com/12792882/112144302-0a42bf80-8bff-11eb-8390-aadf9f4bcabf.png" width="46%"> &nbsp; &nbsp;
 <img src="https://user-images.githubusercontent.com/12792882/112144297-07e06580-8bff-11eb-87c9-e9e2f39318f0.png" width="46%"> &nbsp; &nbsp;
-
-More screenshots are available in the [Google Play Store page][play_store_page]
 
 ## Build from source
 
@@ -60,7 +55,6 @@ This project is licensed under the [GNU GPLv3 License][project_license]
 [play_store_page]: https://play.google.com/store/apps/details?id=com.cg.zoned
 [github_release_page]: https://github.com/Spikatrix/Zoned/releases
 [gwt_release_page]: https://spikatrix.github.io/Zoned/
-[beta_work]: https://github.com/Spikatrix/Zoned/projects/1
 [issue_tracker]: https://github.com/Spikatrix/Zoned/issues
 [email_feedback]: mailto:cg.devworks@gmail.com?subject=Zoned+Feedback&body=Your+feedback+here
 [custom_external_map_wiki]: https://github.com/Spikatrix/Zoned/wiki/Custom-External-Maps
